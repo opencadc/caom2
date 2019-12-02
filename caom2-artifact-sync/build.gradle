@@ -15,7 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.33'
+version = '2.3.35'
 
 dependencies {
     compile 'log4j:log4j:[1.2.0,)'
@@ -34,7 +34,7 @@ dependencies {
     runtime 'net.sourceforge.jtds:jtds:[1.0,)'
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
     
-    testCompile 'junit:junit:[4.+,)'
+    testCompile 'junit:junit:[4,)'
 }
 
 apply from: '../opencadc.gradle'

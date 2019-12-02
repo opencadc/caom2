@@ -73,17 +73,13 @@ import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.StoragePolicy;
-import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
-import ca.nrc.cadc.util.PropertiesReader;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -133,7 +129,7 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         try {
             physicalArtifacts.add(metadata);
-            Assert.fail("Failed to detect null metadata.storageID in physicalArtifacts.");
+            Assert.fail("Failed to detect null metadata.uri in physicalArtifacts.");
         } catch (NullPointerException ex) {
             // expected
         }
@@ -143,12 +139,12 @@ public class ArtifactMetadataTest
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         try {
             logicalArtifacts.add(metadata);
-            Assert.fail("Failed to detect null metadata.storageID in logicalArtifacts.");
+            Assert.fail("Failed to detect null metadata.uri in logicalArtifacts.");
         } catch (NullPointerException ex) {
             // expected
         }
         
-        // d. logicalArtifacts.storageID is not null, physicalArtifacts.storageID is not null
+        // d. logicalArtifacts.uri is not null, physicalArtifacts.uri is not null
         logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         ArtifactMetadata logicalMetadata = new ArtifactMetadata();
@@ -156,45 +152,40 @@ public class ArtifactMetadataTest
         logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalMetadata.productType = ProductType.SCIENCE;
         logicalMetadata.releaseType = ReleaseType.DATA;
-        logicalMetadata.storageID = "foo";
-        physicalMetadata.storageID = "bar";
+        physicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
         
-        // e. logicalArtifacts attributes are not null, physicalArtifacts.storageID is not null
+        // e. logicalArtifacts attributes are not null, physicalArtifacts.uri is not null
         logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.storageID = "foo";
         logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalMetadata.productType = ProductType.SCIENCE;
         logicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         logicalMetadata.contentLength = "10";
         logicalMetadata.contentType = "logicalType";
-        logicalMetadata.lastModified = new Date();
         logicalMetadata.releaseType = ReleaseType.DATA;
         logicalMetadata.dataRelease = new Date();
         logicalMetadata.metaRelease = null;
-        physicalMetadata.storageID = "foo";
+        physicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
         
-        // f. logicalArtifacts storageID is not null, physicalArtifacts.attributes are not null
+        // f. logicalArtifacts uri is not null, physicalArtifacts.attributes are not null
         logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         logicalMetadata = new ArtifactMetadata();
         physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.storageID = "bar";
         logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalMetadata.productType = ProductType.SCIENCE;
         physicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
         physicalMetadata.contentLength = "10";
         physicalMetadata.contentType = "logicalType";
-        physicalMetadata.lastModified = new Date();
-        physicalMetadata.storageID = "bar";
+        physicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
@@ -207,7 +198,7 @@ public class ArtifactMetadataTest
             this.storagePolicy = policy;
         }
 
-        public boolean contains(URI artifactURI, URI checksum) throws TransientException {
+        public ArtifactMetadata get(URI artifactURI) throws TransientException {
             // not used by the unit test
             throw new UnsupportedOperationException("This method should not have been invoked.");
         }

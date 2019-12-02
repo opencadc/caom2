@@ -415,22 +415,26 @@ public class Main {
         sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
         sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
 
-        sb.append("\n\nSource selection:");
-        sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
-        sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)");
-        sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
-        sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
-        
+        if (!ENABLE_COMPUTE_FEATURES) {
+            sb.append("\n\nSource selection:");
+            sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
+            sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)");
+            sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository "
+                    + "endpoints (use: unregistered service)");
+            sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
+        }
 
         sb.append("\n\nOptional modes: [--validate|--skip|--full] (default: incremental harvest)");
         sb.append("\n         --validate : validate all Observation.accMetaChecksum values between source and destination ");
         sb.append("\n         --skip : redo previously skipped (failed) observations (default: false)");
         sb.append("\n         --full : restart at the first (oldest) observation (default: false)");
 
-        sb.append("\n\nOptional authentication: [--netrc|--cert=<pem file>] (default: anonymous)");
-        sb.append("\n         --netrc : read username and password(s) from ~/.netrc file");
-        sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
-
+        if (!ENABLE_COMPUTE_FEATURES) {
+            sb.append("\n\nOptional authentication: [--netrc|--cert=<pem file>] (default: anonymous)");
+            sb.append("\n         --netrc : read username and password(s) from ~/.netrc file");
+            sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
+        }
+        
         sb.append("\n\nOptional modifiers:");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n         --dryrun : check for work but don't do anything");

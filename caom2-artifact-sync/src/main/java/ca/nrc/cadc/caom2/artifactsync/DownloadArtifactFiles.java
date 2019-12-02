@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
@@ -332,7 +333,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 }
 
                 // check again to be sure the destination doesn't already have it
-                if (artifactStore.contains(artifactURI, artifact.contentChecksum)) {
+                ArtifactMetadata tempMetadata = artifactStore.get(artifactURI);
+                if (tempMetadata != null && tempMetadata.checksum != null  
+                        && tempMetadata.checksum.equals(artifact.contentChecksum.getSchemeSpecificPart())) {
                     result.message = "ArtifactStore already has correct copy";
                     result.success = true;
                     return result;
