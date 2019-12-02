@@ -97,7 +97,8 @@ public final class CustomAxisUtil {
     private static final TreeMap<String, String> ctypeCunitMap = new TreeMap<String,String>() {{
                 put("FARADAY", "rad/m**2");
                 put("RM", "rad/m**2");
-    }};
+        }
+    };
 
     private CustomAxisUtil() {
     }
@@ -107,9 +108,10 @@ public final class CustomAxisUtil {
 
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
-               for (Chunk c : p.getChunks()) {
+                for (Chunk c : p.getChunks()) {
                     if (c.custom != null
                         && Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        
                         String currentCtype = c.custom.getAxis().getAxis().getCtype();
                         if (firstCtype == null) {
                             if (ctypeCunitMap.get(currentCtype) == null) {
@@ -117,7 +119,7 @@ public final class CustomAxisUtil {
                             }
                             firstCtype = currentCtype;
                         }
-                       if (currentCtype.compareTo(firstCtype) != 0) {
+                        if (currentCtype.compareTo(firstCtype) != 0) {
                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: "
                                + currentCtype + " and " + firstCtype);
                         }
