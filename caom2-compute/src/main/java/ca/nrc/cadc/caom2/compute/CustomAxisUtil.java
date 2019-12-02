@@ -111,7 +111,7 @@ public final class CustomAxisUtil {
                 for (Chunk c : p.getChunks()) {
                     if (c.custom != null
                         && Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                        
+
                         String currentCtype = c.custom.getAxis().getAxis().getCtype();
                         if (firstCtype == null) {
                             if (ctypeCunitMap.get(currentCtype) == null) {
@@ -120,7 +120,7 @@ public final class CustomAxisUtil {
                             firstCtype = currentCtype;
                         }
                         if (currentCtype.compareTo(firstCtype) != 0) {
-                           throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: "
+                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: "
                                + currentCtype + " and " + firstCtype);
                         }
                     }
