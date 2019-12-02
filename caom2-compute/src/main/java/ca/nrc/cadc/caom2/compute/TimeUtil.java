@@ -443,7 +443,7 @@ public final class TimeUtil {
         return ret;
     }
 
-    private static double val2pix(TemporalWCS wcs, CoordFunction1D func, double val) {
+    public static double val2pix(TemporalWCS wcs, CoordFunction1D func, double val) {
         validateWCS(wcs);
 
         // TODO: if mjdref has a value then the units of axis values could be any time
