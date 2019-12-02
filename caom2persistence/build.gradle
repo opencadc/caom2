@@ -31,7 +31,7 @@ dependencies {
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-dali-pg:[0.1,)'
     compile 'org.opencadc:caom2:[2.4.0,2.5)'
-    compile 'org.opencadc:caom2-persist:[2.3.3,2.4)'
+    compile 'org.opencadc:caom2-persist:[2.4.0,2.5)'
 
     testCompile 'junit:junit:4.+'
     
