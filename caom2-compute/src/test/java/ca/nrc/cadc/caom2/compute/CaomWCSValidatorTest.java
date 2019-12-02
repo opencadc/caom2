@@ -84,7 +84,6 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.net.URISyntaxException;
-import java.rmi.UnexpectedException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;

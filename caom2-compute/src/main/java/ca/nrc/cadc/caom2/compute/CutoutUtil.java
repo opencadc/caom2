@@ -121,6 +121,7 @@ public final class CutoutUtil {
      * @param energyInter
      * @param timeInter
      * @param polarStates
+     * @param customCtype
      * @param customInter
      * @return
      * @throws NoSuchKeywordException
