@@ -123,36 +123,13 @@ public class ArtifactMetadataTest
         long start = System.currentTimeMillis();
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
         
-        // b. logicalArtifacts is empty, physicalArtifacts is not empty
-        ArtifactMetadata metadata = new ArtifactMetadata();
-        logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        try {
-            physicalArtifacts.add(metadata);
-            Assert.fail("Failed to detect null metadata.uri in physicalArtifacts.");
-        } catch (NullPointerException ex) {
-            // expected
-        }
-        
-        // c. logicalArtifacts is not empty, physicalArtifacts is empty
-        logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        try {
-            logicalArtifacts.add(metadata);
-            Assert.fail("Failed to detect null metadata.uri in logicalArtifacts.");
-        } catch (NullPointerException ex) {
-            // expected
-        }
-        
         // d. logicalArtifacts.uri is not null, physicalArtifacts.uri is not null
         logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        ArtifactMetadata logicalMetadata = new ArtifactMetadata();
-        ArtifactMetadata physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        ArtifactMetadata logicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), null);
+        ArtifactMetadata physicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), null);
         logicalMetadata.productType = ProductType.SCIENCE;
         logicalMetadata.releaseType = ReleaseType.DATA;
-        physicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
@@ -160,17 +137,14 @@ public class ArtifactMetadataTest
         // e. logicalArtifacts attributes are not null, physicalArtifacts.uri is not null
         logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        logicalMetadata = new ArtifactMetadata();
-        physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), "1043fe4c1a259a610fa9fb7ebff5833f");
+        physicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), null);
         logicalMetadata.productType = ProductType.SCIENCE;
-        logicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
-        logicalMetadata.contentLength = "10";
+        logicalMetadata.contentLength = 10L;
         logicalMetadata.contentType = "logicalType";
         logicalMetadata.releaseType = ReleaseType.DATA;
         logicalMetadata.dataRelease = new Date();
         logicalMetadata.metaRelease = null;
-        physicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);
@@ -178,14 +152,11 @@ public class ArtifactMetadataTest
         // f. logicalArtifacts uri is not null, physicalArtifacts.attributes are not null
         logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
-        logicalMetadata = new ArtifactMetadata();
-        physicalMetadata = new ArtifactMetadata();
-        logicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
+        logicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), null);
+        physicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), "1043fe4c1a259a610fa9fb7ebff5833f");
         logicalMetadata.productType = ProductType.SCIENCE;
-        physicalMetadata.checksum = "1043fe4c1a259a610fa9fb7ebff5833f";
-        physicalMetadata.contentLength = "10";
+        physicalMetadata.contentLength = 10L;
         physicalMetadata.contentType = "logicalType";
-        physicalMetadata.artifactURI = new URI("mast:HST/product/id5n04lfq_drc.fits");
         logicalArtifacts.add(logicalMetadata);
         physicalArtifacts.add(physicalMetadata);
         validator.compareMetadata(logicalArtifacts, physicalArtifacts, start);

@@ -124,16 +124,18 @@ public class ResultReader implements InputStreamWrapper {
                     if (parts.length == 0) {
                         // empty line
                     } else {
-                        am = new ArtifactMetadata();
-                        am.artifactURI = new URI(parts[0]);
                         
+                        URI artifactURI = new URI(parts[0]);
+                        
+                        String acs = null;
                         if (parts.length > 1) {
                             String checksum = parts[1];
                             int colon = checksum.indexOf(":");
-                            am.checksum = checksum.substring(colon + 1, checksum.length());
+                            acs = checksum.substring(colon + 1, checksum.length());
                         }
+                        am = new ArtifactMetadata(artifactURI, acs);
                         if (parts.length > 2) {
-                            am.contentLength = parts[2];
+                            am.contentLength = Long.parseLong(parts[2]);
                         }
                         if (parts.length > 3) {
                             am.contentType = parts[3];
