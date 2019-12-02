@@ -157,10 +157,11 @@ public class CaomWCSValidator {
 
         // Only case to ignore is if both are declared as null
         if (c.customAxis != null || c.custom != null) {
-            if (c.custom != null && c.customAxis != null ) {
+            if (c.custom != null && c.customAxis != null) {
                 validateCustomWCS(context, c.custom);
             } else {
-                throw new IllegalArgumentException(CUSTOM_WCS_VALIDATION_ERROR + ": CustomWCS or axis definition null. Axis: " + c.customAxis + ", WCS:" + c.custom);
+                throw new IllegalArgumentException(CUSTOM_WCS_VALIDATION_ERROR + ": CustomWCS or axis definition null. Axis: "
+                    + c.customAxis + ", WCS:" + c.custom);
             }
 
         }
@@ -193,8 +194,7 @@ public class CaomWCSValidator {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
             } catch (WCSLibRuntimeException ex) {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context , ex);
-            }
-            catch (UnsupportedOperationException ex) {
+            } catch (UnsupportedOperationException ex) {
                 // error thrown from toPolygon if WCS is too near a pole, or if the bounds
                 // value is not recognized
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
@@ -348,7 +348,7 @@ public class CaomWCSValidator {
             if (axisList[0] != null) {
                 errorMsg += "\tInvalid axis definition (0): " + axisList[0] + ".";
             }
-            for (int i=1; i<= chunk.naxis; i++) {
+            for (int i = 1; i <= chunk.naxis; i++) {
                 if (axisList[i] == null) {
                     errorMsg += "\tMissing axis number: " + i;
                 }

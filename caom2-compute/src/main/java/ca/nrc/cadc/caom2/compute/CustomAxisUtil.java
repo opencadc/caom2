@@ -95,8 +95,8 @@ public final class CustomAxisUtil {
     private static final Logger log = Logger.getLogger(CustomAxisUtil.class);
 
     private static final TreeMap<String, String> ctypeCunitMap = new TreeMap<String,String>() {{
-        put("FARADAY", "rad/m**2");
-        put("RM", "rad/m**2");
+                put("FARADAY", "rad/m**2");
+                put("RM", "rad/m**2");
     }};
 
     private CustomAxisUtil() {
@@ -106,23 +106,24 @@ public final class CustomAxisUtil {
         String firstCtype = null;
 
         for (Artifact a : artifacts) {
-                for (Part p : a.getParts()) {
-                       for (Chunk c : p.getChunks()) {
-                            if (c.custom != null
-                                && Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                                String currentCtype = c.custom.getAxis().getAxis().getCtype();
-                                if (firstCtype == null) {
-                                    if (ctypeCunitMap.get(currentCtype) == null) {
-                                        throw new IllegalArgumentException("Unsupported CTYPE: " + currentCtype);
-                                    }
-                                    firstCtype = currentCtype;
-                                }
-                               if (currentCtype.compareTo(firstCtype) != 0) {
-                                   throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + " and " + firstCtype);
-                                }
+            for (Part p : a.getParts()) {
+               for (Chunk c : p.getChunks()) {
+                    if (c.custom != null
+                        && Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        String currentCtype = c.custom.getAxis().getAxis().getCtype();
+                        if (firstCtype == null) {
+                            if (ctypeCunitMap.get(currentCtype) == null) {
+                                throw new IllegalArgumentException("Unsupported CTYPE: " + currentCtype);
                             }
+                            firstCtype = currentCtype;
                         }
+                       if (currentCtype.compareTo(firstCtype) != 0) {
+                           throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: "
+                               + currentCtype + " and " + firstCtype);
+                        }
+                    }
                 }
+            }
         }
 
         return firstCtype;
@@ -132,7 +133,7 @@ public final class CustomAxisUtil {
         ProductType productType = Util.choseProductType(artifacts);
         String axisCtype = getCtype(artifacts, productType);
 
-        if (axisCtype != null ) {
+        if (axisCtype != null) {
 
             CustomAxis c = new CustomAxis(axisCtype);
 
@@ -167,7 +168,8 @@ public final class CustomAxisUtil {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                         String currentCtype = c.custom.getAxis().getAxis().getCtype();
                         if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
-                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: "
+                                + currentCtype + ". Expected: " + expectedCtype);
                         } else {
                             CoordRange1D range = c.custom.getAxis().range;
                             CoordBounds1D bounds = c.custom.getAxis().bounds;
@@ -232,7 +234,8 @@ public final class CustomAxisUtil {
                     if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
                         String currentCtype = c.custom.getAxis().getAxis().getCtype();
                         if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
-                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                            throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: "
+                                + currentCtype + ". Expected: " + expectedCtype);
                         } else {
                             num++;
                             double ss = Math.abs(c.custom.getAxis().function.getDelta());
@@ -282,7 +285,8 @@ public final class CustomAxisUtil {
                         if (c.custom != null) {
                             String currentCtype = c.custom.getAxis().getAxis().getCtype();
                             if (currentCtype == null || currentCtype.compareTo(expectedCtype) != 0) {
-                                throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: " + currentCtype + ". Expected: " + expectedCtype);
+                                throw new IllegalArgumentException("CTYPE must be the same across all Artifacts. Found: "
+                                    + currentCtype + ". Expected: " + expectedCtype);
                             } else {
                                 double n = Util.getNumPixels(c.custom.getAxis(), false);
                                 numPixels += n;
@@ -360,14 +364,15 @@ public final class CustomAxisUtil {
         }
 
         if (!mapCunit.equals(cunit)) {
-            throw new IllegalArgumentException("Invalid CUNIT for CTYPE: " + ctype + ". Expected: " + mapCunit + ". Found: " + cunit + " (normalized, raw: " + rawCunit + ")");
+            throw new IllegalArgumentException("Invalid CUNIT for CTYPE: " + ctype + ". Expected: "
+                + mapCunit + ". Found: " + cunit + " (normalized, raw: " + rawCunit + ")");
         }
     }
 
     private static String normalizeUnit(String rawUnit) {
         String normalizedUnit = rawUnit;
         if (rawUnit.contains("^")) {
-            normalizedUnit = rawUnit.replaceAll("\\^", "**" );
+            normalizedUnit = rawUnit.replaceAll("\\^", "**");
             log.debug("normalized unit: " + rawUnit + " to: " + normalizedUnit);
         }
         return normalizedUnit;
