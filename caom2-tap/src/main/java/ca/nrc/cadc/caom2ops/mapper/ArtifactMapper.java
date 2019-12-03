@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -140,6 +140,8 @@ public class ArtifactMapper implements VOTableRowMapper<Artifact>
             artifact.contentType = Util.getString(data, map.get("caom2:Artifact.contentType"));
             artifact.contentLength = Util.getLong(data, map.get("caom2:Artifact.contentLength"));
             artifact.contentChecksum = Util.getURI(data, map.get("caom2:Artifact.contentChecksum"));
+            artifact.contentRelease = Util.getDate(data, map.get("caom2:Artifact.contentRelease")); // CAOM-2.4
+            // TODO: fill Artifact.contentReadGroups // CAOM-2.4
 
             Date lastModified = Util.getDate(data, map.get("caom2:Artifact.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Artifact.maxLastModified"));

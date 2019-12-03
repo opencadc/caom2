@@ -104,6 +104,7 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
+@Deprecated
 public class MetaQueryRunner22 implements JobRunner
 {
     private static final Logger log = Logger.getLogger(MetaQueryRunner22.class);
@@ -220,9 +221,6 @@ public class MetaQueryRunner22 implements JobRunner
             }
             else
             {
-                //RegistryClient reg = new RegistryClient();
-                //URL metaURL = reg.getServiceURL(metaID, Standards.CAOM2_OBS_20, AuthMethod.ANON);
-                //String styleSheetURL = metaURL.toExternalForm().replace("/meta", "/caom2_summary.xslt");
                 ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
                 //writer.setStylesheetURL(styleSheetURL);
                 writer.write(obs, syncOutput.getOutputStream());

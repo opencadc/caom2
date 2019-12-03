@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2ops.mapper;
 
 import ca.nrc.cadc.caom2.CalibrationLevel;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
@@ -88,9 +89,10 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
@@ -140,10 +142,13 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 plane.dataProductType = DataProductType.toValue(dpType);
             
             plane.dataRelease = Util.getDate(data, map.get("caom2:Plane.dataRelease"));
+            // TODO: fill Plane.dataReadGroups // CAOM-2.4
             plane.metaRelease = Util.getDate(data, map.get("caom2:Plane.metaRelease"));
+            // TODO: fill Plane.metaReadGroups // CAOM-2.4
             
             plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
               
+            // position
             ca.nrc.cadc.dali.Shape posBounds = (ca.nrc.cadc.dali.Shape) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
             double[] posBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.samples"));
             if (posBounds != null) {
@@ -180,75 +185,87 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                     plane.position.dimension = new Dimension2D(dim1, dim2);
                 }
                 plane.position.resolution = Util.getDouble(data, map.get("caom2:Plane.position.resolution"));
+                double[] rBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.resolutionBounds")); // CAOM 2.4
+                if (rBounds != null) {
+                    plane.position.resolutionBounds = new Interval(rBounds[0], rBounds[1]);
+                }
                 plane.position.sampleSize = Util.getDouble(data, map.get("caom2:Plane.position.sampleSize"));
                 plane.position.timeDependent = Util.getBoolean(data, map.get("caom2:Plane.position.timeDependent"));
             }
             
+            // energy
             ca.nrc.cadc.dali.DoubleInterval nrgBounds 
                     = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.energy.bounds"));
-            //ca.nrc.cadc.dali.DoubleInterval[] nrgBoundsSamples 
-            //        = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
             double[] nrgBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
             if (nrgBounds != null)
             {
                 plane.energy = new Energy();
-                plane.energy.bounds = new Interval(nrgBounds.getLower(), nrgBounds.getUpper());
+                plane.energy.bounds = new SampledInterval(nrgBounds.getLower(), nrgBounds.getUpper());
                 if (nrgBoundsSamples != null)
                 {
                     //for (ca.nrc.cadc.dali.DoubleInterval si : nrgSamples)
                     for (int i = 0; i < nrgBoundsSamples.length; i += 2)
                     {
                         //plane.energy.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
-                        plane.energy.bounds.getSamples().add(new SubInterval(nrgBoundsSamples[i], nrgBoundsSamples[i+1]));
+                        plane.energy.bounds.getSamples().add(new Interval(nrgBoundsSamples[i], nrgBoundsSamples[i+1]));
                     }
                 }
                 else // HACK: backwards compat
                 {
-                    plane.energy.bounds.getSamples().add(new SubInterval(nrgBounds.getLower(), nrgBounds.getUpper()));
+                    plane.energy.bounds.getSamples().add(new Interval(nrgBounds.getLower(), nrgBounds.getUpper()));
                 }
                 plane.energy.bandpassName = Util.getString(data, map.get("caom2:Plane.energy.bandpassName"));
                 plane.energy.dimension = Util.getLong(data, map.get("caom2:Plane.energy.dimension"));
-                String emBand = Util.getString(data, map.get("caom2:Plane.energy.emBand"));
-                if (emBand != null)
-                    plane.energy.emBand = EnergyBand.toValue(emBand);
+                String ebs = Util.getString(data, map.get("caom2:Plane.energy.emBand"));
+                if (ebs != null) {
+                    CaomUtil.decodeBands(ebs, plane.energy.getEnergyBands());
+                }
                 plane.energy.resolvingPower = Util.getDouble(data, map.get("caom2:Plane.energy.resolvingPower"));
+                double[] rBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.resolvingPowerBounds")); // CAOM 2.4
+                if (rBounds != null) {
+                    plane.energy.resolvingPowerBounds = new Interval(rBounds[0], rBounds[1]);
+                }
                 plane.energy.restwav = Util.getDouble(data, map.get("caom2:Plane.energy.restwav"));
                 plane.energy.sampleSize = Util.getDouble(data, map.get("caom2:Plane.energy.sampleSize"));
                 String spec = Util.getString(data, map.get("caom2:Plane.energy.transition.species"));
                 String trans = Util.getString(data, map.get("caom2:Plane.energy.transition.transition"));
-                if (spec != null && trans != null)
+                if (spec != null && trans != null) {
                     plane.energy.transition = new EnergyTransition(spec, trans);
+                }
             }
             
+            // time
             ca.nrc.cadc.dali.DoubleInterval timBounds 
                     = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.time.bounds"));
-            //ca.nrc.cadc.dali.DoubleInterval[] timBoundsSamples 
-            //        = (ca.nrc.cadc.dali.DoubleInterval[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
             double[] timBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
             if (timBounds != null)
             {
                 plane.time = new Time();
-                plane.time.bounds = new Interval(timBounds.getLower(), timBounds.getUpper());
+                plane.time.bounds = new SampledInterval(timBounds.getLower(), timBounds.getUpper());
                 if (timBoundsSamples != null) // actual sub-samples
                 {
                     //for (ca.nrc.cadc.dali.DoubleInterval si : timSamples)
                     for (int i = 0; i < timBoundsSamples.length; i += 2)
                     {
                         //plane.time.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
-                        plane.time.bounds.getSamples().add(new SubInterval(timBoundsSamples[i],timBoundsSamples[i+1]));
+                        plane.time.bounds.getSamples().add(new Interval(timBoundsSamples[i],timBoundsSamples[i+1]));
                     }
                 }
                 else // HACK: backwards compat
                 {
-                    plane.time.bounds.getSamples().add(new SubInterval(timBounds.getLower(), timBounds.getUpper()));
+                    plane.time.bounds.getSamples().add(new Interval(timBounds.getLower(), timBounds.getUpper()));
                 }
                 plane.time.dimension = Util.getLong(data, map.get("caom2:Plane.time.dimension"));
                 plane.time.resolution = Util.getDouble(data, map.get("caom2:Plane.time.resolution"));
+                double[] rBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.resolutionBounds")); // CAOM 2.4
+                if (rBounds != null) {
+                    plane.time.resolutionBounds = new Interval(rBounds[0], rBounds[1]);
+                }
                 plane.time.exposure = Util.getDouble(data, map.get("caom2:Plane.time.exposure"));
                 plane.time.sampleSize = Util.getDouble(data, map.get("caom2:Plane.time.sampleSize"));
-                
             }
 
+            // polarization
             String polStates = Util.getString(data, map.get("caom2:Plane.polarization.states"));
             if (polStates != null)
             {
@@ -258,17 +275,36 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 plane.polarization.dimension = Util.getLong(data, map.get("caom2:Plane.polarization.dimension"));
             }
             
+            // custom
+            String customCtype = Util.getString(data, map.get("caom2:Plane.custom.ctype")); // CAOM 2.4
+            if (customCtype != null) {
+                plane.custom = new CustomAxis(customCtype);
+                ca.nrc.cadc.dali.DoubleInterval cBounds 
+                    = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.custom.bounds"));
+                double[] cBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.time.custom.samples"));
+                if (cBounds != null)
+                {
+                    plane.custom.bounds = new SampledInterval(cBounds.getLower(), cBounds.getUpper());
+                    if (cBoundsSamples != null) {
+                        for (int i = 0; i < cBoundsSamples.length; i += 2) {
+                            plane.custom.bounds.getSamples().add(new Interval(cBoundsSamples[i], cBoundsSamples[i+1]));
+                        }
+                    }
+                    plane.custom.dimension = Util.getLong(data, map.get("caom2:Plane.custom.dimension"));
+                }
+            }
+            
             Metrics metrics = new Metrics();
             metrics.background = Util.getDouble(data, map.get("caom2:Plane.metrics.background"));
             metrics.backgroundStddev = Util.getDouble(data, map.get("caom2:Plane.metrics.backgroundStddev"));
             metrics.fluxDensityLimit = Util.getDouble(data, map.get("caom2:Plane.metrics.fluxDensityLimit"));
             metrics.magLimit = Util.getDouble(data, map.get("caom2:Plane.metrics.magLimit"));
             metrics.sourceNumberDensity = Util.getDouble(data, map.get("caom2:Plane.metrics.sourceNumberDensity"));
+            metrics.sampleSNR = Util.getDouble(data, map.get("caom2:Plane.metrics.sampleSNR"));
             // cosmetic but consistent with ObservationReader:
             if (metrics.background != null || metrics.backgroundStddev != null
                     || metrics.fluxDensityLimit != null || metrics.magLimit != null
-                    || metrics.sourceNumberDensity != null)
-            {
+                    || metrics.sourceNumberDensity != null || metrics.sampleSNR != null) {
                     plane.metrics = metrics;
             }
             
