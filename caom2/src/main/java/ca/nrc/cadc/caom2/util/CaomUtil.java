@@ -183,8 +183,8 @@ public class CaomUtil implements Serializable {
     /**
      * Format a list of keywords using the CAOM-2.3+ reserved character.
      * 
-     * @param strs
-     * @return
+     * @param bands energy bands to encode
+     * @return encoded as string
      */
     public static String encodeBands(Collection<EnergyBand> bands) {
         if (bands == null || bands.isEmpty()) {
