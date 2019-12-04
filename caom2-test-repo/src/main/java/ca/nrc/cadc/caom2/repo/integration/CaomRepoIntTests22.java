@@ -125,6 +125,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
+    @Deprecated
     private CaomRepoIntTests22() {
     }
 
@@ -134,6 +135,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
      * @param pem2       PEM file for user with read-only permission
      * @param pem3       PEM file for user with no permissions
      */
+    @Deprecated
     public CaomRepoIntTests22(URI resourceID, String pem1, String pem2, String pem3) {
         super(resourceID, Standards.CAOM2REPO_OBS_20, pem1, pem2, pem3);
     }

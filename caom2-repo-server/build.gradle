@@ -40,7 +40,7 @@ dependencies {
     compile 'org.opencadc:cadc-wcs:[2.0,3.0)'
     
     // support optional access-control grant generation
-    compile 'org.opencadc:caom2-access-control:[2.3.3,2.4)'
+    compile 'org.opencadc:caom2-access-control:[2.4.0,2.5)'
     
     testCompile 'junit:junit:[4.0,5.0)'
     testCompile 'org.easymock:easymock:[3.2,4.0)'
