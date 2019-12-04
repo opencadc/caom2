@@ -76,6 +76,7 @@ import ca.nrc.cadc.tap.caom2.CaomSelectListConverter;
 import ca.nrc.cadc.tap.caom2.IsDownloadableConverter;
 import ca.nrc.cadc.tap.parser.BaseExpressionDeParser;
 import ca.nrc.cadc.tap.parser.PgsphereDeParser;
+import ca.nrc.cadc.tap.parser.converter.ColumnNameConverter;
 import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
 import ca.nrc.cadc.tap.parser.converter.TableNameReferenceConverter;
 import ca.nrc.cadc.tap.parser.converter.TopConverter;
@@ -142,6 +143,13 @@ public class CaomAdqlQuery extends AdqlQuery
         TableNameReferenceConverter tnrc = new TableNameReferenceConverter(tnc.map);
         super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), tnrc, tnc));
 
+        // temporary backwards compatibility hack for CAOM-2.4 column name change
+        ColumnNameConverter cnc = new ColumnNameConverter(true, tapSchema);
+        ColumnNameConverter.QualifiedColumn emBand = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_emBand");
+        ColumnNameConverter.QualifiedColumn energyBands = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_energyBands");
+        cnc.put(emBand, energyBands);
+        super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), cnc, new FromItemNavigator()));
+        
         if (enableMetaReadAccessConverter) {
             // enforce access control policy in queries - must be after TableNameConverter
             super.navigatorList.add(new CaomReadAccessConverter());
