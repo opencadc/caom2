@@ -30,7 +30,7 @@ dependencies {
     compile 'org.opencadc:cadc-tap-server:[1.1.7,)'
     compile 'org.opencadc:cadc-tap-server-pg:[1.0.3,)'
     compile 'org.opencadc:cadc-tap-schema:[1.1.6,)'
-    compile 'org.opencadc:cadc-adql:[1.1,)'
+    compile 'org.opencadc:cadc-adql:[1.1.9,)'
     
     compile 'org.opencadc:cadc-vos:[1.0,)'
     compile 'org.opencadc:cadc-gms:[1.0.0,)'
