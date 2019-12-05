@@ -84,14 +84,17 @@ import java.util.List;
 /**
  * For CAOM 2.2 support.
  */
+@Deprecated
 public class GetAction22 extends GetAction {
 
     @Override
+    @Deprecated
     protected ObservationWriter getObservationWriter() {
         return new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
     }
 
     @Override
+    @Deprecated
     protected long writeObservationList(List<ObservationState> states) throws IOException {
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         syncOutput.setHeader("Content-Type", "text/csv");
