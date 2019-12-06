@@ -397,7 +397,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     
     private String safeToString(Long n) {
         if (n == null) {
-            return null;
+            return "null";
         }
         return n.toString();
     }
@@ -487,7 +487,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             List<ObservationState> states = observationDAO.getObservationList(collection, null, null, null);
             long t2 = System.currentTimeMillis();
             long dt = t2 - t1;
-            log.info("get-state-list: " + states.size() + " " + dt + " ms");
+            log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
             
             int depth = 3;
             ListIterator<ObservationState> iter = states.listIterator();
@@ -496,15 +496,21 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 ObservationState s = iter.next();
                 iter.remove(); // GC
                 ObservationResponse resp = observationDAO.getAlt(s, depth);
-                for (Plane plane : resp.observation.getPlanes()) {
-                    for (Artifact artifact : plane.getArtifacts()) {
-                        String observationID = s.getURI().getObservationID();
-                        result.add(getMetadata(observationID, artifact, plane.dataRelease, plane.metaRelease));
+                if (resp == null) {
+                    log.error("Null response from Observation DAO, ObservationURI: " + s.getURI().toString() + ", depth: " + depth);
+                } else if (resp.observation == null) {
+                    log.error("Observation is null, ObservationURI: " + s.getURI().toString() + ", depth: " + depth);
+                } else {
+                    for (Plane plane : resp.observation.getPlanes()) {
+                        for (Artifact artifact : plane.getArtifacts()) {
+                            String observationID = s.getURI().getObservationID();
+                            result.add(getMetadata(observationID, artifact, plane.dataRelease, plane.metaRelease));
+                        }
                     }
                 }
             }
             
-            log.debug("Finished logical query in " + (System.currentTimeMillis() - t1) + " ms");
+            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
         } else {
             this.supportSkipURITable = false;
             if (caomTapResourceID != null) {
@@ -532,7 +538,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
             result = query(caomTapURL, adql);
-            log.debug("Finished logical query in " + (System.currentTimeMillis() - start) + " ms");
+            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - start) + " ms");
         }
         return result;
     }
@@ -598,7 +604,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
 
     private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
         TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
+        long t1 = System.currentTimeMillis();
         metadata.addAll(artifactStore.list(collection));
+        log.info("Finished physical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
         return metadata;
     }
 }
