@@ -94,10 +94,6 @@ public class PutAction extends RepoAction {
 
         checkWritePermission(uri);
 
-        // TODO: have a conditional check to see if the accMetaChecksum is different??
-        // this way the put isn't performed.
-        // Q: what messages should go in here?
-
         Observation obs = getInputObservation();
 
         if (!uri.equals(obs.getURI())) {

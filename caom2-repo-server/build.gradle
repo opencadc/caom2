@@ -43,7 +43,6 @@ dependencies {
     compile 'org.opencadc:caom2-access-control:[2.4.0,2.5)'
     
     testCompile 'junit:junit:[4.0,5.0)'
-    testCompile 'org.easymock:easymock:[3.2,4.0)'
 }
 
 apply from: '../opencadc.gradle'
