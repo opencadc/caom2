@@ -91,7 +91,6 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 
-// TODO: change the write function to be
 public class GetAction extends RepoAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
