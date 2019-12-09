@@ -69,15 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.io.ByteCountOutputStream;
-import com.csvreader.CsvWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.text.DateFormat;
-import java.util.List;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
 
 /**
  * @author hjeeves
@@ -87,30 +79,7 @@ public class GetAction23 extends GetAction {
     public GetAction23() { }
 
     @Override
-    protected long writeObservationList(List<ObservationState> states) throws IOException {
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
-        
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
-        CsvWriter writer = new CsvWriter(out, '\t');
-        for (ObservationState state : states) {
-            writer.write(state.getURI().getCollection());
-            writer.write(state.getURI().getObservationID());
-            if (state.maxLastModified != null) {
-                writer.write(df.format(state.maxLastModified));
-            } else {
-                writer.write("");
-            }
-            if (state.accMetaChecksum != null) {
-                writer.write(state.accMetaChecksum.toASCIIString());
-            } else {
-                writer.write("");
-            }
-            writer.endRecord();
-        }
-        writer.flush();
-        return bc.getByteCount();
+    protected ObservationWriter getObservationWriter() {
+        return new ObservationWriter("http://www.opencadc.org/caom2/xml/v2.3", false);
     }
 }
