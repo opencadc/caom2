@@ -266,11 +266,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         try {
             ObservationResponse ret = new ObservationResponse(s);
             try {
-                Observation o = get(s.getURI());
-                if (o == null) {
-                    return null;
-                }
-                ret.observation = o;
+                ret.observation = get(s.getURI());
             } catch (Exception ex) {
                 ret.error = new IllegalStateException(ex.getMessage());
             }

@@ -151,7 +151,7 @@ public class CaomRepoDeletedTest extends CaomRepoBaseIntTests {
     private class HackRepoClient extends CaomRepoBaseIntTests {
 
         HackRepoClient(URI resourceID) {
-            super(resourceID, Standards.CAOM2REPO_OBS_23, null, null, null);
+            super(resourceID, Standards.CAOM2REPO_OBS_24, null, null, null);
         }
     }
 

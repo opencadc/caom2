@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -124,16 +124,15 @@ public class GetAction extends RepoAction {
         ObservationDAO dao = getDAO();
         ObservationResponse resp = dao.getObservationResponse(uri);
 
-        if (resp == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-        if (resp.observation == null) {
+        if (resp.error != null) {
             throw new RuntimeException("failed to retrieve observation: " + uri, resp.error);
         }
+        if (resp.observation == null) {
+            throw new ResourceNotFoundException("not found: " + uri);
+        }
 
-        // write with default schema
         ObservationWriter ow = getObservationWriter();
-
+        
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);

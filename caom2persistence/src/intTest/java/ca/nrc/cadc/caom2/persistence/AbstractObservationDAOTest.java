@@ -535,6 +535,11 @@ public abstract class AbstractObservationDAOTest
             // !EXISTS
             Assert.assertNull(dao.getState(orig.getURI()));
             log.info("not-exists");
+            
+            ObservationResponse notFound = dao.getObservationResponse(orig.getURI());
+            Assert.assertNotNull("wrapper", notFound);
+            Assert.assertNotNull("wrapper", notFound.observationState);
+            Assert.assertNull("wrapped", notFound.observation);
 
             // PUT
             dao.put(orig);
