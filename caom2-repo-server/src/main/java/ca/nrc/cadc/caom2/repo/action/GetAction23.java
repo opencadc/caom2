@@ -70,6 +70,8 @@
 package ca.nrc.cadc.caom2.repo.action;
 
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.reg.XMLConstants;
 
 /**
  * @author hjeeves
@@ -80,6 +82,6 @@ public class GetAction23 extends GetAction {
 
     @Override
     protected ObservationWriter getObservationWriter() {
-        return new ObservationWriter("http://www.opencadc.org/caom2/xml/v2.3", false);
+        return new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
     }
 }
