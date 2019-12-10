@@ -233,7 +233,7 @@ public class ReadAccessGenerator {
             ret = ret && (p.dataRelease != null && now.compareTo(p.dataRelease) > 0);
             for (Artifact a : p.getArtifacts()) {
                 // contentRelease overrides only if not null
-                ret = ret && a.contentRelease == null || now.compareTo(a.contentRelease) > 0;
+                ret = ret && (a.contentRelease == null || now.compareTo(a.contentRelease) > 0);
             }
         }
         return ret;
