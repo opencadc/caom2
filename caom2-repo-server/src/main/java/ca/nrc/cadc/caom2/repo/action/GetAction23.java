@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2.repo.action;
 
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
-import ca.nrc.cadc.reg.XMLConstants;
 
 /**
  * @author hjeeves
