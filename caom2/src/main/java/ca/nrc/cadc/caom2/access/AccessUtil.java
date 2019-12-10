@@ -120,9 +120,13 @@ public class AccessUtil {
      * @return 
      */
     public static Date getReleaseDate(Artifact artifact, Date metaRelease, Date dataRelease) {
+        if (artifact.contentRelease != null) {
+            return artifact.contentRelease;
+        }
         if (ReleaseType.META.equals(artifact.getReleaseType())) {
             return metaRelease;
-        } else if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
+        } 
+        if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
             return dataRelease;
         }
         throw new IllegalStateException("expected value for ReleaseType: " + artifact.getReleaseType());
