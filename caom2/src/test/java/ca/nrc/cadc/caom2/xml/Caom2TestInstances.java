@@ -162,7 +162,8 @@ public class Caom2TestInstances
     private boolean complete;
     private boolean boundsIsCircle;
     
-    public static String collection = "collection";
+     // using TEST collection so the permanent test document can be re-used in caom2-test-repo
+    public static String collection = "TEST";
     public static String observationID = "observationID";
     public static String productID = "productID";
     public static List<String> keywords;
