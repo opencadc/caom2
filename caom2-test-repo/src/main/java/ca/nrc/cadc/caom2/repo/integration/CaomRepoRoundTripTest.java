@@ -120,6 +120,8 @@ public class CaomRepoRoundTripTest extends CaomRepoBaseIntTests {
 
         ObservationReader r = new ObservationReader();
         Observation observation = r.read(src.openStream());
+        Assert.assertEquals("test collection", "TEST", observation.getCollection());
+        
         URI expected = observation.getAccMetaChecksum();
         URI recomp = observation.computeAccMetaChecksum(md5);
         Assert.assertEquals("observation.accMetaChecksum", expected, recomp);
@@ -137,8 +139,9 @@ public class CaomRepoRoundTripTest extends CaomRepoBaseIntTests {
         
         Assert.assertEquals("roundtrip.accMetaChecksum", expected, actual);
 
-        // cleanup (ok to fail)
-        deleteObservation(uri, subject1, null, null);
+        // currently not doing cleanup after so this complete observation remains in the 
+        // repository
+        //deleteObservation(uri, subject1, null, null);
     }
 
     private boolean checkMismatch(StringBuilder sb, URI u1, URI u2) {
