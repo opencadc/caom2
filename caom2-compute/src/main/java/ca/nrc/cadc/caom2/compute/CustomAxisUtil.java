@@ -357,14 +357,13 @@ public final class CustomAxisUtil {
      */
     private static void validateWCS(CustomWCS wcs) {
         String ctype = wcs.getAxis().getAxis().getCtype();
-        String rawCunit = wcs.getAxis().getAxis().getCunit();
-        String cunit = normalizeUnit(rawCunit);
-        String mapCunit = ctypeCunitMap.get(ctype);
-
+        String mapCunit = ctypeCunitMap.get(ctype); // this is OK until someone justifies support for a dimensionless custom axis
         if (mapCunit == null) {
             throw new IllegalArgumentException("Invalid CTYPE: " + ctype);
         }
 
+        String rawCunit = wcs.getAxis().getAxis().cunit;
+        String cunit = normalizeUnit(rawCunit);
         if (!mapCunit.equals(cunit)) {
             throw new IllegalArgumentException("Invalid CUNIT for CTYPE: " + ctype + ". Expected: "
                 + mapCunit + ". Found: " + cunit + " (normalized, raw: " + rawCunit + ")");
@@ -373,7 +372,7 @@ public final class CustomAxisUtil {
 
     private static String normalizeUnit(String rawUnit) {
         String normalizedUnit = rawUnit;
-        if (rawUnit.contains("^")) {
+        if (rawUnit != null && rawUnit.contains("^")) {
             normalizedUnit = rawUnit.replaceAll("\\^", "**");
             log.debug("normalized unit: " + rawUnit + " to: " + normalizedUnit);
         }

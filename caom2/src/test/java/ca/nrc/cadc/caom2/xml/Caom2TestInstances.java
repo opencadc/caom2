@@ -599,11 +599,11 @@ public class Caom2TestInstances
         throws Exception
     {
         CoordAxis1D axis = getCoordAxis1D(true);
-        SpectralWCS energy = new SpectralWCS(axis, "energy specsys");
+        SpectralWCS energy = new SpectralWCS(axis, "BARCENT");
         if (complete)
         {    
-            energy.ssysobs = "energy ssysobs";
-            energy.ssyssrc = "energy ssyssrc";
+            energy.ssysobs = "BARCENT";
+            energy.ssyssrc = "BARCENT";
             energy.restfrq = 1.0;
             energy.restwav = 2.0;
             energy.velosys = 3.0;
@@ -651,17 +651,16 @@ public class Caom2TestInstances
     }
     
     protected CustomWCS getCustomWCS() {
-        Axis axis = new Axis("FDEP", null);
+        Axis axis = new Axis("RM");
+        axis.cunit = "rad/m**2";
         CoordAxis1D coordAxis1D = new CoordAxis1D(axis);
         if (complete)
         {
             coordAxis1D.error = new CoordError(1.0e-4, 1.0e-6);
-            coordAxis1D.range = new CoordRange1D(new RefCoord(0.5, 1.0), new RefCoord(9.5, 4.0));
+            coordAxis1D.range = new CoordRange1D(new RefCoord(0.5, 1.0), new RefCoord(10.5, 4.0));
+            coordAxis1D.bounds = new CoordBounds1D();
+            coordAxis1D.bounds.getSamples().add(coordAxis1D.range);
             coordAxis1D.function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 1.0));
-
-            CoordBounds1D bounds = new CoordBounds1D();
-            bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 0.0), new RefCoord(10.5, 1.0)));
-            coordAxis1D.bounds = bounds;
         }
         return new CustomWCS(coordAxis1D);
     }
@@ -676,20 +675,17 @@ public class Caom2TestInstances
     {
         Axis axis;
         if (nrg)
-            axis = new Axis("WAV", "m");
+            axis = new Axis("WAVE", "m");
         else
             axis = new Axis("TIME", "d");
         CoordAxis1D coordAxis1D = new CoordAxis1D(axis);
         if (complete)
         {
             coordAxis1D.error = new CoordError(1.0, 1.5);
-            coordAxis1D.range = new CoordRange1D(new RefCoord(2.0, 2.5), new RefCoord(3.0, 3.5));
-            coordAxis1D.function = new CoordFunction1D(4L, 4.5, new RefCoord(5.0, 5.5));
-            
-            CoordBounds1D bounds = new CoordBounds1D();
-            bounds.getSamples().add(new CoordRange1D(new RefCoord(6.0, 6.5), new RefCoord(7.0, 7.5)));
-            bounds.getSamples().add(new CoordRange1D(new RefCoord(8.0, 8.5), new RefCoord(9.0, 9.5)));
-            coordAxis1D.bounds = bounds;
+            coordAxis1D.range = new CoordRange1D(new RefCoord(0.5, 100.0), new RefCoord(4.5, 140.0));
+            coordAxis1D.bounds = new CoordBounds1D();
+            coordAxis1D.bounds.getSamples().add(coordAxis1D.range);
+            coordAxis1D.function = new CoordFunction1D(4L, 10.0, new RefCoord(0.5, 100.0)); // [100,140] in steps of 10u
         }
         return coordAxis1D;
     }

@@ -1795,8 +1795,9 @@ public class ObservationReader implements Serializable {
         }
 
         String ctype = getChildText("ctype", element, namespace, true);
-        String cunit = getChildText("cunit", element, namespace, false);
-        return new Axis(ctype, cunit);
+        Axis ret = new Axis(ctype);
+        ret.cunit = getChildText("cunit", element, namespace, false);
+        return ret;
     }
 
     /**
