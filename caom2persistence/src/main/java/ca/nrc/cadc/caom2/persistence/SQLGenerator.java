@@ -3697,7 +3697,7 @@ public class SQLGenerator {
                     axis.error1 = new CoordError(e1s, e1r);
                 }
                 if (e2s != null || e2r != null) {
-                    axis.error2 = new CoordError(e1s, e2r);
+                    axis.error2 = new CoordError(e2s, e2r);
                 }
                 axis.range = posrange;
                 axis.bounds = posbounds;

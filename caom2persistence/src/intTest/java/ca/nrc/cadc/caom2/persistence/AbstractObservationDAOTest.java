@@ -124,6 +124,7 @@ import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
+import ca.nrc.cadc.caom2.wcs.CoordError;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -2180,6 +2181,8 @@ public abstract class AbstractObservationDAOTest
         c.position = new SpatialWCS(new CoordAxis2D(new Axis("RA---TAN", "deg"), new Axis("DEC--TAN", "deg")));
         c.position.coordsys = "FK5";
         c.position.equinox = 2000.0;
+        c.position.getAxis().error1 = new CoordError(1.0, 2.0);
+        c.position.getAxis().error2 = new CoordError(3.0, 4.0);
 
         // rectangle centered at 10,20
         Coord2D ref = new Coord2D(new RefCoord(512.0, 10.0), new RefCoord(1024, 20.0));

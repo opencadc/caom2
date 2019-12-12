@@ -234,6 +234,8 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
         Chunk ch = new Chunk();
         part.getChunks().add(ch);
 
+        ch.naxis = 1;
+        ch.energyAxis = 1;
         ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
         ch.energy.getAxis().function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 100.0e6)); // 100MHz
 
