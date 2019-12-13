@@ -444,7 +444,7 @@ public class Caom2TestInstances
                 p.time.resolution = 0.5;
                 p.time.sampleSize = 0.15;
                 
-                p.custom = new CustomAxis("FDEP");
+                p.custom = new CustomAxis("FARADAY");
                 p.custom.bounds = new SampledInterval(10.0, 20.0);
                 p.custom.bounds.getSamples().add(new Interval(10.0, 13.0));
                 p.custom.bounds.getSamples().add(new Interval(17.0, 20.0));
