@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<caom2:Observation xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="caom2:DerivedObservation" caom2:id="0a87245c-dc38-450e-b280-575310c038fa" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:f56edbef0a543f14a01f1c5d096da9a8" caom2:accMetaChecksum="md5:cf14a07bd782c71c8f425baff1525118" caom2:metaProducer="test:observation/rountrip-1.0">
+<caom2:Observation xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="caom2:DerivedObservation" caom2:id="35d2d752-46c8-4a2f-afe7-ffbc24fad4e6" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:5dcd6673b6c0ac578ffbed4fe482851c" caom2:accMetaChecksum="md5:ab40491fbe098f2dbdcf219603b03bcd" caom2:metaProducer="test:observation/rountrip-1.0">
   <caom2:collection>TEST</caom2:collection>
   <caom2:observationID>observationID</caom2:observationID>
-  <caom2:metaRelease>2019-12-11T19:27:04.712</caom2:metaRelease>
+  <caom2:metaRelease>2019-12-12T17:28:32.869</caom2:metaRelease>
   <caom2:metaReadGroups>
     <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
     <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
@@ -73,15 +73,15 @@
     <caom2:photometric>true</caom2:photometric>
   </caom2:environment>
   <caom2:planes>
-    <caom2:plane caom2:id="2f6bc3b7-efd0-4e35-b484-ce1ef7feb2e7" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:d508897037adf51bfb4155b291692b70" caom2:accMetaChecksum="md5:78baac2ec716900961762341f69b8881" caom2:metaProducer="test:plane/rountrip-1.0">
+    <caom2:plane caom2:id="161ad6e0-72d7-4d67-81ea-7ba1b5ce53e0" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:522842d68854a6c7ee5af5125dab4fc7" caom2:accMetaChecksum="md5:6c624a449ffa1354ad8e25ea3c207434" caom2:metaProducer="test:plane/rountrip-1.0">
       <caom2:productID>productID0</caom2:productID>
       <caom2:creatorID>ivo://example.org/foo?productID0</caom2:creatorID>
-      <caom2:metaRelease>2019-12-11T19:27:04.712</caom2:metaRelease>
+      <caom2:metaRelease>2019-12-12T17:28:32.869</caom2:metaRelease>
       <caom2:metaReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
       </caom2:metaReadGroups>
-      <caom2:dataRelease>2019-12-11T19:27:04.712</caom2:dataRelease>
+      <caom2:dataRelease>2019-12-12T17:28:32.869</caom2:dataRelease>
       <caom2:dataReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -95,7 +95,7 @@
         <caom2:producer>provenanceProducer</caom2:producer>
         <caom2:runID>provenanceRunID</caom2:runID>
         <caom2:reference>http://foo/bar</caom2:reference>
-        <caom2:lastExecuted>2019-12-11T19:27:04.712</caom2:lastExecuted>
+        <caom2:lastExecuted>2019-12-12T17:28:32.869</caom2:lastExecuted>
         <caom2:keywords>
           <caom2:keyword>keyword1</caom2:keyword>
           <caom2:keyword>keyword2</caom2:keyword>
@@ -247,11 +247,11 @@
         <caom2:dimension>10</caom2:dimension>
       </caom2:custom>
       <caom2:artifacts>
-        <caom2:artifact caom2:id="337d044d-b9db-490b-810e-9e5938baae6c" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:0361335d129edc69d8dfa24c6d8a4f9e" caom2:accMetaChecksum="md5:7e7f1ee0be5fc9efdcac1f75250ce497" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="9d552bca-d4a7-4ab0-b1cd-c445e3ebc607" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:eb328cf0ed233626b5496eb8d60816ab" caom2:accMetaChecksum="md5:c719e9577c7bc56c9de7fe1f31e3e1ce" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar0</caom2:uri>
           <caom2:productType>science</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2019-12-11T19:27:04.712</caom2:contentRelease>
+          <caom2:contentRelease>2019-12-12T17:28:32.869</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -260,11 +260,11 @@
           <caom2:contentLength>12345</caom2:contentLength>
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:parts>
-            <caom2:part caom2:id="814768fc-4a8d-4a16-b544-70cff7ee7496" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:b8743bf76e0c4cde35ee0902a1ee4b1b" caom2:accMetaChecksum="md5:759fe9248f72da5cddd14c5ec52d4472" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="da899e94-bda8-415e-8433-c328b06d7a9c" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:227b33e8d26fabcdb79f8da796e6238e" caom2:accMetaChecksum="md5:6460d14b787cf3d26ed7e53dcdb44696" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="069876b6-0162-4b7d-8dc7-ca6a51e4f29b" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:c6090b42c5c074df0b06cd24b5c671ff" caom2:accMetaChecksum="md5:9d9ede514fe47489de2748916a68db8d" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="e928bb96-8cf2-42b1-85bf-1f25b6fa31b8" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:17aad0a87a753ef6afba4338074647ca" caom2:accMetaChecksum="md5:cd022ea0d4d7b2abd784b8048a4bf16f" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -366,7 +366,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -406,9 +406,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -526,6 +526,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -566,7 +567,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="1c0dadcc-7014-44bb-b4d3-58a237af4115" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:150f4574a185fe310af478a26ecbda48" caom2:accMetaChecksum="md5:5c629e0897cb38ad23095fa8b9833c2f" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="286a3f9f-8c76-45bc-98da-6994f2b48ed7" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:5399599a130ad213f29c16be802bf819" caom2:accMetaChecksum="md5:9ac716b8a134bf9239d32df7639a1623" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -668,7 +669,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -708,9 +709,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -828,6 +829,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -870,11 +872,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="be607688-629c-49eb-96bb-d425893e9fac" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:a54269cca4aaceef824d5088b97887d7" caom2:accMetaChecksum="md5:fb0163330c4807de7cdd0f3aca7a9fed" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="1169dc5d-8daa-4214-8736-4339b946c4b9" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:7de46ac987a557df25d4048315a388e9" caom2:accMetaChecksum="md5:74c39398ef4ca6872860cac7bf89dbca" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="ce4832d6-89c1-40ed-8190-7515d0d9fbdf" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:f23e6857646e7ca2b253f325ef93fa97" caom2:accMetaChecksum="md5:5fceb4b70a740d6489efd868ff95d9cc" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="f9a6e42c-e74f-440d-af1e-1667380d88e9" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:1ea0c8cc22637629c2a6c5499d5d4244" caom2:accMetaChecksum="md5:4428e074e7ba149e3fbfdd485e0b54bb" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -976,7 +978,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -1016,9 +1018,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -1136,6 +1138,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -1176,7 +1179,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="5b5ad76d-f1bc-4513-ac75-a85e8ace88d9" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:08dc6621c3f7a5053daa66bf390a1b61" caom2:accMetaChecksum="md5:edfcf7b9f8dd99c6898180901e7165bb" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="02d7c5b5-dd92-4c09-87b3-e32e66f2703d" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:42f2444bf1e04be54a4d5b8729e7b334" caom2:accMetaChecksum="md5:0b6d77b61c913a1e2c7ed53ebc7ec04e" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -1278,7 +1281,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -1318,9 +1321,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -1438,6 +1441,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -1482,11 +1486,11 @@
             </caom2:part>
           </caom2:parts>
         </caom2:artifact>
-        <caom2:artifact caom2:id="026c080d-1087-45df-9fac-cc33b2adc045" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:9443ea49c3c63a885cee9a173758e281" caom2:accMetaChecksum="md5:510f54377b5650b541d29734a299cd5d" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="724552ed-8a73-44c6-b15c-4562b85f0115" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:b44aff05b0d96fbc6098082e215ee880" caom2:accMetaChecksum="md5:fd1687de1b7b0a33d01beb6343d1b069" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar1</caom2:uri>
           <caom2:productType>science</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2019-12-11T19:27:04.712</caom2:contentRelease>
+          <caom2:contentRelease>2019-12-12T17:28:32.869</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -1495,11 +1499,11 @@
           <caom2:contentLength>12345</caom2:contentLength>
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:parts>
-            <caom2:part caom2:id="f004e7b9-5fb8-41cc-9c04-843096b2020d" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:1a727a6dc60ab0f8bd5d657c1e7670d5" caom2:accMetaChecksum="md5:7183f248c215ee5ecbd733e34279c8bf" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="bbec0967-c872-4010-b206-2043d15eca80" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:6b263cedc5035224f93587def61225c0" caom2:accMetaChecksum="md5:4ec55b7691596c2c9d6d5c491aef80bf" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="bd9d4e03-c7d7-4833-9ade-a9be6c14ffd2" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:df2f2eaa12bbdcd953c9465acaf05951" caom2:accMetaChecksum="md5:9205cf7a52153c8fda4fcc169999e08d" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="cb14c081-0364-4752-8408-b337697b445d" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:5b2102a41fb6e2f7bcec920dee4368e3" caom2:accMetaChecksum="md5:04c08b6ab36d2ec680245359687d5701" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -1601,7 +1605,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -1641,9 +1645,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -1761,6 +1765,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -1801,7 +1806,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="c2babf8b-2fe7-42f7-88a9-6dccaf125b02" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:c47f01bf747c9247d800ab64cb2ce9a2" caom2:accMetaChecksum="md5:f6adaef71270889d06fae0e75f84a562" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="24686ee1-5bc3-4805-9570-3974509d49d7" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:78760dbe3dd5bbfcecc5e5ac2583957c" caom2:accMetaChecksum="md5:4744a6f3314e9138f23dbd9c4c5262d2" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -1903,7 +1908,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -1943,9 +1948,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -2063,6 +2068,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -2105,11 +2111,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="2fd93d68-5676-47aa-9cca-c2726c5a0281" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:5b81526b9e016387bc7da09eb5641ec3" caom2:accMetaChecksum="md5:99ad2df77277dae399cad2af48e49574" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="5ab046b1-d996-4fad-bc30-a1b563d0c0a0" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:18b7f0fe64725c1f0c20cf84922e186b" caom2:accMetaChecksum="md5:9f72ea59a1995781febf00faad61fd14" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="c4a9cece-e2f1-4637-ba13-5e7bac6555c4" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:6e6fd4d8da2ccacc1c6e1959615bff35" caom2:accMetaChecksum="md5:3c54ddb42b6717321388defae198101f" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="b395b056-240a-4418-a811-167b497be892" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:0f0355afc4900ec37c00a7b485da56f9" caom2:accMetaChecksum="md5:ae48d6f7bc390d45f0452fe71ffceaa5" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -2211,7 +2217,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -2251,9 +2257,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -2371,6 +2377,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -2411,7 +2418,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="63fc9c63-2292-4b3a-8c3e-70ebfc6b6db1" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:aa6aa06e4880223312766713e445aeeb" caom2:accMetaChecksum="md5:65604acbf65e8a64f5c72f4b16310448" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="397da28b-aa3b-45af-90c2-faaf2db5ea24" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:c0877ec378cf918bc15a4601d15ef6bc" caom2:accMetaChecksum="md5:cbbdf303ee812cbe505a6d0948ce31b9" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -2513,7 +2520,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -2553,9 +2560,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -2673,6 +2680,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -2719,15 +2727,15 @@
         </caom2:artifact>
       </caom2:artifacts>
     </caom2:plane>
-    <caom2:plane caom2:id="d25ffca8-f7f0-49bc-8ce8-9266728490ad" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:cba5049141fe7988f8a3b929529ccfb3" caom2:accMetaChecksum="md5:3d69d6599d06937b7bf92320ed03331f" caom2:metaProducer="test:plane/rountrip-1.0">
+    <caom2:plane caom2:id="000e233b-a07b-410b-8350-cda42fb598ec" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:4c8bfaa5dd5e77206eb278e63c9c4de7" caom2:accMetaChecksum="md5:a354a1e7c195a7a49a220af6b2d7b2c9" caom2:metaProducer="test:plane/rountrip-1.0">
       <caom2:productID>productID1</caom2:productID>
       <caom2:creatorID>ivo://example.org/foo?productID1</caom2:creatorID>
-      <caom2:metaRelease>2019-12-11T19:27:04.712</caom2:metaRelease>
+      <caom2:metaRelease>2019-12-12T17:28:32.869</caom2:metaRelease>
       <caom2:metaReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
       </caom2:metaReadGroups>
-      <caom2:dataRelease>2019-12-11T19:27:04.712</caom2:dataRelease>
+      <caom2:dataRelease>2019-12-12T17:28:32.869</caom2:dataRelease>
       <caom2:dataReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -2741,7 +2749,7 @@
         <caom2:producer>provenanceProducer</caom2:producer>
         <caom2:runID>provenanceRunID</caom2:runID>
         <caom2:reference>http://foo/bar</caom2:reference>
-        <caom2:lastExecuted>2019-12-11T19:27:04.712</caom2:lastExecuted>
+        <caom2:lastExecuted>2019-12-12T17:28:32.869</caom2:lastExecuted>
         <caom2:keywords>
           <caom2:keyword>keyword1</caom2:keyword>
           <caom2:keyword>keyword2</caom2:keyword>
@@ -2860,11 +2868,11 @@
         <caom2:dimension>10</caom2:dimension>
       </caom2:custom>
       <caom2:artifacts>
-        <caom2:artifact caom2:id="838de3ff-0262-44a4-95fb-15eb66f2126b" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:ef8fd25ff56eea8cbdf48d26893c5978" caom2:accMetaChecksum="md5:6b009f97393bb42ea3ebcc1d8cddb994" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="e5fe2525-d0ee-400c-8fef-43607b839fa2" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:858a98fdced49454ad5167222d73b71b" caom2:accMetaChecksum="md5:0cae8e3726f64ace4045c7ed55b3525f" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar0</caom2:uri>
           <caom2:productType>science</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2019-12-11T19:27:04.712</caom2:contentRelease>
+          <caom2:contentRelease>2019-12-12T17:28:32.869</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -2873,11 +2881,11 @@
           <caom2:contentLength>12345</caom2:contentLength>
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:parts>
-            <caom2:part caom2:id="8c818343-e6a6-4ac1-9f7c-4f9625446e8c" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:3860e80a205304ad9407c6f17c5ac974" caom2:accMetaChecksum="md5:6c1a47f834475f8cbee8bbd2452a5824" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="e403b6b7-5c70-4d5c-bc9e-bdc7d2449b38" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:f4e454ee55aef70f700206bcb4f2f9b9" caom2:accMetaChecksum="md5:6a87d2c346041f49fa698d10a085e062" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="3e133324-0107-4a7b-bd74-b083f70a89ed" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:da2e9f00e521b86a74c8aaf687904f32" caom2:accMetaChecksum="md5:7bd7e7a1ee86c2cc93f5554d2df650f2" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="c62e3b24-832b-4703-8788-653103f2c363" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:dee76402b9db5a82da31964d04040889" caom2:accMetaChecksum="md5:ab32a9b8353623f7c7ec4f3ebbad8c8f" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -2979,7 +2987,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -3019,9 +3027,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -3139,6 +3147,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -3179,7 +3188,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="64168687-026c-46d6-bcda-4d10145bf894" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:8f0d606acd06ac9cbf94e4f1458dbb47" caom2:accMetaChecksum="md5:2ae85ba036680f867729f4db4e2b185a" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="cc9b0eeb-fbfc-4002-a172-0d6a032fee93" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:aa7ff2c6842c5b4740a96db09d673a91" caom2:accMetaChecksum="md5:5a62213b478615e68f6524760bcb72f5" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -3281,7 +3290,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -3321,9 +3330,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -3441,6 +3450,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -3483,11 +3493,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="c5594f00-045f-4a3e-b210-bc60d5b53eb5" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:e5159d6cfba9e732605de6bd34ef26ea" caom2:accMetaChecksum="md5:dbb1b65aaa7cead0ecee4ad393b9b89a" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="8e01fcb8-3b82-4012-a8ff-41c1a8d69224" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:1947cb8c893bd77bc5be17cee13fcf16" caom2:accMetaChecksum="md5:01064378abf6d547348c6ca01dbbc5d8" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="6eda499d-517f-4e74-8707-3779af259177" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:2f7dde653929f239102672f2df592d22" caom2:accMetaChecksum="md5:b73c7b3801f7ab5df421d1866ef8311b" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="b8731493-2eb4-4830-acb3-93e051fb05cf" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:c370bdf77fe2551e777011fbd424c33a" caom2:accMetaChecksum="md5:c0d2c459c2ef0991c6b11fb76cc68bfa" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -3589,7 +3599,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -3629,9 +3639,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -3749,6 +3759,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -3789,7 +3800,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="7ce01f4a-f827-474e-9158-8aa749029ceb" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:df2333e8dd50ffc3eb0c048f469253a0" caom2:accMetaChecksum="md5:3bb76ba65718c80b3d7874d42ef7029c" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="c0f88f85-92dd-4170-837f-cf8ea92a6d19" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:b3f7b1a57c73534034af2ccc8448f940" caom2:accMetaChecksum="md5:d2fd04736bd8b5c5c397666afcbf847f" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -3891,7 +3902,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -3931,9 +3942,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -4051,6 +4062,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -4095,11 +4107,11 @@
             </caom2:part>
           </caom2:parts>
         </caom2:artifact>
-        <caom2:artifact caom2:id="b2db0ade-7f8d-4110-b438-306529d509dc" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:a53673f31ae9ee46418858c0e00975a7" caom2:accMetaChecksum="md5:f7f05a4325161c8a638e15d3c81b83b7" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="16879223-0169-4dfc-8678-7ed10b6a1d27" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:11e7d21105d47b4aeb8fe0cabeb3f2ac" caom2:accMetaChecksum="md5:7fbe7595590150ed14c409e94fea3f66" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar1</caom2:uri>
           <caom2:productType>science</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2019-12-11T19:27:04.712</caom2:contentRelease>
+          <caom2:contentRelease>2019-12-12T17:28:32.869</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -4108,11 +4120,11 @@
           <caom2:contentLength>12345</caom2:contentLength>
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:parts>
-            <caom2:part caom2:id="c575e162-4001-4483-b29d-a4acf0bc2122" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:3a04115d58b800e661993c889eb18ce9" caom2:accMetaChecksum="md5:a0124b68b95492453544352dbdb5f25f" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="153dcaa8-0802-498a-8299-5d5d37f4ea05" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:71dc83edada7b401c200dcd2f62f039c" caom2:accMetaChecksum="md5:403da43c25489f4d9dc5b67e1b1fa5d8" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="9b3b968d-424e-4b26-a43f-b9e39e94b95a" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:165650ffd211756ca3e5b443827aeee5" caom2:accMetaChecksum="md5:3e615f0a03e95af0490b22e7edd218cf" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="6f4e5d74-b6a3-42cd-bb30-70e7e6985f1b" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:91d6e5f593da97404150c49d60a47898" caom2:accMetaChecksum="md5:e4ccc7f6bbad3378806226ce65e59d5f" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -4214,7 +4226,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -4254,9 +4266,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -4374,6 +4386,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -4414,7 +4427,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="5b5b156c-19e9-466b-8dcd-778cfc0206c7" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:809e98a546ea88df78fcc6f62c397d5e" caom2:accMetaChecksum="md5:64cd62c13de1872c2880ad6a7b4c406f" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="7fad5cc6-f642-4a14-bb10-907877ca2aee" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:d528a3cc814813cea302af13aa28b91b" caom2:accMetaChecksum="md5:95502db0ba5dd7739b5aa2af4deb7baf" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -4516,7 +4529,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -4556,9 +4569,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -4676,6 +4689,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -4718,11 +4732,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="0f3c674a-0e67-46fc-b4b6-85d557122b32" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:fbcea5317b4f943e62edaa2b8c39ba2d" caom2:accMetaChecksum="md5:e66a7faa88802b14d2f89551c0c7fb76" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="44580532-47e2-4ec6-8d32-726456163d9e" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:8f7e64965da57cfb5bcf2fd5cf721724" caom2:accMetaChecksum="md5:e233c4f60786b8c800dddd866fdb55f4" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>science</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="ca370618-c1ab-4468-be36-0034a0e6058a" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:6586a1cfc968469d35218919f7fe8d29" caom2:accMetaChecksum="md5:f672b5e6d704693a491c561101464dbc" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="ddd1e5b2-cdfa-4376-bb4c-f392481736ba" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:37e5994569c495394f1405dd18ca9e4e" caom2:accMetaChecksum="md5:890cff5eb3b0287cbb29cb99dbb027e6" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -4824,7 +4838,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -4864,9 +4878,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -4984,6 +4998,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
@@ -5024,7 +5039,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="7a8616b7-1125-4f1b-97e1-505c0c14359a" caom2:lastModified="2019-12-11T19:27:06.058" caom2:maxLastModified="2019-12-11T19:27:08.058" caom2:metaChecksum="md5:7b1478156c0a1258a3f1b2cebeb71756" caom2:accMetaChecksum="md5:75a059affed00943a9776c0764aa92b8" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="6b6d28b7-bb14-416c-9a6c-51a90fcb017a" caom2:lastModified="2019-12-12T17:28:34.437" caom2:maxLastModified="2019-12-12T17:28:36.437" caom2:metaChecksum="md5:33ef4ef82ec9c82f10456c70f253562b" caom2:accMetaChecksum="md5:7761ef59eb23ea58a113e8f64b7f4b16" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
                   <caom2:positionAxis1>1</caom2:positionAxis1>
@@ -5126,7 +5141,7 @@
                   <caom2:energy>
                     <caom2:axis>
                       <caom2:axis>
-                        <caom2:ctype>WAV</caom2:ctype>
+                        <caom2:ctype>WAVE</caom2:ctype>
                         <caom2:cunit>m</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
@@ -5166,9 +5181,9 @@
                         </caom2:refCoord>
                       </caom2:function>
                     </caom2:axis>
-                    <caom2:specsys>energy specsys</caom2:specsys>
-                    <caom2:ssysobs>energy ssysobs</caom2:ssysobs>
-                    <caom2:ssyssrc>energy ssyssrc</caom2:ssyssrc>
+                    <caom2:specsys>BARCENT</caom2:specsys>
+                    <caom2:ssysobs>BARCENT</caom2:ssysobs>
+                    <caom2:ssyssrc>BARCENT</caom2:ssyssrc>
                     <caom2:restfrq>1.0</caom2:restfrq>
                     <caom2:restwav>2.0</caom2:restwav>
                     <caom2:velosys>3.0</caom2:velosys>
@@ -5286,6 +5301,7 @@
                     <caom2:axis>
                       <caom2:axis>
                         <caom2:ctype>RM</caom2:ctype>
+                        <caom2:cunit>rad/m**2</caom2:cunit>
                       </caom2:axis>
                       <caom2:error>
                         <caom2:syser>1.0E-4</caom2:syser>
