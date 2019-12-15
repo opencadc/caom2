@@ -103,7 +103,7 @@ public class DerivedObservation extends Observation {
         CaomValidator.assertNotNull(SimpleObservation.class, "algorithm", a);
         if (SimpleObservation.ALGORITHM.getName().equals(a.getName())) {
             throw new IllegalArgumentException(
-                    "cannot set CompositeObservation.algorithm to " + a
+                    "cannot set DerivedObservation.algorithm to " + a
                             + "(reserved for SimpleObservation)");
         }
         super.setAlgorithm(a);

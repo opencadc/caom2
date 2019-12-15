@@ -83,7 +83,7 @@ import java.util.TreeSet;
  */
 public class Energy implements Serializable {
     // mutable content
-    private Set<EnergyBand> emBand = new TreeSet<>(); // sorted enum
+    private Set<EnergyBand> energyBands = new TreeSet<>(); // sorted enum
     
     public SampledInterval bounds;
     public Long dimension;
@@ -104,7 +104,7 @@ public class Energy implements Serializable {
         sb.append(",r=").append(resolvingPower);
         sb.append(",rb=").append(resolvingPowerBounds);
         sb.append(",b=").append(bandpassName);
-        sb.append(",e=").append(emBand);
+        sb.append(",e=").append(energyBands);
         sb.append(",t=").append(transition);
         sb.append(",w=").append(restwav);
         sb.append("]");
@@ -112,7 +112,7 @@ public class Energy implements Serializable {
     }
 
     public Set<EnergyBand> getEnergyBands() {
-        return emBand;
+        return energyBands;
     }
     
     public Double getFreqWidth() {
