@@ -69,21 +69,18 @@
 
 package ca.nrc.cadc.caom2.types;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
  * @author pdowler
  */
 public class Interval implements Serializable {
-    private static final long serialVersionUID = 201708241230L;
+    private static final long serialVersionUID = 201202081100L;
 
-    private double lower;
-    private double upper;
-    private List<SubInterval> samples = new ArrayList<SubInterval>();
+    // package mutable
+    double lower;
+    double upper;
 
     public static final String[] CTOR_UTYPES = { "lower", "upper" };
 
@@ -91,68 +88,16 @@ public class Interval implements Serializable {
     }
 
     public Interval(double lower, double upper) {
-
-        this.lower = lower;
-        this.upper = upper;
-    }
-
-    public Interval(double lower, double upper, List<SubInterval> samples) {
-        this.lower = lower;
-        this.upper = upper;
-        CaomValidator.assertNotNull(Interval.class, "samples", samples);
-        this.samples.addAll(samples);
-        validate();
-    }
-
-    public final void validate() {
         if (upper < lower) {
-            throw new IllegalArgumentException(
-                    "invalid interval (upper < lower): " + lower + "," + upper);
+            throw new IllegalArgumentException("Interval: upper < lower for " + lower + "," + upper);
         }
-        CaomValidator.assertNotNull(Interval.class, "samples", samples);
-        if (samples.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "invalid interval (samples cannot be empty)");
-        }
-
-        SubInterval prev = null;
-        for (SubInterval si : samples) {
-            if (si.getLower() < lower) {
-                throw new IllegalArgumentException(
-                        "invalid interval: sample extends below lower bound: "
-                                + si + " vs " + lower);
-            }
-            if (si.getUpper() > upper) {
-                throw new IllegalArgumentException(
-                        "invalid interval: sample extends above upper bound: "
-                                + si + " vs " + upper);
-            }
-
-            if (prev != null) {
-                if (si.getLower() <= prev.getUpper()) {
-                    throw new IllegalArgumentException(
-                            "invalid interval: sample overlaps previous sample: "
-                                    + si + " vs " + prev);
-                }
-            }
-            prev = si;
-        }
+        this.lower = lower;
+        this.upper = upper;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Interval[").append(lower).append(",").append(upper);
-        if (!samples.isEmpty()) {
-            sb.append(" samples[ ");
-            for (SubInterval si : samples) {
-                sb.append("[").append(si.lower).append(",").append(si.upper)
-                        .append("] ");
-            }
-            sb.append("]");
-        }
-        sb.append("]");
-        return sb.toString();
+        return "Interval[" + lower + "," + upper + "]";
     }
 
     public double getLower() {
@@ -161,14 +106,6 @@ public class Interval implements Serializable {
 
     public double getUpper() {
         return upper;
-    }
-
-    public List<SubInterval> getSamples() {
-        return samples;
-    }
-
-    public double getWidth() {
-        return (upper - lower);
     }
 
     public static Interval intersection(Interval i1, Interval i2) {

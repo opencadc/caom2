@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -122,14 +122,14 @@ public class ObservationTest
             Assert.assertEquals("Thing", o.getURI().getObservationID());
             Assert.assertEquals(testAlgorithm, o.getAlgorithm());
 
-            o = new CompositeObservation("Stuff", "Thing", testAlgorithm);
+            o = new DerivedObservation("Stuff", "Thing", testAlgorithm);
             Assert.assertEquals("Stuff", o.getURI().getCollection());
             Assert.assertEquals("Thing", o.getURI().getObservationID());
             Assert.assertEquals(testAlgorithm, o.getAlgorithm());
             
             try 
             {
-                o = new CompositeObservation("Stuff", "Thing", null);
+                o = new DerivedObservation("Stuff", "Thing", null);
                 Assert.fail("excpected IllegalArgumentException from " + o);
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
@@ -230,7 +230,7 @@ public class ObservationTest
     {
         try
         {
-            Observation o = new CompositeObservation("Stuff", "Thing", new Algorithm("doit"));
+            Observation o = new DerivedObservation("Stuff", "Thing", new Algorithm("doit"));
             Assert.assertEquals("doit", o.getAlgorithm().getName());
 
             o.setAlgorithm(new Algorithm("foo"));
@@ -306,7 +306,7 @@ public class ObservationTest
     {
         try
         {
-            CompositeObservation o = new CompositeObservation("Stuff", "Thing", new Algorithm("doit"));
+            DerivedObservation o = new DerivedObservation("Stuff", "Thing", new Algorithm("doit"));
             Assert.assertNotNull(o.getMembers());
             Assert.assertEquals(0, o.getMembers().size());
 

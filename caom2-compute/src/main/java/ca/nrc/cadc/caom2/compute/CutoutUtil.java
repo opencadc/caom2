@@ -77,14 +77,16 @@ import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
+import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
+import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.WCSKeywords;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
@@ -104,24 +106,29 @@ public final class CutoutUtil {
     private static final String TIM_CUT = "tt";
     private static final String POL_CUT = "pp";
     private static final String OBS_CUT = "oo";
+    private static final String CUST_CUT = "cc";
     private static final int CUT_LEN = 2;
 
     private CutoutUtil() {
     }
 
     /**
-     * Compute a cfitsio-style cutout string in pixel coordinates for the specified 
+     * Compute a cfitsio-style cutout string in pixel coordinates for the specified
      * artifact and bounds.
-     * 
+     *
      * @param a
      * @param shape
      * @param energyInter
      * @param timeInter
      * @param polarStates
+     * @param customCtype
+     * @param customInter
      * @return
-     * @throws NoSuchKeywordException 
+     * @throws NoSuchKeywordException
      */
-    public static List<String> computeCutout(Artifact a, Shape shape, Interval energyInter, Interval timeInter, List<PolarizationState> polarStates)
+    public static List<String> computeCutout(Artifact a, Shape shape,
+            Interval energyInter, Interval timeInter, List<PolarizationState> polarStates,
+            String customCtype, Interval customInter)
         throws NoSuchKeywordException {
         if (a == null) {
             throw new IllegalArgumentException("null Artifact");
@@ -151,6 +158,8 @@ public final class CutoutUtil {
             long[] timCut = null;
             long[] polCut = null;
             long[] obsCut = null;
+            long[] customCut = null;
+
             for (Chunk c : p.getChunks()) {
                 // check if spatial axes are part of the actual data array
                 if (shape != null) {
@@ -178,6 +187,7 @@ public final class CutoutUtil {
                         long[] cut = getEnergyBounds(c.energy, energyInter);
                         if (nrgCut == null) {
                             nrgCut = cut;
+                            log.debug("energy interval cut:" + cut);
                         } else if (nrgCut.length == 2 && cut != null) { // subset
                             if (cut.length == 0) {
                                 nrgCut = cut;
@@ -188,7 +198,24 @@ public final class CutoutUtil {
                         }
                     }
                 }
-                // no time cutout
+
+                // time cutout
+                if (timeInter != null) {
+                    if (canTimeCutout(c)) {
+                        long[] cut = getTimeBounds(c.time, timeInter);
+                        if (timCut == null) {
+                            timCut = cut;
+                        } else if (timCut.length == 2 && cut != null) { // subset
+                            if (cut.length == 0) {
+                                timCut = cut;
+                            } else { // both are length 4
+                                timCut[0] = Math.min(timCut[0], cut[0]);
+                                timCut[1] = Math.max(timCut[1], cut[1]);
+                            }
+                        }
+                    }
+                }
+
                 // polarization cutout
                 if (polarStates != null && !polarStates.isEmpty()) {
                     if (canPolarizationCutout(c)) {
@@ -205,6 +232,29 @@ public final class CutoutUtil {
                         }
                     }
                 }
+
+                // custom cutout
+                if (customInter != null) {
+                    if (customCtype == null) {
+                        throw new IllegalArgumentException("ctype not declared for custom interval.");
+                    }
+                    if (canCustomCutout(c, customCtype)) {
+                        long[] cut = getCustomAxisBounds(c.custom, customInter);
+                        if (customCut == null) {
+                            customCut = cut;
+                        } else if (customCut.length == 2 && cut != null) { // subset
+                            if (cut.length == 0) {
+                                log.debug("cut length is 0");
+                                customCut = cut;
+                            } else { // both are length 4
+                                log.debug("cut length is 4??");
+                                customCut[0] = Math.min(customCut[0], cut[0]);
+                                customCut[1] = Math.max(customCut[1], cut[1]);
+                            }
+                        }
+                    }
+                }
+
                 // no input observable cutout, but merge
                 if (canObservableCutout(c)) {
                     long[] cut = getObservableCutout(c.observable);
@@ -269,7 +319,21 @@ public final class CutoutUtil {
                 doCut = false;
             }
 
-            // time cutout: not supported
+            if (timCut != null) {
+                // cut.length==0 means circle contains all pixels
+                // cut.length==2 means interval picks a subset of pixels
+                int i = sb.indexOf(TIM_CUT);
+                if (timCut.length == 2) {
+                    sb.replace(i, i + CUT_LEN, timCut[0] + ":" + timCut[1]);
+                } else {
+                    sb.replace(i, i + CUT_LEN, "*");
+                }
+                String cs = sb.toString();
+                log.debug("time cutout: " + a.getURI() + "," + p.getName() + ", Chunk: " + cs);
+            } else if (timeInter != null) {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ", Chunk: no time overlap");
+                doCut = false;
+            }
 
             if (polCut != null) {
                 // cut.length==0 means cut contains all pixels
@@ -288,6 +352,24 @@ public final class CutoutUtil {
                 doCut = false;
             }
 
+            if (customCut != null) {
+                // cut.length==0 means circle contains all pixels
+                // cut.length==2 means interval picks a subset of pixels
+                int i = sb.indexOf(CUST_CUT);
+                log.debug("cust cut index, length: " + i + ", " + customCut.length);
+                if (customCut.length == 2) {
+                    sb.replace(i, i + CUT_LEN, customCut[0] + ":" + customCut[1]);
+                } else {
+                    sb.replace(i, i + CUT_LEN, "*");
+                }
+                String cs = sb.toString();
+                log.debug("custom cutout: " + a.getURI() + "," + p.getName() + ", Chunk: " + cs);
+                doCut = true;
+            } else if (customInter != null) {
+                log.debug("cutout: " + a.getURI() + "," + p.getName() + ", Chunk: no custom overlap");
+                doCut = false;
+            }
+
             if (obsCut != null) {
                 int i = sb.indexOf(OBS_CUT);
                 sb.replace(i, i + CUT_LEN, obsCut[0] + ":" + obsCut[1]);
@@ -296,6 +378,8 @@ public final class CutoutUtil {
             } else {
                 log.debug("cutout: " + a.getURI() + "," + p.getName() + ",Chunk: no Observable axis");
             }
+
+
 
             // for any axis in the data but not in the cutout: keep all pixels
             int i;
@@ -325,6 +409,11 @@ public final class CutoutUtil {
             }
 
             i = sb.indexOf(OBS_CUT);
+            if (i > 0) {
+                sb.replace(i, i + CUT_LEN, "*");
+            }
+
+            i = sb.indexOf(CUST_CUT);
             if (i > 0) {
                 sb.replace(i, i + CUT_LEN, "*");
             }
@@ -378,8 +467,9 @@ public final class CutoutUtil {
         boolean energyCutout = canEnergyCutout(c);
         boolean timeCutout = canTimeCutout(c);
         boolean polCutout = canPolarizationCutout(c);
+        boolean customCutout = c.custom != null && canCustomCutout(c, c.custom.getAxis().getAxis().getCtype());
 
-        return posCutout || energyCutout || timeCutout || polCutout;
+        return posCutout || energyCutout || timeCutout || polCutout || customCutout;
     }
     
     private static String toString(long[] cut) {
@@ -411,48 +501,42 @@ public final class CutoutUtil {
         return new long[] {o1, o2};
     }
 
-    private static StringBuilder initCutout(String partName, Part p) {
+    // protected for unit test
+    static StringBuilder initCutout(String partName, Part p) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(partName).append("]");
-        // create template cutout for each axis in the data array in the right order
         sb.append("[");
-        boolean pos1 = false;
-        boolean pos2 = false;
-        boolean nrg = false;
-        boolean tim = false;
-        boolean pol = false;
-        boolean obs = false;
-        int naxis = 0;
+
+        // create template cutout for each axis in the data array in the right order
         for (Chunk c : p.getChunks()) {
-            naxis = Math.max(naxis, c.naxis);
-            for (int i = 1; i <= c.naxis.intValue(); i++) {
-                pos1 = pos1 || (c.positionAxis1 != null && i == c.positionAxis1);
-                pos2 = pos2 || (c.positionAxis2 != null && i == c.positionAxis2);
-                nrg = nrg || (c.energyAxis != null && i == c.energyAxis);
-                tim = tim || (c.timeAxis != null && i == c.timeAxis);
-                pol = pol || (c.polarizationAxis != null && i == c.polarizationAxis);
-                obs = obs || (c.observableAxis != null && i == c.observableAxis);
+            int n = 0;
+            if (c.naxis != null) {
+                n = c.naxis;
+            }
+            for (int i = 1; i <= n; i++) {
+                if (c.positionAxis1 != null && i == c.positionAxis1) {
+                    sb.append(POS1_CUT).append(",");
+                } else if (c.positionAxis2 != null && i == c.positionAxis2) {
+                    sb.append(POS2_CUT).append(",");
+                } else if (c.energyAxis != null && i == c.energyAxis) {
+                    sb.append(NRG_CUT).append(",");
+                } else if (c.timeAxis != null && i == c.timeAxis) {
+                    sb.append(TIM_CUT).append(",");
+                } else if (c.polarizationAxis != null && i == c.polarizationAxis) {
+                    sb.append(POL_CUT).append(",");
+                } else if (c.customAxis != null && i == c.customAxis) {
+                    sb.append(CUST_CUT).append(",");
+                } else if (c.observableAxis != null && i == c.observableAxis) {
+                    sb.append(OBS_CUT).append(",");
+                }
             }
         }
-        if (pos1) {
-            sb.append(POS1_CUT).append(",");
+        if (sb.indexOf(",") > 0) {
+            sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
+        } else {
+            sb.append("]");
         }
-        if (pos2) {
-            sb.append(POS2_CUT).append(",");
-        }
-        if (nrg) {
-            sb.append(NRG_CUT).append(",");
-        }
-        if (tim) {
-            sb.append(TIM_CUT).append(",");
-        }
-        if (pol) {
-            sb.append(POL_CUT).append(",");
-        }
-        if (obs) {
-            sb.append(OBS_CUT).append(",");
-        }
-        sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
+
         log.debug("cutout template: " + sb.toString());
         return sb;
     }
@@ -484,11 +568,9 @@ public final class CutoutUtil {
 
     // check if time cutout is possible (currently function only)
     protected static boolean canTimeCutout(Chunk c) {
-        boolean timeCutout = false;
-        //(c.naxis != null && c.naxis.intValue() >= 1
-        //            && c.time != null && c.time.getAxis().function != null
-        //            && c.timeAxis != null && c.timeAxis.intValue() <= c.naxis.intValue());
-        return timeCutout;
+        return (c.naxis != null && c.naxis.intValue() >= 1
+                    && c.time != null && c.time.getAxis().function != null
+                    && c.timeAxis != null && c.timeAxis.intValue() <= c.naxis.intValue());
     }
 
     // check if polarization cutout is possible (currently function only)
@@ -497,6 +579,17 @@ public final class CutoutUtil {
                     && c.polarization != null && c.polarization.getAxis().function != null
                     && c.polarizationAxis != null && c.polarizationAxis.intValue() <= c.naxis.intValue());
         return polarizationCutout;
+    }
+
+    // check if custom cutout is possible (currently function only)
+    protected static boolean canCustomCutout(Chunk c, String ctype) {
+        boolean customCutout = (c.naxis != null && c.naxis.intValue() >= 1
+            && c.custom != null && c.custom.getAxis().function != null
+            && c.customAxis != null && c.customAxis.intValue() <= c.naxis.intValue()
+            && c.custom.getAxis().getAxis().getCtype() != null
+            && c.custom.getAxis().getAxis().getCtype().equals(ctype)
+        );
+        return customCutout;
     }
 
     // check if polarization cutout is possible (currently function only)
@@ -613,10 +706,10 @@ public final class CutoutUtil {
         }
 
         // convert npoly to pixel coordinates and find min/max
-        long x1 = Integer.MAX_VALUE;
-        long x2 = -1 * x1;
-        long y1 = x1;
-        long y2 = -1 * y1;
+        double x1 = Double.MAX_VALUE;
+        double x2 = -1 * x1;
+        double y1 = x1;
+        double y2 = -1 * y1;
         log.debug("converting npoly to pixel coordinates");
         double[] coords = new double[2];
         for (Vertex v : npoly.getVertices()) {
@@ -632,21 +725,26 @@ public final class CutoutUtil {
                 // if p2 is null, it was a long way away from the WCS and does not
                 // impose a limit/cutout - so we can safely skip it
                 if (tr != null) {
-                    log.debug(v + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
-                    x1 = (long) Math.min(x1, tr.coordinates[0]);
-                    x2 = (long) Math.ceil(Math.max(x2, tr.coordinates[0]));
-                    y1 = (long) Math.min(y1, tr.coordinates[1]);
-                    y2 = (long) Math.ceil(Math.max(y2, tr.coordinates[1]));
+                    //log.warn("pixel coords: " + tr.coordinates[0] + "," + tr.coordinates[1]);
+                    x1 = Math.min(x1, tr.coordinates[0]);
+                    x2 = Math.max(x2, tr.coordinates[0]);
+                    y1 = Math.min(y1, tr.coordinates[1]);
+                    y2 = Math.max(y2, tr.coordinates[1]);
                 }
                 //else
                 //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
             }
         }
+        //log.warn(x1 + " " + x2 + " " + y1 + " " +y2);
+        long ix1 = (long) Math.floor(x1 + 0.5);
+        long ix2 = (long) Math.ceil(x2 - 0.5);
+        long iy1 = (long) Math.floor(y1 + 0.5);
+        long iy2 = (long) Math.ceil(y2 - 0.5);
 
         // clipping
         long naxis1 = wcs.getAxis().function.getDimension().naxis1;
         long naxis2 = wcs.getAxis().function.getDimension().naxis2;
-        return doPositionClipCheck(naxis1, naxis2, x1, x2, y1, y2);
+        return doPositionClipCheck(naxis1, naxis2, ix1, ix2, iy1, iy2);
     }
 
     private static long[] doPositionClipCheck(long w, long h, long x1, long x2, long y1, long y2) {
@@ -688,13 +786,10 @@ public final class CutoutUtil {
         throws NoSuchKeywordException, WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
             // convert wcs to energy axis interval
-            SubInterval si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
-            Interval wbounds = new Interval(si.getLower(), si.getUpper());
-            //log.info("getBounds: wcs = " + wbounds);
+            Interval si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            Interval inter = Interval.intersection(wbounds, bounds);
-            //log.info("getBounds: intersection = " + inter);
+            Interval inter = Interval.intersection(si, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
                 return null;
@@ -708,7 +803,6 @@ public final class CutoutUtil {
 
             String ctype = wcs.getAxis().getAxis().getCtype();
             if (!ctype.startsWith(EnergyConverter.CORE_CTYPE)) {
-                //log.debug("toInterval: transform from " + ctype + " to " + EnergyConverter.CORE_CTYPE + "-???");
                 kw = trans.translate(EnergyConverter.CORE_CTYPE + "-???"); // any linearization algorithm
                 trans = new Transform(kw);
             }
@@ -719,14 +813,13 @@ public final class CutoutUtil {
             //log.debug("getBounds: sky2pix " + b + " -> " + p2.coordinates[0] + p2.units[0]);
 
             // values can be inverted if WCS is in freq or energy instead of wavelength
-            long x1 = (long) Math.min(p1.coordinates[0], p2.coordinates[0]);
-            long x2 = (long) Math.ceil(Math.max(p1.coordinates[0], p2.coordinates[0]));
+            long x1 = (long) Math.floor(Math.min(p1.coordinates[0], p2.coordinates[0]) + 0.5);
+            long x2 = (long) Math.ceil(Math.max(p1.coordinates[0], p2.coordinates[0]) - 0.5);
 
             return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
         }
 
         if (wcs.getAxis().bounds != null) {
-            //log.info("getBounds: " + bounds);
             // find min and max sky coords
             double pix1 = Double.MAX_VALUE;
             double pix2 = Double.MIN_VALUE;
@@ -735,10 +828,9 @@ public final class CutoutUtil {
             for (CoordRange1D tile : wcs.getAxis().bounds.getSamples()) {
                 //log.warn("getBounds: tile = " + tile);
                 maxPixValue = Math.max(maxPixValue, (long) tile.getEnd().pix);
-                SubInterval bwmRange = EnergyUtil.toInterval(wcs, tile);
-                Interval wbounds = new Interval(bwmRange.getLower(), bwmRange.getUpper());
+                Interval bwmRange = EnergyUtil.toInterval(wcs, tile);
                 // compute intersection
-                Interval inter = Interval.intersection(wbounds, bounds);
+                Interval inter = Interval.intersection(bwmRange, bounds);
                 //log.warn("getBounds: " + inter + " = " + wbounds + " X " + bounds);
                 if (inter != null) {
                     pix1 = Math.min(pix1, tile.getStart().pix);
@@ -759,11 +851,9 @@ public final class CutoutUtil {
 
         if (wcs.getAxis().range != null) {
             // can only check for complete non-overlap
-            SubInterval bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
-            Interval wbounds = new Interval(bwmRange.getLower(), bwmRange.getUpper());
+            Interval bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
             // compute intersection
-            Interval inter = Interval.intersection(wbounds, bounds);
-            //log.info("getBounds: intersection = " + inter);
+            Interval inter = Interval.intersection(bwmRange, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.range == null");
                 return null;
@@ -781,15 +871,15 @@ public final class CutoutUtil {
         for (PolarizationState ps : states) {
             if (dataPols.contains(ps)) {
                 keep.add(ps);
-                log.warn("getPolarizationBounds keep: " + ps);
+                //log.warn("getPolarizationBounds keep: " + ps);
             }
         }
         if (keep.isEmpty()) {
-            log.warn("getPolarizationBounds: empty");
+            //log.warn("getPolarizationBounds: empty");
             return null; // no intersection
         }
         if (keep.size() == dataPols.size()) {
-            log.warn("getPolarizationBounds: all");
+            //log.warn("getPolarizationBounds: all");
             return new long[0]; // keep all pixels
         }
         
@@ -806,7 +896,93 @@ public final class CutoutUtil {
         
         return doClipCheck1D(wcs.getAxis().function.getNaxis(), (long) pix1, (long) pix2);
     }
-    
+
+    /**
+     * Compute custom axis bounds.
+     *
+     * @param wcs
+     * @param bounds
+     * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
+     *     null if no pixels are included
+     */
+    static long[] getCustomAxisBounds(CustomWCS wcs, Interval bounds)
+        throws WCSLibRuntimeException {
+        if (wcs.getAxis().function != null) {
+
+            CoordFunction1D func = wcs.getAxis().function;
+
+            if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
+                throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
+            }
+
+            // convert wcs to custom axis interval
+            Interval si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
+
+            // compute intersection
+            Interval inter = Interval.intersection(si, bounds);
+
+            if (inter == null) {
+                log.debug("bounds INTERSECT wcs.function == null");
+                return null;
+            }
+
+            log.debug("interval upper/lower: " + inter.getLower() + ", " + inter.getUpper());
+
+            double d1 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getLower());
+            double d2 = CustomAxisUtil.val2pix(wcs, wcs.getAxis().function, inter.getUpper());
+            log.debug("d1, d2: " + d1 + " " + d2);
+
+            long x1 = (long) Math.floor(Math.min(d1, d2) + 0.5);
+            long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
+            log.debug("x1, x2: " + x1 + " " + x2);
+
+            return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
+        }
+
+        return null;
+    }
+
+    /**
+     * Compute time bounds.
+     *
+     * @param wcs
+     * @param bounds
+     * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
+     *     null if no pixels are included
+     */
+    static long[] getTimeBounds(TemporalWCS wcs, Interval bounds)
+        throws WCSLibRuntimeException {
+        if (wcs.getAxis().function != null) {
+
+            CoordFunction1D func = wcs.getAxis().function;
+
+            if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
+                throw new IllegalArgumentException("invalid CoordFunction1D: found " + func.getNaxis() + " pixels and delta = 0.0");
+            }
+
+            // convert wcs to time axis interval
+            Interval si = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+
+            // compute intersection
+            Interval inter = Interval.intersection(si, bounds);
+            if (inter == null) {
+                log.debug("bounds INTERSECT wcs.function == null");
+                return null;
+            }
+
+            double d1 = TimeUtil.val2pix(wcs, wcs.getAxis().function, inter.getLower());
+            double d2 = TimeUtil.val2pix(wcs, wcs.getAxis().function, inter.getUpper());
+
+            long x1 = (long) Math.floor(Math.min(d1, d2) + 0.5);
+            long x2 = (long) Math.ceil(Math.max(d1, d2) - 0.5);
+
+            return doClipCheck1D(wcs.getAxis().function.getNaxis().longValue(), x1, x2);
+        }
+
+        return null;
+    }
+
+
     private static long[] doClipCheck1D(long len, long x1, long x2) {
         if (x1 < 1) {
             x1 = 1;
@@ -821,7 +997,7 @@ public final class CutoutUtil {
         //    log.warn("doClipCheck1D: single");
         //    return new long[0]; // the single pixel is included
         //}
-        
+
         // all pixels includes
         if (x1 == 1 && x2 == len) {
             log.warn("doClipCheck1D: all");
@@ -833,7 +1009,7 @@ public final class CutoutUtil {
             log.warn("doClipCheck1D: none");
             return null;
         }
-        
+
         // an actual cutout
         return new long[] {x1, x2};
     }

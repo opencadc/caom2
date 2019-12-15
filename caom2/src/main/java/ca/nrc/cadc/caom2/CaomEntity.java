@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2;
 import ca.nrc.cadc.caom2.util.FieldComparator;
 import ca.nrc.cadc.util.HexUtil;
 import ca.nrc.cadc.util.UUIDComparator;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -95,11 +94,12 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Base class for CAOM entity classes. The base class contains the UUID, modification
+ * timestamps, and metadata checksums.
+ * 
  * @author pdowler
  */
-public abstract class CaomEntity implements Serializable {
-    private static final long serialVersionUID = 201704181300L;
+public abstract class CaomEntity {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     static boolean MCS_DEBUG = false; // way to much debug when true
@@ -110,26 +110,25 @@ public abstract class CaomEntity implements Serializable {
     private Date maxLastModified;
     private URI metaChecksum;
     private URI accMetaChecksum;
+    
+    /**
+     * URI of the form {scheme}:{scheme-specific-part} to signify which process created this CAOM instance.
+     * The scheme should be a short human-readable indicator of the institution/data-centre/provider and
+     * the scheme-specific-part would normally be the name and version of a piece of software. Child entities
+     * are assumed to be produced by the same process as their parent unless specifically set otherwise, so 
+     * it is normally sufficient to set this for the observation only.
+     */
+    public URI metaProducer;
 
+    /**
+     * Constructor. This implementation assigns a random 128-bit UUID.
+     */
     protected CaomEntity() {
         this.id = UUID.randomUUID();
     }
 
     /**
-     * @param fullUUID true for 128-bit, false for 64-bits used in UUID
-     * @deprecated 
-     */
-    @Deprecated
-    protected CaomEntity(boolean fullUUID) {
-        if (fullUUID) {
-            this.id = UUID.randomUUID();
-        } else {
-            this.id = new UUID(0L, CaomIDGenerator.getInstance().generateID());
-        }
-    }
-
-    /**
-     * Get the unique persistent numeric identifier for this object.
+     * Get the unique persistent identifier for this object.
      * 
      * @return
      */
@@ -150,7 +149,7 @@ public abstract class CaomEntity implements Serializable {
 
     /**
      * Get the maximum timestamp of the last modification of the state of this
-     * object and any child entities..
+     * object and any child entities.
      *
      * @return
      */
@@ -236,7 +235,8 @@ public abstract class CaomEntity implements Serializable {
     private void calcMetaChecksum(Class c, Object o, MessageDigest digest) {
         // calculation order:
         // 1. CaomEntity.id for entities
-        // 2. state fields in alphabetic order; depth-first recursion so
+        // 2. CaomEntity.metaProducer
+        // 3. state fields in alphabetic order; depth-first recursion so
         // foo.abc.x comes before foo.def
         // value handling:
         // Date: truncate time to whole number of seconds and treat as a long
@@ -252,11 +252,14 @@ public abstract class CaomEntity implements Serializable {
         try {
             if (o instanceof CaomEntity) {
                 CaomEntity ce = (CaomEntity) o;
-                if (ce.id != null) {
-                    digest.update(primitiveValueToBytes(ce.id, "CaomEntity.id", digest.getAlgorithm()));
+                digest.update(primitiveValueToBytes(ce.id, "CaomEntity.id", digest.getAlgorithm()));
+                if (MCS_DEBUG) {
+                    log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.id);
+                }
+                if (ce.metaProducer != null) {
+                    digest.update(primitiveValueToBytes(ce.metaProducer, "CaomEntity.metaProducer", digest.getAlgorithm()));
                     if (MCS_DEBUG) {
-                        log.debug("metaChecksum: " + ce.getClass().getSimpleName()
-                                + ".id " + ce.id);
+                        log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".metaProducer " + ce.metaProducer);
                     }
                 }
             }
@@ -448,8 +451,7 @@ public abstract class CaomEntity implements Serializable {
                             // md.reset();
                             sorted.put(ce.getID(), bb);
                         }
-                        Iterator<Map.Entry<UUID, byte[]>> si = sorted.entrySet()
-                                .iterator();
+                        Iterator<Map.Entry<UUID, byte[]>> si = sorted.entrySet().iterator();
                         while (si.hasNext()) {
                             Map.Entry<UUID, byte[]> me = si.next();
                             if (MCS_DEBUG) {
@@ -459,8 +461,7 @@ public abstract class CaomEntity implements Serializable {
                         }
                     } else {
                         throw new UnsupportedOperationException(
-                                "found single child field " + f.getName()
-                                        + " in " + c.getName());
+                                "found single child field " + f.getName() + " in " + c.getName());
                     }
                 }
                 // child sets are never null

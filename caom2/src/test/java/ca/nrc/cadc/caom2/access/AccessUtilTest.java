@@ -95,11 +95,13 @@ public class AccessUtilTest {
             Artifact data = new Artifact(URI.create("foo:bar/baz"), ProductType.SCIENCE, ReleaseType.DATA);
             Artifact meta = new Artifact(URI.create("foo:bar/baz"), ProductType.PREVIEW, ReleaseType.META);
             
-            Date pastMetaRelease = new Date(System.currentTimeMillis() - 1800L);
-            Date futureMetaRelease = new Date(System.currentTimeMillis() + 1800L);
+            final Date pastMetaRelease = new Date(System.currentTimeMillis() - 1800L);
+            final Date futureMetaRelease = new Date(System.currentTimeMillis() + 1800L);
             
-            Date pastDataRelease = new Date(System.currentTimeMillis() - 3600L);
-            Date futureDataRelease = new Date(System.currentTimeMillis() + 3600L);
+            final Date pastDataRelease = new Date(System.currentTimeMillis() - 3600L);
+            final Date futureDataRelease = new Date(System.currentTimeMillis() + 3600L);
+            
+            final Date contentRelease = new Date(System.currentTimeMillis() + 600L);
             
             Date actual;
             
@@ -114,6 +116,15 @@ public class AccessUtilTest {
             
             actual = AccessUtil.getReleaseDate(meta, futureMetaRelease, futureMetaRelease);
             Assert.assertEquals(futureMetaRelease, actual);
+            
+            // contentRelease override
+            data.contentRelease = contentRelease;
+            actual = AccessUtil.getReleaseDate(data, pastMetaRelease, pastDataRelease);
+            Assert.assertEquals(contentRelease, actual);
+            
+            actual = AccessUtil.getReleaseDate(data, null, null);
+            Assert.assertEquals(contentRelease, actual);
+            data.contentRelease = null;
             
             // null handling
             actual = AccessUtil.getReleaseDate(data, null, futureDataRelease);

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,15 +74,17 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.ObservationURI;
@@ -110,8 +112,8 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -127,6 +129,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -138,7 +141,6 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.xml.XmlUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -159,7 +161,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
@@ -180,7 +181,8 @@ public class ObservationReader implements Serializable {
     private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
     private static final String CAOM22_SCHEMA_RESOURCE = "CAOM-2.2.xsd";
     private static final String CAOM23_SCHEMA_RESOURCE = "CAOM-2.3.xsd";
-    private static final int CURRENT_CAOM2_SCHEMA_LEVEL = 23;
+    private static final String CAOM24_SCHEMA_RESOURCE = "CAOM-2.4.xsd";
+    private static final int CURRENT_CAOM2_SCHEMA_LEVEL = 24;
 
     private static final String XLINK_SCHEMA_RESOURCE = "XLINK.xsd";
 
@@ -228,6 +230,10 @@ public class ObservationReader implements Serializable {
                 String caom23SchemaUrl = XmlUtil.getResourceUrlString(
                         CAOM23_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.3 schema URL: " + caom23SchemaUrl);
+                
+                String caom24SchemaUrl = XmlUtil.getResourceUrlString(
+                        CAOM24_SCHEMA_RESOURCE, ObservationReader.class);
+                log.debug("caom-2.4 schema URL: " + caom24SchemaUrl);
 
                 String xlinkSchemaUrl = XmlUtil.getResourceUrlString(
                         XLINK_SCHEMA_RESOURCE, ObservationReader.class);
@@ -245,11 +251,15 @@ public class ObservationReader implements Serializable {
                     throw new RuntimeException("failed to load "
                             + CAOM22_SCHEMA_RESOURCE + " from classpath");
                 }
-                
                 if (caom23SchemaUrl == null) {
                     throw new RuntimeException("failed to load "
                             + CAOM23_SCHEMA_RESOURCE + " from classpath");
                 }
+                if (caom24SchemaUrl == null) {
+                    throw new RuntimeException("failed to load "
+                            + CAOM24_SCHEMA_RESOURCE + " from classpath");
+                }
+                
                 if (xlinkSchemaUrl == null) {
                     throw new RuntimeException("failed to load "
                             + XLINK_SCHEMA_RESOURCE + " from classpath");
@@ -260,6 +270,7 @@ public class ObservationReader implements Serializable {
                 schemaMap.put(XmlConstants.CAOM2_1_NAMESPACE, caom21SchemaUrl);
                 schemaMap.put(XmlConstants.CAOM2_2_NAMESPACE, caom22SchemaUrl);
                 schemaMap.put(XmlConstants.CAOM2_3_NAMESPACE, caom23SchemaUrl);
+                schemaMap.put(XmlConstants.CAOM2_4_NAMESPACE, caom24SchemaUrl);
                 schemaMap.put(XmlConstants.XLINK_NAMESPACE, xlinkSchemaUrl);
                 log.debug("schema validation enabled");
             } else {
@@ -274,8 +285,7 @@ public class ObservationReader implements Serializable {
 
     private class ReadContext implements Serializable {
         private static final long serialVersionUID = 201604081100L;
-        DateFormat dateFormat = DateUtil
-                .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+        DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         int docVersion = CURRENT_CAOM2_SCHEMA_LEVEL;
 
         // allow for missing milliseconds in timestamps
@@ -375,6 +385,8 @@ public class ObservationReader implements Serializable {
             rc.docVersion = 21;
         } else if (XmlConstants.CAOM2_2_NAMESPACE.equals(namespace.getURI())) {
             rc.docVersion = 22;
+        } else if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace.getURI())) {
+            rc.docVersion = 23;
         }
 
         // Simple or Composite
@@ -390,19 +402,16 @@ public class ObservationReader implements Serializable {
 
         // Create the Observation.
         Observation obs;
-        String simple = namespace.getPrefix() + ":"
-                + SimpleObservation.class.getSimpleName();
-        String comp = namespace.getPrefix() + ":"
-                + CompositeObservation.class.getSimpleName();
+        String simple = namespace.getPrefix() + ":" + SimpleObservation.class.getSimpleName();
+        String comp = namespace.getPrefix() + ":CompositeObservation"; // 2.3
+        String derived = namespace.getPrefix() + ":" + DerivedObservation.class.getSimpleName();
         if (simple.equals(tval)) {
             obs = new SimpleObservation(collection, observationID);
             obs.setAlgorithm(algorithm);
-        } else if (comp.equals(tval)) {
-            obs = new CompositeObservation(collection, observationID,
-                    algorithm);
+        } else if (derived.equals(tval) || comp.equals(tval)) {
+            obs = new DerivedObservation(collection, observationID, algorithm);
         } else {
-            throw new ObservationParsingException(
-                    "unexpected observation type: " + tval);
+            throw new ObservationParsingException("unexpected observation type: " + tval);
         }
 
         // Observation children.
@@ -412,8 +421,8 @@ public class ObservationReader implements Serializable {
         }
         obs.type = getChildText("type", root, namespace, false);
 
-        obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace,
-                false, rc.dateFormat);
+        obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace, false, rc.dateFormat);
+        addGroups(obs.getMetaReadGroups(), "metaReadGroups", root, namespace, rc);
         obs.sequenceNumber = getChildTextAsInteger("sequenceNumber", root,
                 namespace, false);
         obs.proposal = getProposal(root, namespace, rc);
@@ -426,8 +435,8 @@ public class ObservationReader implements Serializable {
 
         addPlanes(obs.getPlanes(), root, namespace, rc);
 
-        if (obs instanceof CompositeObservation) {
-            addMembers(((CompositeObservation) obs).getMembers(), root,
+        if (obs instanceof DerivedObservation) {
+            addMembers(((DerivedObservation) obs).getMembers(), root,
                     namespace, rc);
         }
 
@@ -445,6 +454,7 @@ public class ObservationReader implements Serializable {
                 e.getNamespace());
         Attribute mcs = e.getAttribute("metaChecksum", e.getNamespace());
         Attribute acc = e.getAttribute("accMetaChecksum", e.getNamespace());
+        Attribute amp = e.getAttribute("metaProducer", e.getNamespace());
         try {
             UUID uuid;
             if (rc.docVersion == 20) {
@@ -476,6 +486,12 @@ public class ObservationReader implements Serializable {
                     CaomUtil.assignMetaChecksum(ce, accCS, "accMetaChecksum");
                 }
             }
+            
+            if (rc.docVersion >= 24) {
+                if (amp != null) {
+                    ce.metaProducer = new URI(amp.getValue());
+                }
+            }
         } catch (DataConversionException ex) {
             throw new ObservationParsingException(
                     "invalid id: " + aid.getValue());
@@ -484,10 +500,31 @@ public class ObservationReader implements Serializable {
                     "invalid lastModified: " + alastModified.getValue());
         } catch (URISyntaxException ex) {
             throw new ObservationParsingException(
-                    "invalid checksum uri: " + aid.getValue());
+                    "invalid uri: " + aid.getValue());
         }
     }
 
+    protected void addGroups(Set<URI> uris, String name, Element parent, Namespace namespace,
+            ReadContext rc) throws ObservationParsingException {
+        if (rc.docVersion < 24) {
+            return;
+        }
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0) {
+            return;
+        }
+        List<Element> els = element.getChildren("groupURI", namespace);
+        for (Element e : els) {
+            String s = e.getTextTrim();
+            try {
+                URI u = new URI(s);
+                uris.add(u);
+            } catch (URISyntaxException ex) {
+                throw new ObservationParsingException("invalid " + name + " URI: " + s, ex);
+            }
+        }
+    }
+    
     /**
      * Build an Algorithm from a JDOM representation of an algorithm element.
      *
@@ -605,6 +642,15 @@ public class ObservationReader implements Serializable {
         String name = getChildText("name", element, namespace, true);
 
         Target target = new Target(name);
+        
+        String tid = getChildText("targetID", element, namespace, false);
+        if (tid != null) {
+            try {
+                target.targetID = new URI(tid);
+            } catch (URISyntaxException ex) {
+                throw new ObservationParsingException("invalid targetID: " + tid, ex);
+            }
+        }
 
         String type = getChildText("type", element, namespace, false);
         if (type != null) {
@@ -824,10 +870,10 @@ public class ObservationReader implements Serializable {
                     namespace, true);
             Plane plane = new Plane(productID);
 
-            plane.metaRelease = getChildTextAsDate("metaRelease", planeElement,
-                    namespace, false, rc.dateFormat);
-            plane.dataRelease = getChildTextAsDate("dataRelease", planeElement,
-                    namespace, false, rc.dateFormat);
+            plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, rc.dateFormat);
+            addGroups(plane.getMetaReadGroups(), "metaReadGroups", planeElement, namespace, rc);
+            plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, rc.dateFormat);
+            addGroups(plane.getDataReadGroups(), "dataReadGroups", planeElement, namespace, rc);
 
             String creatorIDStr = getChildText("creatorID", planeElement,
                     namespace, false);
@@ -864,6 +910,7 @@ public class ObservationReader implements Serializable {
             plane.energy = getEnergy(planeElement, namespace, rc);
             plane.time = getTime(planeElement, namespace, rc);
             plane.polarization = getPolarization(planeElement, namespace, rc);
+            plane.custom = getCustom(planeElement, namespace, rc);
 
             addArtifacts(plane.getArtifacts(), planeElement, namespace, rc);
 
@@ -949,6 +996,12 @@ public class ObservationReader implements Serializable {
 
         pos.resolution = getChildTextAsDouble("resolution", element, namespace,
                 false);
+        cur = getChildElement("resolutionBounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, false);
+            double ub = getChildTextAsDouble("upper", cur, namespace, false);
+            pos.resolutionBounds = new Interval(lb, ub);
+        }
         pos.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
         pos.timeDependent = getChildTextAsBoolean("timeDependent", element,
@@ -969,7 +1022,7 @@ public class ObservationReader implements Serializable {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            nrg.bounds = new Interval(lb, ub);
+            nrg.bounds = new SampledInterval(lb, ub);
             addSamples(nrg.bounds, cur.getChild("samples", namespace),
                     namespace, rc);
         }
@@ -982,16 +1035,34 @@ public class ObservationReader implements Serializable {
 
         nrg.resolvingPower = getChildTextAsDouble("resolvingPower", element,
                 namespace, false);
-
+        cur = getChildElement("resolvingPowerBounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, false);
+            double ub = getChildTextAsDouble("upper", cur, namespace, false);
+            nrg.resolvingPowerBounds = new Interval(lb, ub);
+        }
         nrg.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
 
         nrg.bandpassName = getChildText("bandpassName", element, namespace,
                 false);
 
-        String emb = getChildText("emBand", element, namespace, false);
-        if (emb != null) {
-            nrg.emBand = EnergyBand.toValue(emb);
+        // for 2.3 there is 0..1 EnergyBand
+        // for 2.4 there are 0..* EnergyBand(s)
+        if (rc.docVersion < 24) {
+            String emb = getChildText("emBand", element, namespace, false);
+            if (emb != null) {
+                nrg.getEnergyBands().add(EnergyBand.toValue(emb));
+            }
+        } else {
+            cur = getChildElement("energyBands", element, namespace, false);
+            if (cur != null) {
+                List<Element> bes = cur.getChildren("emBand", namespace);
+                for (Element b : bes) {
+                    String emb = b.getTextTrim();
+                    nrg.getEnergyBands().add(EnergyBand.toValue(emb));
+                }
+            }
         }
         nrg.restwav = getChildTextAsDouble("restwav", element, namespace,
                 false);
@@ -1017,29 +1088,24 @@ public class ObservationReader implements Serializable {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            tim.bounds = new Interval(lb, ub);
+            tim.bounds = new SampledInterval(lb, ub);
             addSamples(tim.bounds, cur.getChild("samples", namespace),
                     namespace, rc);
         }
 
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null) {
-            // Attribute type = cur.getAttribute("type", xsiNamespace);
-            // String tval = type.getValue();
-            // String extype = namespace.getPrefix() + ":" +
-            // Long.class.getSimpleName();
-            // if ( extype.equals(tval) )
-            // {
-            tim.dimension = getChildTextAsLong("dimension", element, namespace,
-                    true);
-            // }
-            // else
-            // throw new ObservationParsingException("unsupported dimension
-            // type: " + tval);
+            tim.dimension = getChildTextAsLong("dimension", element, namespace, true);
         }
 
         tim.resolution = getChildTextAsDouble("resolution", element, namespace,
                 false);
+        cur = getChildElement("resolutionBounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, false);
+            double ub = getChildTextAsDouble("upper", cur, namespace, false);
+            tim.resolutionBounds = new Interval(lb, ub);
+        }
 
         tim.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
@@ -1050,7 +1116,32 @@ public class ObservationReader implements Serializable {
         return tim;
     }
 
-    private void addSamples(Interval inter, Element sampleElement,
+    private CustomAxis getCustom(Element parent, Namespace namespace, ReadContext rc)
+            throws ObservationParsingException {
+        Element element = getChildElement("custom", parent, namespace, false);
+        if (element == null) {
+            return null;
+        }
+
+        String ctype = getChildText("ctype", element, namespace, true);
+        CustomAxis cus = new CustomAxis(ctype);
+        Element cur = getChildElement("bounds", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, true);
+            double ub = getChildTextAsDouble("upper", cur, namespace, true);
+            cus.bounds = new SampledInterval(lb, ub);
+            addSamples(cus.bounds, cur.getChild("samples", namespace), namespace, rc);
+        }
+
+        cur = getChildElement("dimension", element, namespace, false);
+        if (cur != null) {
+            cus.dimension = getChildTextAsLong("dimension", element, namespace, true);
+        }
+
+        return cus;
+    }
+    
+    private void addSamples(SampledInterval inter, Element sampleElement,
             Namespace namespace, ReadContext rc)
             throws ObservationParsingException {
         if (sampleElement != null) {
@@ -1058,13 +1149,13 @@ public class ObservationReader implements Serializable {
             for (Element se : sse) {
                 double lb = getChildTextAsDouble("lower", se, namespace, true);
                 double ub = getChildTextAsDouble("upper", se, namespace, true);
-                inter.getSamples().add(new SubInterval(lb, ub));
+                inter.getSamples().add(new Interval(lb, ub));
             }
         }
         if (rc.docVersion < 23 && inter.getSamples().isEmpty()) {
             // backwards compat
             inter.getSamples()
-                    .add(new SubInterval(inter.getLower(), inter.getUpper()));
+                    .add(new Interval(inter.getLower(), inter.getUpper()));
         }
     }
 
@@ -1169,14 +1260,11 @@ public class ObservationReader implements Serializable {
         Metrics metrics = new Metrics();
         metrics.sourceNumberDensity = getChildTextAsDouble(
                 "sourceNumberDensity", element, namespace, false);
-        metrics.background = getChildTextAsDouble("background", element,
-                namespace, false);
-        metrics.backgroundStddev = getChildTextAsDouble("backgroundStddev",
-                element, namespace, false);
-        metrics.fluxDensityLimit = getChildTextAsDouble("fluxDensityLimit",
-                element, namespace, false);
-        metrics.magLimit = getChildTextAsDouble("magLimit", element, namespace,
-                false);
+        metrics.background = getChildTextAsDouble("background", element, namespace, false);
+        metrics.backgroundStddev = getChildTextAsDouble("backgroundStddev", element, namespace, false);
+        metrics.fluxDensityLimit = getChildTextAsDouble("fluxDensityLimit", element, namespace, false);
+        metrics.magLimit = getChildTextAsDouble("magLimit", element, namespace, false);
+        metrics.sampleSNR = getChildTextAsDouble("sampleSNR", element, namespace, false);
         return metrics;
     }
 
@@ -1197,6 +1285,27 @@ public class ObservationReader implements Serializable {
 
         String flag = getChildText("flag", element, namespace, true);
         DataQuality ret = new DataQuality(Quality.toValue(flag));
+
+        return ret;
+    }
+    
+    /**
+     * 
+     * @param parent
+     * @param namespace
+     * @param rc
+     * @return
+     * @throws ObservationParsingException
+     */
+    protected Observable getObservable(Element parent, Namespace namespace,
+            ReadContext rc) throws ObservationParsingException {
+        Element element = getChildElement("observable", parent, namespace, false);
+        if (element == null || element.getContentSize() == 0) {
+            return null;
+        }
+
+        String ucd = getChildText("ucd", element, namespace, true);
+        Observable ret = new Observable(ucd);
 
         return ret;
     }
@@ -1331,6 +1440,10 @@ public class ObservationReader implements Serializable {
                     throw new ObservationParsingException(error, e);
                 }
             }
+            
+            artifact.contentRelease = getChildTextAsDate("contentRelease", artifactElement,
+                    namespace, false, rc.dateFormat);
+            addGroups(artifact.getContentReadGroups(), "contentReadGroups", artifactElement, namespace, rc);
 
             addParts(artifact.getParts(), artifactElement, namespace, rc);
 
@@ -1438,60 +1551,22 @@ public class ObservationReader implements Serializable {
                     namespace, false);
             chunk.polarizationAxis = getChildTextAsInteger("polarizationAxis",
                     chunkElement, namespace, false);
+            chunk.customAxis = getChildTextAsInteger("customAxis",
+                    chunkElement, namespace, false);
 
-            chunk.observable = getObservableAxis("observable", chunkElement,
-                    namespace, false, rc);
-            chunk.position = getSpatialWCS("position", chunkElement, namespace,
-                    false, rc);
-            chunk.energy = getSpectralWCS("energy", chunkElement, namespace,
-                    false, rc);
-            chunk.time = getTemporalWCS("time", chunkElement, namespace, false,
-                    rc);
-            chunk.polarization = getPolarizationWCS("polarization",
-                    chunkElement, namespace, false, rc);
+            chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, rc);
+            chunk.position = getSpatialWCS("position", chunkElement, namespace, false, rc);
+            chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, rc);
+            chunk.time = getTemporalWCS("time", chunkElement, namespace, false, rc);
+            chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, rc);
+            
+            chunk.custom = getCustomWCS("custom", chunkElement, namespace, false, rc);
 
             assignEntityAttributes(chunkElement, chunk, rc);
 
             chunks.add(chunk);
         }
     }
-
-    /*
-     * //alt version for one-chunk-per-part that was reverted from caom-2.2
-     * protected Chunk getChunk(Element parent, Namespace namespace, ReadContext
-     * rc) throws ObservationParsingException { Element chunkParent = parent; if
-     * (rc.docVersion < 22) { // pre 2.2 a part could have multiple chunks
-     * inside a "chunks" element Element e = getChildElement("chunks", parent,
-     * namespace, false); if (e == null) return null; chunkParent = e; } Element
-     * chunkElement = getChildElement("chunk", chunkParent, namespace, false);
-     * if (chunkElement == null) return null;
-     * 
-     * Chunk chunk = new Chunk();
-     * 
-     * chunk.naxis = getChildTextAsInteger("naxis", chunkElement, namespace,
-     * false); chunk.observableAxis = getChildTextAsInteger("observableAxis",
-     * chunkElement, namespace, false); chunk.positionAxis1 =
-     * getChildTextAsInteger("positionAxis1", chunkElement, namespace, false);
-     * chunk.positionAxis2 = getChildTextAsInteger("positionAxis2",
-     * chunkElement, namespace, false); chunk.energyAxis =
-     * getChildTextAsInteger("energyAxis", chunkElement, namespace, false);
-     * chunk.timeAxis = getChildTextAsInteger("timeAxis", chunkElement,
-     * namespace, false); chunk.polarizationAxis =
-     * getChildTextAsInteger("polarizationAxis", chunkElement, namespace,
-     * false);
-     * 
-     * chunk.observable = getObservableAxis("observable", chunkElement,
-     * namespace, false, rc); chunk.position = getSpatialWCS("position",
-     * chunkElement, namespace, false, rc); chunk.energy =
-     * getSpectralWCS("energy", chunkElement, namespace, false, rc); chunk.time
-     * = getTemporalWCS("time", chunkElement, namespace, false, rc);
-     * chunk.polarization = getPolarizationWCS("polarization", chunkElement,
-     * namespace, false, rc);
-     * 
-     * assignEntityAttributes(chunkElement, chunk, rc);
-     * 
-     * return chunk; }
-     */
 
     /**
      * Build an ObservableAxis from a JDOM representation of an observable
@@ -1669,6 +1744,34 @@ public class ObservationReader implements Serializable {
         CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
         return new PolarizationWCS(axis);
     }
+    
+    /**
+     * Build an CustomWCS from a JDOM representation of an custom
+     * element.
+     * 
+     * @param name
+     *            the name of the Element.
+     * @param parent
+     *            the parent Element.
+     * @param namespace
+     *            of the document.
+     * @param required
+     * @param rc
+     * @return an PolarizationWCS, or null if the document doesn't contain an
+     *         polarization element.
+     * @throws ObservationParsingException
+     */
+    protected CustomWCS getCustomWCS(String name, Element parent,
+            Namespace namespace, boolean required, ReadContext rc)
+            throws ObservationParsingException {
+        Element element = getChildElement(name, parent, namespace, false);
+        if (element == null || element.getContentSize() == 0) {
+            return null;
+        }
+
+        CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
+        return new CustomWCS(axis);
+    }
 
     /**
      * Build an Axis from a JDOM representation of an axis element.
@@ -1692,8 +1795,9 @@ public class ObservationReader implements Serializable {
         }
 
         String ctype = getChildText("ctype", element, namespace, true);
-        String cunit = getChildText("cunit", element, namespace, false);
-        return new Axis(ctype, cunit);
+        Axis ret = new Axis(ctype);
+        ret.cunit = getChildText("cunit", element, namespace, false);
+        return ret;
     }
 
     /**
@@ -2305,18 +2409,18 @@ public class ObservationReader implements Serializable {
     protected void addKeywordsToList(Collection<String> list, Element element,
             Namespace ns) throws ObservationParsingException {
         Element kwe = element.getChild("keywords", ns);
-        log.debug("addKeywordsToList: " + kwe);
+        //log.debug("addKeywordsToList: " + kwe);
         if (kwe == null) {
             return;
         }
 
         List kws = kwe.getChildren("keyword", ns);
-        log.debug("addKeywordsToList: " + kws.size());
+        //log.debug("addKeywordsToList: " + kws.size());
         Iterator it = kws.iterator();
         while (it.hasNext()) {
             Element k = (Element) it.next();
             String s = k.getTextTrim();
-            log.debug("addKeywordsToList: " + s);
+            //log.debug("addKeywordsToList: " + s);
             list.add(s);
         }
     }

@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -80,9 +80,9 @@ import java.util.List;
  * @author pdowler
  */
 public enum EnergyBand implements CaomEnum<String> {
-    RADIO("Radio"), MILLIMETER("Millimeter"), INFRARED("Infrared"), OPTICAL(
-            "Optical"), UV(
-                    "UV"), EUV("EUV"), XRAY("X-ray"), GAMMARAY("Gamma-ray");
+    RADIO("Radio"), MILLIMETER("Millimeter"), INFRARED("Infrared"), 
+    OPTICAL("Optical"), UV("UV"), EUV("EUV"), 
+    XRAY("X-ray"), GAMMARAY("Gamma-ray");
 
     private String value;
 
@@ -105,34 +105,6 @@ public enum EnergyBand implements CaomEnum<String> {
             }
         }
         throw new IllegalArgumentException("invalid value: " + s);
-    }
-
-    /**
-     * Compute the EnergyBand from the wavelength coverage. This finds the band
-     * that overlaps the largest fraction of the specified interval; the current
-     * implementation ignores the sub-intervals.
-     *
-     * @param bounds
-     * @return
-     */
-    public static EnergyBand getEnergyBand(Interval bounds) {
-        if (bounds == null) {
-            return null;
-        }
-
-        double frac = 0.0;
-        EnergyBandWrapper eb = null;
-        for (EnergyBandWrapper b : energyBands) {
-            double f = getOverlapFraction(b, bounds);
-            if (f > frac) {
-                frac = f;
-                eb = b;
-            }
-        }
-        if (eb == null) {
-            return null;
-        }
-        return eb.band;
     }
 
     @Override
@@ -183,6 +155,31 @@ public enum EnergyBand implements CaomEnum<String> {
                 ec.convert(1.0e6, "ENER", "keV")));
     }
 
+    /**
+     * Compute the EnergyBand from the wavelength coverage. This finds the band
+     * that overlaps the largest fraction of the specified interval; the current
+     * implementation ignores the sub-intervals.
+     *
+     * @param bounds
+     * @return
+     */
+    public static List<EnergyBand> getEnergyBand(SampledInterval bounds) {
+        List<EnergyBand> ret = new ArrayList<EnergyBand>();
+        if (bounds == null) {
+            return ret;
+        }
+
+        double frac = 0.0;
+        EnergyBandWrapper eb = null;
+        for (EnergyBandWrapper b : energyBands) {
+            double f = getOverlapFraction(b, bounds);
+            if (f > 0.0) {
+                ret.add(b.band);
+            }
+        }
+        return ret;
+    }
+    
     private static final class EnergyBandWrapper implements Serializable {
         private static final long serialVersionUID = 201207191400L;
         EnergyBand band;
@@ -202,7 +199,7 @@ public enum EnergyBand implements CaomEnum<String> {
     }
 
     // fraction of e that overlaps b
-    private static double getOverlapFraction(EnergyBandWrapper b, Interval ei) {
+    private static double getOverlapFraction(EnergyBandWrapper b, SampledInterval ei) {
         // no overlap
         if (b.ub < ei.getLower() || ei.getUpper() < b.lb) {
             return 0.0;

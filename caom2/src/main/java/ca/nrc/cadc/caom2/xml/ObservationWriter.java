@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,10 +73,12 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
@@ -92,15 +94,16 @@ import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Requirements;
+import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -116,6 +119,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -200,12 +204,11 @@ public class ObservationWriter implements Serializable {
                             + caom2NamespacePrefix);
         }
 
-        if (namespace == null) {
-            namespace = XmlConstants.CAOM2_3_NAMESPACE; // default
-            log.debug("default namespace: " + namespace);
-        }
-
-        if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace)) {
+        if (namespace == null || XmlConstants.CAOM2_4_NAMESPACE.equals(namespace)) {
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
+                    XmlConstants.CAOM2_4_NAMESPACE);
+            docVersion = 24;
+        } else if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace)) {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
                     XmlConstants.CAOM2_3_NAMESPACE);
             docVersion = 23;
@@ -226,8 +229,7 @@ public class ObservationWriter implements Serializable {
                     "invalid namespace: " + namespace);
         }
 
-        this.xsiNamespace = Namespace.getNamespace("xsi",
-                XmlConstants.XMLSCHEMA);
+        this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
 
         log.debug("output version: " + docVersion + " "
                 + caom2Namespace.getPrefix() + " -> "
@@ -387,6 +389,10 @@ public class ObservationWriter implements Serializable {
             el.setAttribute("accMetaChecksum",
                     ce.getAccMetaChecksum().toASCIIString(), el.getNamespace());
         }
+        
+        if (docVersion >= 24 && ce.metaProducer != null) {
+            el.setAttribute("metaProducer", ce.metaProducer.toASCIIString(), el.getNamespace());
+        }
     }
 
     /**
@@ -402,8 +408,14 @@ public class ObservationWriter implements Serializable {
                 .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
         Element element = getCaom2Element("Observation");
-        String type = caom2Namespace.getPrefix() + ":"
-                + obs.getClass().getSimpleName();
+        String type = caom2Namespace.getPrefix() + ":";
+        if (obs instanceof SimpleObservation) {
+            type += SimpleObservation.class.getSimpleName();
+        } else if (docVersion <= 23) {
+            type += "CompositeObservation";
+        } else {
+            type += DerivedObservation.class.getSimpleName();
+        }
         element.setAttribute("type", type, xsiNamespace);
 
         addEntityAttributes(obs, element, dateFormat);
@@ -413,6 +425,9 @@ public class ObservationWriter implements Serializable {
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);
+        if (docVersion >= 24) {
+            addGroupListElement("metaReadGroups", obs.getMetaReadGroups(), element);
+        }
         addNumberElement("sequenceNumber", obs.sequenceNumber, element);
         addAlgorithmElement(obs.getAlgorithm(), element, dateFormat);
         addElement("type", obs.type, element);
@@ -429,8 +444,8 @@ public class ObservationWriter implements Serializable {
         addPlanesElement(obs.getPlanes(), element, dateFormat);
 
         // Members must be the last element.
-        if (obs instanceof CompositeObservation) {
-            addMembersElement(((CompositeObservation) obs).getMembers(),
+        if (obs instanceof DerivedObservation) {
+            addMembersElement(((DerivedObservation) obs).getMembers(),
                     element, dateFormat);
         }
 
@@ -508,6 +523,9 @@ public class ObservationWriter implements Serializable {
 
         Element element = getCaom2Element("target");
         addElement("name", target.getName(), element);
+        if (target.targetID != null && docVersion >= 24) {
+            addElement("targetID", target.targetID.toASCIIString(), element);
+        }
         if (target.type != null) {
             addElement("type", target.type.getValue(), element);
         }
@@ -688,6 +706,19 @@ public class ObservationWriter implements Serializable {
         parent.addContent(element);
     }
 
+    protected void addGroupListElement(String name, Set<URI> uris, Element parent) {
+        if (uris.isEmpty()) {
+            return;
+        }
+        Element e = getCaom2Element(name);
+        for (URI u : uris) {
+            Element ce = getCaom2Element("groupURI");
+            ce.setText(u.toASCIIString());
+            e.addContent(ce);
+        }
+        parent.addContent(e);
+    }
+    
     /**
      * Builds a JDOM representation of a Set of Plane's and adds it to the
      * parent element.
@@ -715,24 +746,23 @@ public class ObservationWriter implements Serializable {
                 addURIElement("creatorID", plane.creatorID, planeElement);
             }
 
-            addDateElement("metaRelease", plane.metaRelease, planeElement,
-                    dateFormat);
-            addDateElement("dataRelease", plane.dataRelease, planeElement,
-                    dateFormat);
+            addDateElement("metaRelease", plane.metaRelease, planeElement, dateFormat);
+            if (docVersion >= 24) {
+                addGroupListElement("metaReadGroups", plane.getMetaReadGroups(), planeElement);
+            }
+            addDateElement("dataRelease", plane.dataRelease, planeElement, dateFormat);
+            if (docVersion >= 24) {
+                addGroupListElement("dataReadGroups", plane.getDataReadGroups(), planeElement);
+            }
             if (plane.dataProductType != null) {
-                if (docVersion < 23 && DataProductType.CATALOG
-                        .equals(plane.dataProductType)) {
-                    addElement("dataProductType",
-                            plane.dataProductType.getTerm(), planeElement);
+                if (docVersion < 23 && DataProductType.CATALOG.equals(plane.dataProductType)) {
+                    addElement("dataProductType", plane.dataProductType.getTerm(), planeElement);
                 } else {
-                    addElement("dataProductType",
-                            plane.dataProductType.getValue(), planeElement);
+                    addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
                 }
             }
             if (plane.calibrationLevel != null) {
-                addElement("calibrationLevel",
-                        String.valueOf(plane.calibrationLevel.getValue()),
-                        planeElement);
+                addElement("calibrationLevel", String.valueOf(plane.calibrationLevel.getValue()), planeElement);
             }
             addProvenanceElement(plane.provenance, planeElement, dateFormat);
             addMetricsElement(plane.metrics, planeElement, dateFormat);
@@ -742,6 +772,7 @@ public class ObservationWriter implements Serializable {
             addEnergyElement(plane.energy, planeElement);
             addTimeElement(plane.time, planeElement);
             addPolarizationElement(plane.polarization, planeElement);
+            addCustomElement(plane.custom, planeElement);
 
             addArtifactsElement(plane.getArtifacts(), planeElement, dateFormat);
             element.addContent(planeElement);
@@ -812,9 +843,6 @@ public class ObservationWriter implements Serializable {
         }
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
-            // String xsiType = caom2Namespace.getPrefix() + ":" +
-            // Dimension2D.class.getSimpleName();
-            // ce.setAttribute("type", xsiType, xsiNamespace);
             addNumberElement("naxis1", comp.dimension.naxis1, ce);
             addNumberElement("naxis2", comp.dimension.naxis2, ce);
             e.addContent(ce);
@@ -831,7 +859,7 @@ public class ObservationWriter implements Serializable {
         parent.addContent(e);
     }
 
-    protected Element getSampleElement(SubInterval si) {
+    protected Element getSampleElement(Interval si) {
         Element s = getCaom2Element("sample");
         addNumberElement("lower", si.getLower(), s);
         addNumberElement("upper", si.getUpper(), s);
@@ -849,15 +877,12 @@ public class ObservationWriter implements Serializable {
         Element e = getCaom2Element("energy");
         if (comp.bounds != null) {
             Element pe = getCaom2Element("bounds");
-            // String xsiType = caom2Namespace.getPrefix() + ":" +
-            // Interval.class.getSimpleName();
-            // pe.setAttribute("type", xsiType, xsiNamespace);
             addNumberElement("lower", comp.bounds.getLower(), pe);
             addNumberElement("upper", comp.bounds.getUpper(), pe);
             e.addContent(pe);
             if (!comp.bounds.getSamples().isEmpty()) {
                 Element ses = getCaom2Element("samples");
-                for (SubInterval si : comp.bounds.getSamples()) {
+                for (Interval si : comp.bounds.getSamples()) {
                     Element se = getSampleElement(si);
                     ses.addContent(se);
                 }
@@ -866,9 +891,6 @@ public class ObservationWriter implements Serializable {
         }
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
-            // String xsiType = caom2Namespace.getPrefix() + ":" +
-            // Long.class.getSimpleName();
-            // ce.setAttribute("type", xsiType, xsiNamespace);
             ce.addContent(Long.toString(comp.dimension));
             e.addContent(ce);
         }
@@ -881,9 +903,15 @@ public class ObservationWriter implements Serializable {
         if (comp.bandpassName != null) {
             addElement("bandpassName", comp.bandpassName, e);
         }
-        if (comp.emBand != null) {
-            addElement("emBand", comp.emBand.getValue(), e);
+        if (docVersion < 24) {
+            if (comp.getEnergyBands().size() == 1) {
+                String eb = comp.getEnergyBands().iterator().next().getValue();
+                addElement("emBand", eb, e);
+            }
+        } else {
+            addEnergyBands(comp.getEnergyBands(), e);
         }
+       
         if (comp.restwav != null) {
             addNumberElement("restwav", comp.restwav, e);
         }
@@ -908,15 +936,12 @@ public class ObservationWriter implements Serializable {
         Element e = getCaom2Element("time");
         if (comp.bounds != null) {
             Element pe = getCaom2Element("bounds");
-            // String xsiType = caom2Namespace.getPrefix() + ":" +
-            // Interval.class.getSimpleName();
-            // pe.setAttribute("type", xsiType, xsiNamespace);
             addNumberElement("lower", comp.bounds.getLower(), pe);
             addNumberElement("upper", comp.bounds.getUpper(), pe);
             e.addContent(pe);
             if (!comp.bounds.getSamples().isEmpty()) {
                 Element ses = getCaom2Element("samples");
-                for (SubInterval si : comp.bounds.getSamples()) {
+                for (Interval si : comp.bounds.getSamples()) {
                     Element se = getSampleElement(si);
                     ses.addContent(se);
                 }
@@ -925,9 +950,6 @@ public class ObservationWriter implements Serializable {
         }
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
-            // String xsiType = caom2Namespace.getPrefix() + ":" +
-            // Long.class.getSimpleName();
-            // ce.setAttribute("type", xsiType, xsiNamespace);
             ce.addContent(Long.toString(comp.dimension));
             e.addContent(ce);
         }
@@ -965,6 +987,41 @@ public class ObservationWriter implements Serializable {
             // String xsiType = caom2Namespace.getPrefix() + ":" +
             // Integer.class.getSimpleName();
             // ce.setAttribute("type", xsiType, xsiNamespace);
+            ce.addContent(Long.toString(comp.dimension));
+            e.addContent(ce);
+        }
+
+        parent.addContent(e);
+    }
+    
+    protected void addCustomElement(CustomAxis comp, Element parent) {
+        if (docVersion < 24) {
+            return;
+        }
+        if (comp == null) {
+            return;
+        }
+
+        Element e = getCaom2Element("custom");
+        Element cte = getCaom2Element("ctype");
+        cte.setText(comp.getCtype());
+        e.addContent(cte);
+        if (comp.bounds != null) {
+            Element pe = getCaom2Element("bounds");
+            addNumberElement("lower", comp.bounds.getLower(), pe);
+            addNumberElement("upper", comp.bounds.getUpper(), pe);
+            e.addContent(pe);
+            if (!comp.bounds.getSamples().isEmpty()) {
+                Element ses = getCaom2Element("samples");
+                for (Interval si : comp.bounds.getSamples()) {
+                    Element se = getSampleElement(si);
+                    ses.addContent(se);
+                }
+                pe.addContent(ses);
+            }
+        }
+        if (comp.dimension != null) {
+            Element ce = getCaom2Element("dimension");
             ce.addContent(Long.toString(comp.dimension));
             e.addContent(ce);
         }
@@ -1014,12 +1071,12 @@ public class ObservationWriter implements Serializable {
         }
 
         Element element = getCaom2Element("metrics");
-        addNumberElement("sourceNumberDensity", metrics.sourceNumberDensity,
-                element);
+        addNumberElement("sourceNumberDensity", metrics.sourceNumberDensity, element);
         addNumberElement("background", metrics.background, element);
         addNumberElement("backgroundStddev", metrics.backgroundStddev, element);
         addNumberElement("fluxDensityLimit", metrics.fluxDensityLimit, element);
         addNumberElement("magLimit", metrics.magLimit, element);
+        addNumberElement("sampleSNR", metrics.sampleSNR, element);
         parent.addContent(element);
     }
 
@@ -1045,6 +1102,19 @@ public class ObservationWriter implements Serializable {
         parent.addContent(element);
     }
 
+    protected void addEnergyBands(Set<EnergyBand> bands, Element parent) {
+        if (bands.isEmpty() && !writeEmptyCollections) {
+            return;
+        }
+        Element bandsElement = getCaom2Element("energyBands");
+        for (EnergyBand e : bands) {
+            Element be = getCaom2Element("emBand");
+            be.setText(e.getValue());
+            bandsElement.addContent(be);
+        }
+        parent.addContent(bandsElement);
+    }
+    
     protected void addTransitionElement(EnergyTransition transition,
             Element parent, DateFormat dateFormat) {
         if (transition == null) {
@@ -1111,21 +1181,23 @@ public class ObservationWriter implements Serializable {
                 addElement("releaseType", artifact.getReleaseType().getValue(),
                         artifactElement);
             }
-
+            
+            if (docVersion >= 24) {
+                addDateElement("contentRelease", artifact.contentRelease, artifactElement, dateFormat);
+                addGroupListElement("contentReadGroups", artifact.getContentReadGroups(), artifactElement);
+            }
+            
             addElement("contentType", artifact.contentType, artifactElement);
-            addNumberElement("contentLength", artifact.contentLength,
-                    artifactElement);
+            addNumberElement("contentLength", artifact.contentLength, artifactElement);
 
             if (docVersion < 22) {
-                addElement("productType", artifact.getProductType().getValue(),
-                        artifactElement);
+                addElement("productType", artifact.getProductType().getValue(), artifactElement);
             }
 
             if (docVersion > 22) {
-                addURIElement("contentChecksum", artifact.contentChecksum,
-                        artifactElement);
+                addURIElement("contentChecksum", artifact.contentChecksum, artifactElement);
             }
-
+            
             addPartsElement(artifact.getParts(), artifactElement, dateFormat);
             element.addContent(artifactElement);
         }
@@ -1190,58 +1262,26 @@ public class ObservationWriter implements Serializable {
                         chunkElement);
             }
             addNumberElement("naxis", chunk.naxis, chunkElement);
-            addNumberElement("observableAxis", chunk.observableAxis,
-                    chunkElement);
-            addNumberElement("positionAxis1", chunk.positionAxis1,
-                    chunkElement);
-            addNumberElement("positionAxis2", chunk.positionAxis2,
-                    chunkElement);
+            addNumberElement("observableAxis", chunk.observableAxis, chunkElement);
+            addNumberElement("positionAxis1", chunk.positionAxis1, chunkElement);
+            addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement);
             addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
             addNumberElement("timeAxis", chunk.timeAxis, chunkElement);
-            addNumberElement("polarizationAxis", chunk.polarizationAxis,
-                    chunkElement);
+            addNumberElement("polarizationAxis", chunk.polarizationAxis, chunkElement);
+            addNumberElement("customAxis", chunk.customAxis, chunkElement);
 
             addObservableAxisElement(chunk.observable, chunkElement,
                     dateFormat);
             addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
             addSpectralWCSElement(chunk.energy, chunkElement, dateFormat);
             addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
-            addPolarizationWCSElement(chunk.polarization, chunkElement,
-                    dateFormat);
+            addPolarizationWCSElement(chunk.polarization, chunkElement, dateFormat);
+            addCustomWCSElement(chunk.custom, chunkElement, dateFormat);
 
             element.addContent(chunkElement);
         }
         parent.addContent(element);
     }
-
-    /*
-     * // alt version for one-chunk-per-part that was reverted from caom-2.2
-     * protected void addChunksElement(Chunk chunk, Element parent, DateFormat
-     * dateFormat) { if (chunk == null) return;
-     * 
-     * Element chunkParent = parent; if (docVersion < 22) { Element chunks =
-     * getCaom2Element("chunks"); parent.addContent(chunks); chunkParent =
-     * chunks; }
-     * 
-     * Element chunkElement = getCaom2Element("chunk");
-     * addEntityAttributes(chunk, chunkElement, dateFormat);
-     * addNumberElement("naxis", chunk.naxis, chunkElement);
-     * addNumberElement("observableAxis", chunk.observableAxis, chunkElement);
-     * addNumberElement("positionAxis1", chunk.positionAxis1, chunkElement);
-     * addNumberElement("positionAxis2", chunk.positionAxis2, chunkElement);
-     * addNumberElement("energyAxis", chunk.energyAxis, chunkElement);
-     * addNumberElement("timeAxis", chunk.timeAxis, chunkElement);
-     * addNumberElement("polarizationAxis", chunk.polarizationAxis,
-     * chunkElement);
-     * 
-     * addObservableAxisElement(chunk.observable, chunkElement, dateFormat);
-     * addSpatialWCSElement(chunk.position, chunkElement, dateFormat);
-     * addSpectralWCSElement(chunk.energy, chunkElement, dateFormat);
-     * addTemporalWCSElement(chunk.time, chunkElement, dateFormat);
-     * addPolarizationWCSElement(chunk.polarization, chunkElement, dateFormat);
-     * 
-     * chunkParent.addContent(chunkElement); }
-     */
 
     /**
      * Builds a JDOM representation of an ObservableAxis and adds it to the
@@ -1374,6 +1414,19 @@ public class ObservationWriter implements Serializable {
         parent.addContent(element);
     }
 
+    protected void addCustomWCSElement(CustomWCS custom, Element parent, DateFormat dateFormat) {
+        if (docVersion < 24) {
+            return;
+        }
+        
+        if (custom == null) {
+            return;
+        }
+
+        Element element = getCaom2Element("custom");
+        addCoordAxis1DElement("axis", custom.getAxis(), element);
+        parent.addContent(element);
+    }
     /*
      * WCS Types
      */

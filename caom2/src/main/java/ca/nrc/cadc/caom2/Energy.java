@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,30 +70,28 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.types.Interval;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
  * @author pdowler
  */
 public class Energy implements Serializable {
-    private static final long serialVersionUID = 201202081400L;
-
-    public Interval bounds;
-
+    // mutable content
+    private Set<EnergyBand> emBand = new TreeSet<>(); // sorted enum
+    
+    public SampledInterval bounds;
     public Long dimension;
-
     public Double resolvingPower;
-
+    public Interval resolvingPowerBounds;
     public Double sampleSize;
-
     public String bandpassName;
-
-    public EnergyBand emBand;
-
     public EnergyTransition transition;
-
     public Double restwav;
 
     @Override
@@ -101,24 +99,22 @@ public class Energy implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append("Energy[");
         sb.append(bounds);
-        sb.append(",d=");
-        sb.append(dimension);
-        sb.append(",s=");
-        sb.append(sampleSize);
-        sb.append(",r=");
-        sb.append(resolvingPower);
-        sb.append(",b=");
-        sb.append(bandpassName);
-        sb.append(",e=");
-        sb.append(emBand);
-        sb.append(",t=");
-        sb.append(transition);
-        sb.append(",w=");
-        sb.append(restwav);
+        sb.append(",d=").append(dimension);
+        sb.append(",s=").append(sampleSize);
+        sb.append(",r=").append(resolvingPower);
+        sb.append(",rb=").append(resolvingPowerBounds);
+        sb.append(",b=").append(bandpassName);
+        sb.append(",e=").append(emBand);
+        sb.append(",t=").append(transition);
+        sb.append(",w=").append(restwav);
         sb.append("]");
         return sb.toString();
     }
 
+    public Set<EnergyBand> getEnergyBands() {
+        return emBand;
+    }
+    
     public Double getFreqWidth() {
         if (bounds == null) {
             return null;

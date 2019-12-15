@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,11 +73,15 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
+import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
+import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
@@ -94,7 +98,12 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.types.Circle;
+import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.Shape;
+import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -109,6 +118,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -127,6 +137,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Iterator;
@@ -153,7 +164,7 @@ public class ObservationReaderWriterTest
     
     public ObservationReaderWriterTest() { }
 
-    @Test
+    //@Test
     public void testTemplate()
     {
         try
@@ -258,7 +269,7 @@ public class ObservationReaderWriterTest
                 }
             }
             
-            File f = new File("sample-composite-caom23.xml");
+            File f = new File("sample-composite-caom24.xml");
             FileOutputStream fos = new FileOutputStream(f);
             ObservationWriter w = new ObservationWriter();
             w.write(o, fos);
@@ -366,6 +377,30 @@ public class ObservationReaderWriterTest
             assertTrue(caom23.contains(XmlConstants.CAOM2_3_NAMESPACE));
             obs23 = nonvalidatingReader.read(caom23);
             compareObservations(obs, obs23);
+            
+            ObservationWriter w24 = new ObservationWriter("caom2", XmlConstants.CAOM2_4_NAMESPACE, false);
+            bos = new ByteArrayOutputStream();
+            w24.write(obs, bos);
+            String caom24 = bos.toString();
+            log.info("caom-2.4 XML:\n" + caom24);
+            assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
+            Observation obs24 = nonvalidatingReader.read(caom24);
+            compareObservations(obs, obs24);
+            
+            // add maxLastModified and meta checksums
+            CaomUtil.assignLastModified(obs, new Date(t2), "maxLastModified");
+            digest = MessageDigest.getInstance("MD5");
+            ocs = obs.computeMetaChecksum(digest);
+            oacs = obs.computeAccMetaChecksum(digest);
+            CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
+            CaomUtil.assignMetaChecksum(obs, oacs, "accMetaChecksum");
+            bos = new ByteArrayOutputStream();
+            w24.write(obs, bos);
+            caom24 = bos.toString();
+            log.info("caom-2.4 XML:\n" + caom24);
+            assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
+            obs24 = nonvalidatingReader.read(caom24);
+            compareObservations(obs, obs24);
             
         }
         catch(Exception unexpected)
@@ -529,7 +564,7 @@ public class ObservationReaderWriterTest
         try
         {
             
-            for (int i = 1; i < 6; i++)
+            for (int i = 1; i <= 5; i++)
             {
                 log.info("testMinimalSimple: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
@@ -595,23 +630,39 @@ public class ObservationReaderWriterTest
             // revert to 2.0 compat
             CaomUtil.assignID(observation, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
             // nullify optional fields introduced after 2.0 so the comparison will work
+            observation.metaProducer = null;
             observation.requirements = null;
+            observation.target.targetID = null;
+            observation.getMetaReadGroups().clear();
             for (Plane p : observation.getPlanes())
             {
                 CaomUtil.assignID(p, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                p.metaProducer = null;
                 p.quality = null;
                 p.creatorID = null;
                 p.position = null;
                 p.energy = null;
                 p.time = null;
                 p.polarization = null;
+                p.custom = null;
+                p.observable = null;
+                p.metrics.sampleSNR = null;
+                p.getMetaReadGroups().clear();
+                p.getDataReadGroups().clear();
                 for (Artifact a : p.getArtifacts())
                 {
                     CaomUtil.assignID(a, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                    a.metaProducer = null;
                     a.contentChecksum = null;
+                    a.contentRelease = null;
+                    a.getContentReadGroups().clear();
                     for (Part pa : a.getParts()) {
                         CaomUtil.assignID(pa, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
+                        pa.metaProducer = null;
                         for (Chunk c : pa.getChunks()) {
+                            c.metaProducer = null;
+                            c.customAxis = null;
+                            c.custom = null;
                             CaomUtil.assignID(c, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
                         }
                     }
@@ -673,7 +724,7 @@ public class ObservationReaderWriterTest
                 log.info("testMinimalComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
-                CompositeObservation observation = getMinimalComposite(i, boundsIsCircle);
+                DerivedObservation observation = getMinimalComposite(i, boundsIsCircle);
                 
                 // Write empty elements.
                 testObservation(observation, true);
@@ -709,7 +760,7 @@ public class ObservationReaderWriterTest
                 log.info("testCompleteComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
-                CompositeObservation observation = getCompleteComposite(i, boundsIsCircle);
+                DerivedObservation observation = getCompleteComposite(i, boundsIsCircle);
                 
                 // Write empty elements.
                 testObservation(observation, true);
@@ -765,7 +816,7 @@ public class ObservationReaderWriterTest
         return instances.getSimpleObservationSetAlgorithm();
     }
     
-    protected CompositeObservation getMinimalComposite(int depth, boolean boundsIsCircle)
+    protected DerivedObservation getMinimalComposite(int depth, boolean boundsIsCircle)
         throws Exception
     {
         Caom2TestInstances instances = new Caom2TestInstances();
@@ -775,7 +826,7 @@ public class ObservationReaderWriterTest
         return instances.getCompositeObservation();
     }
     
-    protected CompositeObservation getCompleteComposite(int depth, boolean boundsIsCircle)
+    protected DerivedObservation getCompleteComposite(int depth, boolean boundsIsCircle)
         throws Exception
     {
         Caom2TestInstances instances = new Caom2TestInstances();
@@ -821,7 +872,7 @@ public class ObservationReaderWriterTest
         compareObservations(observation, returned);
     }
     
-    protected void compareEntity(CaomEntity expected, CaomEntity actual)
+    protected void compareEntity(CaomEntity expected, CaomEntity actual) throws NoSuchAlgorithmException
     {
         assertEquals("type", expected.getClass().getName(), actual.getClass().getName());
         String t = expected.getClass().getSimpleName();
@@ -846,13 +897,25 @@ public class ObservationReaderWriterTest
             assertNotNull(t+".accMetaChecksum", actual.getAccMetaChecksum());
             assertEquals(t+".accMetaChecksum", expected.getAccMetaChecksum(), actual.getAccMetaChecksum());
         }
-    
+        if (expected.metaProducer == null) {
+            assertNull(t+".metaProducer", actual.metaProducer);
+        } else {
+            assertEquals(t+".metaProducer", expected.metaProducer, actual.metaProducer);
+        }
+        
+        // verify checksums
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        URI expectedCS = expected.computeMetaChecksum(md5);
+        URI actualCS = actual.computeMetaChecksum(md5);
+        Assert.assertEquals(expected.getClass().getSimpleName() + ".metaChecksum recomp", expectedCS, actualCS);
+        
+        URI expectedAcc = actual.computeAccMetaChecksum(md5);
+        URI actualAcc = actual.computeAccMetaChecksum(md5);
+        Assert.assertEquals(actual.getClass().getSimpleName() + ".accMetaChecksum recomp", expectedAcc, actualAcc);
     }
     
-    protected void compareObservations(Observation expected, Observation actual)
+    protected void compareObservations(Observation expected, Observation actual) throws NoSuchAlgorithmException
     {
-        compareEntity(expected, actual);
-        
         assertNotNull(expected.getURI().getCollection());
         assertNotNull(actual.getURI().getCollection());
         assertEquals(expected.getURI().getCollection(), actual.getURI().getCollection());
@@ -866,20 +929,25 @@ public class ObservationReaderWriterTest
         assertEquals(expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
         
         assertEquals(expected.metaRelease, actual.metaRelease);
+        compareSets("observation.metaReadGroups", expected.getMetaReadGroups(), actual.getMetaReadGroups());
+        assertEquals(expected.getMetaReadGroups().size(), actual.getMetaReadGroups().size());
+        
         compareProposal(expected.proposal, actual.proposal);
         compareTarget(expected.target, actual.target);
         compareTargetPosition(expected.targetPosition, actual.targetPosition);
-        compareRequirements(expected.requirements, actual.requirements);
+        compare(expected.requirements, actual.requirements);
         compareTelescope(expected.telescope, actual.telescope);
         compareInstrument(expected.instrument, actual.instrument);
         compareEnvironment(expected.environment, actual.environment);
         
         comparePlanes(expected.getPlanes(), actual.getPlanes());
         
-        if (expected instanceof CompositeObservation && actual instanceof CompositeObservation)
+        if (expected instanceof DerivedObservation && actual instanceof DerivedObservation)
         {
-            compareMembers(((CompositeObservation) expected).getMembers(), ((CompositeObservation) actual).getMembers());
+            compareMembers(((DerivedObservation) expected).getMembers(), ((DerivedObservation) actual).getMembers());
         }
+        
+        compareEntity(expected, actual);
     }
     
     protected void compareProposal(Proposal expected, Proposal actual)
@@ -904,6 +972,7 @@ public class ObservationReaderWriterTest
         assertNotNull(expected);
         assertNotNull(actual);
         assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.targetID, actual.targetID);
         assertEquals(expected.type, actual.type);
         assertEquals(expected.redshift, actual.redshift);
         assertEquals(expected.getKeywords(), actual.getKeywords());
@@ -977,6 +1046,24 @@ public class ObservationReaderWriterTest
 
     }
     
+    protected void compareSets(String label, Set<URI> expected, Set<URI> actual) {
+         if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(label, expected);
+        assertNotNull(label, actual);
+        assertEquals(label + ".size", expected.size(), actual.size());
+        
+        Iterator<URI> actualIter = expected.iterator();
+        Iterator<URI> expectedIter = actual.iterator();
+        while (expectedIter.hasNext())
+        {
+            URI expectedUri = expectedIter.next();
+            URI actualUri = actualIter.next();
+            assertEquals(label + ".uri", expectedUri, actualUri);
+        }
+    }
+    
     protected void compareMembers(Set<ObservationURI> expected, Set<ObservationURI> actual)
     {
         if (expected == null && actual == null)
@@ -986,12 +1073,12 @@ public class ObservationReaderWriterTest
         assertNotNull(actual);
         assertEquals(expected.size(), actual.size());
         
-        Iterator actualIter = expected.iterator();
-        Iterator expectedIter = actual.iterator();
+        Iterator<ObservationURI> actualIter = expected.iterator();
+        Iterator<ObservationURI> expectedIter = actual.iterator();
         while (expectedIter.hasNext())
         {
-            ObservationURI expectedUri = (ObservationURI) expectedIter.next();
-            ObservationURI actualUri = (ObservationURI) actualIter.next();
+            ObservationURI expectedUri = expectedIter.next();
+            ObservationURI actualUri = actualIter.next();
             
             assertNotNull(expectedUri);
             assertNotNull(actualUri);
@@ -999,7 +1086,7 @@ public class ObservationReaderWriterTest
         }
     }
     
-    protected void comparePlanes(Set<Plane> expected, Set<Plane> actual)
+    protected void comparePlanes(Set<Plane> expected, Set<Plane> actual) throws NoSuchAlgorithmException
     {
         if (expected == null && actual == null)
             return;
@@ -1023,19 +1110,26 @@ public class ObservationReaderWriterTest
             assertEquals(expectedPlane.getProductID(), actualPlane.getProductID());
             assertEquals(expectedPlane.creatorID, actualPlane.creatorID);
             assertEquals(expectedPlane.metaRelease, actualPlane.metaRelease);
+            compareSets("plane.metaReadGroups", expectedPlane.getMetaReadGroups(), actualPlane.getMetaReadGroups());
             assertEquals(expectedPlane.dataRelease, actualPlane.dataRelease);
+            compareSets("plane.dataReadGroups", expectedPlane.getDataReadGroups(), actualPlane.getDataReadGroups());
             assertEquals(expectedPlane.dataProductType, actualPlane.dataProductType);
             assertEquals(expectedPlane.calibrationLevel, actualPlane.calibrationLevel);
+            compare(expectedPlane.metrics, actualPlane.metrics);
+            compare(expectedPlane.observable, actualPlane.observable);
             
             compareComputed(expectedPlane, actualPlane);
             
             compareDataQuality(expectedPlane.quality, actualPlane.quality);
             compareProvenance(expectedPlane.provenance, actualPlane.provenance);
+            
             compareArtifacts(expectedPlane.getArtifacts(), actualPlane.getArtifacts());
+            
+            compareEntity(expectedPlane, actualPlane);
         }
     }
     
-    protected void compareRequirements(Requirements expected, Requirements actual)
+    protected void compare(Requirements expected, Requirements actual)
     {
         if (expected == null && actual == null)
             return;
@@ -1046,13 +1140,51 @@ public class ObservationReaderWriterTest
         assertEquals(expected.getFlag(), actual.getFlag());
     }
     
+    protected void compare(Metrics expected, Metrics actual)
+    {
+        if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(expected);
+        assertNotNull(actual);
+        
+        compare(expected.background, actual.background);
+        compare(expected.backgroundStddev, actual.backgroundStddev);
+        compare(expected.fluxDensityLimit, actual.fluxDensityLimit);
+        compare(expected.magLimit, actual.magLimit);
+        compare(expected.sourceNumberDensity, actual.sourceNumberDensity);
+        compare(expected.sampleSNR, actual.sampleSNR);
+    }
+    
+    protected void compare(Double e, Double a) {
+        if (e == null)
+            Assert.assertNull(a);
+        else
+            Assert.assertEquals(e, a, 0.0);
+    }
+     
+     
+     
+    protected void compare(Observable expected, Observable actual)
+    {
+        if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(expected);
+        assertNotNull(actual);
+        
+        assertEquals(expected.getUCD(), actual.getUCD());
+    }
+    
     protected void compareComputed(Plane expected, Plane actual)
     {
         compare(expected.position, actual.position);
         compare(expected.energy, actual.energy);
         compare(expected.time, actual.time);
         compare(expected.polarization, actual.polarization);
+        compare(expected.custom, actual.custom);
     }
+    
     protected void compare(Position expected, Position actual)
     {
         if (expected == null)
@@ -1062,9 +1194,10 @@ public class ObservationReaderWriterTest
         }
         if (expected.bounds == null)
             Assert.assertNull(actual.bounds);
-        //else
-        //    throw new UnsupportedOperationException("compare: non-null Position.bounds");
-        
+        else {
+            compare(expected.bounds, actual.bounds);
+        }
+            
         if (expected.dimension == null)
             Assert.assertNull(actual.dimension);
         else
@@ -1076,6 +1209,9 @@ public class ObservationReaderWriterTest
             Assert.assertNull(actual.resolution);
         else
             Assert.assertEquals(expected.resolution, actual.resolution);
+        
+        compare(expected.resolutionBounds, actual.resolutionBounds);
+        
         if (expected.sampleSize == null)
             Assert.assertNull(actual.sampleSize);
         else
@@ -1085,6 +1221,7 @@ public class ObservationReaderWriterTest
         else
             Assert.assertEquals(expected.timeDependent, actual.timeDependent);
     }
+    
     protected void compare(Energy expected, Energy actual)
     {
         if (expected == null)
@@ -1098,14 +1235,28 @@ public class ObservationReaderWriterTest
         {
             Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
             Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
-            // TODO: compare samples when read/write includes them
+            Iterator<Interval> esi = expected.bounds.getSamples().iterator();
+            Iterator<Interval> asi = expected.bounds.getSamples().iterator();
+            while (esi.hasNext()) {
+                Interval ei = esi.next();
+                Interval ai = asi.next();
+                compare(ei, ai);
+            }
         }
         
         Assert.assertEquals(expected.dimension, actual.dimension);
         Assert.assertEquals(expected.resolvingPower, actual.resolvingPower);
+        compare(expected.resolvingPowerBounds, actual.resolvingPowerBounds);
         Assert.assertEquals(expected.sampleSize, actual.sampleSize);
         Assert.assertEquals(expected.bandpassName, actual.bandpassName);
-        Assert.assertEquals(expected.emBand, actual.emBand);
+        
+        Assert.assertEquals("energyBands", expected.getEnergyBands().size(), actual.getEnergyBands().size());
+        Iterator<EnergyBand> ebs = expected.getEnergyBands().iterator();
+        Iterator<EnergyBand> abs = actual.getEnergyBands().iterator();
+        while(ebs.hasNext()) {
+            Assert.assertEquals(ebs.next(), abs.next());
+        }
+        
         Assert.assertEquals(expected.restwav, actual.restwav);
         if (expected.transition == null)
             Assert.assertNull(actual.transition);
@@ -1115,6 +1266,7 @@ public class ObservationReaderWriterTest
             Assert.assertEquals(expected.transition.getTransition(), actual.transition.getTransition());
         }
     }
+    
     protected void compare(Time expected, Time actual)
     {
         if (expected == null)
@@ -1128,11 +1280,18 @@ public class ObservationReaderWriterTest
         {
             Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
             Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
-            // TODO: compare samples when read/write includes them
+            Iterator<Interval> esi = expected.bounds.getSamples().iterator();
+            Iterator<Interval> asi = expected.bounds.getSamples().iterator();
+            while (esi.hasNext()) {
+                Interval ei = esi.next();
+                Interval ai = asi.next();
+                compare(ei, ai);
+            }
         }
         
         Assert.assertEquals(expected.dimension, actual.dimension);
         Assert.assertEquals(expected.resolution, actual.resolution);
+        compare(expected.resolutionBounds, actual.resolutionBounds);
         Assert.assertEquals(expected.sampleSize, actual.sampleSize);
         Assert.assertEquals(expected.exposure, actual.exposure);
     }
@@ -1158,6 +1317,77 @@ public class ObservationReaderWriterTest
                 Assert.assertEquals(ei.next(), ai.next());
             }
         }
+    }
+    
+    protected void compare(CustomAxis expected, CustomAxis actual)
+    {
+        if (expected == null)
+        {
+            Assert.assertNull(actual);
+            return;
+        }
+        Assert.assertNotNull("plane.custom", actual);
+        Assert.assertEquals("CustomAxis.ctype", expected.getCtype(), actual.getCtype());
+        
+        if (expected.bounds == null)
+            Assert.assertNull(actual.bounds);
+        else
+        {
+            Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
+            Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
+            Iterator<Interval> esi = expected.bounds.getSamples().iterator();
+            Iterator<Interval> asi = expected.bounds.getSamples().iterator();
+            while (esi.hasNext()) {
+                Interval ei = esi.next();
+                Interval ai = asi.next();
+                Assert.assertEquals(ei.getLower(), ai.getLower(), 0.0);
+                Assert.assertEquals(ei.getUpper(), ai.getUpper(), 0.0);
+            }
+        }
+        
+        Assert.assertEquals(expected.dimension, actual.dimension);
+        
+    }
+    
+    protected void compare(Shape expected, Shape actual) {
+        assertEquals(expected.getClass(), actual.getClass());
+        if (expected instanceof Circle) {
+            Circle ec = (Circle) expected;
+            Circle ac = (Circle) actual;
+            assertEquals(ec.getCenter().cval1, ac.getCenter().cval1, 0.0);
+            assertEquals(ec.getCenter().cval2, ac.getCenter().cval2, 0.0);
+            assertEquals(ec.getRadius(), ac.getRadius(), 0.0);
+        } else if (expected instanceof Polygon) {
+            Polygon ep = (Polygon) expected;
+            Polygon ap = (Polygon) actual;
+            assertEquals(ep.getPoints().size(), ap.getPoints().size());
+            for (int i = 0; i < ep.getPoints().size(); i++) {
+                Point ept = ep.getPoints().get(i);
+                Point apt = ap.getPoints().get(i);
+                assertEquals(ept.cval1, apt.cval1, 0.0);
+                assertEquals(ept.cval2, apt.cval2, 0.0);
+            }
+            assertEquals(ep.getSamples().getVertices().size(), ap.getSamples().getVertices().size());
+            for (int i = 0; i < ep.getSamples().getVertices().size(); i++) {
+                Vertex ev = ep.getSamples().getVertices().get(i);
+                Vertex av = ap.getSamples().getVertices().get(i);
+                assertEquals(ev.cval1, av.cval1, 0.0);
+                assertEquals(ev.cval2, av.cval2, 0.0);
+                assertEquals(ev.getType(), av.getType());
+            }
+        } else {
+            throw new RuntimeException("TEST BUG: unexpected shape type: " + expected.getClass().getName());
+        }
+    }
+    
+    protected void compare(Interval expected, Interval actual) {
+        if (expected == null)
+        {
+            Assert.assertNull(actual);
+            return;
+        }
+        Assert.assertEquals(expected.getLower(), actual.getLower(), 0.0);
+        Assert.assertEquals(expected.getUpper(), actual.getUpper(), 0.0);
     }
     
     protected void compareDataQuality(DataQuality expected, DataQuality actual)
@@ -1210,7 +1440,7 @@ public class ObservationReaderWriterTest
         }
     }
     
-    protected void compareArtifacts(Set<Artifact> expected, Set<Artifact> actual)
+    protected void compareArtifacts(Set<Artifact> expected, Set<Artifact> actual) throws NoSuchAlgorithmException
     {
         if (expected == null && actual == null)
             return;
@@ -1229,8 +1459,6 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedArtifact);
             assertNotNull(actualArtifact);
 
-            compareEntity(expectedArtifact, actualArtifact);
-            
             assertEquals(expectedArtifact.getURI(), actualArtifact.getURI());
             assertEquals(expectedArtifact.getProductType(), actualArtifact.getProductType());
             assertEquals(expectedArtifact.getReleaseType(), actualArtifact.getReleaseType());
@@ -1242,11 +1470,16 @@ public class ObservationReaderWriterTest
                 assertEquals(expectedArtifact.contentChecksum, actualArtifact.contentChecksum);
             }
 
+            assertEquals(expectedArtifact.contentRelease, actualArtifact.contentRelease);
+            compareSets("Artifact.contentReadGroups", expectedArtifact.getContentReadGroups(), actualArtifact.getContentReadGroups());
+            
             compareParts(expectedArtifact.getParts(), expectedArtifact.getParts());
+            
+            compareEntity(expectedArtifact, actualArtifact);
         }
     }
     
-    protected void compareParts(Set<Part> expected, Set<Part> actual)
+    protected void compareParts(Set<Part> expected, Set<Part> actual) throws NoSuchAlgorithmException
     {
         if (expected == null && actual == null)
             return;
@@ -1265,16 +1498,16 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedPart);
             assertNotNull(actualPart);
 
-            compareEntity(expectedPart, actualPart);
-            
             assertEquals(expectedPart.getName(), actualPart.getName());
             assertEquals(expectedPart.productType, actualPart.productType);
-            
+
             compareChunks(expectedPart.getChunks(), actualPart.getChunks());
+            
+            compareEntity(expectedPart, actualPart);
         }
     }
     
-    protected void compareChunks(Set<Chunk> expected, Set<Chunk> actual)
+    protected void compareChunks(Set<Chunk> expected, Set<Chunk> actual) throws NoSuchAlgorithmException
     {
         if (expected == null && actual == null)
             return;
@@ -1293,8 +1526,6 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedChunk);
             assertNotNull(actualChunk);
 
-            compareEntity(expectedChunk, actualChunk);
-            
             assertEquals(expectedChunk.productType, actualChunk.productType);
             assertEquals(expectedChunk.naxis, actualChunk.naxis);
             assertEquals(expectedChunk.observableAxis, actualChunk.observableAxis);
@@ -1303,12 +1534,16 @@ public class ObservationReaderWriterTest
             assertEquals(expectedChunk.energyAxis, actualChunk.energyAxis);
             assertEquals(expectedChunk.timeAxis, actualChunk.timeAxis);
             assertEquals(expectedChunk.polarizationAxis, actualChunk.polarizationAxis);
+            assertEquals(expectedChunk.customAxis, actualChunk.customAxis);
             
             compareObservableAxis(expectedChunk.observable, actualChunk.observable);
             compareSpatialWCS(expectedChunk.position, actualChunk.position);
             compareSpectralWCS(expectedChunk.energy, actualChunk.energy);
             compareTemporalWCS(expectedChunk.time, actualChunk.time);
             comparePolarizationWCS(expectedChunk.polarization, actualChunk.polarization);
+            compare(expectedChunk.custom, actualChunk.custom);
+            
+            compareEntity(expectedChunk, actualChunk);
         }
     }
     
@@ -1373,6 +1608,17 @@ public class ObservationReaderWriterTest
     }
     
     protected void comparePolarizationWCS(PolarizationWCS expected, PolarizationWCS actual)
+    {
+        if (expected == null && actual == null)
+            return;
+        
+        assertNotNull(expected);
+        assertNotNull(actual);
+        
+        compareCoordAxis1D(expected.getAxis(), actual.getAxis());
+    }
+    
+    protected void compare(CustomWCS expected, CustomWCS actual)
     {
         if (expected == null && actual == null)
             return;

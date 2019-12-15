@@ -80,20 +80,30 @@ public class Axis implements Serializable {
     private static final long serialVersionUID = 201202091500L;
 
     // immutable state
-    private String ctype;
-    private String cunit;
+    private final String ctype;
+    
+    public String cunit;
 
-    public static final String[] CTOR_UTYPES = { "ctype", "cunit" };
-
+    public static final String[] CTOR_UTYPES = { "ctype" };
+    
     /**
-     * Constructor.
+     * Constructor
+     * @param ctype
+     */
+    public Axis(String ctype) {
+        CaomValidator.assertNotEmpty(getClass(), "ctype", ctype);
+        this.ctype = ctype;
+    } 
+    
+    /**
+     * Convenience constructor. The only known case where CUNIT is null is for
+     * CTYPE = STOKES in PolarizationWCS.
      * 
      * @param ctype
-     * @param cunit
+     * @param cunit 
      */
     public Axis(String ctype, String cunit) {
-        CaomValidator.assertNotNull(getClass(), "ctype", ctype);
-        // CaomValidator.assertNotNull(getClass(), "cunit", cunit);
+        CaomValidator.assertNotEmpty(getClass(), "ctype", ctype);
         this.ctype = ctype;
         this.cunit = cunit;
     }
@@ -108,6 +118,7 @@ public class Axis implements Serializable {
         return ctype;
     }
 
+    @Deprecated
     public String getCunit() {
         return cunit;
     }

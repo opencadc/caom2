@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -66,15 +66,17 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
@@ -107,8 +109,8 @@ import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.SubInterval;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -122,6 +124,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -159,15 +162,27 @@ public class Caom2TestInstances
     private boolean complete;
     private boolean boundsIsCircle;
     
-    public static String collection = "collection";
+     // using TEST collection so the permanent test document can be re-used in caom2-test-repo
+    public static String collection = "TEST";
     public static String observationID = "observationID";
-    public static String productID = "productId";
+    public static String productID = "productID";
     public static List<String> keywords;
+    public static List<URI> metaGroups;
+    public static List<URI> dataGroups;
+    
     static
     {
         keywords = new ArrayList<String>();
         keywords.add("keyword1");
         keywords.add("keyword2");
+        
+        metaGroups = new ArrayList<URI>();
+        metaGroups.add(URI.create("ivo://cadc.nrc.ca/gms?A"));
+        metaGroups.add(URI.create("ivo://cadc.nrc.ca/gms?B"));
+        
+        dataGroups = new ArrayList<URI>();
+        dataGroups.add(URI.create("ivo://cadc.nrc.ca/gms?C"));
+        dataGroups.add(URI.create("ivo://cadc.nrc.ca/gms?D"));
     }
     public static Date ivoaDate = Calendar.getInstance().getTime();
 
@@ -205,9 +220,11 @@ public class Caom2TestInstances
         SimpleObservation observation = new SimpleObservation(collection, observationID);
         if (complete)
         {
+            observation.metaProducer = URI.create("test:observation/rountrip-1.0");
             observation.type = "OBJECT";
             observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
+            observation.getMetaReadGroups().addAll(metaGroups);
             observation.sequenceNumber = new Integer(123);
             observation.proposal = getProposal();
             observation.target = getTarget();
@@ -229,9 +246,11 @@ public class Caom2TestInstances
         SimpleObservation observation = new SimpleObservation(collection, observationID, getAlgorithm());
         if (complete)
         {
+            observation.metaProducer = URI.create("test:observation/rountrip-1.0");
             observation.type = "OBJECT";
             observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
+            observation.getMetaReadGroups().addAll(metaGroups);
             observation.sequenceNumber = new Integer(123);
             observation.proposal = getProposal();
             observation.target = getTarget();
@@ -247,15 +266,17 @@ public class Caom2TestInstances
         return observation;
     }
     
-    public CompositeObservation getCompositeObservation()
+    public DerivedObservation getCompositeObservation()
         throws Exception
     {
-        CompositeObservation observation = new CompositeObservation(collection, observationID, getAlgorithm());
+        DerivedObservation observation = new DerivedObservation(collection, observationID, getAlgorithm());
         if (complete)
         {
+            observation.metaProducer = URI.create("test:observation/rountrip-1.0");
             observation.type = "field";
             observation.intent = ObservationIntentType.SCIENCE;
             observation.metaRelease = ivoaDate;
+            observation.getMetaReadGroups().addAll(metaGroups);
             observation.sequenceNumber = new Integer(123);
             observation.proposal = getProposal();
             observation.target = getTarget();
@@ -292,6 +313,7 @@ public class Caom2TestInstances
     protected Target getTarget()
     {
         Target target = new Target("targetName");
+        target.targetID = URI.create("naif:1701");
         target.type = TargetType.OBJECT;
         target.standard = Boolean.FALSE;
         target.redshift = 1.5;
@@ -342,6 +364,7 @@ public class Caom2TestInstances
     {
         Set<ObservationURI> members = new TreeSet<ObservationURI>();
         members.add(new ObservationURI(new URI("caom:foo/bar")));
+        members.add(new ObservationURI(new URI("caom:foo/baz")));
         return members;
     }
     
@@ -355,9 +378,12 @@ public class Caom2TestInstances
             Plane p = new Plane("productID"+i);
             if (complete)
             {
-                p.creatorID = new URI("ivo://example.org/foo?"+p.getProductID());
+                p.metaProducer = URI.create("test:plane/rountrip-1.0");
+                p.creatorID = new URI("ivo://example.org/foo?" + p.getProductID());
                 p.metaRelease = ivoaDate;
+                p.getMetaReadGroups().addAll(metaGroups);
                 p.dataRelease = ivoaDate;
+                p.getDataReadGroups().addAll(dataGroups);
                 p.dataProductType = DataProductType.IMAGE;
                 p.calibrationLevel = CalibrationLevel.PRODUCT;
                 p.provenance = getProvenance();
@@ -368,11 +394,13 @@ public class Caom2TestInstances
             
                 p.energy = new Energy();
                 p.energy.bandpassName = "V";
-                p.energy.bounds = new Interval(400e-6, 900e-6);
-                p.energy.bounds.getSamples().add(new SubInterval(400e-6, 500e-6));
-                p.energy.bounds.getSamples().add(new SubInterval(800e-6, 900e-6));
+                p.energy.bounds = new SampledInterval(400e-6, 900e-6);
+                p.energy.bounds.getSamples().add(new Interval(400e-6, 500e-6));
+                p.energy.bounds.getSamples().add(new Interval(800e-6, 900e-6));
                 p.energy.dimension = 2l;
-                p.energy.emBand = EnergyBand.OPTICAL;
+                for (EnergyBand eb : EnergyBand.values()) {
+                    p.energy.getEnergyBands().add(eb);
+                }
                 p.energy.resolvingPower = 2.0;
                 p.energy.restwav = 600e-9;
                 p.energy.sampleSize = 100e-6;
@@ -408,18 +436,19 @@ public class Caom2TestInstances
                 p.position.timeDependent = false;
 
                 p.time = new Time();
-                p.time.bounds = new Interval(50000.25, 50000.75);
-                p.time.bounds.getSamples().add(new SubInterval(50000.25, 50000.40));
-                p.time.bounds.getSamples().add(new SubInterval(50000.50, 50000.75));
+                p.time.bounds = new SampledInterval(50000.25, 50000.75);
+                p.time.bounds.getSamples().add(new Interval(50000.25, 50000.40));
+                p.time.bounds.getSamples().add(new Interval(50000.50, 50000.75));
                 p.time.dimension = 2l;
                 p.time.exposure = 666.0;
                 p.time.resolution = 0.5;
                 p.time.sampleSize = 0.15;
-
-                //p.energy = null;
-                //p.polarization = null;
-                //p.position = null;
-                //p.time = null;
+                
+                p.custom = new CustomAxis("FARADAY");
+                p.custom.bounds = new SampledInterval(10.0, 20.0);
+                p.custom.bounds.getSamples().add(new Interval(10.0, 13.0));
+                p.custom.bounds.getSamples().add(new Interval(17.0, 20.0));
+                p.custom.dimension = 10L;
             }
             if (depth > 2)
                 p.getArtifacts().addAll(getArtifacts());
@@ -452,6 +481,7 @@ public class Caom2TestInstances
         met.backgroundStddev = 0.2;
         met.fluxDensityLimit = 1.0e-8;
         met.magLimit = 27.5;
+        met.sampleSNR = 2.7;
         return met;
     }
     
@@ -474,9 +504,12 @@ public class Caom2TestInstances
             Artifact artifact = new Artifact(new URI("ad:foo/bar"+i), ProductType.SCIENCE, ReleaseType.DATA);
             if (complete)
             {
+                artifact.metaProducer = URI.create("test:artifact/rountrip-1.0");
                 artifact.contentType = "application/fits";
                 artifact.contentLength = 12345L;
-                artifact.contentChecksum = new URI("md5:1234567");
+                artifact.contentChecksum = new URI("md5:d41d8cd98f00b204e9800998ecf8427e");
+                artifact.contentRelease = ivoaDate;
+                artifact.getContentReadGroups().addAll(dataGroups);
             }
             if (depth > 3)
                 artifact.getParts().addAll(getParts());
@@ -495,6 +528,7 @@ public class Caom2TestInstances
             Part part = new Part("x"+i);
             if (complete)
             {
+                part.metaProducer = URI.create("test:part/rountrip-1.0");
                 part.productType = ProductType.SCIENCE;
             }
             if (depth > 4)
@@ -514,19 +548,22 @@ public class Caom2TestInstances
             Chunk chunk = new Chunk();
             if (complete)
             {
+                chunk.metaProducer = URI.create("test:chunk/rountrip-1.0");
                 chunk.naxis = 5;
-                chunk.observableAxis = 1;
                 chunk.positionAxis1 = 1;
                 chunk.positionAxis2 = 2;
                 chunk.energyAxis = 3;
                 chunk.timeAxis = 4;
                 chunk.polarizationAxis = 5;
+                chunk.observableAxis = 6;
+                chunk.customAxis = 7;
 
                 chunk.observable = getObservableAxis();
                 chunk.position = getSpatialWCS();
                 chunk.energy = getSpectralWCS();
                 chunk.time = getTemporalWCS();
                 chunk.polarization = getPolarizationWCS();
+                chunk.custom = getCustomWCS();
             }
             chunks.add(chunk);
         }
@@ -562,11 +599,11 @@ public class Caom2TestInstances
         throws Exception
     {
         CoordAxis1D axis = getCoordAxis1D(true);
-        SpectralWCS energy = new SpectralWCS(axis, "energy specsys");
+        SpectralWCS energy = new SpectralWCS(axis, "BARCENT");
         if (complete)
         {    
-            energy.ssysobs = "energy ssysobs";
-            energy.ssyssrc = "energy ssyssrc";
+            energy.ssysobs = "BARCENT";
+            energy.ssyssrc = "BARCENT";
             energy.restfrq = 1.0;
             energy.restwav = 2.0;
             energy.velosys = 3.0;
@@ -613,6 +650,21 @@ public class Caom2TestInstances
         return new PolarizationWCS(coordAxis1D);
     }
     
+    protected CustomWCS getCustomWCS() {
+        Axis axis = new Axis("RM");
+        axis.cunit = "rad/m**2";
+        CoordAxis1D coordAxis1D = new CoordAxis1D(axis);
+        if (complete)
+        {
+            coordAxis1D.error = new CoordError(1.0e-4, 1.0e-6);
+            coordAxis1D.range = new CoordRange1D(new RefCoord(0.5, 1.0), new RefCoord(10.5, 4.0));
+            coordAxis1D.bounds = new CoordBounds1D();
+            coordAxis1D.bounds.getSamples().add(coordAxis1D.range);
+            coordAxis1D.function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 1.0));
+        }
+        return new CustomWCS(coordAxis1D);
+    }
+    
     protected Slice getSlice()
     {
         Axis axis = new Axis("sliceCtype", "sliceCunit");
@@ -623,20 +675,17 @@ public class Caom2TestInstances
     {
         Axis axis;
         if (nrg)
-            axis = new Axis("WAV", "m");
+            axis = new Axis("WAVE", "m");
         else
             axis = new Axis("TIME", "d");
         CoordAxis1D coordAxis1D = new CoordAxis1D(axis);
         if (complete)
         {
             coordAxis1D.error = new CoordError(1.0, 1.5);
-            coordAxis1D.range = new CoordRange1D(new RefCoord(2.0, 2.5), new RefCoord(3.0, 3.5));
-            coordAxis1D.function = new CoordFunction1D(4L, 4.5, new RefCoord(5.0, 5.5));
-            
-            CoordBounds1D bounds = new CoordBounds1D();
-            bounds.getSamples().add(new CoordRange1D(new RefCoord(6.0, 6.5), new RefCoord(7.0, 7.5)));
-            bounds.getSamples().add(new CoordRange1D(new RefCoord(8.0, 8.5), new RefCoord(9.0, 9.5)));
-            coordAxis1D.bounds = bounds;
+            coordAxis1D.range = new CoordRange1D(new RefCoord(0.5, 100.0), new RefCoord(4.5, 140.0));
+            coordAxis1D.bounds = new CoordBounds1D();
+            coordAxis1D.bounds.getSamples().add(coordAxis1D.range);
+            coordAxis1D.function = new CoordFunction1D(4L, 10.0, new RefCoord(0.5, 100.0)); // [100,140] in steps of 10u
         }
         return coordAxis1D;
     }

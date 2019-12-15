@@ -153,26 +153,4 @@ public class ProductTypeTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
-    @Test
-    public void testChecksum()
-    {
-        try
-        {
-            // correctness is a 100% duplicate of the enum code itself, but
-            // we can test uniqueness
-            Set<Integer> values = new TreeSet<Integer>();
-            for (ProductType c : ProductType.values())
-            {
-                int i = c.checksum();
-                boolean added = values.add(i);
-                Assert.assertTrue("added " + i, added);
-            }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
 }

@@ -96,14 +96,14 @@ public class IntervalTest
     {
         try
         {
-            List<SubInterval> subs = new ArrayList<SubInterval>();
-            subs.add(new SubInterval(1.0, 2.0));
-            Interval i1 = new Interval(1.0, 2.0, subs);
+            List<Interval> subs = new ArrayList<Interval>();
+            subs.add(new Interval(1.0, 2.0));
+            SampledInterval i1 = new SampledInterval(1.0, 2.0, subs);
             
             subs.clear();
-            subs.add(new SubInterval(1.0, 1.2));
-            subs.add(new SubInterval(1.8, 2.0));
-            Interval i2 = new Interval(1.0, 2.0, subs);
+            subs.add(new Interval(1.0, 1.2));
+            subs.add(new Interval(1.8, 2.0));
+            SampledInterval i2 = new SampledInterval(1.0, 2.0, subs);
         }
         catch(Exception unexpected)
         {
@@ -120,7 +120,7 @@ public class IntervalTest
             try
             {
                 
-                Interval i = new Interval(1.0, 2.0, null);
+                SampledInterval i = new SampledInterval(1.0, 2.0, null);
                 Assert.fail("expected IllegalArgumentException");
             }
             catch(IllegalArgumentException expected)
@@ -128,22 +128,11 @@ public class IntervalTest
                 log.info("caught expected: " + expected);
             }
             
-            List<SubInterval> subs = new ArrayList<SubInterval>();
+            List<Interval> subs = new ArrayList<Interval>();
             
             try
             {
-                Interval i = new Interval(1.0, 2.0, subs);
-                Assert.fail("expected IllegalArgumentException");
-            }
-            catch(IllegalArgumentException expected)
-            {
-                log.info("caught expected: " + expected);
-            }
-            
-            try
-            {
-                subs.add(new SubInterval(0.0, 2.0));
-                Interval i = new Interval(1.0, 2.0, subs);
+                SampledInterval i = new SampledInterval(1.0, 2.0, subs);
                 Assert.fail("expected IllegalArgumentException");
             }
             catch(IllegalArgumentException expected)
@@ -153,9 +142,8 @@ public class IntervalTest
             
             try
             {
-                subs.clear();
-                subs.add(new SubInterval(1.0, 3.0));
-                Interval i = new Interval(1.0, 2.0, subs);
+                subs.add(new Interval(0.0, 2.0));
+                SampledInterval i = new SampledInterval(1.0, 2.0, subs);
                 Assert.fail("expected IllegalArgumentException");
             }
             catch(IllegalArgumentException expected)
@@ -166,9 +154,21 @@ public class IntervalTest
             try
             {
                 subs.clear();
-                subs.add(new SubInterval(1.0, 1.6));
-                subs.add(new SubInterval(1.4, 2.0));
-                Interval i = new Interval(1.0, 2.0, subs);
+                subs.add(new Interval(1.0, 3.0));
+                SampledInterval i = new SampledInterval(1.0, 2.0, subs);
+                Assert.fail("expected IllegalArgumentException");
+            }
+            catch(IllegalArgumentException expected)
+            {
+                log.info("caught expected: " + expected);
+            }
+            
+            try
+            {
+                subs.clear();
+                subs.add(new Interval(1.0, 1.6));
+                subs.add(new Interval(1.4, 2.0));
+                SampledInterval i = new SampledInterval(1.0, 2.0, subs);
                 Assert.fail("expected IllegalArgumentException");
             }
             catch(IllegalArgumentException expected)

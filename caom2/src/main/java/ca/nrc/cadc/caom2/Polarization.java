@@ -77,10 +77,7 @@ import java.util.List;
  * @author pdowler
  */
 public class Polarization implements Serializable {
-    private static final long serialVersionUID = 201202081400L;
-
     public List<PolarizationState> states;
-
     public Long dimension;
 
     @Override

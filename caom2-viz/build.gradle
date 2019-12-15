@@ -15,7 +15,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '0.3.1'
+version = '0.4'
 
 mainClassName = 'ca.nrc.cadc.caom2.viz.Main'
 
@@ -24,8 +24,8 @@ dependencies {
     compile 'org.jdom:jdom2:[2,3)'
     
     compile 'org.opencadc:cadc-util:[1,2)'
-    compile 'org.opencadc:caom2:[2.3.4,)'
-    compile 'org.opencadc:caom2-compute:[2.3.3,)'
+    compile 'org.opencadc:caom2:[2.4.0,2.5.0)'
+    compile 'org.opencadc:caom2-compute:[2.4.0,2.5.0)'
     
     testCompile 'junit:junit:[4,5)'
 }

@@ -112,7 +112,7 @@ public class DataProductTypeTest
         {
             for (DataProductType c : DataProductType.values())
             {
-                log.debug("testing: " + c);
+                log.debug("roundtrip: " + c);
                 String s = c.getValue();
                 DataProductType c2 = DataProductType.toValue(s);
                 log.info(c + " -> " + s + " -> " + c2);
@@ -143,12 +143,7 @@ public class DataProductTypeTest
     {
         try
         {
-            DataProductType catalog = DataProductType.toValue("catalog");
-            Assert.assertEquals(DataProductType.CATALOG, catalog);
-            
-            // the wrong value
-            DataProductType eventlist = DataProductType.toValue("eventlist");
-            Assert.assertEquals(DataProductType.EVENT, eventlist);
+           // no supported values
         }
         catch(Exception unexpected)
         {
@@ -167,28 +162,6 @@ public class DataProductTypeTest
             String s2 = c2.getValue();
             log.info(s1 + " == " + s2);
             Assert.assertEquals(s1, s2);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testChecksum()
-    {
-        try
-        {
-            // correctness is a 100% duplicate of the enum code itself, but
-            // we can test uniqueness
-            Set<Integer> values = new TreeSet<Integer>();
-            for (DataProductType c : DataProductType.values())
-            {
-                int i = c.checksum();
-                boolean added = values.add(i);
-                Assert.assertTrue("added " + i, added);
-            }
         }
         catch(Exception unexpected)
         {

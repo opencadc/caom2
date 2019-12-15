@@ -12,10 +12,10 @@ import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
@@ -38,7 +38,21 @@ public class ComputeDataGenerator {
     EnergyTransition TRANSITION = new EnergyTransition("H", "alpha");
 
     private TimeUtilTest tiTest = new TimeUtilTest();
+    private CustomAxisUtilTest cuTest = new CustomAxisUtilTest();
 
+    Chunk getFreshChunk() {
+        Chunk testChunk = new Chunk();
+
+        // Define some sort of axis set that may or may not make sense in reality,
+        // but will pass validation
+        testChunk.naxis = 5;
+        testChunk.observableAxis = 1;
+        testChunk.positionAxis1 = 2;
+        testChunk.positionAxis2 = 3;
+        testChunk.timeAxis = 4;
+        testChunk.customAxis = 5;
+        return testChunk;
+    }
 
     Plane getTestPlane(ProductType ptype)
         throws URISyntaxException {
@@ -47,7 +61,7 @@ public class ComputeDataGenerator {
         plane.getArtifacts().add(na);
         Part np = new Part("baz");
         na.getParts().add(np);
-        np.getChunks().add(new Chunk());
+        np.getChunks().add(getFreshChunk());
         return plane;
     }
 
@@ -119,12 +133,11 @@ public class ComputeDataGenerator {
 
     TemporalWCS mkGoodTemporalWCS() {
         double px = 0.5;
-        double sx = 54321.0;
+        double sx = 1.0;
         double nx = 200.0;
-        double ds = 0.01;
+        double ds = 1;
 
         return tiTest.getTestFunction(true, px, sx * nx * ds, nx, ds);
-
     }
 
     TemporalWCS mkBadTemporalWCSCunit() {
@@ -181,12 +194,41 @@ public class ComputeDataGenerator {
         CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES", null));
         PolarizationWCS w = new PolarizationWCS(axis);
 
-
         c1 = new RefCoord(0.5, zeroErr);
         c2 = new RefCoord(1.5, zeroErr);
         w.getAxis().range = new CoordRange1D(c1, c2);
 
         return w;
     }
+
+    CustomWCS mkGoodCustomWCS() {
+        double px = 0.5;
+        double sx = 1.0;
+        double nx = 200.0;
+        double ds = 1;
+
+        return cuTest.getTestFunction(px, sx * nx * ds, nx, ds);
+    }
+
+    CustomWCS mkBadCtypeCustomWCS() {
+        RefCoord c1 = new RefCoord(0.5, 10.0);
+        RefCoord c2 = new RefCoord(100.5, 20.0);
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis("BAD_CTYPE", CustomAxisUtilTest.TEST_CUNIT));
+        CustomWCS wcs = new CustomWCS(axis);
+        wcs.getAxis().range = new CoordRange1D(c1, c2);
+        return wcs;
+    }
+
+    CustomWCS mkBadCunitCustomWCS() {
+        RefCoord c1 = new RefCoord(0.5, 10.0);
+        RefCoord c2 = new RefCoord(100.5, 20.0);
+
+        CoordAxis1D axis = new CoordAxis1D(new Axis(CustomAxisUtilTest.TEST_RM_CTYPE, "HelloKitty"));
+        CustomWCS wcs = new CustomWCS(axis);
+        wcs.getAxis().range = new CoordRange1D(c1, c2);
+        return wcs;
+    }
+
 
 }

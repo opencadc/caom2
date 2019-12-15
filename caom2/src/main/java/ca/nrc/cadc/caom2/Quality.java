@@ -69,38 +69,37 @@
 
 package ca.nrc.cadc.caom2;
 
+import java.net.URI;
+
 /**
  *
  * @author pdowler
  */
-public enum Quality implements CaomEnum<String> {
-    JUNK("junk");
+public class Quality extends VocabularyTerm implements CaomEnum<String> {
+    
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/Status");
+    
+    public static final Quality JUNK = new Quality("junk");
 
-    private final String value;
+    public static final Quality[] values() { 
+        return new Quality[] { JUNK };
+    }
 
     private Quality(String value) {
-        this.value = value;
+        super(CAOM, value, true);
     }
 
     public static Quality toValue(String s) {
         for (Quality d : values()) {
-            if (d.value.equals(s)) {
+            if (d.getValue().equals(s)) {
                 return d;
             }
         }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
-    public int checksum() {
-        return value.hashCode();
-    }
-
-    public String getValue() {
-        return value;
-    }
-
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return this.getClass().getSimpleName() + "[" + getValue() + "]";
     }
 }

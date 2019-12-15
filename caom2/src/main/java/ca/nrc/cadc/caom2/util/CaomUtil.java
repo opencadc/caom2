@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.CaomEntity;
+import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
@@ -179,6 +180,44 @@ public class CaomUtil implements Serializable {
         }
     }
 
+    /**
+     * Format a list of keywords using the CAOM-2.3+ reserved character.
+     * 
+     * @param bands energy bands to encode
+     * @return encoded as string
+     */
+    public static String encodeBands(Collection<EnergyBand> bands) {
+        if (bands == null || bands.isEmpty()) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        Iterator<EnergyBand> i = bands.iterator();
+        while (i.hasNext()) {
+            sb.append(i.next().getValue());
+            if (i.hasNext()) {
+                sb.append(KEYWORD_SET_SEPARATOR);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Parse a list of keywords from string using the CAOM-2.3+ reserved
+     * character.
+     * 
+     * @param val
+     * @param out
+     */
+    public static void decodeBands(String val, Collection<EnergyBand> out) {
+        if (val == null) {
+            return;
+        }
+        String[] ss = val.split("[" + KEYWORD_SET_SEPARATOR + "]");
+        for (String s : ss) {
+            out.add(EnergyBand.toValue(s));
+        }
+    }
+    
     // IVOA ObsCore-1.0 Data Model, B.6.6
     public static String encodeStates(List<PolarizationState> states) {
         if (states == null || states.isEmpty()) {

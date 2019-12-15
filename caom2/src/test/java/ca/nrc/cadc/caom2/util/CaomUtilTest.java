@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
@@ -149,7 +149,7 @@ public class CaomUtilTest
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
-            ce = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
+            ce = new DerivedObservation("FOO", "bar", new Algorithm("doit"));
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
@@ -189,7 +189,7 @@ public class CaomUtilTest
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");
             Assert.assertEquals(expected, ce.getMaxLastModified());
             
-            ce = new CompositeObservation("FOO", "bar", new Algorithm("doit"));
+            ce = new DerivedObservation("FOO", "bar", new Algorithm("doit"));
             CaomUtil.assignLastModified(ce, expected, "lastModified");
             Assert.assertEquals(expected, ce.getLastModified());
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");

@@ -67,46 +67,106 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.types;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * A CompositeObservation is created by collecting data from multiple
- * SimpleObservations together.
- * 
+ *
  * @author pdowler
  */
-public class CompositeObservation extends Observation {
-    private static final long serialVersionUID = 201110261400L;
+public class SampledInterval implements Serializable {
+    private static final long serialVersionUID = 201708241230L;
 
-    // mutable contents
-    private final Set<ObservationURI> members = new TreeSet<ObservationURI>();
+    private double lower;
+    private double upper;
+    private List<Interval> samples = new ArrayList<Interval>();
 
-    /**
-     * @param collection
-     * @param observationID
-     * @param algorithm
-     */
-    public CompositeObservation(String collection, String observationID,
-            Algorithm algorithm) {
-        super(collection, observationID, algorithm);
+    public static final String[] CTOR_UTYPES = { "lower", "upper" };
+
+    private SampledInterval() {
     }
 
-    public Set<ObservationURI> getMembers() {
-        return members;
+    public SampledInterval(double lower, double upper) {
+        this.lower = lower;
+        this.upper = upper;
+    }
+
+    public SampledInterval(double lower, double upper, List<Interval> samples) {
+        this.lower = lower;
+        this.upper = upper;
+        CaomValidator.assertNotNull(SampledInterval.class, "samples", samples);
+        this.samples.addAll(samples);
+        validate();
+    }
+
+    public final void validate() {
+        if (upper < lower) {
+            throw new IllegalArgumentException(
+                    "invalid interval (upper < lower): " + lower + "," + upper);
+        }
+        CaomValidator.assertNotNull(SampledInterval.class, "samples", samples);
+        if (samples.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "invalid interval (samples cannot be empty)");
+        }
+
+        Interval prev = null;
+        for (Interval si : samples) {
+            if (si.getLower() < lower) {
+                throw new IllegalArgumentException(
+                        "invalid interval: sample extends below lower bound: "
+                                + si + " vs " + lower);
+            }
+            if (si.getUpper() > upper) {
+                throw new IllegalArgumentException(
+                        "invalid interval: sample extends above upper bound: "
+                                + si + " vs " + upper);
+            }
+
+            if (prev != null) {
+                if (si.getLower() <= prev.getUpper()) {
+                    throw new IllegalArgumentException(
+                            "invalid interval: sample overlaps previous sample: "
+                                    + si + " vs " + prev);
+                }
+            }
+            prev = si;
+        }
     }
 
     @Override
-    public void setAlgorithm(Algorithm a) {
-        CaomValidator.assertNotNull(SimpleObservation.class, "algorithm", a);
-        if (SimpleObservation.ALGORITHM.getName().equals(a.getName())) {
-            throw new IllegalArgumentException(
-                    "cannot set CompositeObservation.algorithm to " + a
-                            + "(reserved for SimpleObservation)");
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Interval[").append(lower).append(",").append(upper);
+        if (!samples.isEmpty()) {
+            sb.append(" samples[ ");
+            for (Interval si : samples) {
+                sb.append("[").append(si.lower).append(",").append(si.upper)
+                        .append("] ");
+            }
+            sb.append("]");
         }
-        super.setAlgorithm(a);
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public double getLower() {
+        return lower;
+    }
+
+    public double getUpper() {
+        return upper;
+    }
+
+    public List<Interval> getSamples() {
+        return samples;
+    }
+
+    public double getWidth() {
+        return (upper - lower);
     }
 }

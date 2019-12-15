@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,7 +74,6 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
-import org.apache.log4j.Logger;
 
 /**
  * An artifact is a single physical (stored) result. This is normally a file,
@@ -84,14 +83,12 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class Artifact extends CaomEntity implements Comparable<Artifact> {
-    private static final long serialVersionUID = 201604081100L;
-    private static final Logger log = Logger.getLogger(Artifact.class);
-
     // immutable state
     private final URI uri;
 
     // mutable contents
     private final Set<Part> parts = new TreeSet<Part>();
+    private final Set<URI> contentReadGroups = new TreeSet<URI>();
     private ProductType productType;
     private ReleaseType releaseType;
 
@@ -99,6 +96,7 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     public String contentType;
     public Long contentLength;
     public URI contentChecksum;
+    public Date contentRelease;
 
     public Artifact(URI uri, ProductType productType, ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);
@@ -134,6 +132,10 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     public void setReleaseType(ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
         this.releaseType = releaseType;
+    }
+
+    public Set<URI> getContentReadGroups() {
+        return contentReadGroups;
     }
 
     public Set<Part> getParts() {

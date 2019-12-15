@@ -101,12 +101,20 @@ public class StableMetaChecksumTest
     public StableMetaChecksumTest() { }
     
     @Test
-    public void testStableChecksums()
-    {
+    public void testStableChecksums23() {
+        doit("sample-composite-caom23.xml");
+    }
+    
+    @Test
+    public void testStableChecksums24() {
+        doit("sample-composite-caom24.xml");
+    }
+    
+    private void doit(String filename) {
         try
         {
             // read stored file with computed checksums and verify
-            File f = FileUtil.getFileFromResource("sample-composite-caom23.xml", StableMetaChecksumTest.class);
+            File f = FileUtil.getFileFromResource(filename, StableMetaChecksumTest.class);
             if (!f.exists())
             {
                 log.warn("testStableChecksums: not found: " + f.getName() + " -- SKIPPING TEST");
@@ -114,12 +122,12 @@ public class StableMetaChecksumTest
             }
             
             Reader r = new FileReader(f);
-            ObservationReader or = new ObservationReader();
+            ObservationReader or = new ObservationReader(); // latest model/schema version
             Observation o = or.read(r);
             Assert.assertNotNull(o);
             
             boolean verifyAcc = true;
-            log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc);
+            log.info(filename + ": verify metaChecksum: true verify accMetaChecksum: " + verifyAcc);
             
             MessageDigest digest = MessageDigest.getInstance("MD5");
             URI mcs = o.computeMetaChecksum(digest);
@@ -127,7 +135,7 @@ public class StableMetaChecksumTest
             if (verifyAcc)
             {
                 URI acs = o.computeAccMetaChecksum(digest);
-                Assert.assertEquals("observation.metaChecksum", o.getAccMetaChecksum(), acs);
+                Assert.assertEquals("observation.accMetaChecksum", o.getAccMetaChecksum(), acs);
             }
             
             for (Plane pl : o.getPlanes())
