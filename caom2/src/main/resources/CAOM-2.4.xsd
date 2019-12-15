@@ -541,7 +541,7 @@
     <xs:complexType name="SpectralWCS">
         <xs:sequence>    
             <xs:element name="axis" type="caom2:CoordAxis1D"/>
-            <xs:element name="specsys" type="xs:string" minOccurs="0"/>
+            <xs:element name="specsys" type="xs:string" minOccurs="1"/>
             <xs:element name="ssysobs" type="xs:string" minOccurs="0"/>
             <xs:element name="ssyssrc" type="xs:string" minOccurs="0"/>
             <xs:element name="restfrq" type="xs:double" minOccurs="0"/>
