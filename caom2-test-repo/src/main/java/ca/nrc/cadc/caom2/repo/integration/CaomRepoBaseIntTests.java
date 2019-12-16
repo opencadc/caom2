@@ -253,13 +253,17 @@ class CaomRepoBaseIntTests {
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
         }
 
-        if (expectedMessage != null) {
-            Assert.assertNotNull(message);
-            if (expectedResponse != null && expectedResponse == 400) {
-                // service provides extra info so check the start only
-                message = message.substring(0, expectedMessage.length());
+        if (response == 200) {
+            log.info("200 message: " + message);
+        } else {
+            if (expectedMessage != null) {
+                Assert.assertNotNull(message);
+                if (expectedResponse != null && expectedResponse == 400) {
+                    // service provides extra info so check the start only
+                    message = message.substring(0, expectedMessage.length());
+                }
+                Assert.assertEquals("Wrong response message", expectedMessage, message);
             }
-            Assert.assertEquals("Wrong response message", expectedMessage, message);
         }
 
         conn.disconnect();
@@ -347,11 +351,15 @@ class CaomRepoBaseIntTests {
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
         }
 
-        if (expectedMessage != null) {
-            Assert.assertNotNull(message);
-            Assert.assertEquals("Wrong response message", expectedMessage, message);
+        if (response == 200) {
+            log.info("200 message: " + message);
+        } else {
+            if (expectedMessage != null) {
+                Assert.assertNotNull(message);
+                Assert.assertEquals("Wrong response message", expectedMessage, message);
+            }
         }
-
+        
         conn.disconnect();
     }
 
