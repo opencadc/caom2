@@ -72,7 +72,6 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import static ca.nrc.cadc.caom2.repo.integration.CaomRepoBaseIntTests.TEST_COLLECTION;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.reg.Standards;
