@@ -70,6 +70,7 @@ package ca.nrc.cadc.caom2.ac;
 import ca.nrc.cadc.ac.Group;
 import ca.nrc.cadc.ac.GroupNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Proposal;
@@ -186,7 +187,6 @@ public class ReadAccessGenerator {
     
     public void generateTuples(Observation observation)
             throws TransientException {
-
         Date now = new Date();
         boolean pub = isPublic(observation, now);
         log.debug("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
@@ -201,15 +201,21 @@ public class ReadAccessGenerator {
             }
 
             checkProposalGroup(proposalGroupID);
-
-            // get complete list of tuples
-            createObservationMetaReadAccess(observation, now, proposalGroupID);
-            for (Plane p : observation.getPlanes()) {
-                createPlaneMetaReadAccess(p, now, proposalGroupID);
-                createPlaneDataReadAccess(p, now, proposalGroupID);
+            generateTuples(observation, now, proposalGroupID);
+        }
+    }
+    
+    // bypass group check/create for tests
+    void generateTuples(Observation observation, Date now, GroupURI proposalGroupID) {
+        // get complete list of tuples
+        createObservationMetaReadAccess(observation, now, proposalGroupID);
+        for (Plane p : observation.getPlanes()) {
+            createPlaneMetaReadAccess(p, now, proposalGroupID);
+            createPlaneDataReadAccess(p, now, proposalGroupID);
+            for (Artifact a : p.getArtifacts()) {
+                createArtifactContentReadAccess(a, now, proposalGroupID);
             }
         }
-
     }
     
     private String formatDate(Date date) {
@@ -225,6 +231,10 @@ public class ReadAccessGenerator {
         for (Plane p : o.getPlanes()) {
             ret = ret && (p.metaRelease != null && now.compareTo(p.metaRelease) > 0);
             ret = ret && (p.dataRelease != null && now.compareTo(p.dataRelease) > 0);
+            for (Artifact a : p.getArtifacts()) {
+                // contentRelease overrides only if not null
+                ret = ret && (a.contentRelease == null || now.compareTo(a.contentRelease) > 0);
+            }
         }
         return ret;
     }
@@ -298,6 +308,27 @@ public class ReadAccessGenerator {
 
             if (this.staffGroupURI != null) {
                 p.getDataReadGroups().add(staffGroupURI.getURI());
+            }
+        }
+    }
+    
+    void createArtifactContentReadAccess(Artifact a, Date now, GroupURI proposalGroupID) {
+        log.debug("createArtifactContentReadAccess: " + formatDate(a.contentRelease));
+        a.getContentReadGroups().clear();
+        if (a.contentRelease == null) {
+            return; // inherits permissions from plane.dataRelease/dataReadGroups
+        }
+        if (now.compareTo(a.contentRelease) <= 0) {
+            if (this.operatorGroupURI != null) {
+                a.getContentReadGroups().add(operatorGroupURI.getURI());
+            }
+
+            if (this.createProposalGroup && proposalGroupID != null) {
+                a.getContentReadGroups().add(proposalGroupID.getURI());
+            }
+
+            if (this.staffGroupURI != null) {
+                a.getContentReadGroups().add(staffGroupURI.getURI());
             }
         }
     }

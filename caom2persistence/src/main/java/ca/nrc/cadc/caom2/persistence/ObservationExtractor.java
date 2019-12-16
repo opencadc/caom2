@@ -108,10 +108,119 @@ public class ObservationExtractor implements ResultSetExtractor {
 
     public Object extractData(ResultSet rs)
             throws SQLException {
-        return extractObservations(rs);
+        return extractObservation(rs);
+    }
+    
+    private Observation extractObservation(ResultSet rs) throws SQLException {
+        int ncol = rs.getMetaData().getColumnCount();
+        log.debug("extractData: ncol=" + ncol);
+        Observation ret = null;
+        Observation curObs = null;
+        Plane curPlane = null;
+        Artifact curArtifact = null;
+        Part curPart = null;
+        Chunk curChunk = null;
+        int row = 0;
+        while (rs.next()) {
+            row++;
+            int col = 1;
+            UUID obsID = obsMapper.getID(rs, row, col);
+            if (curObs == null || !curObs.getID().equals(obsID)) {
+                log.debug("mapping Observation at column " + col);
+                if (curObs != null) {
+                    throw new RuntimeException("BUG: query returned multiple observation(s) -- expected one obsID value");
+                }
+
+                curObs = obsMapper.mapRow(rs, row, col);
+                ret = curObs;
+                log.debug("START observation: " + curObs.getID());
+            } // else: obs content repeated due to join -- ignore it
+            col += obsMapper.getColumnCount();
+
+            if (ncol > col) {
+                log.debug("mapping Plane at column " + col);
+                UUID planeID = planeMapper.getID(rs, row, col);
+                
+                if (planeID != null) {
+                    if (curPlane == null || !curPlane.getID().equals(planeID)) {
+                        if (curPlane != null) {
+                            log.debug("END plane: " + curPlane.getID());
+                        }
+                        curPlane = planeMapper.mapRow(rs, row, col);
+                        curObs.getPlanes().add(curPlane);
+                        log.debug("START plane: " + curPlane.getID());
+                    }
+                    //else:  plane content repeated due to join -- ignore it
+                } else {
+                    log.debug("observation: " + curObs.getID() + ": no planes");
+                    curPlane = null;
+                }
+                col += planeMapper.getColumnCount();
+            }
+            if (curPlane != null && ncol > col) {
+                log.debug("mapping Artifact at column " + col);
+                UUID artifactID = artifactMapper.getID(rs, row, col);
+                if (artifactID != null) {
+                    if (curArtifact == null || !curArtifact.getID().equals(artifactID)) {
+                        if (curArtifact != null) {
+                            log.debug("END artifact: " + curArtifact.getID());
+                        }
+                        curArtifact = artifactMapper.mapRow(rs, row, col);
+                        curPlane.getArtifacts().add(curArtifact);
+                        log.debug("START artifact: " + curArtifact.getID());
+                    }
+                    //else: artifact content repeated due to join -- ignore it
+                } else {
+                    log.debug("plane: " + curPlane.getID() + ": no artifacts");
+                    curArtifact = null;
+                }
+                col += artifactMapper.getColumnCount();
+            }
+            if (curArtifact != null && ncol > col) {
+                log.debug("mapping Part at column " + col);
+                UUID partID = partMapper.getID(rs, row, col);
+                if (partID != null) {
+                    if (curPart == null || !curPart.getID().equals(partID)) {
+                        if (curPart != null) {
+                            log.debug("END part: " + curPart.getID());
+                        }
+                        curPart = partMapper.mapRow(rs, row, col);
+                        curArtifact.getParts().add(curPart);
+                        log.debug("START part: " + curPart.getID());
+                    }
+                    //else: artifact content repeated due to join -- ignore it
+                } else {
+                    log.debug("artifact: " + curArtifact.getID() + ": no parts");
+                    curPart = null;
+                }
+                col += partMapper.getColumnCount();
+            }
+            if (curPart != null && ncol > col) {
+                log.debug("mapping Chunk at column " + col);
+                UUID chunkID = chunkMapper.getID(rs, row, col);
+                if (chunkID != null) {
+                    if (curChunk == null || !curChunk.getID().equals(chunkID)) {
+                        if (curChunk != null) {
+                            log.debug("END part: " + curChunk.getID());
+                        }
+                        curChunk = chunkMapper.mapRow(rs, row, col);
+                        curPart.getChunks().add(curChunk);
+                        log.debug("START chunk: " + curChunk.getID());
+                    }
+                    //else: artifact content repeated due to join -- ignore it
+                } else {
+                    log.debug("part: " + curPart.getID() + ": no chunks");
+                    curChunk = null;
+                }
+                col += chunkMapper.getColumnCount();
+            }
+        }
+
+        return ret;
     }
 
-    public List<Observation> extractObservations(ResultSet rs)
+    // obsolete: this extracts list of observations but ObservationDAO no longer supports that in a single query
+    private List<Observation> extractObservations(ResultSet rs)
             throws SQLException {
         int ncol = rs.getMetaData().getColumnCount();
         log.debug("extractData: ncol=" + ncol);

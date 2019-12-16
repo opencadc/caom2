@@ -103,6 +103,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
         ArtifactSkeleton curArtifact = null;
         PartSkeleton curPart = null;
         ChunkSkeleton curChunk = null;
+        int ncol = rs.getMetaData().getColumnCount();
         while (rs.next()) {
             if (ret == null) {
                 ret = new ObservationSkeleton();
@@ -129,75 +130,80 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
             } else {
                 col += 5; // skip
             }
-            // plane
-            d = Util.getDate(rs, col++, utcCalendar);
-            md = Util.getDate(rs, col++, utcCalendar);
-            cs = Util.getURI(rs, col++);
-            acs = Util.getURI(rs, col++);
-            id = Util.getUUID(rs, col++);
-            if (id != null) {
-                if (curPlane == null || !curPlane.id.equals(id)) {
-                    curPlane = new PlaneSkeleton();
-                    curPlane.id = id;
-                    curPlane.lastModified = d;
-                    curPlane.maxLastModified = md;
-                    curPlane.metaChecksum = cs;
-                    curPlane.accMetaChecksum = acs;
-                    log.debug("add: " + curPlane + " to " + ret);
-                    ret.planes.add(curPlane);
-                }
-
-                // artifact
+            if (ncol > col) {
+                // plane
                 d = Util.getDate(rs, col++, utcCalendar);
                 md = Util.getDate(rs, col++, utcCalendar);
                 cs = Util.getURI(rs, col++);
                 acs = Util.getURI(rs, col++);
                 id = Util.getUUID(rs, col++);
                 if (id != null) {
-                    if (curArtifact == null || !curArtifact.id.equals(id)) {
-                        curArtifact = new ArtifactSkeleton();
-                        curArtifact.id = id;
-                        curArtifact.lastModified = d;
-                        curArtifact.maxLastModified = md;
-                        curArtifact.metaChecksum = cs;
-                        curArtifact.accMetaChecksum = acs;
-                        log.debug("add: " + curArtifact + " to " + curPlane);
-                        curPlane.artifacts.add(curArtifact);
+                    if (curPlane == null || !curPlane.id.equals(id)) {
+                        curPlane = new PlaneSkeleton();
+                        curPlane.id = id;
+                        curPlane.lastModified = d;
+                        curPlane.maxLastModified = md;
+                        curPlane.metaChecksum = cs;
+                        curPlane.accMetaChecksum = acs;
+                        log.debug("add: " + curPlane + " to " + ret);
+                        ret.planes.add(curPlane);
                     }
-
-                    // part
-                    d = Util.getDate(rs, col++, utcCalendar);
-                    md = Util.getDate(rs, col++, utcCalendar);
-                    cs = Util.getURI(rs, col++);
-                    acs = Util.getURI(rs, col++);
-                    id = Util.getUUID(rs, col++);
-                    if (id != null) {
-                        if (curPart == null || !curPart.id.equals(id)) {
-                            curPart = new PartSkeleton();
-                            curPart.id = id;
-                            curPart.lastModified = d;
-                            curPart.maxLastModified = md;
-                            curPart.metaChecksum = cs;
-                            curPart.accMetaChecksum = acs;
-                            log.debug("add: " + curPart + " to " + curArtifact);
-                            curArtifact.parts.add(curPart);
-                        }
-
-                        // chunk
+                    if (ncol > col) {
+                        // artifact
                         d = Util.getDate(rs, col++, utcCalendar);
                         md = Util.getDate(rs, col++, utcCalendar);
                         cs = Util.getURI(rs, col++);
                         acs = Util.getURI(rs, col++);
                         id = Util.getUUID(rs, col++);
                         if (id != null) {
-                            curChunk = new ChunkSkeleton();
-                            curChunk.id = id;
-                            curChunk.lastModified = d;
-                            curChunk.maxLastModified = md;
-                            curChunk.metaChecksum = cs;
-                            curChunk.accMetaChecksum = acs;
-                            log.debug("add: " + curChunk + " to " + curPart);
-                            curPart.chunks.add(curChunk);
+                            if (curArtifact == null || !curArtifact.id.equals(id)) {
+                                curArtifact = new ArtifactSkeleton();
+                                curArtifact.id = id;
+                                curArtifact.lastModified = d;
+                                curArtifact.maxLastModified = md;
+                                curArtifact.metaChecksum = cs;
+                                curArtifact.accMetaChecksum = acs;
+                                log.debug("add: " + curArtifact + " to " + curPlane);
+                                curPlane.artifacts.add(curArtifact);
+                            }
+                            if (ncol > col) {
+                                // part
+                                d = Util.getDate(rs, col++, utcCalendar);
+                                md = Util.getDate(rs, col++, utcCalendar);
+                                cs = Util.getURI(rs, col++);
+                                acs = Util.getURI(rs, col++);
+                                id = Util.getUUID(rs, col++);
+                                if (id != null) {
+                                    if (curPart == null || !curPart.id.equals(id)) {
+                                        curPart = new PartSkeleton();
+                                        curPart.id = id;
+                                        curPart.lastModified = d;
+                                        curPart.maxLastModified = md;
+                                        curPart.metaChecksum = cs;
+                                        curPart.accMetaChecksum = acs;
+                                        log.debug("add: " + curPart + " to " + curArtifact);
+                                        curArtifact.parts.add(curPart);
+                                    }
+                                    if (ncol > col) {
+                                        // chunk
+                                        d = Util.getDate(rs, col++, utcCalendar);
+                                        md = Util.getDate(rs, col++, utcCalendar);
+                                        cs = Util.getURI(rs, col++);
+                                        acs = Util.getURI(rs, col++);
+                                        id = Util.getUUID(rs, col++);
+                                        if (id != null) {
+                                            curChunk = new ChunkSkeleton();
+                                            curChunk.id = id;
+                                            curChunk.lastModified = d;
+                                            curChunk.maxLastModified = md;
+                                            curChunk.metaChecksum = cs;
+                                            curChunk.accMetaChecksum = acs;
+                                            log.debug("add: " + curChunk + " to " + curPart);
+                                            curPart.chunks.add(curChunk);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

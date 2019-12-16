@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,39 +69,18 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.net.ResourceNotFoundException;
-
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
 
 /**
- *
- * @author pdowler
+ * @author hjeeves
  */
-public class DeleteAction extends RepoAction {
-    private static final Logger log = Logger.getLogger(DeleteAction.class);
+public class GetAction23 extends GetAction {
 
-    public DeleteAction() {
-    }
+    public GetAction23() { }
 
     @Override
-    public void doAction() throws Exception {
-        ObservationURI uri = getURI();
-        log.debug("START: " + uri);
-
-        checkWritePermission(uri);
-
-        ObservationDAO dao = getDAO();
-        ObservationState s = dao.getState(uri);
-
-        if (s == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-
-        dao.delete(s.getID());
-
-        log.debug("DONE: " + uri);
+    protected ObservationWriter getObservationWriter() {
+        return new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
     }
 }

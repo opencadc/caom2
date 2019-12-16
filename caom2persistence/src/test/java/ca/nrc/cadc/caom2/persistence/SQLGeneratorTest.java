@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
@@ -309,14 +310,14 @@ public class SQLGeneratorTest
         try
         {
             Date d2 = new Date();
-            Date d1 = new Date(d2.getTime() - 3600*1000L); // one hour ago
-            String sql = gen.getObservationSelectSQL(Observation.class, d1, d2, SQLGenerator.MAX_DEPTH);
-            log.debug("SQL: " + sql);
+            Date d1 = new Date(d2.getTime() - 3600 * 1000L); // one hour ago
+            String sql = gen.getSelectSQL(ObservationState.class, d1, d2, SQLGenerator.MAX_DEPTH);
+            log.info("SQL: " + sql);
             sql = sql.toLowerCase();
             DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
-            String exp1 = "observation.maxlastmodified >= '" + df.format(d1) + "'";
-            String exp2 = "observation.maxlastmodified <= '" + df.format(d2) + "'";
+            String exp1 = "observationstate.maxlastmodified >= '" + df.format(d1) + "'";
+            String exp2 = "observationstate.maxlastmodified <= '" + df.format(d2) + "'";
             Assert.assertTrue(sql.contains(exp1));
             Assert.assertTrue(sql.contains(exp2));
         }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
@@ -122,19 +122,21 @@ public class GetAction extends RepoAction {
         checkReadPermission(uri.getCollection());
 
         ObservationDAO dao = getDAO();
-        Observation obs = dao.get(uri);
+        ObservationResponse resp = dao.getObservationResponse(uri);
 
-        if (obs == null) {
+        if (resp.error != null) {
+            throw new RuntimeException("failed to retrieve observation: " + uri, resp.error);
+        }
+        if (resp.observation == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
-        // write with default schema
         ObservationWriter ow = getObservationWriter();
-
+        
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ow.write(obs, bc);
+        ow.write(resp.observation, bc);
         logInfo.setBytes(bc.getByteCount());
 
         log.debug("DONE: " + uri);

@@ -15,13 +15,13 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.3.14'
+version = '2.4.0'
 
 dependencies {
     compile 'log4j:log4j:[1.2,)'
     
     compile 'org.opencadc:cadc-util:[1,)'
-    compile 'org.opencadc:caom2:[2.3.13,2.4)'
+    compile 'org.opencadc:caom2:[2.4.0,2.5)'
 
     testCompile 'junit:junit:[4,)'
 }

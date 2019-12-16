@@ -87,7 +87,6 @@ import ca.nrc.cadc.reg.Capability;
 import ca.nrc.cadc.reg.Interface;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -110,22 +109,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Logger;
 
 /**
- * Class in charge of reading the caom2 metadata end points
+ * Class in charge of reading the caom2 metadata end points from a repository service.
+ * This class looks for a CAOM-2.4 obs endpoint and falls back to a CAOM 2.3 endpoint 
+ * if the former is not found.
  * 
  * @author jduran
  *
  */
 public class RepoClient {
-
-    private static final int INIT_FROM_REGISTRY = 0;
-    private static final int INIT_FROM_CAPABILITIES_URL = 1;
-
     private static final Logger log = Logger.getLogger(RepoClient.class);
     private static final Integer DEFAULT_BATCH_SIZE = 50000;
 
@@ -133,7 +128,6 @@ public class RepoClient {
     private RegistryClient rc;
     private URI resourceID = null;
     private URL capabilitiesURL = null;
-    private int initType = INIT_FROM_REGISTRY;
 
     private URL baseServiceURL = null;
     private URL baseDeletionURL = null;
@@ -182,19 +176,22 @@ public class RepoClient {
      *            number of threads to use when getting list of observations
      */
     public RepoClient(URI resourceID, int nthreads) {
+        if (resourceID == null) {
+            throw new IllegalArgumentException("resourceID cannot be null");
+        }
         this.nthreads = nthreads;
         this.resourceID = resourceID;
         this.rc = new RegistryClient();
-        this.initType = INIT_FROM_REGISTRY;
         init();
         initDel();
     }
 
     public RepoClient(URL capabilitiesURL, int nthreads) {
+        if (capabilitiesURL == null) {
+            throw new IllegalArgumentException("capabilitiesURL cannot be null");
+        }
         this.nthreads = nthreads;
         this.capabilitiesURL = capabilitiesURL;
-        this.rc = new RegistryClient();
-        this.initType = INIT_FROM_CAPABILITIES_URL;
         init();
         initDel();
     }
@@ -206,9 +203,16 @@ public class RepoClient {
             meth = AuthMethod.ANON;
         }
 
-        if (initType == INIT_FROM_REGISTRY) {
-            this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_23, meth);
-        } else if (initType == INIT_FROM_CAPABILITIES_URL) {
+        if (resourceID != null) {
+            this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_24, meth);
+            if (baseServiceURL == null) {
+                this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_23, meth);
+            }
+            if (baseServiceURL == null) {
+                throw new RuntimeException("not found: " + resourceID 
+                        + " + one of {" + Standards.CAOM2REPO_OBS_24 + " " + Standards.CAOM2REPO_OBS_23 + "} + " + meth);
+            }
+        } else if (capabilitiesURL != null) {
             CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
 
             Capabilities capabilities;
@@ -232,12 +236,10 @@ public class RepoClient {
             }
 
         } else {
-            log.debug("Invalid initialisation.");
+            throw new RuntimeException("BUG: no resourceID or capabilitiesURL");
         }
 
-        if (baseServiceURL == null) {
-            throw new RuntimeException("not found: " + resourceID + " + " + Standards.CAOM2REPO_OBS_23 + " + " + meth);
-        }
+        
         log.debug("observation list URL: " + baseServiceURL.toString());
         log.debug("AuthMethod:  " + meth);
         this.isObsAvailable = true;
@@ -250,9 +252,9 @@ public class RepoClient {
             meth = AuthMethod.ANON;
         }
 
-        if (initType == INIT_FROM_REGISTRY) {
+        if (resourceID != null) {
             this.baseDeletionURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_DEL_23, meth);
-        } else if (initType == INIT_FROM_CAPABILITIES_URL) {
+        } else if (capabilitiesURL != null) {
             CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
 
             Capabilities capabilities;
@@ -276,7 +278,7 @@ public class RepoClient {
             }
 
         } else {
-            log.debug("Invalid initialisation.");
+            throw new RuntimeException("BUG: no resourceID or capabilitiesURL");
         }
 
         if (baseDeletionURL == null) {
@@ -697,16 +699,5 @@ public class RepoClient {
             }
         }
         return partialList;
-    }
-
-    @Override
-    public String toString() {
-        if (initType == INIT_FROM_REGISTRY) {
-            return this.resourceID.toASCIIString();
-        } else if (initType == INIT_FROM_CAPABILITIES_URL) {
-            return this.capabilitiesURL.toString();
-        } else {
-            return "UNKNOWN";
-        }
     }
 }

@@ -729,7 +729,7 @@ public class ObservationHarvester extends Harvester {
             for (HarvestSkipURI hs : skip) {
                 log.debug("getSkipped: " + hs.getSkipID());
                 ObservationURI ouri = new ObservationURI(hs.getSkipID());
-                ObservationResponse wr = srcObservationDAO.getAlt(ouri);
+                ObservationResponse wr = srcObservationDAO.getObservationResponse(ouri);
                 log.debug("response: " + wr);
                 ret.add(new SkippedWrapperURI<ObservationResponse>(wr, hs));
             }

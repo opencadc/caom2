@@ -134,52 +134,51 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     public ObservationState getState(UUID id) {
-        return getState(null, id);
+        return getStateImpl(null, id);
     }
     
     public ObservationState getState(ObservationURI uri) {
-        return getState(uri, null);
+        return getStateImpl(uri, null);
     }
     
-    private ObservationState getState(ObservationURI uri, UUID id) {
-        Observation o = get(uri, id, 1);
-        if (o != null) {
-            ObservationState ret = new ObservationState(o.getURI());
-            ret.accMetaChecksum = o.getAccMetaChecksum();
-            ret.maxLastModified = o.getMaxLastModified();
-            ret.id = o.getID();
-            return ret;
+    private ObservationState getStateImpl(ObservationURI uri, UUID id) {
+        checkInit();
+        if (uri == null && id == null) {
+            throw new IllegalArgumentException("args cannot be null");
         }
-        return null;
-    }
-    
-    /**
-     * @param uri
-     * @return
-     * @deprecated use getState and check for non-null return
-     */
-    @Deprecated
-    public boolean exists(ObservationURI uri) {
-        ObservationState s = getState(uri);
-        return s != null;
-    }
+        log.debug("GET: " + uri + " | " + id);
+        long t = System.currentTimeMillis();
 
-    public UUID getID(ObservationURI uri) {
-        ObservationState s = getState(uri);
-        if (s != null) {
-            return s.getID();
+        try {
+            String sql = null;
+            if (uri != null) {
+                sql = gen.getSelectSQL(uri, 1, false);
+            } else { 
+                sql = gen.getSelectSQL(id, 1, false);
+            }
+            log.debug("GET: " + sql);
+            
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            //ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+            Observation obs = (Observation) jdbc.query(sql, gen.getObservationExtractor());
+            if (obs != null) {
+                ObservationState ret = new ObservationState(obs.getURI());
+                ret.id = obs.getID();
+                ret.accMetaChecksum = obs.getAccMetaChecksum();
+                ret.maxLastModified = obs.getMaxLastModified();
+                
+                //ret.id = skel.id;
+                //ret.accMetaChecksum = skel.accMetaChecksum;
+                //ret.maxLastModified = skel.maxLastModified;
+                return ret;
+            }
+            return null;
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("GET: " + uri + " | " + id + " " + dt + "ms");
         }
-        return null;
     }
-
-    public ObservationURI getURI(UUID id) {
-        ObservationState s = getState(id);
-        if (s != null) {
-            return s.getURI();
-        }
-        return null;
-    }
-
+  
     /**
      * Get list of observation states in ascending order.
      *
@@ -229,18 +228,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     }
 
     /**
-     * Get a wrapped complete Observation or error.
+     * Get a wrapped complete observation or error.
      * 
      * @param uri
-     * @return wrapped observation
+     * @return 
      */
-    public ObservationResponse getAlt(ObservationURI uri) {
-        // TODO: could just get the Observation and build ObservationState from it (single query)
-        ObservationState s = getState(uri);
-        if (s == null) {
-            return null;
+    public ObservationResponse getObservationResponse(ObservationURI uri) {
+        ObservationState s = new ObservationState(uri);
+        ObservationResponse ret = getObservationResponse(s, SQLGenerator.MAX_DEPTH);
+        if (ret.observation != null) {
+            s.id = ret.observation.getID();
+            s.accMetaChecksum = ret.observation.getAccMetaChecksum();
+            s.maxLastModified = ret.observation.getMaxLastModified();
         }
-        return getAlt(s);
+        return ret;
     }
     
     /**
@@ -249,38 +250,38 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param s
      * @return wrapped observation
      */
-    public ObservationResponse getAlt(ObservationState s) {
-        return getAlt(s, SQLGenerator.MAX_DEPTH);
+    public ObservationResponse getObservationResponse(ObservationState s) {
+        return getObservationResponse(s, SQLGenerator.MAX_DEPTH);
     }
     
     /**
-     * Get a wrapped 
+     * Get a wrapped Observation to the specified depth or error.
      * @param s
      * @param depth
      * @return 
      */
-    public ObservationResponse getAlt(ObservationState s, int depth) {
+    public ObservationResponse getObservationResponse(ObservationState s, int depth) {
         long t = System.currentTimeMillis();
 
         try {
             ObservationResponse ret = new ObservationResponse(s);
             try {
-                ret.observation = get(s.getURI(), null, depth);
-                if (ret.observation == null) {
-                    return null;
-                }
+                ret.observation = get(s.getURI());
             } catch (Exception ex) {
                 ret.error = new IllegalStateException(ex.getMessage());
             }
             return ret;
         } finally {
             long dt = System.currentTimeMillis() - t;
-            log.debug("getAlt: " + s.getURI() + "depth=" + depth + " " + dt + "ms");
+            log.debug("getObservationResponse: " + s.getURI() + " depth=" + depth + " " + dt + "ms");
         }
     }
     
     /**
      * Get a list of wrapped observations from the specified collection and optional timestamp range.
+     * This method can load a large number of observations into memory. It is better to use getObservationList
+     * and iterate through the state(s) to access observations via getObservationResponse(ObservationState) 
+     * or get(UUID).
      * 
      * @param collection
      * @param minLastModified
@@ -288,6 +289,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param batchSize
      * @return 
      */
+    @Deprecated
     public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize) {
         return getList(collection, minLastModified, maxLastModified, batchSize, SQLGenerator.MAX_DEPTH);
     }
@@ -302,6 +304,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param depth
      * @return 
      */
+    @Deprecated
     public List<ObservationResponse> getList(String collection, Date minLastModified, Date maxLastModified, Integer batchSize, int depth) {
         long t = System.currentTimeMillis();
 
@@ -310,7 +313,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             List<ObservationResponse> ret = new ArrayList<ObservationResponse>(states.size());
 
             for (ObservationState s : states) {
-                ObservationResponse r = getAlt(s, depth);
+                ObservationResponse r = getObservationResponse(s, depth);
                 ret.add(r);
             }
             return ret;
@@ -326,7 +329,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param uri
      * @return the complete observation
      */
-    public Observation get(ObservationURI uri) {
+    Observation get(ObservationURI uri) {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
         }
@@ -362,10 +365,13 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             }
 
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            return (Observation) jdbc.query(sql, gen.getObservationExtractor());
+            /**
             Object result = jdbc.query(sql, gen.getObservationExtractor());
             if (result == null) {
                 return null;
             }
+            
             if (result instanceof List) {
                 List obs = (List) result;
                 if (obs.isEmpty()) {
@@ -383,6 +389,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 }
             }
             throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
+            */
         } finally {
             long dt = System.currentTimeMillis() - t;
             log.debug("GET: " + uri + " " + dt + "ms");
@@ -508,6 +515,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      *
      * @param uri
      */
+    @Deprecated
     public void delete(ObservationURI uri) {
         if (uri == null) {
             throw new IllegalArgumentException("uri arg cannot be null");
@@ -548,7 +556,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
             if (skel != null) {
                 if (uri == null) {
-                    uri = getURI(id);
+                    uri = getState(id).getURI(); // null state not possible
                 }
                 if (id == null) {
                     id = skel.id;

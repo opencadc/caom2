@@ -128,7 +128,7 @@ public class GetActionTest {
     public void testTemplate() {
     }
     
-    //@Test(expected = ResourceNotFoundException.class)
+    @Test(expected = ResourceNotFoundException.class)
     public void testCollectionNotFoundException() throws Exception {
 
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
@@ -147,7 +147,7 @@ public class GetActionTest {
         getAction.doAction();
     }
 
-    //@Test
+    @Test
     public void testDoIt() throws Exception {
         // test the doIt method when it returns 2 observations
         HttpServletRequest mockRequest = mock(HttpServletRequest.class);
@@ -225,6 +225,8 @@ public class GetActionTest {
         getAction.setSyncInput(new SyncInput(mockRequest, getAction.getInlineContentHandler()));
         getAction.run();
         Assert.assertEquals(expected, out.getContent());
+
+        log.info("Finished testDoIt.");
     }
 
     private class TestLogInfo extends WebServiceLogInfo {

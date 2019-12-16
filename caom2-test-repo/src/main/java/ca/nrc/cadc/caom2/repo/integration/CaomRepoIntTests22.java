@@ -125,6 +125,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
+    @Deprecated
     private CaomRepoIntTests22() {
     }
 
@@ -134,6 +135,7 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
      * @param pem2       PEM file for user with read-only permission
      * @param pem3       PEM file for user with no permissions
      */
+    @Deprecated
     public CaomRepoIntTests22(URI resourceID, String pem1, String pem2, String pem3) {
         super(resourceID, Standards.CAOM2REPO_OBS_20, pem1, pem2, pem3);
     }
@@ -232,6 +234,8 @@ public class CaomRepoIntTests22 extends CaomRepoBaseIntTests {
         Chunk ch = new Chunk();
         part.getChunks().add(ch);
 
+        ch.naxis = 1;
+        ch.energyAxis = 1;
         ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
         ch.energy.getAxis().function = new CoordFunction1D(10L, 1.0, new RefCoord(0.5, 100.0e6)); // 100MHz
 

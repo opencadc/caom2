@@ -102,7 +102,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
      * @param pem3       PEM file for user with no permissions
      */
     public CaomRepoTupleTests(URI resourceID, String pem1, String pem2, String pem3) {
-        super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
+        super(resourceID, Standards.CAOM2REPO_OBS_24, pem1, pem2, pem3);
     }
 
     private void ensurePutAndDelete(final Observation observation, final String uri) throws Exception {

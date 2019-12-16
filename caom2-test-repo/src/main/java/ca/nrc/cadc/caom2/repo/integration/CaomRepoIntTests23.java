@@ -115,18 +115,18 @@ import org.junit.Test;
  *
  * @author majorb
  */
-public class CaomRepoIntTests extends CaomRepoBaseIntTests {
+public class CaomRepoIntTests23 extends CaomRepoBaseIntTests {
 
-    private static final Logger log = Logger.getLogger(CaomRepoIntTests.class);
+    private static final Logger log = Logger.getLogger(CaomRepoIntTests23.class);
 
-    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_4_NAMESPACE;
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_3_NAMESPACE;
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.repo", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    private CaomRepoIntTests() {
+    private CaomRepoIntTests23() {
     }
 
     /**
@@ -135,8 +135,8 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
      * @param pem2       PEM file for user with read-only permission
      * @param pem3       PEM file for user with no permissions
      */
-    public CaomRepoIntTests(URI resourceID, String pem1, String pem2, String pem3) {
-        super(resourceID, Standards.CAOM2REPO_OBS_24, pem1, pem2, pem3);
+    public CaomRepoIntTests23(URI resourceID, String pem1, String pem2, String pem3) {
+        super(resourceID, Standards.CAOM2REPO_OBS_23, pem1, pem2, pem3);
     }
 
     @Test
@@ -232,7 +232,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
         Chunk ch = new Chunk();
         part.getChunks().add(ch);
-        
+
         ch.naxis = 1;
         ch.energyAxis = 1;
         ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
@@ -268,9 +268,9 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         Chunk ch = new Chunk();
         part.getChunks().add(ch);
 
-        ch.naxis = 1;
-        ch.energyAxis = 1;
-        ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Hz")), "TOPOCENT");
+        // Use invalid cunit
+        ch.energy = new SpectralWCS(new CoordAxis1D(new Axis("FREQ", "Fred")), "TOPOCENT");
+
         //set delta to 0
         ch.energy.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 100.0e6)); // 100MHz
 

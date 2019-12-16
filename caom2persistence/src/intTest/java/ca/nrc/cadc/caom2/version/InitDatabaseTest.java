@@ -114,10 +114,7 @@ public class InitDatabaseTest {
         }
     }
 
-    // NOTE: tests are currently commented out because the other Postgresql*Test(s)
-    // all use InitDatabase.doInit and one of them will have done this anyway; this
-    // test will have some value if/when the TODOs are implemented.
-    @Test
+    //@Test
     public void testNewInstall() {
         try {
             // TODO: nuke all tables and re-create
@@ -149,7 +146,7 @@ public class InitDatabaseTest {
         }
     }
 
-    @Test
+    //@Test
     public void testParseCreateDDL() {
         try {
             InitDatabase init = new InitDatabase(null, null, schema);
@@ -196,7 +193,7 @@ public class InitDatabaseTest {
         }
     }
 
-    @Test
+    //@Test
     public void testParseUpgradeDDL() {
         try {
             InitDatabase init = new InitDatabase(null, null, schema);

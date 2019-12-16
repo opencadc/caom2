@@ -100,15 +100,15 @@ create index i_telescope_pattern
     on <schema>.Observation (telescope_name varchar_pattern_ops)
 ;
 
--- this works as a combo index but not individually because enums have few values
-create index Plane_i_emBand_dataProductType
-    on <schema>.Plane (energy_emBand, dataProductType)
-;
+-- this is no longer meaningful since energyBands can have multiple values like keywords
+--create index Plane_i_energyBands_dataProductType
+--    on <schema>.Plane (energy_energyBands, dataProductType)
+--;
 
 -- these columns seem to have too-few different values for index to be used
 -- with LIKE even when constraint matches very few records
 --create index i_emband_pattern
---    on <schema>.Plane (energy_emBand varchar_pattern_ops)
+--    on <schema>.Plane (energy_energyBands varchar_pattern_ops)
 --;
 --create index i_dataproducttype_pattern
 --    on <schema>.Plane (dataProductType varchar_pattern_ops)

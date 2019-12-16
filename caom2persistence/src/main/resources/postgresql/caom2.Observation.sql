@@ -17,6 +17,7 @@ create table <schema>.Observation
     proposal_keywords citext,
 
     target_name varchar(64),
+    target_id   varchar(128),
     target_type varchar(64),
     target_standard integer,
     target_redshift double precision,
@@ -59,7 +60,8 @@ create table <schema>.Observation
     lastModified timestamp not null,
     maxLastModified timestamp not null,
     metaChecksum varchar(136) not null,
-    accMetaChecksum varchar(136) not null
+    accMetaChecksum varchar(136) not null,
+    metaProducer varchar(128)
 )
 ;
 
@@ -76,13 +78,14 @@ create index i_maxLastModified on <schema>.Observation (maxLastModified)
 -- member join support
 create table <schema>.ObservationMember
 (
-    compositeID uuid not null references <schema>.Observation (obsID),
-    simpleID varchar(512) not null
+    parentID uuid not null references <schema>.Observation (obsID),
+    memberID varchar(512) not null
 )
 ;
 
-create unique index i_composite2simple on <schema>.ObservationMember (compositeID,simpleID)
+create unique index i_parent2member on <schema>.ObservationMember (parentID,memberID)
 ;
 
-create unique index i_simple2composite on <schema>.ObservationMember (simpleID,compositeID)
+create unique index i_member2parent on <schema>.ObservationMember (memberID,parentID)
 ;
+
