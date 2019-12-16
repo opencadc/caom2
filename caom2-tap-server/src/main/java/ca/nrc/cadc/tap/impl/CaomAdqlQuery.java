@@ -148,6 +148,9 @@ public class CaomAdqlQuery extends AdqlQuery
         ColumnNameConverter.QualifiedColumn emBand = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_emBand");
         ColumnNameConverter.QualifiedColumn energyBands = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_energyBands");
         cnc.put(emBand, energyBands);
+        emBand = new ColumnNameConverter.QualifiedColumn("caom2.EnumField", "energy_emBand");
+        energyBands = new ColumnNameConverter.QualifiedColumn("caom2.EnumField", "energy_energyBands");
+        cnc.put(emBand, energyBands);
         super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), cnc, new FromItemNavigator()));
         
         if (enableMetaReadAccessConverter) {
