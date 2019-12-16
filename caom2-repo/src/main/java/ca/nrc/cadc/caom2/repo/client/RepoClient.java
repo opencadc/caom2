@@ -209,7 +209,8 @@ public class RepoClient {
                 this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_23, meth);
             }
             if (baseServiceURL == null) {
-                throw new RuntimeException("not found: " + resourceID + " + one of {" + Standards.CAOM2REPO_OBS_24 + " " + Standards.CAOM2REPO_OBS_23 + "} + " + meth);
+                throw new RuntimeException("not found: " + resourceID 
+                        + " + one of {" + Standards.CAOM2REPO_OBS_24 + " " + Standards.CAOM2REPO_OBS_23 + "} + " + meth);
             }
         } else if (capabilitiesURL != null) {
             CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
