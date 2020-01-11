@@ -133,7 +133,7 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
 
     public static final DataProductType[] values() {
         return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       CUBE, SED, MEASUREMENTS, CATALOG };
+                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENT };
     }
 
     private DataProductType(String value) {
