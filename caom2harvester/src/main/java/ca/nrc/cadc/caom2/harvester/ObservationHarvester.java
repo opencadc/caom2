@@ -432,6 +432,12 @@ public class ObservationHarvester extends Harvester {
                                 destObservationDAO.delete(cur.getID());
                             }
 
+                            // verify we retrieved the observation intact
+                            if (!nochecksum) {
+                                validateChecksum(o);
+                            }
+                            
+                            // extended content verification
                             CaomValidator.validate(o);
 
                             for (Plane p : o.getPlanes()) {
@@ -440,6 +446,7 @@ public class ObservationHarvester extends Harvester {
                                 }
                             }
 
+                            // optionally augment the observation
                             if (computePlaneMetadata) {
                                 log.debug("computePlaneMetadata: " + o.getURI());
                                 for (Plane p : o.getPlanes()) {
@@ -450,10 +457,6 @@ public class ObservationHarvester extends Harvester {
                             if (acGenerator != null) {
                                 log.debug("generateReadAccessTuples: " + o.getURI());
                                 acGenerator.generateTuples(o);
-                            }
-
-                            if (!nochecksum) {
-                                validateChecksum(o);
                             }
 
                             // everything is OK

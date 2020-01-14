@@ -120,7 +120,7 @@ public class CaomRepoConditionalUpdateTest extends CaomRepoBaseIntTests {
         MessageDigest md5 = MessageDigest.getInstance("MD5");
         
         Observation orig = new SimpleObservation(TEST_COLLECTION, "testConditionalUpdate");
-        URI origAcc = orig.computeAccMetaChecksum(md5);
+        final URI origAcc = orig.computeAccMetaChecksum(md5);
         deleteObservation(orig.getURI().getURI().toASCIIString(), subject1, null, null);
          
         log.info("put: orig");
@@ -130,7 +130,7 @@ public class CaomRepoConditionalUpdateTest extends CaomRepoBaseIntTests {
         log.info("get: o1");
         Observation o1 = getObservation(orig.getURI().getURI().toASCIIString(), subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertNotNull(o1);
-        URI acc1 = o1.computeAccMetaChecksum(md5);
+        final URI acc1 = o1.computeAccMetaChecksum(md5);
         
         // modify
         orig.intent = ObservationIntentType.SCIENCE;
@@ -144,7 +144,7 @@ public class CaomRepoConditionalUpdateTest extends CaomRepoBaseIntTests {
         log.info("get: updated");
         Observation o2 = getObservation(orig.getURI().getURI().toASCIIString(), subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertNotNull(o2);
-        URI acc2 = o2.computeAccMetaChecksum(md5);
+        final URI acc2 = o2.computeAccMetaChecksum(md5);
         
         // attempt second update from orig: rejected
         imHeaderValue = "Observation.accMetaChecksum=" + origAcc;

@@ -146,7 +146,9 @@ public class Main {
             if (ENABLE_COMPUTE_FEATURES) {
                 compute = am.isSet("compute");
                 generateAC = am.getValue("generate-ac");
-                noChecksum = noChecksum || compute || am.isSet("generate-ac");
+                // this is longer be required since checksum validation  occurs before these features
+                // are invoked to modify the observation
+                //noChecksum = noChecksum || compute || am.isSet("generate-ac");
             }
             
             log.info("accMetaChecksum validation enabled: " + !noChecksum);
