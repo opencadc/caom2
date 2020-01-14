@@ -399,7 +399,8 @@ public abstract class RepoAction extends RestAction {
         throw new AccessControlException("permission denied: " + getURI());
     }
 
-    protected void validate(Observation obs) throws TransientException {
+    protected void validate(Observation obs) 
+        throws AccessControlException, IOException, TransientException {
         try {
             if (computeMetadata) {
                 for (Plane p : obs.getPlanes()) {
@@ -434,13 +435,11 @@ public abstract class RepoAction extends RestAction {
             if (ratGenerator != null) {
                 ratGenerator.generateTuples(obs);
             }
-        
+        } catch (AccessControlException ex) {
+            throw ex;
         } catch (IllegalArgumentException ex) {
             log.debug(ex.getMessage(), ex);
             throw new IllegalArgumentException("invalid input: " + uri, ex);
-        } catch (RuntimeException ex) {
-            log.debug(ex.getMessage(), ex);
-            throw new RuntimeException("invalid input: " + uri, ex);
         }
     }
 

@@ -68,7 +68,11 @@
 package ca.nrc.cadc.caom2.ac;
 
 import ca.nrc.cadc.ac.Group;
+import ca.nrc.cadc.ac.GroupAlreadyExistsException;
 import ca.nrc.cadc.ac.GroupNotFoundException;
+import ca.nrc.cadc.ac.ReaderException;
+import ca.nrc.cadc.ac.UserNotFoundException;
+import ca.nrc.cadc.ac.WriterException;
 import ca.nrc.cadc.ac.client.GMSClient;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
@@ -79,6 +83,7 @@ import ca.nrc.cadc.net.TransientException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.AccessControlException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.LinkedList;
@@ -186,7 +191,7 @@ public class ReadAccessGenerator {
     }
     
     public void generateTuples(Observation observation)
-            throws TransientException {
+            throws AccessControlException, IOException, TransientException {
         Date now = new Date();
         boolean pub = isPublic(observation, now);
         log.debug("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
@@ -333,7 +338,7 @@ public class ReadAccessGenerator {
         }
     }
 
-    private int checkProposalGroup(GroupURI groupURI) throws TransientException {
+    private int checkProposalGroup(GroupURI groupURI) throws AccessControlException, IOException, TransientException {
         if (groupURI == null) {
             return 0;
         }
@@ -349,30 +354,31 @@ public class ReadAccessGenerator {
             } catch (IOException ioex) {
                 throw new TransientException("GMSClient failed to get proposal group " + proposalGroupName, ioex);
             } catch (GroupNotFoundException ignore) {
-                if (!dryrun) {
-                    proposalGroup = new Group(groupURI);
-                    try {
-                        proposalGroup = gmsClient.createGroup(proposalGroup);
-                        log.info("created group: " + proposalGroupName);
-                    } catch (Exception e) {
-                        throw new RuntimeException("could not create group " + proposalGroupName, e);
-                    }
-                }
-                ret++;
+                // try to create below
             }
 
-            if (!dryrun) {
-                // Add admin groups to proposal group
-                proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
-
-                try {
+            try {
+                if (proposalGroup == null) {
+                    proposalGroup = new Group(groupURI);
+                    proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
+                    proposalGroup = gmsClient.createGroup(proposalGroup);
+                    log.debug("created group: " + proposalGroupName);
+                } else {
+                    proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
                     gmsClient.updateGroup(proposalGroup);
-                } catch (GroupNotFoundException ex) {
-                    throw new RuntimeException("group not found: " + proposalGroupName + " for update (right after check/create)");
-                } catch (Exception e) {
-                    throw new RuntimeException("could not update group " + proposalGroupName, e);
+                    log.debug("updated group: " + proposalGroupName);
                 }
-                log.debug("added group admins to group: " + proposalGroupName);
+            } catch (AccessControlException ex) {
+                throw ex;
+            } catch (GroupNotFoundException ex) {
+                throw new RuntimeException("BUG: group not found " + proposalGroupName + " for update (right after positive check)");
+            } catch (GroupAlreadyExistsException ex) {
+                //throw new RuntimeException("BUG: group collision " + proposalGroupName + " for create (right after negative check)");
+                throw new AccessControlException("permission denied: cannot create group " + proposalGroupName);
+            } catch (UserNotFoundException ex) {
+                throw new RuntimeException("BUG: unexpected failure (reasons)", ex);
+            } catch (ReaderException | WriterException | URISyntaxException ex) {
+                throw new RuntimeException("BUG: bad api exposing internal failure", ex);
             }
 
             // cache groups we have already updated

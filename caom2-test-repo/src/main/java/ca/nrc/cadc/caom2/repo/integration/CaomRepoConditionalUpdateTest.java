@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,87 +62,98 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.repo.action;
+package ca.nrc.cadc.caom2.repo.integration;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.net.PreconditionFailedException;
-import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.rest.InlineContentHandler;
+import ca.nrc.cadc.caom2.ObservationIntentType;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.SimpleObservation;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.caom2.xml.XmlConstants;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.MessageDigest;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- *
+ * This integration test round-trips a complete CAOM observation (latest version) and verifies
+ * the Observation.accMetaChecksum of the response.
+ * 
  * @author pdowler
  */
-public class PostAction extends RepoAction {
-    private static final Logger log = Logger.getLogger(PostAction.class);
+public class CaomRepoConditionalUpdateTest extends CaomRepoBaseIntTests {
+    private static final Logger log = Logger.getLogger(CaomRepoRoundTripTest.class);
 
-    static final String IF_MATCH_KEY = "Observation.accMetaChecksum";
+    private static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_4_NAMESPACE;
+
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+    }
     
-    public PostAction() {
+    private CaomRepoConditionalUpdateTest() {
     }
-
-    @Override
-    public void doAction() throws Exception {
-        ObservationURI uri = getURI();
-        log.debug("START: " + uri);
-
-        checkWritePermission(uri);
-
-        Observation obs = getInputObservation();
-
-        if (!uri.equals(obs.getURI())) {
-            throw new IllegalArgumentException("invalid input: " + uri);
-        }
-
-        ObservationDAO dao = getDAO();
-        ObservationState s = dao.getState(uri);
-
-        if (s == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-        if (!s.getID().equals(obs.getID())) {
-            // trying to update with non-matching uuid
-            // TODO: test for current exception/message and improve on it here
-        }
-        
-        String condition = syncInput.getHeader("If-Match");
-        if (condition != null) {
-            condition = condition.trim();
-            String[] ss = condition.split("="); // key=value
-            if (ss.length == 2) {
-                if (IF_MATCH_KEY.equals(ss[0])) {
-                    try {
-                        URI expectedAccMetaChecksum = new URI(ss[1]);
-                        if (!expectedAccMetaChecksum.equals(s.accMetaChecksum)) {
-                            throw new PreconditionFailedException("update blocked: current " + IF_MATCH_KEY + "=" + s.accMetaChecksum);
-                        }
-                    } catch (URISyntaxException ex) {
-                        throw new IllegalArgumentException("invalid Expect " + IF_MATCH_KEY + " value: " + ss[1], ex);
-                    }
-                }
-            }
-        }
-        
-        validate(obs);
-
-        dao.put(obs);
-
-        log.debug("DONE: " + uri);
+    
+    /**
+     * @param resourceID resource identifier of service to test
+     * @param pem       PEM file for user with read-write permission
+     */
+    public CaomRepoConditionalUpdateTest(URI resourceID, String pem) {
+        super(resourceID, Standards.CAOM2REPO_OBS_24, pem, null, null);
     }
+    
+    @Test
+    public void testConditonalUpdate() throws Throwable {
+        
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        
+        Observation orig = new SimpleObservation(TEST_COLLECTION, "testConditionalUpdate");
+        URI origAcc = orig.computeAccMetaChecksum(md5);
+        deleteObservation(orig.getURI().getURI().toASCIIString(), subject1, null, null);
+         
+        log.info("put: orig");
+        sendObservation("PUT", orig, subject1, 200, "OK", null);
 
-    @Override
-    protected InlineContentHandler getInlineContentHandler() {
-        return new ObservationInlineContentHandler();
+        // get the observation using subject2
+        log.info("get: o1");
+        Observation o1 = getObservation(orig.getURI().getURI().toASCIIString(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        Assert.assertNotNull(o1);
+        URI acc1 = o1.computeAccMetaChecksum(md5);
+        
+        // modify
+        orig.intent = ObservationIntentType.SCIENCE;
+        
+        // update
+        String imHeaderValue = "Observation.accMetaChecksum=" + acc1;
+        log.info("update: orig");
+        sendObservation("POST", orig, subject1, 200, "OK", null, imHeaderValue);
+        
+        // get and verify
+        log.info("get: updated");
+        Observation o2 = getObservation(orig.getURI().getURI().toASCIIString(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        Assert.assertNotNull(o2);
+        URI acc2 = o2.computeAccMetaChecksum(md5);
+        
+        // attempt second update from orig: rejected
+        imHeaderValue = "Observation.accMetaChecksum=" + origAcc;
+        log.info("update: orig [race loser]");
+        sendObservation("POST", orig, subject1, 412, "update blocked", null, imHeaderValue);
+        
+        // attempt update from current: accepted
+        imHeaderValue = "Observation.accMetaChecksum=" + acc2;
+        log.info("update: o2");
+        sendObservation("POST", orig, subject1, 200, "OK", null, imHeaderValue);
     }
 }
