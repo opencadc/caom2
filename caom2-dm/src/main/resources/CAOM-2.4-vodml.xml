@@ -1230,7 +1230,13 @@
             <attribute>
                 <vodml-id>Chunk.naxis</vodml-id>
                 <name>naxis</name>
-                <description>number of axes in the data array</description>
+                <description>number of axes in the data array; value ust be in [1,7] since CAOM supports a maximum
+                    of seven axes; furthermore, if naxis has a value, the axis index values 1 to {naxis} must be assigned
+                    (to positionAxis1, positionAxis2, energyAxis, timeAxis, polarizationAxis, customAxis, and/or observableAxis) 
+                    and each axis index value assigned to those fields must be unique; axis index values above {naxis} may be 
+                    assigned in order to preserve the ordering  of metadata-only WCS (see FITS-WCS WCSAXES defintion for an example
+                    of how this could originate and be used)
+                </description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1242,7 +1248,7 @@
             <attribute>
                 <vodml-id>Chunk.positionAxis1</vodml-id>
                 <name>positionAxis1</name>
-                <description>index of the first position axis</description>
+                <description>index of the first position axis; if set: positionAxis2 and position must also have values</description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1254,7 +1260,7 @@
             <attribute>
                 <vodml-id>Chunk.positionAxis2</vodml-id>
                 <name>positionAxis2</name>
-                <description>index of the second position axis</description>
+                <description>index of the second position axis; if set: positionAxis1 and position must also have values</description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1266,7 +1272,7 @@
             <attribute>
                 <vodml-id>Chunk.energyAxis</vodml-id>
                 <name>energyAxis</name>
-                <description>index of the energy axis</description>
+                <description>index of the energy axis; if set: energy must have a value</description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1278,7 +1284,7 @@
             <attribute>
                 <vodml-id>Chunk.timeAxis</vodml-id>
                 <name>timeAxis</name>
-                <description>index of the time axis</description>
+                <description>index of the time axis; if set: time must have a value</description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1290,7 +1296,7 @@
             <attribute>
                 <vodml-id>Chunk.polarizationAxis</vodml-id>
                 <name>polarizationAxis</name>
-                <description>index of the polarization axis</description>
+                <description>index of the polarization axis; if set: polarization must have a value</description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1302,7 +1308,7 @@
             <attribute>
                 <vodml-id>Chunk.customAxis</vodml-id>
                 <name>customAxis</name>
-                <description>index of the custom axis</description>
+                <description>index of the custom axis; if set: custom must have a value</description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1314,7 +1320,7 @@
             <attribute>
                 <vodml-id>Chunk.observableAxis</vodml-id>
                 <name>observableAxis</name>
-                <description>index of the observable axis</description>
+                <description>index of the observable axis; if set: observable must have a value</description>
                 <datatype>
                     <vodml-ref>ivoa:integer</vodml-ref>
                 </datatype>
@@ -1326,7 +1332,8 @@
             <composition>
                 <vodml-id>Chunk.position</vodml-id>
                 <name>position</name>
-                <description>spatial WCS description of the data array or subsection thereof</description>
+                <description>spatial WCS description of the data array or subsection thereof; if positionAxis1 and positionAxis2 indices are null
+                    or have values above {naxis}, then the spatial WCS is metadata only (usually the degenerate case of one spatial pixel)</description>
                 <datatype>
                     <vodml-ref>caom2:SpatialWCS</vodml-ref>
                 </datatype>
@@ -1338,7 +1345,8 @@
             <composition>
                 <vodml-id>Chunk.energy</vodml-id>
                 <name>energy</name>
-                <description>spectral WCS description of the data array or subsection thereof</description>
+                <description>spectral WCS description of the data array or subsection thereof; if energyAxis index is null or has a value
+                    above {naxis}, then the spectral WCS is metadata only (usually the degenerate case of one spectral pixel)</description>
                 <datatype>
                     <vodml-ref>caom2:SpectralWCS</vodml-ref>
                 </datatype>
@@ -1350,7 +1358,8 @@
             <composition>
                 <vodml-id>Chunk.time</vodml-id>
                 <name>time</name>
-                <description>temporal WCS description of the data array or subsection thereof</description>
+                <description>temporal WCS description of the data array or subsection thereof; if timeAxis index is null or has a value
+                    above {naxis}, then the time WCS is metadata only (usually the degenerate case of one time pixel for the whole data array)</description>
                 <datatype>
                     <vodml-ref>caom2:TemporalWCS</vodml-ref>
                 </datatype>
@@ -1362,7 +1371,8 @@
             <composition>
                 <vodml-id>Chunk.polarization</vodml-id>
                 <name>polarization</name>
-                <description>polarization WCS description of the data array or subsection thereof</description>
+                <description>polarization WCS description of the data array or subsection thereof; if polarizationAxis index is null or has a value
+                    above {naxis}, then the polarization WCS is metadata only (usually the degenerate case of one polarization pixel)</description>
                 <datatype>
                     <vodml-ref>caom2:PolarizationWCS</vodml-ref>
                 </datatype>
@@ -1374,7 +1384,8 @@
             <composition>
                 <vodml-id>Chunk.custom</vodml-id>
                 <name>custom</name>
-                <description>custom WCS description of the data array or subsection thereof</description>
+                <description>custom WCS description of the data array or subsection thereof; if customAxis index is null or has a value
+                    above {naxis}, then the custom WCS is metadata only (usually the degenerate case of one custom pixel)</description>
                 <datatype>
                     <vodml-ref>caom2:CustomWCS</vodml-ref>
                 </datatype>
@@ -1386,7 +1397,8 @@
             <composition>
                 <vodml-id>Chunk.observable</vodml-id>
                 <name>observable</name>
-                <description>observable description of the data array or subsection thereof</description>
+                <description>observable description of the data array or subsection thereof; if observableAxis index is null or has a value
+                    above {naxis}, then the observable axis is metadata only (usually the degenerate case of one observable for the whole data array)</description>
                 <datatype>
                     <vodml-ref>caom2:ObservableAxis</vodml-ref>
                 </datatype>
@@ -1406,7 +1418,7 @@
             <attribute>
                 <vodml-id>Algorithm.name</vodml-id>
                 <name>name</name>
-                <description>common name of the algorithm; for SimpleObservation: exposure; 
+                <description>common name of the algorithm; the value 'exposure' is reserved for use in SimpleObservation; 
                     TBD: publish a list of acceptable values as a machine-readable vocabulary?</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
@@ -1425,7 +1437,8 @@
             <attribute>
                 <vodml-id>Telescope.name</vodml-id>
                 <name>name</name>
-                <description>common name of the telescope; TBD: reference to a standard list of names?</description>
+                <description>common name of the telescope; 
+                    TBD: reference to a standard list of names?</description>
                 <datatype>
                     <vodml-ref>ivoa:string</vodml-ref>
                 </datatype>
