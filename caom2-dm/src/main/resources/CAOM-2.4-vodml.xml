@@ -1230,7 +1230,7 @@
             <attribute>
                 <vodml-id>Chunk.naxis</vodml-id>
                 <name>naxis</name>
-                <description>number of axes in the data array; value ust be in [1,7] since CAOM supports a maximum
+                <description>number of axes in the data array; value must be in [1,7] since CAOM supports a maximum
                     of seven axes; furthermore, if naxis has a value, the axis index values 1 to {naxis} must be assigned
                     (to positionAxis1, positionAxis2, energyAxis, timeAxis, polarizationAxis, customAxis, and/or observableAxis) 
                     and each axis index value assigned to those fields must be unique; axis index values above {naxis} may be 
