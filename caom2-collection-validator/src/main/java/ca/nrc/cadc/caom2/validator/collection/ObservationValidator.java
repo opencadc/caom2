@@ -649,7 +649,7 @@ public class ObservationValidator implements Runnable {
                         log.error("unexpected exception", oops);
                     }
                     // message for HarvestSkipURI record
-                    skipMsg = oops.getMessage();
+//                    skipMsg = oops.getMessage();
                 } finally {
                     if (!ok ){
 //                        && !dryrun) {
