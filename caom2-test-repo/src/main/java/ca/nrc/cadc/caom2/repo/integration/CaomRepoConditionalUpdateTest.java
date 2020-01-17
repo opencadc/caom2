@@ -67,20 +67,13 @@
 
 package ca.nrc.cadc.caom2.repo.integration;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationIntentType;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.net.URL;
 import java.security.MessageDigest;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -136,9 +129,8 @@ public class CaomRepoConditionalUpdateTest extends CaomRepoBaseIntTests {
         orig.intent = ObservationIntentType.SCIENCE;
         
         // update
-        String imHeaderValue = "Observation.accMetaChecksum=" + acc1;
         log.info("update: orig");
-        sendObservation("POST", orig, subject1, 200, "OK", null, imHeaderValue);
+        sendObservation("POST", orig, subject1, 200, "OK", null, acc1.toASCIIString());
         
         // get and verify
         log.info("get: updated");
@@ -147,13 +139,11 @@ public class CaomRepoConditionalUpdateTest extends CaomRepoBaseIntTests {
         final URI acc2 = o2.computeAccMetaChecksum(md5);
         
         // attempt second update from orig: rejected
-        imHeaderValue = "Observation.accMetaChecksum=" + origAcc;
         log.info("update: orig [race loser]");
-        sendObservation("POST", orig, subject1, 412, "update blocked", null, imHeaderValue);
+        sendObservation("POST", orig, subject1, 412, "update blocked", null, origAcc.toASCIIString());
         
         // attempt update from current: accepted
-        imHeaderValue = "Observation.accMetaChecksum=" + acc2;
         log.info("update: o2");
-        sendObservation("POST", orig, subject1, 200, "OK", null, imHeaderValue);
+        sendObservation("POST", orig, subject1, 200, "OK", null, acc2.toASCIIString());
     }
 }

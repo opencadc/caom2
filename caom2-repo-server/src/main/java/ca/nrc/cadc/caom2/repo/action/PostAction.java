@@ -87,8 +87,6 @@ import org.apache.log4j.Logger;
 public class PostAction extends RepoAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
-    static final String IF_MATCH_KEY = "Observation.accMetaChecksum";
-    
     public PostAction() {
     }
 
@@ -119,18 +117,13 @@ public class PostAction extends RepoAction {
         String condition = syncInput.getHeader("If-Match");
         if (condition != null) {
             condition = condition.trim();
-            String[] ss = condition.split("="); // key=value
-            if (ss.length == 2) {
-                if (IF_MATCH_KEY.equals(ss[0])) {
-                    try {
-                        URI expectedAccMetaChecksum = new URI(ss[1]);
-                        if (!expectedAccMetaChecksum.equals(s.accMetaChecksum)) {
-                            throw new PreconditionFailedException("update blocked: current " + IF_MATCH_KEY + "=" + s.accMetaChecksum);
-                        }
-                    } catch (URISyntaxException ex) {
-                        throw new IllegalArgumentException("invalid Expect " + IF_MATCH_KEY + " value: " + ss[1], ex);
-                    }
+            try {
+                URI expectedAccMetaChecksum = new URI(condition);
+                if (!expectedAccMetaChecksum.equals(s.accMetaChecksum)) {
+                    throw new PreconditionFailedException("update blocked: current entity is : " + s.accMetaChecksum);
                 }
+            } catch (URISyntaxException ex) {
+                throw new IllegalArgumentException("invalid If-Match value: " + condition, ex);
             }
         }
         

@@ -361,20 +361,17 @@ public class ReadAccessGenerator {
                 if (proposalGroup == null) {
                     proposalGroup = new Group(groupURI);
                     proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
-                    proposalGroup = gmsClient.createGroup(proposalGroup);
+                    gmsClient.createGroup(proposalGroup);
                     log.debug("created group: " + proposalGroupName);
                 } else {
                     proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
                     gmsClient.updateGroup(proposalGroup);
                     log.debug("updated group: " + proposalGroupName);
                 }
-            } catch (AccessControlException ex) {
-                throw ex;
             } catch (GroupNotFoundException ex) {
-                throw new RuntimeException("BUG: group not found " + proposalGroupName + " for update (right after positive check)");
+                throw new RuntimeException("CONFIG: group not found " + proposalGroupName + " or " + staffGroupURI + " for update");
             } catch (GroupAlreadyExistsException ex) {
-                //throw new RuntimeException("BUG: group collision " + proposalGroupName + " for create (right after negative check)");
-                throw new AccessControlException("permission denied: cannot create group " + proposalGroupName);
+                throw new RuntimeException("CONFIG: group collision " + proposalGroupName + " for create (right after negative check)");
             } catch (UserNotFoundException ex) {
                 throw new RuntimeException("BUG: unexpected failure (reasons)", ex);
             } catch (ReaderException | WriterException | URISyntaxException ex) {
