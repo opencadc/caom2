@@ -87,6 +87,7 @@ import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.net.TransientException;
@@ -97,6 +98,7 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -310,6 +312,15 @@ public class ObservationValidator implements Runnable {
         return id.toString();
     }
 
+    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+
+    protected String format(Date d) {
+        if (d == null) {
+            return "null";
+        }
+        return df.format(d);
+    }
+
 //    @Override
     public void run() {
         log.info("START: " + Observation.class.getSimpleName());
@@ -343,7 +354,7 @@ public class ObservationValidator implements Runnable {
         boolean done = false;
         boolean abort = false;
         int found = 0;
-//        int ingested = 0;
+        int ingested = 0;
         int failed = 0;
         int handled = 0;
 
@@ -416,7 +427,7 @@ public class ObservationValidator implements Runnable {
 //            if (skipped) {
 //                entityList = getSkipped(startDate);
 //            } else {
-//                log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
+                log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
                 List<ObservationResponse> obsList;
                 if (srcObservationDAO != null) {
                     obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize + 1);
@@ -434,7 +445,7 @@ public class ObservationValidator implements Runnable {
                 ListIterator<SkippedWrapperURI<ObservationResponse>> iter = entityList.listIterator();
                 Observation curBatchLeader = iter.next().entity.observation;
                 if (curBatchLeader != null) {
-//                    log.debug("currentBatch: " + curBatchLeader.getURI() + " " + format(curBatchLeader.getMaxLastModified()));
+                    log.debug("currentBatch: " + curBatchLeader.getURI() + " " + format(curBatchLeader.getMaxLastModified()));
                     log.debug("currentBatch: " + curBatchLeader.getURI() + " <need a date here for format asking for URI?>");
 //                    log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
 //                    if (curBatchLeader.getID().equals(state.curID) && curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
@@ -462,7 +473,7 @@ public class ObservationValidator implements Runnable {
                 HarvestSkipURI hs = ow.skip;
                 iter1.remove(); // allow garbage collection during loop
 
-                String skipMsg = null;
+//                String skipMsg = null;
 
 //                if (!dryrun) {
 //                    if (destObservationDAO.getTransactionManager().isOpen()) {
@@ -574,10 +585,10 @@ public class ObservationValidator implements Runnable {
 //                        log.debug("commit: OK");
 //                    } // if !dryrun
                     ok = true;
-//                    ret.ingested++;
+                    ret.ingested++;
                 } catch (Throwable oops) {
                     // TODO: which of these errors are appropriate to keep?
-                    skipMsg = null;
+//                    skipMsg = null;
                     String str = oops.toString();
                     if (oops instanceof HarvestReadException) {
                         // unwrap HarvestReadException from above
