@@ -438,7 +438,7 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,u
 ( 'caom2', 'caom2.SIAv1', 'view', 'SIAv1 view on CAOM-2.0: caom.Observation JOIN caom.Plane JOIN caom2.Artifact, limited to calibrated science images', NULL );
 
 insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,unit,datatype,arraysize,xtype,principal,indexed,std) values
-( 'caom2.SIAv1', 'collection', 		'data collection this observation belongs to', 		NULL, NULL, NULL, 			'char', NULL,NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'collection', 		'data collection this observation belongs to', 		NULL, NULL, NULL, 			'char', '32*',NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'publisherDID', 	'unique product identifier', 	'VOX:Image_Title', NULL, NULL, 	'char', '128*', NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'instrument_name', 	'name of the instrument used to collect the data', 	'INST_ID', NULL, NULL, 	'char', '128*',NULL, 1,1,1 ),
 
@@ -453,7 +453,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 ( 'caom2.SIAv1', 'energy_bounds_center', 'medianvalue on  energy axis (barycentric wavelength)',  'VOX:BandPass_RefValue', NULL, 'm', 'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'energy_bounds_cval1', 'lower bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_LoLimit', NULL, 'm', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'energy_bounds_cval2', 'upper bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_HiLimit', NULL, 'm', 	'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'energy_units', 	'units used for energy values', 			'VOX:BandPass_Unit', NULL, NULL, 	'char', '32*',NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_units', 	'units used for energy values', 			'VOX:BandPass_Unit', NULL, NULL, 	'char', '1*',NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'energy_bandpassName', 'collection-specific name for energy band (e.g. filter name)', 'VOX:BandPass_ID', NULL, NULL, 'char', '32*',NULL, 1,1,1 ),
 
 ( 'caom2.SIAv1', 'time_bounds_center', 	'central value on time axis (Modified Julian Day)', 	'VOX:Image_MJDateObs', NULL, 'd', 	'double', NULL, NULL, 1,1,1 ),
