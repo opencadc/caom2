@@ -88,6 +88,7 @@ import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.date.DateUtil;
+import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -440,18 +441,28 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
             // update metadata checksums, maybe modified timestamps
             updateEntity(obs, cur, now);
-
+            
             log.debug("starting transaction");
             getTransactionManager().startTransaction();
             txnOpen = true;
             
             // obtain row lock on observation update
             if (cur != null) {
+                URI acc = cur.accMetaChecksum; // lock updates this and we need to reset
                 String lock = gen.getUpdateLockSQL(obs);
                 log.debug("LOCK SQL: " + lock);
                 jdbc.update(lock);
+                
+                // req-acquire current state after obtaining lock
+                ObservationSkeleton tmp = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+                tmp.accMetaChecksum = acc;
+                cur = tmp;
+                // update metadata checksums, maybe modified timestamps
+                updateEntity(obs, cur, now);
             }
             
+            
+
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
             if (cur != null) {
