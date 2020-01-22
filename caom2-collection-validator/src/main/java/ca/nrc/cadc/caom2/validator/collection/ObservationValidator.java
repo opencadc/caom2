@@ -162,7 +162,7 @@ public class ObservationValidator implements Runnable {
     protected boolean full;
 
 
-    public ObservationValidator(HarvestResource src, String progressFileName, Integer batchSize, boolean compute) throws IOException {
+    public ObservationValidator(HarvestResource src, String progressFileName, Integer batchSize, boolean compute) throws ObservationValidatorException {
         this.src = src;
         this.batchSize = batchSize;
         this.computePlaneMetadata = compute;
@@ -172,13 +172,12 @@ public class ObservationValidator implements Runnable {
         } else {
             this.progressFileName = progressFileName;
         }
-//        initProgressFile();
-        // TODO: for cleaning up
-//        this.progressFile = new File(progressFileName);
 
-        // Serialized to the progress File, processed for curLastModified date
-        progressRecord = new ValidatorProgress();
-        init(1);
+        try {
+            init(1);
+        } catch (Exception e) {
+            throw new ObservationValidatorException((e.getMessage()));
+        }
     }
 
     // Used to set these optional parameters
@@ -220,7 +219,7 @@ public class ObservationValidator implements Runnable {
     }
 
 
-    private void init(int nthreads) throws IOException {
+    private void init(int nthreads) throws IOException, ParseException, URISyntaxException {
         if (src.getResourceType() == HarvestResource.SOURCE_DB && src.getDatabaseServer() != null) {
             Map<String, Object> config1 = getConfigDAO(src);
             this.srcObservationDAO = new ObservationDAO();
@@ -521,6 +520,10 @@ public class ObservationValidator implements Runnable {
 
     // Progress file management functions
     protected void initProgressFile() throws IOException, ParseException, URISyntaxException {
+
+        // Serialized to the progress File, processed for curLastModified date
+        progressRecord = new ValidatorProgress();
+
         this.progressFile = new File(progressFileName);
 
         if (this.progressFile.exists()) {

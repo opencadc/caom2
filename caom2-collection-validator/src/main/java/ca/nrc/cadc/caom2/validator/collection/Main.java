@@ -228,9 +228,8 @@ public class Main {
                 obsValidator.setMinDate(minDate);
                 obsValidator.setMaxDate(maxDate);
                 action = obsValidator;
-            } catch (IOException ioex) {
-
-                log.error("failed to init: " + ioex.getMessage());
+            } catch (ObservationValidatorException ioex) {
+                log.error("failed to initialize validator: " + ioex.getMessage());
                 exitValue = -1;
                 System.exit(exitValue);
             }
