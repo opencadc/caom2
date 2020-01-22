@@ -72,7 +72,7 @@ package ca.nrc.cadc.caom2.validator.collection;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
+
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
@@ -80,8 +80,6 @@ import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
-import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -91,27 +89,36 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.util.StringUtil;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.io.Writer;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import javax.sql.DataSource;
 import org.apache.log4j.Logger;
+import org.apache.log4j.helpers.ISO8601DateFormat;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.BadSqlGrammarException;
 
@@ -120,120 +127,64 @@ import org.springframework.jdbc.BadSqlGrammarException;
  * @author hjeeves
  */
 public class ObservationValidator implements Runnable {
-//    extends Harvester {
-    // TODO : collapse Harvester variables & function needed into this class.
 
     private static Logger log = Logger.getLogger(ObservationValidator.class);
 
     public static final String POSTGRESQL = "postgresql";
+    private String defaultProgressFile = "caom2-collection-validator_progress.txt";
+    public static String WCS_ERROR = "[wcs] ";
+    public static String CORE_ERROR = "[core] ";
+    public static String CHECKSUM_ERROR = "[checksum] ";
 
-//    private final URI basePublisherID;
-    
+    private String srcURI;
     private RepoClient srcObservationService;
     private ObservationDAO srcObservationDAO;
     protected HarvestResource src;
+
+    // Progress file values
+    private String progressFileName;
     private File progressFile;
-//    private ObservationDAO destObservationDAO;
+    private ValidatorProgress progressRecord;
+    private Aggregate runAggregate;
 
-//    private boolean nochecksum = false;
-//    private boolean skipped;
-//
-    private boolean computePlaneMetadata = false;
-    // TODO: is this needed?
-    private ReadAccessGenerator acGenerator;
-    
-    private boolean ready = false;
-
-//    HarvestSkipURIDAO harvestSkipDAO = null;
-
+    // Parameter values
     protected Integer batchSize;
-    protected boolean full;
-
+    private boolean computePlaneMetadata = false;
     protected Date minDate;
     protected Date maxDate;
 
-    public ObservationValidator(HarvestResource src, String progressFileName, Integer batchSize) throws IOException {
+    // Batch management values
+    private Date startDate;
+    private Date endDate;
+    private boolean firstIteration = true;
+    private boolean ready = false;
+    protected boolean full;
 
-        // grab any batchSize and min/max date code as well.
-//        super(Observation.class, src, dest, batchSize, full, dryrun);
-        // TODO: this needs to be a smarter function that either creates the file
-        // or uses the existing, including any observationID inside it.
+
+    public ObservationValidator(HarvestResource src, String progressFileName, Integer batchSize, boolean compute) throws IOException {
         this.src = src;
         this.batchSize = batchSize;
+        this.computePlaneMetadata = compute;
+
+        if (progressFileName.equals("")) {
+            this.progressFileName = defaultProgressFile;
+        } else {
+            this.progressFileName = progressFileName;
+        }
         this.progressFile = new File(progressFileName);
 
-//        this.nochecksum = nochecksum;
-//        this.basePublisherID = basePublisherID;
-//        init(nthreads);
+        // Serialized to the progress File, processed for curLastModified date
+        progressRecord = new ValidatorProgress();
         init(1);
     }
 
-    // TODO: is this needed for validator?
-//    public void setSkipped(boolean skipped) {
-//        this.skipped = skipped;
-//    }
-
+    // Used to set these optional parameters
     public void setMinDate(Date d) {
         this.minDate = d;
     }
 
     public void setMaxDate(Date d) {
         this.maxDate = d;
-    }
-
-    public boolean getComputePlaneMetadata() {
-        return computePlaneMetadata;
-    }
-    
-    public void setComputePlaneMetadata(boolean computePlaneMetadata) {
-        this.computePlaneMetadata = computePlaneMetadata;
-    }
-
-    public void setGenerateReadAccessTuples(File config) {
-        try {
-            Properties props = new Properties();
-            props.load(new FileReader(config));
-            String line = props.getProperty(src.getCollection());
-            if (line == null) {
-                throw new IllegalArgumentException("CONFIG: collection not found: " + src.getCollection());
-            }
-            
-            Map<String,Object> groupConfig = new HashMap<>();
-            String[] parts = line.split("[ \t]+"); // one or more spaces and tabs
-            for (int i = 0; i < parts.length; i++) {
-                String option = parts[i]; // key=value pair
-                String[] kv = option.split("=");
-                if (kv.length != 2) {
-                    throw new IllegalArgumentException("invalid key=value pair: " + option);
-                }
-                if (ReadAccessGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
-                    boolean proposalGroup = "true".equals(kv[1]);
-                    if (proposalGroup) {
-                        groupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, proposalGroup);
-                    }
-                } else if (ReadAccessGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
-                    String og = kv[1];
-                    if (og != null) {
-                        URI ouri = new URI(og);
-                        groupConfig.put(ReadAccessGenerator.OPERATOR_GROUP_KEY, ouri);
-                    }
-                } else if (ReadAccessGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
-                    String sg = kv[1];
-                    if (sg != null) {
-                        URI suri = new URI(sg);
-                        groupConfig.put(ReadAccessGenerator.STAFF_GROUP_KEY, suri);
-                    }
-                }
-            }
-            for (Map.Entry<String,Object> me : groupConfig.entrySet()) {
-                log.debug("generate config for " + src.getCollection() + ": " + me.getKey() + " = " + me.getValue());
-            }
-            this.acGenerator = new ReadAccessGenerator(src.getCollection(), groupConfig);
-        } catch (IOException ex) {
-            throw new RuntimeException("failed to read config from " + config, ex);
-        } catch (Exception ex) {
-            throw new RuntimeException("CONFIG: invalid config " + config, ex);
-        } 
     }
 
 
@@ -274,27 +225,18 @@ public class ObservationValidator implements Runnable {
             ready = true;
         } else if (src.getResourceType() == HarvestResource.SOURCE_URI) {
             this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
+            this.srcURI = src.getResourceID().toString();
         } else if (src.getResourceType() == HarvestResource.SOURCE_CAP_URL) {
             this.srcObservationService = new RepoClient(src.getCapabilitiesURL(), nthreads);
+            this.srcURI = src.getCapabilitiesURL().toString();
         } else {
             throw new IllegalStateException("BUG: unexpected HarvestResource resource type: " + src);
         }
 
-        // todo: for validator, dest is meaningless
-        // for now, dest is always a database
-//        Map<String, Object> config2 = getConfigDAO(dest);
-//        config2.put("basePublisherID", basePublisherID.toASCIIString());
-//        this.destObservationDAO = new ObservationDAO();
-//        destObservationDAO.setConfig(config2);
-//        if (src.getIdentifier().equals(dest.getIdentifier())) {
-//            log.info("source = destination = " + dest.getIdentifier() + ": setting origin=true");
-//            destObservationDAO.setOrigin(true); // reproc in a single db should update timestamps
-//        } else {
-//            destObservationDAO.setOrigin(false); // copy as-is
-//        }
-        // initProgressStateFile - todo - separate task to get this going
-//        initHarvestState(destObservationDAO.getDataSource(), Observation.class);
-//        initProgressFile(progressFile, Observation.class);
+        initProgressFile();
+
+        // This is to capture the totals of each batch aggregate
+        runAggregate = new Aggregate();
         
         if (srcObservationService != null) {
             if (srcObservationService.isObsAvailable()) {
@@ -312,67 +254,54 @@ public class ObservationValidator implements Runnable {
         return id.toString();
     }
 
+    // Used for printing and reading dates
     DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
-    protected String format(Date d) {
+    public String format(Date d) {
         if (d == null) {
             return "null";
         }
         return df.format(d);
     }
 
-//    @Override
+    protected void initProgressFile() throws IOException {
+        // This will discover if it can read from the file, and if it can do something.
+        // for now, it will write to the file to create it
+        ValidatorProgress blankProgress = new ValidatorProgress();
+        writeProgressFile(blankProgress);
+    }
+
     public void run() {
-        log.info("START: " + Observation.class.getSimpleName());
+        log.info("START: Observation Validation");
+        System.out.println("Observation Validation for:"
+            + "\n\tcollection source: " + this.srcURI
+            + "\n\tcollection: " + src.getCollection());
 
         boolean go = true;
         while (go) {
-            Progress num = doit();
+            Aggregate agg = doit();
 
-            if (num.found > 0) {
-                log.debug("***************** finished batch: " + num + " *******************");
+            if (agg.found > 0) {
+                log.debug("***************** finished batch: " + agg + " *******************");
             }
 
-            if (num.abort) {
+            if (agg.abort) {
                 log.error("batched aborted");
             }
-            go = (num.found > 0 && !num.abort && !num.done);
-            if (batchSize != null && num.found < batchSize.intValue() / 2) {
+            go = (agg.found > 0 && !agg.abort && !agg.done);
+            log.debug("agg.found, abort, done: " + agg.found + ": " + agg.abort + ": " + agg.done);
+            if (batchSize != null && agg.found < batchSize.intValue() / 2) {
                 go = false;
             }
-            full = false; // do not start at beginning again
-//            if (dryrun) {
-//                go = false; // no state update -> infinite loop
-//            }
-        }
-
-//        log.info("DONE: " + entityClass.getSimpleName() + "\n");
-    }
-
-    private static class Progress {
-
-        boolean done = false;
-        boolean abort = false;
-        int found = 0;
-        int ingested = 0;
-        int failed = 0;
-        int handled = 0;
-
-        // todo: potentially the aggregate report string?
-        @Override
-        public String toString() {
-            return found + " ingested: <need value here> failed: " + failed;
+            full = true; // do not start at beginning again
+            runAggregate.addAggregate(agg);
         }
     }
 
-    // todo: maxDate and minDate from harvester may be replaced with these? or should replace these?
-    private Date startDate;
-    private Date endDate;
-    private boolean firstIteration = true; // todo: is this needed?
+    private Aggregate doit() {
 
-    private Progress doit() {
-
-        Progress ret = new Progress();
+        log.info("Starting batch. batchsize: " + batchSize);
+        Aggregate ret = new Aggregate();
 
         if (!ready) {
             log.error("Observation Validator not ready");
@@ -380,27 +309,23 @@ public class ObservationValidator implements Runnable {
             return ret;
         }
         long t = System.currentTimeMillis();
-        long timeState = -1;
         long timeQuery = -1;
-        long timeTransaction = -1;
+        long timeValidation = -1;
 
         int expectedNum = Integer.MAX_VALUE;
         if (batchSize != null) {
             expectedNum = batchSize.intValue();
         }
+        log.debug("expectedNum: " + expectedNum);
         try {
             System.gc(); // hint
             t = System.currentTimeMillis();
 
-//            todo: does 'skipped' have a meaning for validator?
-//            HarvestState state = null;
-//            if (!skipped) {
-//                state = harvestStateDAO.get(source, Observation.class.getSimpleName());
-//                startDate = state.curLastModified;
-//                log.debug("state " + state);
-//            }
+            String state = null;
+            progressRecord = readProgressFile();
+            startDate = progressRecord.curLastModified;
+            log.debug("state " + state);
 
-            timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
             if (firstIteration) {
@@ -410,330 +335,178 @@ public class ObservationValidator implements Runnable {
                     startDate = this.minDate;
                 }
                 endDate = this.maxDate;
-//                if (!skipped) {
-                    // harvest up to a little in the past because the head of
-                    // the sequence may be volatile
-                    long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
-                    if (endDate == null) {
-                        endDate = new Date(fiveMinAgo);
-                    } else {
-                        endDate = new Date(Math.min(fiveMinAgo, endDate.getTime()));
-                    }
-//                }
             }
             firstIteration = false;
 
-            List<SkippedWrapperURI<ObservationResponse>> entityList;
-//            if (skipped) {
-//                entityList = getSkipped(startDate);
-//            } else {
-                log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
-                List<ObservationResponse> obsList;
-                if (srcObservationDAO != null) {
-                    obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize + 1);
-                } else {
-                    obsList = srcObservationService.getList(src.getCollection(), startDate, endDate, batchSize + 1);
-                }
-                entityList = wrap(obsList);
-//            }
+            log.info("...getting collection list");
 
-            // avoid re-processing the last successful one stored in
-            // HarvestState (normal case because query: >= startDate)
-            if (!entityList.isEmpty()) {
-//                &&
-//            } !skipped) {
-                ListIterator<SkippedWrapperURI<ObservationResponse>> iter = entityList.listIterator();
-                Observation curBatchLeader = iter.next().entity.observation;
+            log.info("Validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
+            List<ObservationResponse> obsList;
+            if (srcObservationDAO != null) {
+                obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize + 1);
+            } else {
+                obsList = srcObservationService.getList(src.getCollection(), startDate, endDate, batchSize + 1);
+            }
+
+            // avoid re-processing the last successful one stored in progressRecord (normal case because query: >= startDate)
+            if (obsList.isEmpty()) {
+                ListIterator<ObservationResponse> iter = obsList.listIterator();
+                Observation curBatchLeader = iter.next().observation;
                 if (curBatchLeader != null) {
                     log.debug("currentBatch: " + curBatchLeader.getURI() + " " + format(curBatchLeader.getMaxLastModified()));
                     log.debug("currentBatch: " + curBatchLeader.getURI() + " <need a date here for format asking for URI?>");
-//                    log.debug("harvestState: " + format(state.curID) + " " + format(state.curLastModified));
-//                    if (curBatchLeader.getID().equals(state.curID) && curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
-//                        iter.remove();
-//                        expectedNum--;
-//                    }
+                    log.debug("progressRecord: " + format(progressRecord.curID) + " " + format(progressRecord.curLastModified));
+                    if (curBatchLeader.getID().equals(progressRecord.curID)
+                        && curBatchLeader.getMaxLastModified().equals(progressRecord.curLastModified)) {
+                        iter.remove();
+                        expectedNum--;
+                    }
                 }
             }
 
-            ret.found = entityList.size();
-            log.debug("found: " + entityList.size());
+            ret.found = obsList.size();
+            log.debug("observation count: " + obsList.size());
 
             timeQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
-            ListIterator<SkippedWrapperURI<ObservationResponse>> iter1 = entityList.listIterator();
-            // int i = 0;
-            // todo: this is the interesting loop where reporting can occur
+            ListIterator<ObservationResponse> iter1 = obsList.listIterator();
+            log.info("...validating observations\n");
             while (iter1.hasNext()) {
-                SkippedWrapperURI<ObservationResponse> ow = iter1.next();
+                boolean clean = true;
+                log.debug("next iteration...");
+
+                // TOOD: is the observationURI object the way to prune out the SkippedWrapperURI object?
+                ObservationResponse ow = iter1.next();
+                ObservationURI observationURI = ow.observationState.getURI();
                 Observation o = null;
-                if (ow.entity != null) {
-                    o = ow.entity.observation;
+                if (ow != null) {
+                    o = ow.observation;
                 }
-                HarvestSkipURI hs = ow.skip;
                 iter1.remove(); // allow garbage collection during loop
 
-//                String skipMsg = null;
+                if (o != null) {
+                    if (progressRecord != null) {
+                        progressRecord.curLastModified = o.getMaxLastModified();
+                        progressRecord.curID = o.getID();
+                        progressRecord.observationURI = o.getURI().getURI();
+                        // todo: finish this part
+                        // todo: re-order values in progress file
+                        //                                progressRecord.cname =
+                    }
 
-//                if (!dryrun) {
-//                    if (destObservationDAO.getTransactionManager().isOpen()) {
-//                        throw new RuntimeException("BUG: found open transaction at start of next observation");
-//                    }
-//                    log.debug("starting transaction");
-//                    destObservationDAO.getTransactionManager().startTransaction();
-//                }
-                boolean ok = false;
-                try {
-                    // o could be null in skip mode cleanup
-//                    if (o != null) {
-//                        String treeSize = computeTreeSize(o);
-//                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
-//                    } else if (hs != null) {
-//                        log.info("put (retry error): " + hs.getName() + " " + hs.getSkipID() + " " + format(hs.getLastModified()));
-//                    } else {
-//                        log.info("put (error): Observation " + ow.entity.observationState.getURI() + " " + format(ow.entity.observationState.maxLastModified));
-//                    }
+                    // core validator
+                    try {
+                        log.debug("core validation");
+                        CaomValidator.validate(o);
+                    } catch (Throwable coreOops) {
+                        clean = false;
+                        String str = coreOops.toString();
+                        if (coreOops instanceof IllegalArgumentException) {
+                            log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + coreOops.getMessage());
+                            if (coreOops.getCause() != null) {
+                                log.error("cause: " + coreOops.getCause());
+                            }
+                        } else if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
+                            log.error(CORE_ERROR + "CONTENT PROBLEM - duplicate observation: " + observationURI);
+                        } else {
+                            log.error(CORE_ERROR + "CAOM2 Core Validation error: " + observationURI);
+                        }
+                        ret.coreErr++;
+                    }
 
-//                    if (!dryrun) {
-//                        if (skipped) {
-//                            startDate = hs.getTryAfter();
-//                        }
+                    // WCS validation
+                    try {
+                        log.debug("wcs validation");
+                        for (Plane p : o.getPlanes()) {
+                            for (Artifact a : p.getArtifacts()) {
+                                CaomWCSValidator.validate(a);
+                            }
+                        }
+                    } catch (Throwable wcsOops) {
+                        clean = false;
+                        if (wcsOops instanceof IllegalArgumentException) {
+                            log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + wcsOops.getMessage());
+                            if (wcsOops.getCause() != null) {
+                                log.error("cause: " + wcsOops.getCause());
+                            }
+                        } else {
+                            log.error(WCS_ERROR + " " + observationURI);
+                        }
+                        ret.wcsErr++;
+                    }
 
-                        if (o != null) {
-//                            if (state != null) {
-//                                state.curLastModified = o.getMaxLastModified();
-//                                state.curID = o.getID();
-//                            }
+                    try {
+                        log.debug("checksum validation");
+                        validateChecksum(o);
+                    } catch (Throwable checksumOops) {
+                        clean = false;
 
-//                            // try to avoid DataIntegrityViolationException due
-//                            // to missed deletion followed by insert with new
-//                            // UUID
-//                            ObservationState cur = destObservationDAO.getState(o.getURI());
-//                            if (cur != null && !cur.getID().equals(o.getID())) {
-//                                // missed harvesting a deletion: trust source
-//                                log.info("delete: " + o.getClass().getSimpleName() + " " + cur.getURI() + " " + cur.getID()
-//                                        + " (ObservationURI conflict avoided)");
-//                                destObservationDAO.delete(cur.getID());
-//                            }
+                        if (checksumOops instanceof MismatchedChecksumException) {
+                            log.error(CHECKSUM_ERROR + "CONTENT PROBLEM - mismatching checksums: " + observationURI);
+                        } else {
+                            log.error(CHECKSUM_ERROR + ": " + observationURI);
+                        }
+                        ret.checksumErr++;
+                    }
 
-                            // need to do this. - TODO
-                            // observation validator
-                            CaomValidator.validate(o);
-
-                            // Definitely need to do this
-                            // WCS validation
+                    // Optional, via --compute on command line
+                    // default is false
+                    if (computePlaneMetadata) {
+                        try {
+                            log.debug("computePlaneMetadata: " + o.getURI());
                             for (Plane p : o.getPlanes()) {
-                                for (Artifact a : p.getArtifacts()) {
-                                    CaomWCSValidator.validate(a);
-                                }
+                                ComputeUtil.computeTransientState(o, p);
                             }
-
-                            if (computePlaneMetadata) {
-                                log.debug("computePlaneMetadata: " + o.getURI());
-                                for (Plane p : o.getPlanes()) {
-                                    ComputeUtil.computeTransientState(o, p);
-                                }
-                            }
-                            
-                            if (acGenerator != null) {
-                                log.debug("generateReadAccessTuples: " + o.getURI());
-                                acGenerator.generateTuples(o);
-                            }
-
-                            // todo: is this making sense to do? - yes, always do
-//                            if (!nochecksum) {
-                                validateChecksum(o);
-//                            }
-
-                            // everything is OK - TODO: not to be done by the validator
-//                            destObservationDAO.put(o);
-
-//                            if (!skipped) {
-//                                // TODO: write to progress state file here.
-//                                harvestStateDAO.put(state);
-//                            }
-
-//                            if (hs == null) {
-//                                // normal harvest mode: try to cleanup skip
-//                                // records immediately
-//                                hs = harvestSkipDAO.get(source, cname, o.getURI().getURI());
-//                            }
-
-//                            if (hs != null) {
-//                                log.info("delete: " + hs + " " + format(hs.getLastModified()));
-//                                harvestSkipDAO.delete(hs);
-//                            }
-                            // TODO: is it right to miss this entirely?
-//                        } else if (skipped && ow.entity == null) {
-//                            // observation was simply missing from source == missed deletion
-//                            ObservationURI uri = new ObservationURI(hs.getSkipID());
-//                            log.info("delete: " + uri);
-////                            destObservationDAO.delete(uri);
-//                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
-//                            harvestSkipDAO.delete(hs);
-                        } else if (ow.entity.error != null) {
-                            // try to make progress on failures TODO: does this have any context?
-//                            if (state != null && ow.entity.observationState.maxLastModified != null) {
-//                                state.curLastModified = ow.entity.observationState.maxLastModified;
-//                                state.curID = null; // unknown
-//                            }
-                            throw new HarvestReadException(ow.entity.error);
+                        } catch(Throwable otherOoops){
+                            clean = false;
+                            log.error("Compute error: " + observationURI);
                         }
-
-//                        log.debug("committing transaction");
-//                        destObservationDAO.getTransactionManager().commitTransaction();
-//                        log.debug("commit: OK");
-//                    } // if !dryrun
-                    ok = true;
-                    ret.ingested++;
-                } catch (Throwable oops) {
-                    // TODO: which of these errors are appropriate to keep?
-//                    skipMsg = null;
-                    String str = oops.toString();
-                    if (oops instanceof HarvestReadException) {
-                        // unwrap HarvestReadException from above
-                        oops = oops.getCause();
-                        // unwrap intervening RuntimeException(s)
-                        while (oops.getCause() != null && oops instanceof RuntimeException) {
-                            oops = oops.getCause();
-                        }
-                        log.error("HARVEST PROBLEM - failed to read observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
-                        ret.handled++;
-                    } else if (oops instanceof IllegalStateException) {
-                        if (oops.getMessage().contains("XML failed schema validation")) {
-                            log.error("CONTENT PROBLEM - XML failed schema validation: " + oops.getMessage());
-                            ret.handled++;
-                        } else if (oops.getMessage().contains("failed to read")) {
-                            log.error("CONTENT PROBLEM - " + oops.getMessage(), oops.getCause());
-                            ret.handled++;
-                        }
-                    } else if (oops instanceof IllegalArgumentException) {
-                        log.error("CONTENT PROBLEM - invalid observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
-                        if (oops.getCause() != null) {
-                            log.error("cause: " + oops.getCause());
-                        }
-                        ret.handled++;
-                    } else if (oops instanceof MismatchedChecksumException) {
-                        log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
-                        ret.handled++;
-                    } else if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
-                        log.error("CONTENT PROBLEM - duplicate observation: " + ow.entity.observationState.getURI());
-                        ret.handled++;
-                    } else if (oops instanceof TransientException) {
-                        log.error("CONTENT PROBLEM - " + oops.getMessage());
-                        ret.handled++;
-                    } else if (oops instanceof Error) {
-                        log.error("FATAL - probably installation or environment", oops);
-                        ret.abort = true;
-                    } else if (oops instanceof NullPointerException) {
-                        log.error("BUG", oops);
-                        ret.abort = true;
-                    } else if (oops instanceof BadSqlGrammarException) {
-                        log.error("BUG", oops);
-                        BadSqlGrammarException bad = (BadSqlGrammarException) oops;
-                        SQLException sex1 = bad.getSQLException();
-                        if (sex1 != null) {
-                            log.error("CAUSE", sex1);
-                            SQLException sex2 = sex1.getNextException();
-                            log.error("NEXT CAUSE", sex2);
-                        }
-                        ret.abort = true;
-                    } else if (oops instanceof DataAccessResourceFailureException) {
-                        log.error("SEVERE PROBLEM - probably out of space in database", oops);
-                        ret.abort = true;
-                    } else if (str.contains("spherepoly_from_array")) {
-                        log.error("CONTENT PROBLEM - failed to persist: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
-                        oops = new IllegalArgumentException("invalid polygon (spoly): " + oops.getMessage(), oops);
-                        ret.handled++;
-                    } else {
-                        log.error("unexpected exception", oops);
                     }
-                    // message for HarvestSkipURI record
-//                    skipMsg = oops.getMessage();
-                } finally {
-                    if (!ok ){
-//                        && !dryrun) {
-//                        destObservationDAO.getTransactionManager().rollbackTransaction();
-//                        log.debug("rollback: OK");
-                        timeTransaction += System.currentTimeMillis() - t;
 
-//                        try {
-//                            log.debug("starting HarvestSkipURI transaction");
-//                            HarvestSkipURI skip = null;
-//                            if (o != null) {
-//                                skip = harvestSkipDAO.get(source, cname, o.getURI().getURI());
-//                            } else {
-//                                skip = harvestSkipDAO.get(source, cname, ow.entity.observationState.getURI().getURI());
-//                            }
-//                            Date tryAfter = ow.entity.observationState.maxLastModified;
-//                            if (o != null) {
-//                                tryAfter = o.getMaxLastModified();
-//                            }
-//                            if (skip == null) {
-//                                if (o != null) {
-//                                    skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), tryAfter, skipMsg);
-//                                } else {
-//                                    skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), tryAfter, skipMsg);
-//                                }
-//                            } else {
-//                                skip.errorMessage = skipMsg;
-//                                skip.setTryAfter(tryAfter);
-//                            }
-//
-//                            log.debug("starting HarvestSkipURI transaction");
-//                            destObservationDAO.getTransactionManager().startTransaction();
-//
-//                            if (!skipped) {
-//                                // track the harvest state progress
-//                                harvestStateDAO.put(state);
-//                            }
-//
-//                            // track the fail
-//                            log.info("put: " + skip);
-//                            harvestSkipDAO.put(skip);
-//
-//                            if (!src.getIdentifier().equals(dest.getIdentifier())) {
-//                                // delete previous version of observation (if any)
-//                                log.info("delete: " + ow.entity.observationState.getURI());
-//                                destObservationDAO.delete(ow.entity.observationState.getURI());
-//                            }
-//
-//                            log.debug("committing HarvestSkipURI transaction");
-//                            destObservationDAO.getTransactionManager().commitTransaction();
-//                            log.debug("commit HarvestSkipURI: OK");
-//                        } catch (Throwable oops) {
-//                            log.warn("failed to insert HarvestSkipURI", oops);
-//                            destObservationDAO.getTransactionManager().rollbackTransaction();
-//                            log.debug("rollback HarvestSkipURI: OK");
-//                            ret.abort = true;
-//                        }
-//                        ret.failed++;
+                } else if (ow.error != null) {
+                    clean = false;
+                    // unwrap intervening RuntimeException(s)
+                    Throwable oops = ow.error.getCause();
+                    while (oops.getCause() != null && oops instanceof RuntimeException) {
+                         oops = oops.getCause();
                     }
+                    log.error("PROBLEM - failed to read observation: " + observationURI + " - " + oops.getMessage());
                 }
-//                if (ret.abort) {
-//                    return ret;
-//                }
+
+                writeProgressFile(progressRecord);
+
+                if (clean == true) {
+                    ret.passed++;
+                } else {
+                    ret.failed++;
+                }
+                timeValidation += System.currentTimeMillis() - t;
+
             }
+
             if (ret.found < expectedNum) {
                 ret.done = true;
             }
+
         } catch (InterruptedException | ExecutionException e) {
             log.error("SEVERE PROBLEM - ThreadPool harvesting Observations failed: " + e.getMessage());
             ret.abort = true;
+            ret.runtime++;
+        } catch (IOException | ParseException iope) {
+            log.error("SEVERE PROBLEM - error reading from progress file" + iope.toString());
+            ret.runtime++;
+        } catch (URISyntaxException ue ) {
+            log.error("SEVERE PROBLEM - error reading observation URI from progress file: " + ue.toString());
+            ret.runtime++;
         } finally {
-            timeTransaction = System.currentTimeMillis() - t;
-            log.debug("time to get HarvestState: " + timeState + "ms");
-            log.debug("time to run ObservationListQuery: " + timeQuery + "ms");
-            log.debug("time to run transactions: " + timeTransaction + "ms");
+            timeValidation = System.currentTimeMillis() - t;
+            log.info("...done batch.");
+            log.info("batch stats: " + ret.toString());
+            log.info("\nTime to run ObservationListQuery: " + timeQuery + "ms");
+            log.info("Time to run validations for batch: " + timeValidation + "ms\n");
         }
         return ret;
-    }
-
-    private static class HarvestReadException extends Exception {
-
-        public HarvestReadException(Exception cause) {
-            super(cause);
-        }
     }
 
     private void validateChecksum(Observation o) throws MismatchedChecksumException {
@@ -752,143 +525,104 @@ public class ObservationValidator implements Runnable {
         }
     }
 
-    private String computeTreeSize(Observation o) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        int numA = 0;
-        int numP = 0;
-        for (Plane p : o.getPlanes()) {
-            numA += p.getArtifacts().size();
-            for (Artifact a : p.getArtifacts()) {
-                numP += a.getParts().size();
-            }
-        }
-        sb.append(o.getPlanes().size()).append(",");
-        sb.append(numA).append(",");
-        sb.append(numP).append("]");
-        return sb.toString();
+    protected void writeProgressFile(ValidatorProgress progressRec) throws IOException {
+        log.debug("writing progress file: " + progressRecord);
+        // output : Unicode to Cp850 (MS-DOS Latin-1)
+        FileOutputStream fos = new FileOutputStream(this.progressFileName);
+        Writer w =
+            new BufferedWriter(new OutputStreamWriter(fos, "Cp850"));
+        w.write(progressRec.toString());
+        w.flush();
+        w.close();
     }
 
-    private void detectLoop(List<SkippedWrapperURI<ObservationResponse>> entityList) {
-        if (entityList.size() < 2) {
-            return;
-        }
-        SkippedWrapperURI<ObservationResponse> start = entityList.get(0);
-        SkippedWrapperURI<ObservationResponse> end = entityList.get(entityList.size() - 1);
-//        if (skipped) {
-//            if (start.skip.getLastModified().equals(end.skip.getLastModified())) {
-//                throw new RuntimeException("detected infinite harvesting loop: " + HarvestSkipURI.class.getSimpleName() + " at "
-//                        + format(start.skip.getLastModified()));
-//            }
-//            return;
-//        }
-        Date d1 = null;
-        Date d2 = null;
-        if (start.entity.observation != null) {
-            d1 = start.entity.observation.getMaxLastModified();
-        } else if (start.entity.observationState != null) {
-            d1 = start.entity.observationState.maxLastModified;
-        }
-        if (end.entity.observation != null) {
-            d2 = end.entity.observation.getMaxLastModified();
-        } else if (end.entity.observationState != null) {
-            d2 = end.entity.observationState.maxLastModified;
-        }
-        if (d1 == null || d2 == null) {
-            throw new RuntimeException("detectLoop: FAIL -- cannotr comapre timestamps " + d1 + " vs " + d2);
-        }
-        // todo: does this need to happen still? Jan 2020
+    protected ValidatorProgress readProgressFile() throws IOException, ParseException, URISyntaxException {
+        log.debug("reading progress file");
 
-//        if (d1.equals(d2)) {
-//            throw new RuntimeException("detected infinite harvesting loop: " + entityClass.getSimpleName() + " at "
-//                    + format(start.entity.observation.getMaxLastModified()));
-//        }
+        // input`: Cp850  to Unicode
+        FileInputStream fis =  new FileInputStream(this.progressFileName);
+        BufferedReader r =
+            new BufferedReader(new InputStreamReader(fis, "Cp850"));
+
+        ValidatorProgress vp = new ValidatorProgress();
+        String tmpVal = r.readLine().split(": ")[1];
+        if (!tmpVal.equals("null")) {
+            vp.curLastModified = DateUtil.flexToDate(tmpVal, df);
+        }
+
+        tmpVal = r.readLine(); // todo: handle curID?
+//        vp.curID = (r.readLine().split(": ")[1]);
+
+        tmpVal = r.readLine().split(": ")[1];
+        if (!tmpVal.equals("null")) {
+            vp.observationURI = new URI(tmpVal);
+        }
+
+        tmpVal = r.readLine().split(": ")[1];
+        if (!tmpVal.equals("null")) {
+            vp.source = tmpVal;
+        }
+
+        tmpVal = r.readLine().split(": ")[1];
+        if (!tmpVal.equals("null")) {
+            vp.cname = tmpVal;
+        }
+
+        r.close();
+        log.debug ("PROGRESS FILE OBJECT: " + vp);
+        return vp;
     }
 
-    // TODO: SkippedWrapperURI is probably punt-able as well.
-    private List<SkippedWrapperURI<ObservationResponse>> wrap(List<ObservationResponse> obsList) {
-        List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(obsList.size());
-        for (ObservationResponse wr : obsList) {
-            ret.add(new SkippedWrapperURI<ObservationResponse>(wr, null));
-        }
-        return ret;
+    public void printAggregateReport() {
+        String aggReport =
+            "\n---------------------------"
+            + "\n\nFinal Report: " + "\n---------------"
+            + "\ncollection source: " + this.srcURI
+            + "\ncollection: " + src.getCollection()
+            + "\ntotal observations: " + runAggregate.found
+            + "\npassed:  " + runAggregate.passed
+            + "\nfailed: " + runAggregate.failed
+            + runAggregate.getDetails()
+            + "\n---------------------------"+ "\nDone! " + "\n";
+
+        System.out.print(aggReport);
     }
 
-//    private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) throws ExecutionException, InterruptedException {
-//        log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
-//        List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null, batchSize);
-//
-//        List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
-//
-//        if (srcObservationDAO != null) {
-//            for (HarvestSkipURI hs : skip) {
-//                log.debug("getSkipped: " + hs.getSkipID());
-//                ObservationURI ouri = new ObservationURI(hs.getSkipID());
-//                ObservationResponse wr = srcObservationDAO.getAlt(ouri);
-//                log.debug("response: " + wr);
-//                ret.add(new SkippedWrapperURI<ObservationResponse>(wr, hs));
-//            }
-//        } else {
-//            // srcObservationService
-//            List<ObservationURI> listUris = new ArrayList<>();
-//            for (HarvestSkipURI hs : skip) {
-//                log.debug("getSkipped: " + hs.getSkipID());
-//                listUris.add(new ObservationURI(hs.getSkipID()));
-//            }
-//            List<ObservationResponse> listResponses = srcObservationService.get(listUris);
-//            log.warn("getSkipped: " + skip.size() + " HarvestSkipURI -> " + listResponses.size() + " ObservationResponse");
-//
-//            for (ObservationResponse o : listResponses) {
-//                HarvestSkipURI hs = findSkip(o.observationState.getURI().getURI(), skip);
-//                o.observationState.maxLastModified = hs.getTryAfter(); // overwrite bogus value from RepoClient
-//                ret.add(new SkippedWrapperURI<>(o, hs));
-//            }
-//        }
-//        // re-order so we process in tryAfter order
-//        Collections.sort(ret, new SkipWrapperComparator());
-//        return ret;
-//    }
 
-//    private HarvestSkipURI findSkip(URI uri, List<HarvestSkipURI> skip) {
-//        for (HarvestSkipURI hs : skip) {
-//            if (hs.getSkipID().equals(uri)) {
-//                return hs;
-//            }
-//        }
-//        return null;
-//    }
+    private static class Aggregate {
+        boolean done = false;
+        boolean abort = false;
+        int found = 0;
+        int passed = 0;
+        int failed = 0;
+        int handled = 0;
+        int wcsErr = 0;
+        int coreErr = 0;
+        int checksumErr = 0;
+        int runtime = 0;
 
-//    private static class SkipWrapperComparator implements Comparator<SkippedWrapperURI> {
-//        @Override
-//        public int compare(SkippedWrapperURI o1, SkippedWrapperURI o2) {
-//            return o1.skip.getTryAfter().compareTo(o2.skip.getTryAfter());
-//        }
-//    }
+        @Override
+        public String toString() {
+            return "found: " + found + " passed:  " + passed + " failed: " + failed;
+        }
 
-    /*
-     * private List<SkippedWrapperURI<ObservationState>> getSkippedState(Date
-     * start) { log.info("harvest window (skip): " + format(start) + " [" +
-     * batchSize + "]" + " source = " + source + " cname = " + cname);
-     * List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start);
-     * 
-     * List<SkippedWrapperURI<ObservationState>> ret = new
-     * ArrayList<SkippedWrapperURI<ObservationState>>(skip.size()); for
-     * (HarvestSkipURI hs : skip) { ObservationState o = null;
-     * log.debug("getSkipped: " + hs.getSkipID()); log.debug("start: " + start);
-     * 
-     * ObservationResponse wr = srcObservationService.get(src.getCollection(),
-     * hs.getSkipID(), start);
-     * 
-     * if (wr != null && wr.getObservationState() != null) o =
-     * wr.getObservationState();
-     * 
-     * if (o != null) { ret.add(new SkippedWrapperURI<ObservationState>(o, hs));
-     * } } return ret; }
-     */
-//    @Override
-//    protected void initHarvestState(DataSource ds, Class c) {
-//        super.initHarvestState(ds, c);
-//        this.harvestSkipDAO = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema());
-//    }
+        public String getDetails() {
+            return "\nDetailed error counts (total may be higher than # failed):" + "\n---------------\n"
+                + ObservationValidator.WCS_ERROR + ": " + wcsErr + "\n"
+                + ObservationValidator.CORE_ERROR + ": " + coreErr + "\n"
+                + ObservationValidator.CHECKSUM_ERROR + ": " + checksumErr + "\n"
+                + "For more information use caom2-validator of caom2ui for individual observations.";
+        }
+
+        public void addAggregate(Aggregate ag) {
+            this.found += ag.found;
+            this.passed += ag.passed;
+            this.failed += ag.failed;
+            this.handled += ag.handled;
+            this.wcsErr += ag.wcsErr;
+            this.coreErr += ag.coreErr;
+            this.checksumErr += ag.checksumErr;
+        }
+    }
 
 }

@@ -97,18 +97,14 @@ import org.apache.log4j.Logger;
 public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
-
-    // these are CADC-specific features that are very dangerous so can
-    // only be enabled by setting a system property
-//    private static boolean ENABLE_COMPUTE_FEATURES = false;
     
-    private static final int DEFAULT_BATCH_SIZE = 100;
+    private static final int DEFAULT_BATCH_SIZE = 10; // TODO: reinstate 100 later;
     private static int exitValue = 0;
+
+    private static ObservationValidator obsValidator;
 
     public static void main(String[] args) {
         try {
-//            String ecf = System.getProperty("ca.nrc.cadc.caom2.harvester.Main.ecf");
-//            ENABLE_COMPUTE_FEATURES = "true".equals(ecf);
             
             ArgumentMap am = new ArgumentMap(args);
 
@@ -133,24 +129,10 @@ public class Main {
                 usage();
                 System.exit(0);
             }
-
-//            final boolean test = am.isSet("test");
-//            final boolean full = am.isSet("full");
-//            final boolean skip = am.isSet("skip");
-//            final boolean dryrun = am.isSet("dryrun");
-//            final boolean validate = am.isSet("validate");
             
             // optional plugins
             boolean compute = false;
             String generateAC = null;
-//            boolean noChecksum = am.isSet("nochecksum");
-//            if (ENABLE_COMPUTE_FEATURES) {
-//                compute = am.isSet("compute");
-//                generateAC = am.getValue("generate-ac");
-//                noChecksum = noChecksum || compute || am.isSet("generate-ac");
-//            }
-            
-//            log.info("accMetaChecksum validation enabled: " + !noChecksum);
 
             // setup optional authentication for harvesting from a web service
             Subject subject = AuthenticationUtil.getAnonSubject();
@@ -162,12 +144,6 @@ public class Main {
             AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
             log.info("authentication using: " + meth);
 
-//            if (full && skip) {
-//                usage();
-//                log.warn("cannot specify both --full and --skip");
-//                System.exit(1);
-//            }
-
             // required args
             String collection = am.getValue("collection");
             boolean nocol = (collection == null || collection.trim().length() == 0);
@@ -177,67 +153,21 @@ public class Main {
                 System.exit(1);
             }
 
-            
-//            String destination = am.getValue("destination");
-//            boolean nodest = (destination == null || destination.trim().length() == 0);
-//            if (nodest) {
-//                log.warn("missing required argument: --destination");
-//                usage();
-//                System.exit(1);
-//            }
-//            String[] destDS = destination.split("[.]");
-//            if (destDS.length != 3) {
-//                log.warn("malformed --destination value, found " + destination + " expected: server.database.schema");
-//                usage();
-//                System.exit(1);
-//            }
-//            HarvestResource dest = new HarvestResource(destDS[0], destDS[1], destDS[2], collection);
-
             int nthreads = 1;
             HarvestResource src;
-//            if (ENABLE_COMPUTE_FEATURES) {
-//                src = dest;
-//            } else {
-                src = getSource(am, collection);
-//                if (src.getResourceType() != HarvestResource.SOURCE_DB) {
-//                    try {
-//                        if (am.isSet("threads")) {
-//                            nthreads = Integer.parseInt(am.getValue("threads"));
-//                        }
-//                    } catch (NumberFormatException ex) {
-//                        log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
-//                        usage();
-//                        System.exit(1);
-//                    }
-//                }
-//            }
+            src = getSource(am, collection);
+            if (src.getResourceType() != HarvestResource.SOURCE_DB) {
+                try {
+                    if (am.isSet("threads")) {
+                        nthreads = Integer.parseInt(am.getValue("threads"));
+                    }
+                } catch (NumberFormatException ex) {
+                    log.warn("invalid value for --threads parameter: " + am.getValue("threads") + " -- must be an integer");
+                    usage();
+                    System.exit(1);
+                }
+            }
 
-//            URI basePublisherID = null;
-//            String bpidStr = am.getValue("basePublisherID");
-//            if (bpidStr != null) {
-//                try {
-//                    if (!bpidStr.endsWith("/")) {
-//                        bpidStr += "/";
-//                    }
-//                    basePublisherID = new URI(bpidStr);
-//                    if ("ivo".equals(basePublisherID.getScheme()) && basePublisherID.getAuthority() != null && basePublisherID.getAuthority().length() > 0) {
-//                        log.info("basePublisherID: " + basePublisherID);
-//                        log.debug("publisherID form: " + basePublisherID + "<collection>?<observationID>/<productID>");
-//                    } else {
-//                        log.error("invalid basePublisherID: " + bpidStr + " expected: ivo://<authority> or ivo://<authority>/<path>");
-//                        usage();
-//                        System.exit(1);
-//                    }
-//                } catch (URISyntaxException ex) {
-//                    log.error("invalid basePublisherID: " + bpidStr + " reason: " + ex);
-//                    usage();
-//                    System.exit(1);
-//                }
-//            } else {
-//                log.warn("missing required argument: --basePublisherID");
-//                usage();
-//                System.exit(1);
-//            }
 
             Integer batchSize = null;
             String sbatch = am.getValue("batchSize");
@@ -257,10 +187,7 @@ public class Main {
                 batchSize = DEFAULT_BATCH_SIZE;
             }
 
-            // ... batch size doesn't apply to validate?
-//            if (!validate) {
-                log.info("batchSize: " + batchSize);
-//            }
+            log.info("batchSize: " + batchSize);
 
             Date minDate = null;
             String minDateStr = am.getValue("minDate");
@@ -274,6 +201,7 @@ public class Main {
                     System.exit(1);
                 }
             }
+
             // TODO: maxdate will be default to 'now', so there's no state where
             // newly inserted records dribble in causing this function to never finish
             Date maxDate = new Date();
@@ -289,43 +217,24 @@ public class Main {
                 }
             }
 
+            // Optional args
+            boolean computePlaneMetadata = am.isSet("compute");
+
             Runnable action = null;
-//            if (!validate) {
 
-                try {
-                    String progressFile = "progressFile.txt";
-                    ObservationValidator ch = new ObservationValidator(src, progressFile, batchSize);
-                    ch.setMinDate(minDate);
-                    ch.setMaxDate(maxDate);
-//                    ch.setCompute(compute);
-//                    if (generateAC != null) {
-//                        ch.setGenerateReadAccess(generateAC);
-//                    }
-                    action = ch;
-                } catch (IOException ioex) {
+            try {
+                String progressFile = "progressFile.txt";
+                obsValidator = new ObservationValidator(src, progressFile, batchSize, computePlaneMetadata);
+                obsValidator.setMinDate(minDate);
+                obsValidator.setMaxDate(maxDate);
+                action = obsValidator;
+            } catch (IOException ioex) {
 
-                    log.error("failed to init: " + ioex.getMessage());
-                    exitValue = -1;
-                    System.exit(exitValue);
-                }
-//
-//            } else {
-//
-//                try {
-//                    // TODO: what values need to be passed in here?
-//                    // does nochecksum make sense?
-//
-//                    ObservationValidator cv = new ObservationValidator(noChecksum, src, progressFile, minDate, maxDate, batchSize);
-//                    // [min,max] timestamps not supported by validator (only full) ??? TODO - what does this note
-//                    // mean? - Jan 2020
-//                    action = cv;
-//                } catch (IOException ioex) {
-//
-//                    log.error("failed to init: " + ioex.getMessage());
-//                    exitValue = -1;
-//                    System.exit(exitValue);
-//                }
-////            }
+                log.error("failed to init: " + ioex.getMessage());
+                exitValue = -1;
+                System.exit(exitValue);
+            }
+
             exitValue = 2; // in case we get killed
             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
 
@@ -350,7 +259,11 @@ public class Main {
 
         @Override
         public void run() {
+            // TODO: how to get the aggregate printed here no matter what.
+            obsValidator.printAggregateReport();
+
             if (exitValue != 0) {
+                System.out.println("\nTerminated with exit status " + exitValue + ". progress file shows last observation being processed.");
                 log.error("terminating with exit status " + exitValue);
             }
         }
@@ -412,29 +325,18 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2-collection-validator [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
-        
-//        if (ENABLE_COMPUTE_FEATURES) {
-//            sb.append("\n         --destination=<server.database.schema> : persist output directly to a database server");
-//            sb.append("\n         single database feature enabled: will read from --destination");
-//        } else {
-            // normal mode
-            sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
-//        }
-        
-//        sb.append("\n         --basePublisherID=ivo://<authority>[/<path>] : base for generating Plane publisherID values");
-//        sb.append("\n                      publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>");
+
+        sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
 
         sb.append("\n\nSource selection:");
         sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
         sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)");
         sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
 //        sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
-        
 
-//        sb.append("\n\nOptional modes: [--validate|--skip|--full] (default: incremental harvest)");
-//        sb.append("\n         --validate : validate all Observation.accMetaChecksum values between source and destination ");
-//        sb.append("\n         --skip : redo previously skipped (failed) observations (default: false)");
-//        sb.append("\n         --full : restart at the first (oldest) observation (default: false)");
+        sb.append("\n\nOptional modes: [--validate|--skip|--full] (default: incremental harvest)");
+        sb.append("\n\nOptional: [--compute]");
+        sb.append("\n         --compute : compute plane metadata to validate it can be done. (default: false) ");
 
         sb.append("\n\nOptional authentication: [--netrc|--cert=<pem file>] (default: anonymous)");
         sb.append("\n         --netrc : read username and password(s) from ~/.netrc file");
@@ -442,19 +344,9 @@ public class Main {
 
         sb.append("\n\nOptional modifiers:");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
-//        sb.append("\n         --dryrun : check for work but don't do anything");
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
-//        sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
-        
-//        if (ENABLE_COMPUTE_FEATURES) {
-//            sb.append("\n                        Note: checksum verification is automatically disabled with either --compute or --generate-ac");
-//            sb.append("\n\nOptional plugin invocation:");
-//            sb.append("\n           (probably only useful for CADC; automatically adds --nochecksum since they modify content)");
-//            sb.append("\n         --compute : invoke the caom2-compute plugin (computes plane metadata from WCS in artifacts)");
-//            sb.append("\n         --generate-ac=<config file> : invoke the caom2-access-control plugin (generates grants for proprietary metadata and data)");
-//            sb.append("\n                       <config file> is a properties file with <collection> = <same generate options as caom2-repo-server>");
-//        }
+
         sb.append("\n");
         log.warn(sb.toString());
     }
