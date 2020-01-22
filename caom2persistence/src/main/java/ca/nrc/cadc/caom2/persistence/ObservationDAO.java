@@ -451,10 +451,10 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             log.debug("PUT: " + sql);
             ObservationSkeleton cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
 
-            log.debug("starting transaction");
+            //log.debug("starting transaction");
             getTransactionManager().startTransaction();
             txnOpen = true;
-            
+
             // obtain row lock on observation update
             if (cur != null) {
                 String lock = gen.getUpdateLockSQL(obs);
@@ -474,7 +474,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             
             // update metadata checksums, maybe modified timestamps
             updateEntity(obs, cur, now);
-            
 
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
