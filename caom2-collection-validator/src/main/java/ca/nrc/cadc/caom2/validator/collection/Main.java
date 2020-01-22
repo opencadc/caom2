@@ -261,6 +261,7 @@ public class Main {
         public void run() {
             // TODO: how to get the aggregate printed here no matter what.
             obsValidator.printAggregateReport();
+            obsValidator.cleanup(exitValue);
 
             if (exitValue != 0) {
                 System.out.println("\nTerminated with exit status " + exitValue + ". progress file shows last observation being processed.");
@@ -325,7 +326,6 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: caom2-collection-validator [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
-
         sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
 
         sb.append("\n\nSource selection:");
@@ -334,19 +334,15 @@ public class Main {
         sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
 //        sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
 
-        sb.append("\n\nOptional modes: [--validate|--skip|--full] (default: incremental harvest)");
-        sb.append("\n\nOptional: [--compute]");
-        sb.append("\n         --compute : compute plane metadata to validate it can be done. (default: false) ");
-
         sb.append("\n\nOptional authentication: [--netrc|--cert=<pem file>] (default: anonymous)");
         sb.append("\n         --netrc : read username and password(s) from ~/.netrc file");
         sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
 
         sb.append("\n\nOptional modifiers:");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
+        sb.append("\n         --compute : compute plane metadata to validate it can be done. (default: false) ");
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
-
         sb.append("\n");
         log.warn(sb.toString());
     }

@@ -104,6 +104,7 @@ import java.io.Serializable;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -171,7 +172,9 @@ public class ObservationValidator implements Runnable {
         } else {
             this.progressFileName = progressFileName;
         }
-        this.progressFile = new File(progressFileName);
+//        initProgressFile();
+        // TODO: for cleaning up
+//        this.progressFile = new File(progressFileName);
 
         // Serialized to the progress File, processed for curLastModified date
         progressRecord = new ValidatorProgress();
@@ -262,13 +265,6 @@ public class ObservationValidator implements Runnable {
             return "null";
         }
         return df.format(d);
-    }
-
-    protected void initProgressFile() throws IOException {
-        // This will discover if it can read from the file, and if it can do something.
-        // for now, it will write to the file to create it
-        ValidatorProgress blankProgress = new ValidatorProgress();
-        writeProgressFile(blankProgress);
     }
 
     public void run() {
@@ -390,9 +386,7 @@ public class ObservationValidator implements Runnable {
                         progressRecord.curLastModified = o.getMaxLastModified();
                         progressRecord.curID = o.getID();
                         progressRecord.observationURI = o.getURI().getURI();
-                        // todo: finish this part
-                        // todo: re-order values in progress file
-                        //                                progressRecord.cname =
+                        progressRecord.source = this.srcURI;
                     }
 
                     // core validator
@@ -525,12 +519,38 @@ public class ObservationValidator implements Runnable {
         }
     }
 
+    // Progress file management functions
+    protected void initProgressFile() throws IOException, ParseException, URISyntaxException {
+        this.progressFile = new File(progressFileName);
+
+        if (this.progressFile.exists()) {
+            // read in the file and set the minDate to the last record in progress
+            ValidatorProgress lastProgressRec = readProgressFile();
+            this.minDate = lastProgressRec.curLastModified;
+
+        } else {
+            // Initialize the file
+            ValidatorProgress blankProgress = new ValidatorProgress();
+            writeProgressFile(blankProgress);
+        }
+    }
+
+    // Called from Shutdown hook function in main
+    public void cleanup(int exitValue) {
+        if (exitValue == 0) {
+            try {
+                boolean result = Files.deleteIfExists(this.progressFile.toPath());
+            } catch (Exception e) {
+                log.error("Unable to delete progress file " + this.progressFileName);
+            }
+        }
+    }
+
     protected void writeProgressFile(ValidatorProgress progressRec) throws IOException {
         log.debug("writing progress file: " + progressRecord);
-        // output : Unicode to Cp850 (MS-DOS Latin-1)
         FileOutputStream fos = new FileOutputStream(this.progressFileName);
         Writer w =
-            new BufferedWriter(new OutputStreamWriter(fos, "Cp850"));
+            new BufferedWriter(new OutputStreamWriter(fos));
         w.write(progressRec.toString());
         w.flush();
         w.close();
@@ -538,34 +558,27 @@ public class ObservationValidator implements Runnable {
 
     protected ValidatorProgress readProgressFile() throws IOException, ParseException, URISyntaxException {
         log.debug("reading progress file");
-
-        // input`: Cp850  to Unicode
         FileInputStream fis =  new FileInputStream(this.progressFileName);
         BufferedReader r =
-            new BufferedReader(new InputStreamReader(fis, "Cp850"));
+            new BufferedReader(new InputStreamReader(fis));
 
         ValidatorProgress vp = new ValidatorProgress();
+
         String tmpVal = r.readLine().split(": ")[1];
-        if (!tmpVal.equals("null")) {
-            vp.curLastModified = DateUtil.flexToDate(tmpVal, df);
-        }
-
-        tmpVal = r.readLine(); // todo: handle curID?
-//        vp.curID = (r.readLine().split(": ")[1]);
-
-        tmpVal = r.readLine().split(": ")[1];
         if (!tmpVal.equals("null")) {
             vp.observationURI = new URI(tmpVal);
         }
 
         tmpVal = r.readLine().split(": ")[1];
         if (!tmpVal.equals("null")) {
-            vp.source = tmpVal;
+            vp.curLastModified = DateUtil.flexToDate(tmpVal, df);
         }
+
+        tmpVal = r.readLine(); // todo: handle curID?
 
         tmpVal = r.readLine().split(": ")[1];
         if (!tmpVal.equals("null")) {
-            vp.cname = tmpVal;
+            vp.source = tmpVal;
         }
 
         r.close();
@@ -587,7 +600,6 @@ public class ObservationValidator implements Runnable {
 
         System.out.print(aggReport);
     }
-
 
     private static class Aggregate {
         boolean done = false;
@@ -618,7 +630,6 @@ public class ObservationValidator implements Runnable {
             this.found += ag.found;
             this.passed += ag.passed;
             this.failed += ag.failed;
-            this.handled += ag.handled;
             this.wcsErr += ag.wcsErr;
             this.coreErr += ag.coreErr;
             this.checksumErr += ag.checksumErr;
