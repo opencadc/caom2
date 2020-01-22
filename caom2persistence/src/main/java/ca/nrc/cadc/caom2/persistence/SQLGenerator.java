@@ -624,7 +624,7 @@ public class SQLGenerator {
     String getUpdateLockSQL(Observation o) {
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE ").append(getTable(Observation.class));
-        sb.append(" SET accMetaChecksum = ").append(literal(o.getAccMetaChecksum()));
+        sb.append(" SET obsID = ").append(literal(o.getID()));
         sb.append(" WHERE obsID = ").append(literal(o.getID()));
         return sb.toString();
     }

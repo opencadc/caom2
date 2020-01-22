@@ -88,6 +88,7 @@ import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.PreconditionFailedException;
 import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -403,6 +404,18 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param obs
      */
     public void put(Observation obs) {
+        put(obs, null);
+    }
+    
+    /**
+     * Store an observation. If the optional accMetaChecksum argument is not null and does not
+     * match the accMetaChecksum of the currently observation, the update is rejected.
+     * 
+     * @param obs the observation
+     * @param expectedMetaChecksum optional metadata checksum
+     * @throws PreconditionFailedException if the accMetaChecksum does not match 
+     */
+    public void put(Observation obs, URI expectedMetaChecksum) throws PreconditionFailedException {
         if (readOnly) {
             throw new UnsupportedOperationException("put in readOnly mode");
         }
@@ -433,34 +446,34 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
             // NOTE: this is by ID which means to update the caller must get(uri) then put(o)
             //       and if they do not get(uri) they can get a duplicate observation error
-            //       if they violate unique keys... but if it was by uri, it would be the same
-            //       result as if they skipped the get(uri)
+            //       if they violate unique keys
             String sql = gen.getSelectSQL(obs.getID(), SQLGenerator.MAX_DEPTH, true);
             log.debug("PUT: " + sql);
             ObservationSkeleton cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
 
-            // update metadata checksums, maybe modified timestamps
-            updateEntity(obs, cur, now);
-            
             log.debug("starting transaction");
             getTransactionManager().startTransaction();
             txnOpen = true;
             
             // obtain row lock on observation update
             if (cur != null) {
-                URI acc = cur.accMetaChecksum; // lock updates this and we need to reset
                 String lock = gen.getUpdateLockSQL(obs);
                 log.debug("LOCK SQL: " + lock);
                 jdbc.update(lock);
                 
                 // req-acquire current state after obtaining lock
-                ObservationSkeleton tmp = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
-                tmp.accMetaChecksum = acc;
-                cur = tmp;
-                // update metadata checksums, maybe modified timestamps
-                updateEntity(obs, cur, now);
+                cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+                
+                // check conditional update
+                if (expectedMetaChecksum != null) {
+                    if (!expectedMetaChecksum.equals(cur.accMetaChecksum)) {
+                        throw new PreconditionFailedException("update blocked: current entity is : " + cur.accMetaChecksum);
+                    }
+                }
             }
             
+            // update metadata checksums, maybe modified timestamps
+            updateEntity(obs, cur, now);
             
 
             // delete obsolete children
@@ -504,6 +517,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             log.debug("rollback: OK");
             txnOpen = false;
             throw e;
+        } catch (PreconditionFailedException ex) {
+            log.debug("failed to update " + obs + ": ", ex);
+            getTransactionManager().rollbackTransaction();
+            log.debug("rollback: OK");
+            txnOpen = false;
+            throw ex;
         } catch (Exception e) {
             log.error("failed to insert " + obs + ": ", e);
             getTransactionManager().rollbackTransaction();

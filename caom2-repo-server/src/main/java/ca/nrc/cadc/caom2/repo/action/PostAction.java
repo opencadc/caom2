@@ -114,22 +114,20 @@ public class PostAction extends RepoAction {
             // TODO: test for current exception/message and improve on it here
         }
         
+        validate(obs);
+        
+        URI expectedMetaChecksum = null;
         String condition = syncInput.getHeader("If-Match");
         if (condition != null) {
             condition = condition.trim();
             try {
-                URI expectedAccMetaChecksum = new URI(condition);
-                if (!expectedAccMetaChecksum.equals(s.accMetaChecksum)) {
-                    throw new PreconditionFailedException("update blocked: current entity is : " + s.accMetaChecksum);
-                }
+                expectedMetaChecksum = new URI(condition);
             } catch (URISyntaxException ex) {
                 throw new IllegalArgumentException("invalid If-Match value: " + condition, ex);
             }
         }
-        
-        validate(obs);
 
-        dao.put(obs);
+        dao.put(obs, expectedMetaChecksum);
 
         log.debug("DONE: " + uri);
     }

@@ -435,8 +435,6 @@ public abstract class RepoAction extends RestAction {
             if (ratGenerator != null) {
                 ratGenerator.generateTuples(obs);
             }
-        } catch (AccessControlException ex) {
-            throw ex;
         } catch (IllegalArgumentException ex) {
             log.debug(ex.getMessage(), ex);
             throw new IllegalArgumentException("invalid input: " + uri, ex);
