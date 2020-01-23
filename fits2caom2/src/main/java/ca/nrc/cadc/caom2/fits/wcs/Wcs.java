@@ -242,6 +242,12 @@ public class Wcs
     {
         String ctype = mapping.getMapping(utype + ".ctype");
         String cunit = mapping.getMapping(utype + ".cunit");
+        if (cunit != null) {
+            cunit = cunit.trim();
+            if (cunit.isEmpty()) {
+                cunit = null;
+            }
+        }
         if (ctype == null && cunit == null)
             return null;
         return new Axis(ctype, cunit);
