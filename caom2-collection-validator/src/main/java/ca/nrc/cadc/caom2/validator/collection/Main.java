@@ -98,7 +98,7 @@ public class Main {
     
     private static final int DEFAULT_BATCH_SIZE = 100;
     private static int exitValue = 0;
-    private static ObservationValidator obsValidator;
+    private ObservationValidator obsValidator;
 
     public static void main(String[] args) {
         try {

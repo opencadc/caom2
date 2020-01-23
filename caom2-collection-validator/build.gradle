@@ -16,7 +16,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.4.12'
+version = '1.0.0'
 ext {
     // release number for building packages (rpm, deb, etc)
     // when only library dependencies change
@@ -40,16 +40,11 @@ dependencies {
     
     // needed to run plane metadata compute plugin (--compute)
     compile 'org.opencadc:caom2-compute:[2.4.0,2.5)'
-    
-    // needed to run access-control regen plugin (--generate-ac)
-    compile 'org.opencadc:caom2-access-control:[2.4.0,2.5)'
 
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
     
     testCompile 'junit:junit:[4.0,5.0)'
 }
-
-apply from: '../opencadc.gradle'
 
 distributions {
     main {
