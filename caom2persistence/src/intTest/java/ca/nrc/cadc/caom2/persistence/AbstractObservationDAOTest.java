@@ -140,6 +140,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.TransactionManager;
+import ca.nrc.cadc.net.PreconditionFailedException;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -1096,6 +1097,62 @@ public abstract class AbstractObservationDAOTest
 
             Observation deleted = dao.get(simp.getURI());
             Assert.assertNull("deleted", deleted);
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            if ( txnManager.isOpen() )
+                try { txnManager.rollbackTransaction(); }
+                catch(Throwable t)
+                {
+                    log.error("failed to rollback transaction", t);
+                }
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testConditionalUpdate()
+    {
+        try
+        {
+            SimpleObservation orig = new SimpleObservation("FOO", "bar");
+            dao.put(orig);
+            
+            Observation c = dao.get(orig.getURI());
+            Assert.assertNotNull("found", c);
+            testEqual(orig, c);
+
+            URI cs1 = c.getAccMetaChecksum();
+            c.sequenceNumber = 1;
+            dao.put(c, cs1);
+            Observation c2 = dao.get(c.getURI());
+            Assert.assertNotNull("found", c2);
+            URI cs2 = c.getAccMetaChecksum();
+            
+            // conditional update fails when expected checksum does not match
+            c.type = "OBJECT";
+            try {
+                dao.put(c, cs1);
+            } catch (PreconditionFailedException expected) {
+                log.info("caught expected exception: " + expected);
+            }
+            
+            // conditional update succeeds when expected checksum does match
+            dao.put(c, cs2);
+            Observation c3 = dao.get(c.getURI());
+            Assert.assertNotNull("found", c3);
+            URI cs3 = c.getAccMetaChecksum();
+            
+            dao.delete(orig.getID());
+            
+            // copnditional update fails when not found
+            try {
+                dao.put(c, cs3);
+            } catch (PreconditionFailedException expected) {
+                log.info("caught expected exception: " + expected);
+            }
+
         }
         catch(Exception unexpected)
         {
