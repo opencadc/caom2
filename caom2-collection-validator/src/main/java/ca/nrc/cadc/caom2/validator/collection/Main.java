@@ -128,10 +128,6 @@ public class Main {
                 usage();
                 System.exit(0);
             }
-            
-            // optional plugins
-            boolean compute = false;
-            String generateAC = null;
 
             // setup optional authentication for harvesting from a web service
             Subject subject = AuthenticationUtil.getAnonSubject();
@@ -218,12 +214,12 @@ public class Main {
 
             // Optional args
             boolean computePlaneMetadata = am.isSet("compute");
+            String progressFileName = am.getValue("progressFile");
 
             Runnable action = null;
 
             try {
-                String progressFile = "progressFile.txt";
-                obsValidator = new ObservationValidator(src, progressFile, batchSize, computePlaneMetadata);
+                obsValidator = new ObservationValidator(src, progressFileName, batchSize, computePlaneMetadata);
                 obsValidator.setMinDate(minDate);
                 obsValidator.setMaxDate(maxDate);
                 action = obsValidator;
@@ -339,6 +335,7 @@ public class Main {
         sb.append("\n\nOptional modifiers:");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n         --compute : compute plane metadata to validate it can be done. (default: false) ");
+        sb.append("\n         --progressFile : name of progress file. (default: caom2-collection-validator_progress.txt) ");
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n");

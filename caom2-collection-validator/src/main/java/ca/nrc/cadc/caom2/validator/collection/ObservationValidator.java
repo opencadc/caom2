@@ -156,10 +156,10 @@ public class ObservationValidator implements Runnable {
         this.batchSize = batchSize;
         this.computePlaneMetadata = compute;
 
-        if (progressFileName.equals("")) {
-            this.progressFileName = defaultProgressFile;
-        } else {
+        if (progressFileName != null && progressFileName.trim().length() > 0) {
             this.progressFileName = progressFileName;
+        } else {
+            this.progressFileName = defaultProgressFile;
         }
 
         try {
