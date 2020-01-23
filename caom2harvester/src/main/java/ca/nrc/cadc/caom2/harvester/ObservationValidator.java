@@ -99,7 +99,6 @@ import org.springframework.jdbc.UncategorizedSQLException;
  * @author pdowler
  */
 public class ObservationValidator extends Harvester {
-public class ObservationValidator extends Harvester {
 
     private static Logger log = Logger.getLogger(ObservationValidator.class);
 
