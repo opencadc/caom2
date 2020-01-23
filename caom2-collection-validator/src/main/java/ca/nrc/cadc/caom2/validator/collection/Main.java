@@ -94,17 +94,14 @@ import org.apache.log4j.Logger;
  * @author hjeeves
  */
 public class Main {
-
     private static Logger log = Logger.getLogger(Main.class);
     
     private static final int DEFAULT_BATCH_SIZE = 100;
     private static int exitValue = 0;
-
     private static ObservationValidator obsValidator;
 
     public static void main(String[] args) {
         try {
-            
             ArgumentMap am = new ArgumentMap(args);
 
             if (am.isSet("d") || am.isSet("debug")) {
@@ -163,7 +160,6 @@ public class Main {
                 }
             }
 
-
             Integer batchSize = null;
             String sbatch = am.getValue("batchSize");
 
@@ -197,8 +193,7 @@ public class Main {
                 }
             }
 
-            // TODO: maxdate will be default to 'now', so there's no state where
-            // newly inserted records dribble in causing this function to never finish
+            // maxDate is set to 'Now'
             Date maxDate = new Date();
             String maxDateStr = am.getValue("maxDate");
             if (maxDateStr != null && maxDateStr.trim().length() > 0) {

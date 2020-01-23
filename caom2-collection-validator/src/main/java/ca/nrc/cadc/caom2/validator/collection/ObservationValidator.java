@@ -117,39 +117,39 @@ import org.apache.log4j.Logger;
  * @author hjeeves
  */
 public class ObservationValidator implements Runnable {
-
     private static Logger log = Logger.getLogger(ObservationValidator.class);
 
-    public static final String POSTGRESQL = "postgresql";
-    private String defaultProgressFile = "caom2-collection-validator_progress.txt";
-    public static String WCS_ERROR = "[wcs] ";
-    public static String CORE_ERROR = "[core] ";
-    public static String CHECKSUM_ERROR = "[checksum] ";
+    private static final String POSTGRESQL = "postgresql";
+    private static String defaultProgressFile = "caom2-collection-validator_progress.txt";
+    private static String WCS_ERROR = "[wcs] ";
+    private static String CORE_ERROR = "[core] ";
+    private static String CHECKSUM_ERROR = "[checksum] ";
 
     private String srcURI;
     private RepoClient srcObservationService;
     private ObservationDAO srcObservationDAO;
-    protected HarvestResource src;
+    private HarvestResource src;
 
     // Progress file values
-    private String progressFileName;
     private File progressFile;
     private ValidatorProgress progressRecord;
+
+    // Store aggregate error count across batches
     private Aggregate runAggregate;
 
     // Parameter values
     protected Integer batchSize;
     private boolean computePlaneMetadata = false;
+    private String progressFileName;
     protected Date minDate;
     protected Date maxDate;
 
-    // Batch management values
+    // Batch handling values
     private Date startDate;
     private Date endDate;
     private boolean firstIteration = true;
     private boolean ready = false;
     protected boolean full;
-
 
     public ObservationValidator(HarvestResource src, String progressFileName, Integer batchSize, boolean compute) throws ObservationValidatorException {
         this.src = src;
@@ -169,7 +169,6 @@ public class ObservationValidator implements Runnable {
         }
     }
 
-    // Used to set these optional parameters
     public void setMinDate(Date d) {
         this.minDate = d;
     }
@@ -177,7 +176,6 @@ public class ObservationValidator implements Runnable {
     public void setMaxDate(Date d) {
         this.maxDate = d;
     }
-
 
     private Map<String, Object> getConfigDAO(HarvestResource desc) throws IOException {
         if (desc.getDatabaseServer() == null) {
@@ -206,7 +204,6 @@ public class ObservationValidator implements Runnable {
         ret.put("schema", desc.getSchema());
         return ret;
     }
-
 
     private void init(int nthreads) throws IOException, ParseException, URISyntaxException {
         if (src.getResourceType() == HarvestResource.SOURCE_DB && src.getDatabaseServer() != null) {
@@ -238,6 +235,7 @@ public class ObservationValidator implements Runnable {
         }
     }
 
+    // Used for printing UUIDs to logs
     private String format(UUID id) {
         if (id == null) {
             return "null";
@@ -283,7 +281,6 @@ public class ObservationValidator implements Runnable {
     }
 
     private Aggregate doit() {
-
         log.info("Starting batch. batchsize: " + batchSize);
         Aggregate ret = new Aggregate();
 
@@ -360,7 +357,6 @@ public class ObservationValidator implements Runnable {
                 boolean clean = true;
                 log.debug("next iteration...");
 
-                // TOOD: is the observationURI object the way to prune out the SkippedWrapperURI object?
                 ObservationResponse ow = iter1.next();
                 ObservationURI observationURI = ow.observationState.getURI();
                 Observation o = null;
@@ -445,7 +441,6 @@ public class ObservationValidator implements Runnable {
                             log.error("Compute error: " + observationURI);
                         }
                     }
-
                 } else if (ow.error != null) {
                     clean = false;
                     // unwrap intervening RuntimeException(s)
@@ -464,7 +459,6 @@ public class ObservationValidator implements Runnable {
                     ret.failed++;
                 }
                 timeValidation += System.currentTimeMillis() - t;
-
             }
 
             if (ret.found < expectedNum) {
@@ -486,7 +480,8 @@ public class ObservationValidator implements Runnable {
             log.info("...done batch.");
             log.info("batch stats: " + ret.toString());
             log.info("\nTime to run ObservationListQuery: " + timeQuery + "ms");
-            log.info("Time to run validations for batch: " + timeValidation + "ms\n");
+            log.info("\nTime to run validations for batch: " + timeValidation + "ms\n");
+            ret.processTime = timeQuery + timeValidation;
         }
         return ret;
     }
@@ -509,17 +504,14 @@ public class ObservationValidator implements Runnable {
 
     // Progress file management functions
     protected void initProgressFile() throws IOException, ParseException, URISyntaxException {
-
-        // Serialized to the progress File, processed for curLastModified date
         progressRecord = new ValidatorProgress();
-
         this.progressFile = new File(progressFileName);
 
         if (this.progressFile.exists()) {
             // read in the file and set the minDate to the last record in progress
+            // processing will start from that date
             ValidatorProgress lastProgressRec = readProgressFile();
             this.minDate = lastProgressRec.curLastModified;
-
         } else {
             // Initialize the file
             ValidatorProgress blankProgress = new ValidatorProgress();
@@ -527,18 +519,7 @@ public class ObservationValidator implements Runnable {
         }
     }
 
-    // Called from Shutdown hook function in main
-    public void cleanup(int exitValue) {
-        if (exitValue == 0) {
-            try {
-                boolean result = Files.deleteIfExists(this.progressFile.toPath());
-            } catch (Exception e) {
-                log.error("Unable to delete progress file " + this.progressFileName);
-            }
-        }
-    }
-
-    protected void writeProgressFile(ValidatorProgress progressRec) throws IOException {
+    private void writeProgressFile(ValidatorProgress progressRec) throws IOException {
         log.debug("writing progress file: " + progressRecord);
         FileOutputStream fos = new FileOutputStream(this.progressFileName);
         Writer w =
@@ -548,7 +529,7 @@ public class ObservationValidator implements Runnable {
         w.close();
     }
 
-    protected ValidatorProgress readProgressFile() throws IOException, ParseException, URISyntaxException {
+    private ValidatorProgress readProgressFile() throws IOException, ParseException, URISyntaxException {
         log.debug("reading progress file");
         FileInputStream fis =  new FileInputStream(this.progressFileName);
         BufferedReader r =
@@ -566,7 +547,7 @@ public class ObservationValidator implements Runnable {
             vp.curLastModified = DateUtil.flexToDate(tmpVal, df);
         }
 
-        tmpVal = r.readLine(); // todo: handle curID?
+        tmpVal = r.readLine(); //  handle curID in future?
 
         tmpVal = r.readLine().split(": ")[1];
         if (!tmpVal.equals("null")) {
@@ -578,6 +559,7 @@ public class ObservationValidator implements Runnable {
         return vp;
     }
 
+    // Called from Shutdown hook function
     public void printAggregateReport() {
         String aggReport =
             "\n---------------------------"
@@ -588,9 +570,26 @@ public class ObservationValidator implements Runnable {
             + "\npassed:  " + runAggregate.passed
             + "\nfailed: " + runAggregate.failed
             + runAggregate.getDetails()
+            + "\ntotal time: " + runAggregate.processTime
             + "\n---------------------------"+ "\nDone! " + "\n";
 
         System.out.print(aggReport);
+    }
+
+    // Called from Shutdown hook function in main
+    public void cleanup(int exitValue) {
+        // Leave the file in place if it's not a clean exit
+        if (exitValue == 0) {
+            try {
+                boolean result = Files.deleteIfExists(this.progressFile.toPath());
+
+                if (result == false) {
+                    log.error("progress file not found: " + this.progressFileName);
+                }
+            } catch (Exception e) {
+                log.error("Unable to delete progress file " + this.progressFileName);
+            }
+        }
     }
 
     private static class Aggregate {
@@ -599,15 +598,15 @@ public class ObservationValidator implements Runnable {
         int found = 0;
         int passed = 0;
         int failed = 0;
-        int handled = 0;
         int wcsErr = 0;
         int coreErr = 0;
         int checksumErr = 0;
         int runtime = 0;
+        long processTime;
 
         @Override
         public String toString() {
-            return "found: " + found + " passed:  " + passed + " failed: " + failed;
+            return "found: " + found + " passed:  " + passed + " failed: " + failed + " time: " + this.processTime;
         }
 
         public String getDetails() {
@@ -625,6 +624,7 @@ public class ObservationValidator implements Runnable {
             this.wcsErr += ag.wcsErr;
             this.coreErr += ag.coreErr;
             this.checksumErr += ag.checksumErr;
+            this.processTime += ag.processTime;
         }
     }
 
