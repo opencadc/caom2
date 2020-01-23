@@ -436,7 +436,7 @@ public class ObservationValidator implements Runnable {
                             for (Plane p : o.getPlanes()) {
                                 ComputeUtil.computeTransientState(o, p);
                             }
-                        } catch(Throwable otherOoops){
+                        } catch (Throwable otherOoops) {
                             clean = false;
                             log.error("Compute error: " + observationURI);
                         }
@@ -446,7 +446,7 @@ public class ObservationValidator implements Runnable {
                     // unwrap intervening RuntimeException(s)
                     Throwable oops = ow.error.getCause();
                     while (oops.getCause() != null && oops instanceof RuntimeException) {
-                         oops = oops.getCause();
+                        oops = oops.getCause();
                     }
                     log.error("PROBLEM - failed to read observation: " + observationURI + " - " + oops.getMessage());
                 }
@@ -472,7 +472,7 @@ public class ObservationValidator implements Runnable {
         } catch (IOException | ParseException iope) {
             log.error("SEVERE PROBLEM - error reading from progress file" + iope.toString());
             ret.runtime++;
-        } catch (URISyntaxException ue ) {
+        } catch (URISyntaxException ue) {
             log.error("SEVERE PROBLEM - error reading observation URI from progress file: " + ue.toString());
             ret.runtime++;
         } finally {
@@ -555,7 +555,7 @@ public class ObservationValidator implements Runnable {
         }
 
         r.close();
-        log.debug ("PROGRESS FILE OBJECT: " + vp);
+        log.debug("PROGRESS FILE OBJECT: " + vp);
         return vp;
     }
 
@@ -571,7 +571,7 @@ public class ObservationValidator implements Runnable {
             + "\nfailed: " + runAggregate.failed
             + runAggregate.getDetails()
             + "\ntotal time: " + runAggregate.processTime
-            + "\n---------------------------"+ "\nDone! " + "\n";
+            + "\n---------------------------" + "\nDone! " + "\n";
 
         System.out.print(aggReport);
     }
