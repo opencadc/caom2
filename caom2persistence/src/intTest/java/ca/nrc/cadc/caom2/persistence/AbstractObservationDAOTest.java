@@ -1130,6 +1130,7 @@ public abstract class AbstractObservationDAOTest
             Assert.assertNotNull("found", c2);
             URI cs2 = c.getAccMetaChecksum();
             
+            // conditional update fails when expected checksum does not match
             c.type = "OBJECT";
             try {
                 dao.put(c, cs1);
@@ -1137,9 +1138,20 @@ public abstract class AbstractObservationDAOTest
                 log.info("caught expected exception: " + expected);
             }
             
+            // conditional update succeeds when expected checksum does match
             dao.put(c, cs2);
+            Observation c3 = dao.get(c.getURI());
+            Assert.assertNotNull("found", c3);
+            URI cs3 = c.getAccMetaChecksum();
             
             dao.delete(orig.getID());
+            
+            // copnditional update fails when not found
+            try {
+                dao.put(c, cs3);
+            } catch (PreconditionFailedException expected) {
+                log.info("caught expected exception: " + expected);
+            }
 
         }
         catch(Exception unexpected)

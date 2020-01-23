@@ -621,11 +621,11 @@ public class SQLGenerator {
         return id;
     }
 
-    String getUpdateLockSQL(Observation o) {
+    String getUpdateLockSQL(UUID id) {
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE ").append(getTable(Observation.class));
-        sb.append(" SET obsID = ").append(literal(o.getID()));
-        sb.append(" WHERE obsID = ").append(literal(o.getID()));
+        sb.append(" SET obsID = ").append(literal(id));
+        sb.append(" WHERE obsID = ").append(literal(id));
         return sb.toString();
     }
     
