@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2020.                            (c) 2020.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -78,7 +78,6 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -98,7 +97,7 @@ public class Main {
 
     private static Logger log = Logger.getLogger(Main.class);
     
-    private static final int DEFAULT_BATCH_SIZE = 10; // TODO: reinstate 100 later;
+    private static final int DEFAULT_BATCH_SIZE = 100;
     private static int exitValue = 0;
 
     private static ObservationValidator obsValidator;
