@@ -46,15 +46,4 @@ dependencies {
     testCompile 'junit:junit:[4.0,5.0)'
 }
 
-distributions {
-    main {
-        contents {
-            into('bin') {
-                from {
-                    'src/scripts'
-                }
-                fileMode 0755
-            }
-        }
-    }
-}
+apply from: '../opencadc.gradle'

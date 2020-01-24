@@ -120,10 +120,11 @@ public class ObservationValidator implements Runnable {
     private static Logger log = Logger.getLogger(ObservationValidator.class);
 
     private static final String POSTGRESQL = "postgresql";
-    private static String defaultProgressFile = "caom2-collection-validator_progress.txt";
     private static String WCS_ERROR = "[wcs] ";
     private static String CORE_ERROR = "[core] ";
     private static String CHECKSUM_ERROR = "[checksum] ";
+    private static String COMPUTE_ERROR = "[compute] ";
+    private static String SOURCE_ERROR = "[source] ";
 
     private String srcURI;
     private RepoClient srcObservationService;
@@ -131,7 +132,7 @@ public class ObservationValidator implements Runnable {
     private HarvestResource src;
 
     // Progress file values
-    private File progressFile;
+    protected File progressFile;
     private ValidatorProgress progressRecord;
 
     // Store aggregate error count across batches
@@ -140,7 +141,6 @@ public class ObservationValidator implements Runnable {
     // Parameter values
     protected Integer batchSize;
     private boolean computePlaneMetadata = false;
-    private String progressFileName;
     protected Date minDate;
     protected Date maxDate;
 
@@ -151,19 +151,15 @@ public class ObservationValidator implements Runnable {
     private boolean ready = false;
     protected boolean full;
 
-    public ObservationValidator(HarvestResource src, String progressFileName, Integer batchSize, boolean compute) throws ObservationValidatorException {
+    public ObservationValidator(HarvestResource src, File progressFile, Integer batchSize, boolean compute, Integer nthreads) throws ObservationValidatorException {
         this.src = src;
         this.batchSize = batchSize;
         this.computePlaneMetadata = compute;
 
-        if (progressFileName != null && progressFileName.trim().length() > 0) {
-            this.progressFileName = progressFileName;
-        } else {
-            this.progressFileName = defaultProgressFile;
-        }
+        this.progressFile = progressFile;
 
         try {
-            init(1);
+            init(nthreads);
         } catch (Exception e) {
             throw new ObservationValidatorException((e.getMessage()));
         }
@@ -278,6 +274,8 @@ public class ObservationValidator implements Runnable {
             full = true; // do not start at beginning again
             runAggregate.addAggregate(agg);
         }
+
+        cleanupProgressFile();
     }
 
     private Aggregate doit() {
@@ -359,10 +357,7 @@ public class ObservationValidator implements Runnable {
 
                 ObservationResponse ow = iter1.next();
                 ObservationURI observationURI = ow.observationState.getURI();
-                Observation o = null;
-                if (ow != null) {
-                    o = ow.observation;
-                }
+                Observation o =  ow.observation;
                 iter1.remove(); // allow garbage collection during loop
 
                 if (o != null) {
@@ -377,18 +372,12 @@ public class ObservationValidator implements Runnable {
                     try {
                         log.debug("core validation");
                         CaomValidator.validate(o);
-                    } catch (Throwable coreOops) {
+                    } catch (IllegalArgumentException coreOops) {
                         clean = false;
                         String str = coreOops.toString();
-                        if (coreOops instanceof IllegalArgumentException) {
-                            log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + coreOops.getMessage());
-                            if (coreOops.getCause() != null) {
-                                log.error("cause: " + coreOops.getCause());
-                            }
-                        } else if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
-                            log.error(CORE_ERROR + "CONTENT PROBLEM - duplicate observation: " + observationURI);
-                        } else {
-                            log.error(CORE_ERROR + "CAOM2 Core Validation error: " + observationURI);
+                        log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + coreOops.getMessage());
+                        if (coreOops.getCause() != null) {
+                            log.error("cause: " + coreOops.getCause());
                         }
                         ret.coreErr++;
                     }
@@ -401,15 +390,11 @@ public class ObservationValidator implements Runnable {
                                 CaomWCSValidator.validate(a);
                             }
                         }
-                    } catch (Throwable wcsOops) {
+                    } catch (IllegalArgumentException wcsOops) {
                         clean = false;
-                        if (wcsOops instanceof IllegalArgumentException) {
-                            log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + wcsOops.getMessage());
-                            if (wcsOops.getCause() != null) {
-                                log.error("cause: " + wcsOops.getCause());
-                            }
-                        } else {
-                            log.error(WCS_ERROR + " " + observationURI);
+                        log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + wcsOops.getMessage());
+                        if (wcsOops.getCause() != null) {
+                            log.error("cause: " + wcsOops.getCause());
                         }
                         ret.wcsErr++;
                     }
@@ -417,14 +402,9 @@ public class ObservationValidator implements Runnable {
                     try {
                         log.debug("checksum validation");
                         validateChecksum(o);
-                    } catch (Throwable checksumOops) {
+                    } catch (MismatchedChecksumException checksumOops) {
                         clean = false;
-
-                        if (checksumOops instanceof MismatchedChecksumException) {
-                            log.error(CHECKSUM_ERROR + "CONTENT PROBLEM - mismatching checksums: " + observationURI);
-                        } else {
-                            log.error(CHECKSUM_ERROR + ": " + observationURI);
-                        }
+                        log.error(CHECKSUM_ERROR + "CONTENT PROBLEM - mismatching checksums: " + observationURI);
                         ret.checksumErr++;
                     }
 
@@ -436,11 +416,13 @@ public class ObservationValidator implements Runnable {
                             for (Plane p : o.getPlanes()) {
                                 ComputeUtil.computeTransientState(o, p);
                             }
-                        } catch (Throwable otherOoops) {
+                        } catch (IllegalArgumentException otherOoops) {
                             clean = false;
                             log.error("Compute error: " + observationURI);
+                            ret.computeErr++;
                         }
                     }
+
                 } else if (ow.error != null) {
                     clean = false;
                     // unwrap intervening RuntimeException(s)
@@ -449,6 +431,7 @@ public class ObservationValidator implements Runnable {
                         oops = oops.getCause();
                     }
                     log.error("PROBLEM - failed to read observation: " + observationURI + " - " + oops.getMessage());
+                    ret.srcErr++;
                 }
 
                 writeProgressFile(progressRecord);
@@ -505,7 +488,7 @@ public class ObservationValidator implements Runnable {
     // Progress file management functions
     protected void initProgressFile() throws IOException, ParseException, URISyntaxException {
         progressRecord = new ValidatorProgress();
-        this.progressFile = new File(progressFileName);
+//        this.progressFile = new File(progressFileName);
 
         if (this.progressFile.exists()) {
             // read in the file and set the minDate to the last record in progress
@@ -521,7 +504,7 @@ public class ObservationValidator implements Runnable {
 
     private void writeProgressFile(ValidatorProgress progressRec) throws IOException {
         log.debug("writing progress file: " + progressRecord);
-        FileOutputStream fos = new FileOutputStream(this.progressFileName);
+        FileOutputStream fos = new FileOutputStream(this.progressFile);
         Writer w =
             new BufferedWriter(new OutputStreamWriter(fos));
         w.write(progressRec.toString());
@@ -531,7 +514,7 @@ public class ObservationValidator implements Runnable {
 
     private ValidatorProgress readProgressFile() throws IOException, ParseException, URISyntaxException {
         log.debug("reading progress file");
-        FileInputStream fis =  new FileInputStream(this.progressFileName);
+        FileInputStream fis =  new FileInputStream(this.progressFile);
         BufferedReader r =
             new BufferedReader(new InputStreamReader(fis));
 
@@ -576,19 +559,16 @@ public class ObservationValidator implements Runnable {
         System.out.print(aggReport);
     }
 
-    // Called from Shutdown hook function in main
-    public void cleanup(int exitValue) {
+    private void cleanupProgressFile() {
         // Leave the file in place if it's not a clean exit
-        if (exitValue == 0) {
-            try {
-                boolean result = Files.deleteIfExists(this.progressFile.toPath());
+        try {
+            boolean result = Files.deleteIfExists(this.progressFile.toPath());
 
-                if (result == false) {
-                    log.error("progress file not found: " + this.progressFileName);
-                }
-            } catch (Exception e) {
-                log.error("Unable to delete progress file " + this.progressFileName);
+            if (result == false) {
+                log.error("progress file not found: " + this.progressFile.getName());
             }
+        } catch (Exception e) {
+            log.error("Unable to delete progress file " + this.progressFile.getName());
         }
     }
 
@@ -601,6 +581,8 @@ public class ObservationValidator implements Runnable {
         int wcsErr = 0;
         int coreErr = 0;
         int checksumErr = 0;
+        int computeErr = 0;
+        int srcErr = 0;
         int runtime = 0;
         long processTime;
 
@@ -614,6 +596,8 @@ public class ObservationValidator implements Runnable {
                 + ObservationValidator.WCS_ERROR + ": " + wcsErr + "\n"
                 + ObservationValidator.CORE_ERROR + ": " + coreErr + "\n"
                 + ObservationValidator.CHECKSUM_ERROR + ": " + checksumErr + "\n"
+                + ObservationValidator.COMPUTE_ERROR + ": " + computeErr + "\n"
+                + ObservationValidator.SOURCE_ERROR + ": " + srcErr + "\n"
                 + "For more information use caom2-validator of caom2ui for individual observations.";
         }
 
@@ -625,6 +609,7 @@ public class ObservationValidator implements Runnable {
             this.coreErr += ag.coreErr;
             this.checksumErr += ag.checksumErr;
             this.processTime += ag.processTime;
+            this.computeErr += ag.computeErr;
         }
     }
 

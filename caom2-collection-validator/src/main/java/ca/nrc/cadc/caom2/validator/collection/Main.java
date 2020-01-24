@@ -78,6 +78,7 @@ import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -98,7 +99,6 @@ public class Main {
     
     private static final int DEFAULT_BATCH_SIZE = 100;
     private static int exitValue = 0;
-    private ObservationValidator obsValidator;
 
     public static void main(String[] args) {
         try {
@@ -207,33 +207,32 @@ public class Main {
                 }
             }
 
+            String progressFileName = am.getValue("progressFile");
+            if (progressFileName == null || progressFileName.trim().length() == 0) {
+               log.error("progress file name required (--progressFile)");
+               usage();
+               System.exit(1);
+            }
+            File progressFile = new File(progressFileName);
+
             // Optional args
             boolean computePlaneMetadata = am.isSet("compute");
-            String progressFileName = am.getValue("progressFile");
 
-            Runnable action = null;
-
-            try {
-                obsValidator = new ObservationValidator(src, progressFileName, batchSize, computePlaneMetadata);
-                obsValidator.setMinDate(minDate);
-                obsValidator.setMaxDate(maxDate);
-                action = obsValidator;
-            } catch (ObservationValidatorException ioex) {
-                log.error("failed to initialize validator: " + ioex.getMessage());
-                exitValue = -1;
-                System.exit(exitValue);
-            }
+            ObservationValidator obsValidator = new ObservationValidator(src, progressFile, batchSize, computePlaneMetadata, nthreads);
+            obsValidator.setMinDate(minDate);
+            obsValidator.setMaxDate(maxDate);
+            Runnable action = obsValidator;
 
             exitValue = 2; // in case we get killed
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook()));
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(obsValidator)));
 
             if (subject != null) {
                 Subject.doAs(subject, new RunnableAction(action));
             }
 
             exitValue = 0; // finished cleanly
-        } catch (Throwable t) {
-            log.error("uncaught exception", t);
+        } catch (Exception e) {
+            log.error("uncaught exception", e);
             exitValue = -1;
             System.exit(exitValue);
         } finally {
@@ -243,14 +242,14 @@ public class Main {
 
     private static class ShutdownHook implements Runnable {
 
-        ShutdownHook() {
+        private ObservationValidator oValidator;
+        ShutdownHook(ObservationValidator obsValidator) {
+            this.oValidator = obsValidator;
         }
 
         @Override
         public void run() {
-            // TODO: how to get the aggregate printed here no matter what.
-            obsValidator.printAggregateReport();
-            obsValidator.cleanup(exitValue);
+            this.oValidator.printAggregateReport();
 
             if (exitValue != 0) {
                 System.out.println("\nTerminated with exit status " + exitValue + ". progress file shows last observation being processed.");
@@ -316,11 +315,13 @@ public class Main {
         sb.append("\n\nusage: caom2-collection-validator [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
         sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
+        sb.append("\n         --progressFile : name of progress file. ");
 
         sb.append("\n\nSource selection:");
         sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
         sb.append("\n          <resourceID> : resource identifier for a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)");
         sb.append("\n          <capabilities URL> : direct URL to a VOSI capabilities document with caom2 repository endpoints (use: unregistered service)");
+        sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
 
         sb.append("\n\nOptional authentication: [--netrc|--cert=<pem file>] (default: anonymous)");
         sb.append("\n         --netrc : read username and password(s) from ~/.netrc file");
@@ -329,9 +330,9 @@ public class Main {
         sb.append("\n\nOptional modifiers:");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n         --compute : compute plane metadata to validate it can be done. (default: false) ");
-        sb.append("\n         --progressFile : name of progress file. (default: caom2-collection-validator_progress.txt) ");
         sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
         sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
+
         sb.append("\n");
         log.warn(sb.toString());
     }
