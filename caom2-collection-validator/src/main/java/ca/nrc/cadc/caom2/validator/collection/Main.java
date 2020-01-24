@@ -166,7 +166,6 @@ public class Main {
                 usage();
                 System.exit(1);
             }
-            File progressFile = new File(progressFileName);
 
             // Optional args
             Integer batchSize = null;
@@ -214,10 +213,10 @@ public class Main {
                     System.exit(1);
                 }
             }
-
-
+            
             boolean computePlaneMetadata = am.isSet("compute");
 
+            File progressFile = new File(progressFileName);
             ObservationValidator obsValidator = new ObservationValidator(src, progressFile, batchSize, nthreads);
             obsValidator.setMinDate(minDate);
             obsValidator.setMaxDate(maxDate);
