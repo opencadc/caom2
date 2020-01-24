@@ -72,12 +72,12 @@ package ca.nrc.cadc.caom2.validator.collection;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
-
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
@@ -133,7 +133,7 @@ public class ObservationValidator implements Runnable {
 
     // Progress file values
     protected File progressFile;
-    private ValidatorProgress progressRecord;
+    private HarvestState progressRecord;
 
     // Store aggregate error count across batches
     private Aggregate runAggregate;
@@ -217,7 +217,7 @@ public class ObservationValidator implements Runnable {
             throw new IllegalStateException("BUG: unexpected HarvestResource resource type: " + src);
         }
 
-        initProgressFile();
+        initProgressFile(src.getIdentifier());
 
         // This is to capture the totals of each batch aggregate
         runAggregate = new Aggregate();
@@ -240,7 +240,8 @@ public class ObservationValidator implements Runnable {
     }
 
     // Used for printing and reading dates
-    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+//    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+    DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
     public String format(Date d) {
         if (d == null) {
@@ -275,7 +276,8 @@ public class ObservationValidator implements Runnable {
             runAggregate.addAggregate(agg);
         }
 
-        cleanupProgressFile();
+        log.info("about to clean up");
+//        cleanupProgressFile();
     }
 
     private Aggregate doit() {
@@ -300,12 +302,8 @@ public class ObservationValidator implements Runnable {
             System.gc(); // hint
             t = System.currentTimeMillis();
 
-            String state = null;
             progressRecord = readProgressFile();
             startDate = progressRecord.curLastModified;
-            log.debug("state " + state);
-
-            t = System.currentTimeMillis();
 
             if (firstIteration) {
                 if (full) {
@@ -318,7 +316,6 @@ public class ObservationValidator implements Runnable {
             firstIteration = false;
 
             log.info("...getting collection list");
-
             log.info("Validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
             List<ObservationResponse> obsList;
             if (srcObservationDAO != null) {
@@ -361,12 +358,8 @@ public class ObservationValidator implements Runnable {
                 iter1.remove(); // allow garbage collection during loop
 
                 if (o != null) {
-                    if (progressRecord != null) {
-                        progressRecord.curLastModified = o.getMaxLastModified();
-                        progressRecord.curID = o.getID();
-                        progressRecord.observationURI = o.getURI().getURI();
-                        progressRecord.source = this.srcURI;
-                    }
+                    progressRecord.curLastModified = o.getMaxLastModified();
+                    log.debug("max last modified: " + o.getMaxLastModified());
 
                     // core validator
                     try {
@@ -434,7 +427,7 @@ public class ObservationValidator implements Runnable {
                     ret.srcErr++;
                 }
 
-                writeProgressFile(progressRecord);
+                writeProgressFile(progressRecord.curLastModified, src.getIdentifier());
 
                 if (clean == true) {
                     ret.passed++;
@@ -486,60 +479,61 @@ public class ObservationValidator implements Runnable {
     }
 
     // Progress file management functions
-    protected void initProgressFile() throws IOException, ParseException, URISyntaxException {
-        progressRecord = new ValidatorProgress();
-//        this.progressFile = new File(progressFileName);
+    protected void initProgressFile(String src) throws IOException, ParseException, URISyntaxException {
+        progressRecord = new HarvestState();
 
         if (this.progressFile.exists()) {
             // read in the file and set the minDate to the last record in progress
             // processing will start from that date
-            ValidatorProgress lastProgressRec = readProgressFile();
+            HarvestState lastProgressRec = readProgressFile();
             this.minDate = lastProgressRec.curLastModified;
         } else {
             // Initialize the file
-            ValidatorProgress blankProgress = new ValidatorProgress();
-            writeProgressFile(blankProgress);
+            HarvestState blankProgress = new HarvestState();
+            writeProgressFile(blankProgress.curLastModified, src);
         }
     }
 
-    private void writeProgressFile(ValidatorProgress progressRec) throws IOException {
-        log.debug("writing progress file: " + progressRecord);
+    private void writeProgressFile(Date curLastModified, String source) throws IOException {
+        String sourceStr;
+
+        if (source == null || source.length() == 0) {
+            sourceStr = "null";
+        } else {
+            sourceStr = source;
+        }
+
+        String progressString = "source: " + sourceStr + "\n"
+                + "curLastModified: " + format(curLastModified) + "\n";
+
+        log.debug("writing progress file: " + progressRecord + ": " + progressString);
         FileOutputStream fos = new FileOutputStream(this.progressFile);
         Writer w =
             new BufferedWriter(new OutputStreamWriter(fos));
-        w.write(progressRec.toString());
+        w.write(progressString);
         w.flush();
         w.close();
     }
 
-    private ValidatorProgress readProgressFile() throws IOException, ParseException, URISyntaxException {
+    private HarvestState readProgressFile() throws IOException, ParseException, URISyntaxException {
         log.debug("reading progress file");
         FileInputStream fis =  new FileInputStream(this.progressFile);
         BufferedReader r =
             new BufferedReader(new InputStreamReader(fis));
 
-        ValidatorProgress vp = new ValidatorProgress();
+        HarvestState hs = new HarvestState();
 
-        String tmpVal = r.readLine().split(": ")[1];
-        if (!tmpVal.equals("null")) {
-            vp.observationURI = new URI(tmpVal);
-        }
+        // read past the source statement.
+        String tmpVal = r.readLine();
 
         tmpVal = r.readLine().split(": ")[1];
         if (!tmpVal.equals("null")) {
-            vp.curLastModified = DateUtil.flexToDate(tmpVal, df);
-        }
-
-        tmpVal = r.readLine(); //  handle curID in future?
-
-        tmpVal = r.readLine().split(": ")[1];
-        if (!tmpVal.equals("null")) {
-            vp.source = tmpVal;
+            hs.curLastModified = DateUtil.flexToDate(tmpVal, df);
         }
 
         r.close();
-        log.debug("PROGRESS FILE OBJECT: " + vp);
-        return vp;
+        log.debug("PROGRESS FILE OBJECT: " + hs);
+        return hs;
     }
 
     // Called from Shutdown hook function
