@@ -229,6 +229,14 @@ public class ObservationValidator implements Runnable {
                 log.error("Not available obs endpoint in " + srcObservationService.toString());
             }
         }
+
+        // make sure wcslib can be loaded
+        try {
+            log.info("loading ca.nrc.cadc.wcs.WCSLib");
+            Class.forName("ca.nrc.cadc.wcs.WCSLib");
+        } catch (Throwable t) {
+            throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
+        }
     }
 
     // Used for printing UUIDs to logs
