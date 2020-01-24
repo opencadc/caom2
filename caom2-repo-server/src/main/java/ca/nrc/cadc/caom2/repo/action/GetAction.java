@@ -134,6 +134,7 @@ public class GetAction extends RepoAction {
         ObservationWriter ow = getObservationWriter();
         
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
+        syncOutput.setHeader("ETag", resp.observation.getAccMetaChecksum());
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         ow.write(resp.observation, bc);

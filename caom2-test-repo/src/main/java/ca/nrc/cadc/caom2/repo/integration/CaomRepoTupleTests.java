@@ -120,7 +120,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        observation.proposal = new Proposal("proposal666");
+        observation.proposal = new Proposal("proposal777_nulldates");
         final Plane plane = new Plane(productID);
 
         observation.getPlanes().add(plane);
@@ -143,7 +143,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        observation.proposal = new Proposal("proposal666");
+        observation.proposal = new Proposal("proposal777_pastdates");
         observation.metaRelease = pastCal.getTime();
         final Plane plane = new Plane(productID);
 
@@ -171,7 +171,7 @@ public abstract class CaomRepoTupleTests extends CaomRepoBaseIntTests {
         final String uri = SCHEME + path;
 
         final Observation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        observation.proposal = new Proposal("proposal666");
+        observation.proposal = new Proposal("proposal777_futuredates");
         observation.metaRelease = futureCal.getTime();
         final Plane plane = new Plane(productID);
 

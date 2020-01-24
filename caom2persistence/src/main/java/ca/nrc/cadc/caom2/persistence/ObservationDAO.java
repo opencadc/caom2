@@ -88,6 +88,8 @@ import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.PreconditionFailedException;
+import java.net.URI;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -402,6 +404,18 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param obs
      */
     public void put(Observation obs) {
+        put(obs, null);
+    }
+    
+    /**
+     * Store an observation. If the optional accMetaChecksum argument is not null and does not
+     * match the accMetaChecksum of the currently observation, the update is rejected.
+     * 
+     * @param obs the observation
+     * @param expectedMetaChecksum optional metadata checksum
+     * @throws PreconditionFailedException if the accMetaChecksum does not match 
+     */
+    public void put(Observation obs, URI expectedMetaChecksum) throws PreconditionFailedException {
         if (readOnly) {
             throw new UnsupportedOperationException("put in readOnly mode");
         }
@@ -432,26 +446,41 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
             // NOTE: this is by ID which means to update the caller must get(uri) then put(o)
             //       and if they do not get(uri) they can get a duplicate observation error
-            //       if they violate unique keys... but if it was by uri, it would be the same
-            //       result as if they skipped the get(uri)
+            //       if they violate unique keys
             String sql = gen.getSelectSQL(obs.getID(), SQLGenerator.MAX_DEPTH, true);
             log.debug("PUT: " + sql);
-            ObservationSkeleton cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
-
-            // update metadata checksums, maybe modified timestamps
-            updateEntity(obs, cur, now);
+            final ObservationSkeleton dirtyRead = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
 
             log.debug("starting transaction");
             getTransactionManager().startTransaction();
             txnOpen = true;
-            
+
             // obtain row lock on observation update
-            if (cur != null) {
-                String lock = gen.getUpdateLockSQL(obs);
+            ObservationSkeleton cur = null;
+            if (dirtyRead != null) {
+                String lock = gen.getUpdateLockSQL(obs.getID());
                 log.debug("LOCK SQL: " + lock);
                 jdbc.update(lock);
+                
+                // req-acquire current state after obtaining lock
+                cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+                
+                // check conditional update
+                if (expectedMetaChecksum != null) {
+                    if (cur == null) {
+                        // deleted by another actor since dirtyRead
+                        throw new PreconditionFailedException("update blocked: current entity does not exist");
+                    } else if (!expectedMetaChecksum.equals(cur.accMetaChecksum)) {
+                        throw new PreconditionFailedException("update blocked: current entity is : " + cur.accMetaChecksum);
+                    }
+                }
+            } else if (expectedMetaChecksum != null) {
+                throw new PreconditionFailedException("update blocked: current entity does not exist");
             }
             
+            // update metadata checksums, maybe modified timestamps
+            updateEntity(obs, cur, now);
+
             // delete obsolete children
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
             if (cur != null) {
@@ -493,6 +522,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             log.debug("rollback: OK");
             txnOpen = false;
             throw e;
+        } catch (PreconditionFailedException ex) {
+            log.debug("failed to update " + obs + ": ", ex);
+            getTransactionManager().rollbackTransaction();
+            log.debug("rollback: OK");
+            txnOpen = false;
+            throw ex;
         } catch (Exception e) {
             log.error("failed to insert " + obs + ": ", e);
             getTransactionManager().rollbackTransaction();
@@ -541,10 +576,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
         boolean txnOpen = false;
         try {
-            log.debug("starting transaction");
-            getTransactionManager().startTransaction();
-            txnOpen = true;
-
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
             String sql = null;
             if (id != null) {
@@ -553,7 +584,23 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
             }
             log.debug("DELETE: " + sql);
-            ObservationSkeleton skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
+            final ObservationSkeleton dirtyRead = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+
+            log.debug("starting transaction");
+            getTransactionManager().startTransaction();
+            txnOpen = true;
+
+            // obtain row lock on observation update
+            ObservationSkeleton skel = null;
+            if (dirtyRead != null) {
+                String lock = gen.getUpdateLockSQL(dirtyRead.id);
+                log.debug("LOCK SQL: " + lock);
+                jdbc.update(lock);
+                
+                // req-acquire current state after obtaining lock
+                skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
+            }
+            
             if (skel != null) {
                 if (uri == null) {
                     uri = getState(id).getURI(); // null state not possible
@@ -561,9 +608,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 if (id == null) {
                     id = skel.id;
                 }
-                if (id.getMostSignificantBits() == 0L) {
-                    // SybaseSQLGenerator will convert this to a long
-                }
+                
                 DeletedObservation de = new DeletedObservation(id, uri);
                 deletedDAO.put(de, jdbc);
                 delete(skel, jdbc);

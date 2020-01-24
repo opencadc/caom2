@@ -211,6 +211,12 @@ class CaomRepoBaseIntTests {
     protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage,
                                    String path)
         throws Exception {
+        sendObservation(method, observation, subject, expectedResponse, expectedMessage, path, null);
+    }
+    
+    protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage,
+                                   String path, String httpIfMatchHeaderValue)
+        throws Exception {
         log.debug("start " + method.toLowerCase() + " on " + observation.toString());
 
         String urlPath = path;
@@ -222,6 +228,9 @@ class CaomRepoBaseIntTests {
         HttpURLConnection conn = openConnection(subject, urlPath);
         conn.setRequestMethod(method);
         conn.setRequestProperty("Content-Type", TEXT_XML);
+        if (httpIfMatchHeaderValue != null) {
+            conn.setRequestProperty("If-Match", httpIfMatchHeaderValue);
+        }
 
         OutputStream out = conn.getOutputStream();
         log.debug("write: " + observation);
@@ -258,7 +267,8 @@ class CaomRepoBaseIntTests {
         } else {
             if (expectedMessage != null) {
                 Assert.assertNotNull(message);
-                if (expectedResponse != null && expectedResponse == 400) {
+                if (expectedResponse != null 
+                        && (expectedResponse == 400 || expectedResponse == 412)) {
                     // service provides extra info so check the start only
                     message = message.substring(0, expectedMessage.length());
                 }
