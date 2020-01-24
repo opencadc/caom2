@@ -160,6 +160,15 @@ public class Main {
                 }
             }
 
+            String progressFileName = am.getValue("progressFile");
+            if (progressFileName == null || progressFileName.trim().length() == 0) {
+                log.error("progress file name required (--progressFile)");
+                usage();
+                System.exit(1);
+            }
+            File progressFile = new File(progressFileName);
+
+            // Optional args
             Integer batchSize = null;
             String sbatch = am.getValue("batchSize");
 
@@ -178,7 +187,6 @@ public class Main {
                 batchSize = DEFAULT_BATCH_SIZE;
             }
 
-            log.info("batchSize: " + batchSize);
 
             Date minDate = null;
             String minDateStr = am.getValue("minDate");
@@ -207,20 +215,13 @@ public class Main {
                 }
             }
 
-            String progressFileName = am.getValue("progressFile");
-            if (progressFileName == null || progressFileName.trim().length() == 0) {
-               log.error("progress file name required (--progressFile)");
-               usage();
-               System.exit(1);
-            }
-            File progressFile = new File(progressFileName);
 
-            // Optional args
             boolean computePlaneMetadata = am.isSet("compute");
 
-            ObservationValidator obsValidator = new ObservationValidator(src, progressFile, batchSize, computePlaneMetadata, nthreads);
+            ObservationValidator obsValidator = new ObservationValidator(src, progressFile, batchSize, nthreads);
             obsValidator.setMinDate(minDate);
             obsValidator.setMaxDate(maxDate);
+            obsValidator.setCompute(computePlaneMetadata);
             Runnable action = obsValidator;
 
             exitValue = 2; // in case we get killed
@@ -242,14 +243,15 @@ public class Main {
 
     private static class ShutdownHook implements Runnable {
 
-        private ObservationValidator oValidator;
+        private ObservationValidator obsValidator;
+
         ShutdownHook(ObservationValidator obsValidator) {
-            this.oValidator = obsValidator;
+            this.obsValidator = obsValidator;
         }
 
         @Override
         public void run() {
-            this.oValidator.printAggregateReport();
+            this.obsValidator.printAggregateReport();
 
             if (exitValue != 0) {
                 System.out.println("\nTerminated with exit status " + exitValue + ". progress file shows last observation being processed.");

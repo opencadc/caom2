@@ -140,7 +140,7 @@ public class ObservationValidator implements Runnable {
 
     // Parameter values
     protected Integer batchSize;
-    private boolean computePlaneMetadata = false;
+    private boolean computePlaneMetadata;
     protected Date minDate;
     protected Date maxDate;
 
@@ -151,11 +151,10 @@ public class ObservationValidator implements Runnable {
     private boolean ready = false;
     protected boolean full;
 
-    public ObservationValidator(HarvestResource src, File progressFile, Integer batchSize, boolean compute, Integer nthreads) throws ObservationValidatorException {
+    public ObservationValidator(HarvestResource src, File progressFile, Integer batchSize, Integer nthreads) throws ObservationValidatorException {
         this.src = src;
         this.batchSize = batchSize;
-        this.computePlaneMetadata = compute;
-
+        this.computePlaneMetadata = false;
         this.progressFile = progressFile;
 
         try {
@@ -171,6 +170,10 @@ public class ObservationValidator implements Runnable {
 
     public void setMaxDate(Date d) {
         this.maxDate = d;
+    }
+
+    public void setCompute(boolean compute) {
+        this.computePlaneMetadata = compute;
     }
 
     private Map<String, Object> getConfigDAO(HarvestResource desc) throws IOException {
@@ -248,7 +251,6 @@ public class ObservationValidator implements Runnable {
     }
 
     // Used for printing and reading dates
-//    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
     public String format(Date d) {
@@ -284,8 +286,7 @@ public class ObservationValidator implements Runnable {
             runAggregate.addAggregate(agg);
         }
 
-        log.info("about to clean up");
-//        cleanupProgressFile();
+        cleanupProgressFile();
     }
 
     private Aggregate doit() {
