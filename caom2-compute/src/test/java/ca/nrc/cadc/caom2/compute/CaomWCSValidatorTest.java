@@ -183,6 +183,29 @@ public class CaomWCSValidatorTest {
     }
 
     @Test
+    public void testNullAxis() {
+        Artifact a = null;
+        try {
+            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
+
+            // Populate all WCS with good values
+            c.position = dataGenerator.mkGoodSpatialWCS();
+            c.energy = dataGenerator.mkGoodSpectralWCS();
+            c.time = dataGenerator.mkGoodTemporalWCS();
+            c.polarization = dataGenerator.mkGoodPolarizationWCS();
+            c.custom = dataGenerator.mkGoodCustomWCS();
+            c.naxis = null;
+
+            CaomWCSValidator.validate(a);
+        } catch (Exception unexpected) {
+            log.error(UNEXPECTED_EXCEPTION + " validating artifact: " + a.toString(), unexpected);
+            Assert.fail(UNEXPECTED_EXCEPTION + a.toString() + unexpected);
+        }
+
+    }
+
+    @Test
     public void testSpatialWCSValidator() {
         SpatialWCS position = null;
 
@@ -216,19 +239,19 @@ public class CaomWCSValidatorTest {
     }
 
     @Test
-
     public void testInvalidAxes() {
         try {
             // Test data axes are set up to pass validation
             Chunk c = dataGenerator.getFreshChunk();
 
-            // 1) naxis can't be null
-            c.naxis = null;
+            // 1) pos1 & pos2 axis must both be defined
+            c.positionAxis2 = null;
 
             try {
                 CaomWCSValidator.validateAxes(c);
+                Assert.fail("Position axis 2 not defined. Error expected but not thrown.");
             } catch (IllegalArgumentException iae) {
-                log.info("naxis expected to be null: " + iae.getMessage());
+                log.info("position axis 2 error expected: " + iae.getMessage());
             }
 
             // 2) Duplicate axis definition

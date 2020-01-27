@@ -354,9 +354,10 @@ public class CaomWCSValidator {
                 }
             }
 
-        } else {
-            errorMsg += "\tnaxis is null.";
         }
+//        else {
+//            errorMsg += "\tnaxis is null.";
+//        }
 
         if (errorMsg.compareTo("") != 0) {
             // report all errors found during validation, throw an error and go
