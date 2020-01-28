@@ -17,8 +17,10 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
+import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
+import ca.nrc.cadc.caom2.wcs.Slice;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
@@ -45,12 +47,17 @@ public class ComputeDataGenerator {
 
         // Define some sort of axis set that may or may not make sense in reality,
         // but will pass validation
+
         testChunk.naxis = 5;
         testChunk.observableAxis = 1;
+        testChunk.observable = mkGoodObservableAxis("WAVE", "m");
         testChunk.positionAxis1 = 2;
         testChunk.positionAxis2 = 3;
+        testChunk.position = mkGoodSpatialWCS();
         testChunk.timeAxis = 4;
+        testChunk.time = mkGoodTemporalWCS();
         testChunk.customAxis = 5;
+        testChunk.custom = mkGoodCustomWCS();
         return testChunk;
     }
 
@@ -208,6 +215,13 @@ public class ComputeDataGenerator {
         double ds = 1;
 
         return cuTest.getTestFunction(px, sx * nx * ds, nx, ds);
+    }
+
+    ObservableAxis mkGoodObservableAxis(String ctype, String cunit) {
+        Axis sliceAxis = new Axis(ctype, cunit);
+        long bin = 1;
+        Slice dependent = new Slice(sliceAxis, bin);
+        return new ObservableAxis(dependent);
     }
 
     CustomWCS mkBadCtypeCustomWCS() {
