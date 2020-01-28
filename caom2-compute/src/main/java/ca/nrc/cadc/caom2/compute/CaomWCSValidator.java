@@ -291,8 +291,8 @@ public class CaomWCSValidator {
         }
     }
 
-    private static void checkDuplicateAxis( String[] axisList, Integer axis, String varName) {
-        log.debug("checking duplicate: " + axis );
+    private static void checkDuplicateAxis(String[] axisList, Integer axis, String varName) {
+        log.debug("checking duplicate: " + axis);
         if (axisList[axis] != null) {
             throw new IllegalArgumentException("Duplicate axis found: (" + axis + ") " + axisList[axis] + " & " + varName);
         }
