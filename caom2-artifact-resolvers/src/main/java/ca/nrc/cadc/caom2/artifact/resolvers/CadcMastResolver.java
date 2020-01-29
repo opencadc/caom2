@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -86,7 +86,8 @@ import org.apache.log4j.Logger;
 
 /**
  * StorageResolver implementation for the MAST archive.
- * This class can convert an MAST URI into a URL. This is an alternate version that uses the RegistryClient to find the data web service base URL.
+ * This class can convert an MAST URI into a URL. This is an alternate 
+ * version that uses the RegistryClient to find the data web service base URL.
  *
  * @author yeunga
  */
@@ -116,7 +117,7 @@ public class CadcMastResolver implements StorageResolver, Traceable {
                 throw new IllegalArgumentException("No interface for auth method " + authMethod);
             }
             String baseDataURL = ifc.getAccessURL().getURL().toString();
-            URL url = new URL(baseDataURL + "/MAST/" + uri.getSchemeSpecificPart());
+            URL url = new URL(baseDataURL + "/" + uri.getSchemeSpecificPart());
             log.debug(uri + " --> " + url);
             return url;
         } catch (MalformedURLException ex) {
