@@ -40,7 +40,7 @@ import java.net.URL;
  */
 public class NoaoResolver implements StorageResolver {
     private static final String SCHEME = "noao";
-    private static final String BASE_ARTIFACT_URL = "http://nsaserver.sdm.noao.edu:7003/?fileRef=";
+    private static final String BASE_ARTIFACT_URL = "http://archive1.dm.noao.edu:7003/?fileRef=";
 
     public NoaoResolver() {
     }

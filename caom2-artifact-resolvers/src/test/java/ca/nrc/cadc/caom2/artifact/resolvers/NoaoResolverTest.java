@@ -92,10 +92,10 @@ public class NoaoResolverTest {
     String VALID_URI = "noao:FOO";
     String VALID_URI2 = "noao:FOO/bar";
 
-    //    URL: http://nsaserver.sdm.noao.edu:7003/?fileRef=c13a_140805_212140_ori.fits.fz
+    //    URL: http://archive1.dm.noao.edu:7003/?fileRef=c13a_140805_212140_ori.fits.fz
     //    URI: noao:c13a_140805_212140_ori.fits.fz
     String PROTOCOL_STR = "http";
-    String BASE_ARTIFACT_URL = "nsaserver.sdm.noao.edu";
+    String BASE_ARTIFACT_URL = "archive1.dm.noao.edu";
     String URL_QUERY = "fileRef=";
     String BASE_PATH = "/";
 
