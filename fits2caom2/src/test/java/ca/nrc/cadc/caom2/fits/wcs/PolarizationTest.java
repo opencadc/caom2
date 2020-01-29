@@ -69,20 +69,35 @@ public class PolarizationTest
         Assert.assertEquals(4.0, polarizationWCS.getAxis().range.getEnd().val, 0.0);
     }
 
-//    @Test
-//    public void getPartialWCSException()
-//    {
-//        FitsMapping mapping = new FitsMapping(config, null, null);
-//        mapping.setArgumentProperty("utype.axis.axis.ctype", "STOKES");
-//        mapping.setArgumentProperty("utype.axis.axis.cunit", "foo");
-//
-//        try
-//        {
-//            PolarizationWCS polarizationWCS = Polarization.getPolarization("utype", mapping);
-//            fail("")
-//        }
-//        catch (PartialWCSException expected) {}
-//
-//    }
+    @Test
+    public void testGetPolarizationTolerant() throws Exception
+    {
+        FitsMapping mapping = new FitsMapping(config, null, null);
+        mapping.setArgumentProperty("utype.axis.axis.ctype", "STOKES");
+        
+        PolarizationWCS polarizationWCS = Polarization.getPolarization("utype", mapping);
+        
+        Assert.assertNull(polarizationWCS);
+        
+        mapping = new FitsMapping(config, null, null);
+        mapping.setArgumentProperty("utype.axis.axis.ctype", "STOKES");
+        mapping.setArgumentProperty("utype.axis.axis.cunit", "      "); // check that we tolerate this abuse of CUNIT
+        mapping.setArgumentProperty("utype.axis.range.start.pix", "1.0");
+        mapping.setArgumentProperty("utype.axis.range.start.val", "2.0");
+        mapping.setArgumentProperty("utype.axis.range.end.pix", "3.0");
+        mapping.setArgumentProperty("utype.axis.range.end.val", "4.0");
+        
+        polarizationWCS = Polarization.getPolarization("utype", mapping);
+        
+        Assert.assertNotNull(polarizationWCS);
+        Assert.assertNotNull(polarizationWCS.getAxis());
+        
+        Assert.assertEquals("STOKES", polarizationWCS.getAxis().getAxis().getCtype());
+        Assert.assertNull("cunit", polarizationWCS.getAxis().getAxis().getCunit());
+        Assert.assertEquals(1.0, polarizationWCS.getAxis().range.getStart().pix, 0.0);
+        Assert.assertEquals(2.0, polarizationWCS.getAxis().range.getStart().val, 0.0);
+        Assert.assertEquals(3.0, polarizationWCS.getAxis().range.getEnd().pix, 0.0);
+        Assert.assertEquals(4.0, polarizationWCS.getAxis().range.getEnd().val, 0.0);
+    }
     
 }
