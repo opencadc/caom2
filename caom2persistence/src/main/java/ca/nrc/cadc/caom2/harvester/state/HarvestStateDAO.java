@@ -134,9 +134,7 @@ public abstract class HarvestStateDAO {
         sel.setValues(source, cname);
         Object o = jdbc.query(sel, extractor);
         if (o == null) {
-            HarvestState s = new HarvestState();
-            s.cname = cname;
-            s.source = source;
+            HarvestState s = new HarvestState(source, cname);
             log.debug("created: " + s);
             return s;
         }
@@ -233,10 +231,10 @@ public abstract class HarvestStateDAO {
                 throws SQLException {
             StringBuilder sb = new StringBuilder("values: ");
             int col = 1;
-            ps.setString(col++, state.source);
-            sb.append(state.source).append(",");
-            ps.setString(col++, state.cname);
-            sb.append(state.cname).append(",");
+            ps.setString(col++, state.getSource());
+            sb.append(state.getSource()).append(",");
+            ps.setString(col++, state.getEntityClassName());
+            sb.append(state.getEntityClassName()).append(",");
             if (state.curLastModified != null) {
                 ps.setTimestamp(col++, new Timestamp(state.curLastModified.getTime()), utcCalendar);
                 sb.append(state.curLastModified).append(",");
@@ -292,14 +290,16 @@ public abstract class HarvestStateDAO {
          * @return a java.util.Date value
          * @throws SQLException if accessing result set fails
          */
+        @Override
         public Object extractData(ResultSet rs)
                 throws SQLException {
             HarvestState ret = null;
             if (rs.next()) {
-                ret = new HarvestState();
                 int col = 1;
-                ret.source = rs.getString(col++);
-                ret.cname = rs.getString(col++);
+                String source = rs.getString(col++);
+                String cname = rs.getString(col++);
+                ret = new HarvestState(source, cname);
+                
                 ret.curLastModified = Util.getDate(rs, col++, utcCalendar);
                 ret.curID = Util.getUUID(rs, col++);
 

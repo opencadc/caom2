@@ -78,22 +78,36 @@ import java.util.UUID;
  */
 public class HarvestState {
 
+    private final String source;
+    private final String entityClassName;
+
+    
     // mutable
     public Date curLastModified;
     public UUID curID;
 
-    // internal
-    String source;
-    String cname;
-
+    
     Date lastModified;
     UUID id;
 
+    public HarvestState(String source, String cname) {
+        this.source = source;
+        this.entityClassName = cname;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public String getEntityClassName() {
+        return entityClassName;
+    }
+    
     public Date getLastModified() {
         return lastModified;
     }
 
     public String toString() {
-        return "HarvestState[" + source + "," + cname + ": " + curLastModified + "," + curID + "]";
+        return "HarvestState[" + source + "," + entityClassName + ": " + curLastModified + "," + curID + "]";
     }
 }
