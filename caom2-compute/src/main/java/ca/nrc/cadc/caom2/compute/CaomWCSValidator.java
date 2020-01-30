@@ -306,79 +306,67 @@ public class CaomWCSValidator {
 
             // Go through each axis and validate
 
-            // positionAxis1 and positionAxis2 must both be defined. If they are, position metadata must be defined
-            if (chunk.positionAxis1 != null && chunk.positionAxis1 <= chunk.naxis) {
-                if (chunk.positionAxis2 == null) {
-                    throw new IllegalArgumentException(AXES_VALIDATION_ERROR
-                        + ": positionAxis1 defined (" + chunk.positionAxis1 + ") but positionAxis2 null.");
-
+            // If positionAxis1 is defined, positionsAxis2 must be defined and position must
+            // also be defined.
+            if (chunk.positionAxis1 != null || chunk.positionAxis2 != null) {
+                if (chunk.positionAxis1 == chunk.positionAxis2) {
+                    throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": "
+                        + ": duplicate axes: positionAxis1 & positionAxis2 (" + chunk.positionAxis1
+                        + ")");
                 }
                 if (chunk.position == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, "positionAxis1", chunk.positionAxis1));
                 }
-                if (chunk.positionAxis1 == chunk.positionAxis2) {
-                    throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": "
-                        + ": duplicate axes: positionAxis1 & positionAxis2 (" + chunk.positionAxis1
-                            + ")");
+                if (chunk.positionAxis2 == null || chunk.positionAxis1 == null) {
+                    throw new IllegalArgumentException(AXES_VALIDATION_ERROR
+                        + ": positionAxis1 or positionAxis2 is null.");
                 }
                 axisList[chunk.positionAxis1] = "positionAxis1";
-            }
-
-            if (chunk.positionAxis2 != null && chunk.positionAxis2 <= chunk.naxis) {
-                if (chunk.positionAxis1 == null) {
-                    throw new IllegalArgumentException(AXES_VALIDATION_ERROR
-                        + ": positionAxis2 defined (" + chunk.positionAxis2
-                        + ") but positionAxis1 null.");
-                }
-                if (chunk.position == null) {
-                    throw new IllegalArgumentException(
-                        String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, "positionAxis2", chunk.positionAxis2));
-                }
                 axisList[chunk.positionAxis2] = "positionAxis2";
             }
 
             String axisName = "timeAxis";
-            if (chunk.timeAxis != null && chunk.timeAxis <= chunk.naxis) {
+            if (chunk.timeAxis != null) {
+                // Throws an illegal argument exception if it's duplicate
+                checkDuplicateAxis(axisList, chunk.timeAxis, axisName);
                 if (chunk.time == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.timeAxis)
                     );
-                } else {
-                    checkDuplicateAxis(axisList, chunk.timeAxis, axisName);
                 }
                 axisList[chunk.timeAxis] = axisName;
             }
 
             axisName = "energyAxis";
-            if (chunk.energyAxis != null && chunk.energyAxis <= chunk.naxis) {
+            if (chunk.energyAxis != null) {
+                // Throws an illegal argument exception if it's duplicate
+                checkDuplicateAxis(axisList, chunk.energyAxis, axisName);
                 if (chunk.energy == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.energyAxis));
-                } else {
-                    checkDuplicateAxis(axisList, chunk.energyAxis, axisName);
                 }
                 axisList[chunk.energyAxis] = axisName;
             }
 
             axisName = "customAxis";
-            if (chunk.customAxis != null && chunk.customAxis <= chunk.naxis) {
+            if (chunk.customAxis != null) {
+                // Throws an illegal argument exception if it's duplicate
+                checkDuplicateAxis(axisList, chunk.customAxis, axisName);
                 if (chunk.custom == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.customAxis));
-                } else {
-                    checkDuplicateAxis(axisList, chunk.customAxis, axisName);
                 }
                 axisList[chunk.customAxis] = axisName;
             }
 
             axisName = "polarizationAxis";
-            if (chunk.polarizationAxis != null && chunk.polarizationAxis <= chunk.naxis) {
+            if (chunk.polarizationAxis != null) {
+                // Throws an illegal argument exception if it's duplicate
+                checkDuplicateAxis(axisList, chunk.polarizationAxis, axisName);
                 if (chunk.polarization == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.polarizationAxis));
-                } else {
-                    checkDuplicateAxis(axisList, chunk.polarizationAxis, axisName);
                 }
                 axisList[chunk.polarizationAxis] = axisName;
             }
@@ -386,11 +374,11 @@ public class CaomWCSValidator {
             axisName = "observableAxis";
             log.debug("OBSERVABLEAXIS: " + chunk.observableAxis + "- metadata: " + chunk.observable);
             if (chunk.observableAxis != null && chunk.observableAxis <= chunk.naxis) {
+                // Throws an illegal argument exception if it's duplicate
+                checkDuplicateAxis(axisList, chunk.observableAxis, axisName);
                 if (chunk.observable == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.observableAxis));
-                } else {
-                    checkDuplicateAxis(axisList, chunk.observableAxis, axisName);
                 }
                 axisList[chunk.observableAxis] = axisName;
             }

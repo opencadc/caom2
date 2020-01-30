@@ -244,7 +244,7 @@ public class CaomWCSValidatorTest {
                 CaomWCSValidator.validateAxes(c);
                 Assert.fail("Position axis 2 not defined. Error expected but not thrown.");
             } catch (IllegalArgumentException iae) {
-                Assert.assertEquals( "Invalid Axes: positionAxis1 defined (2) but positionAxis2 null.", iae.getMessage());
+                Assert.assertEquals( "Invalid Axes: positionAxis1 or positionAxis2 is null.", iae.getMessage());
                 log.info("position axis 2 error expected: " + iae.getMessage());
             }
 
@@ -252,7 +252,7 @@ public class CaomWCSValidatorTest {
             c.position = null;
             try {
                 CaomWCSValidator.validateAxes(c);
-                Assert.fail("Position axis 2 not defined. Error expected but not thrown.");
+                Assert.fail("Position not defined. Error expected but not thrown.");
             } catch (IllegalArgumentException iae) {
                 Assert.assertEquals( "Invalid Axes: positionAxis1 found (2) but metadata not found", iae.getMessage());
                 log.info("position null error expected: " + iae.getMessage());
