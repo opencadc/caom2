@@ -309,6 +309,10 @@ public class CaomWCSValidator {
             // If positionAxis1 is defined, positionsAxis2 must be defined and position must
             // also be defined.
             if (chunk.positionAxis1 != null || chunk.positionAxis2 != null) {
+                if (chunk.positionAxis2 == null || chunk.positionAxis1 == null) {
+                    throw new IllegalArgumentException(AXES_VALIDATION_ERROR
+                        + ": positionAxis1 or positionAxis2 is null.");
+                }
                 checkDuplicateAxis(axisList, chunk.positionAxis1, "positionAxis1");
                 axisList[chunk.positionAxis1] = "positionAxis1";
                 checkDuplicateAxis(axisList, chunk.positionAxis2, "positionAxis2");
@@ -316,10 +320,6 @@ public class CaomWCSValidator {
                 if (chunk.position == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, "positionAxis1", chunk.positionAxis1));
-                }
-                if (chunk.positionAxis2 == null || chunk.positionAxis1 == null) {
-                    throw new IllegalArgumentException(AXES_VALIDATION_ERROR
-                        + ": positionAxis1 or positionAxis2 is null.");
                 }
             }
 
