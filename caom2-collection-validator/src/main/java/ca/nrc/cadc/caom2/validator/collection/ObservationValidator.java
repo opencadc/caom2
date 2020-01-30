@@ -527,7 +527,6 @@ public class ObservationValidator implements Runnable {
         
         String line = r.readLine();
         while (line != null) {
-            log.warn("[readProgressFile] skip: " + line);
             String[] tokens = line.split("=");
             if (tokens.length == 2) {
                 tokens[0] = tokens[0].trim();
