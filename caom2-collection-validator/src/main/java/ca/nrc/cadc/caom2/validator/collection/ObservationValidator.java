@@ -89,11 +89,9 @@ import ca.nrc.cadc.db.DBConfig;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -436,7 +434,7 @@ public class ObservationValidator implements Runnable {
                     ret.srcErr++;
                 }
 
-                writeProgressFile(progressRecord.curLastModified, src.getIdentifier());
+                writeProgressFile(progressRecord);
 
                 if (clean == true) {
                     ret.passed++;
@@ -489,36 +487,31 @@ public class ObservationValidator implements Runnable {
 
     // Progress file management functions
     protected void initProgressFile(String src) throws IOException, ParseException, URISyntaxException {
-        progressRecord = new HarvestState();
-
         if (this.progressFile.exists()) {
-            // read in the file and set the minDate to the last record in progress
-            // processing will start from that date
-            HarvestState lastProgressRec = readProgressFile();
-            this.minDate = lastProgressRec.curLastModified;
+            // read in the file
+            this.progressRecord = readProgressFile();
+            if (!progressRecord.getSource().equals(src)) {
+                throw new IllegalStateException("existing progress file has different source: " + progressRecord.getSource());
+            }
         } else {
             // Initialize the file
-            HarvestState blankProgress = new HarvestState();
-            writeProgressFile(blankProgress.curLastModified, src);
+            progressRecord = new HarvestState(src, Observation.class.getSimpleName());
+            writeProgressFile(progressRecord);
         }
     }
 
-    private void writeProgressFile(Date curLastModified, String source) throws IOException {
-        String sourceStr;
+    private void writeProgressFile(HarvestState hs) throws IOException {
 
-        if (source == null || source.length() == 0) {
-            sourceStr = "null";
-        } else {
-            sourceStr = source;
+        StringBuilder sb = new StringBuilder();
+        sb.append("source = ").append(hs.getSource()).append("\n");
+        sb.append("entityClassName = ").append(hs.getEntityClassName()).append("\n");
+        if (hs.curLastModified != null) {
+            sb.append("curLastModified = ").append(format(hs.curLastModified)).append("\n");
         }
-
-        String progressString = "source: " + sourceStr + "\n"
-                + "curLastModified: " + format(curLastModified) + "\n";
-
+        String progressString = sb.toString();
+        
         log.debug("writing progress file: " + progressRecord + ": " + progressString);
-        FileOutputStream fos = new FileOutputStream(this.progressFile);
-        Writer w =
-            new BufferedWriter(new OutputStreamWriter(fos));
+        Writer w = new BufferedWriter(new FileWriter(this.progressFile));
         w.write(progressString);
         w.flush();
         w.close();
@@ -526,23 +519,43 @@ public class ObservationValidator implements Runnable {
 
     private HarvestState readProgressFile() throws IOException, ParseException, URISyntaxException {
         log.debug("reading progress file");
-        FileInputStream fis =  new FileInputStream(this.progressFile);
-        BufferedReader r =
-            new BufferedReader(new InputStreamReader(fis));
+        BufferedReader r = new BufferedReader(new FileReader(progressFile));
 
-        HarvestState hs = new HarvestState();
-
-        // read past the source statement.
-        String tmpVal = r.readLine();
-
-        tmpVal = r.readLine().split(": ")[1];
-        if (!tmpVal.equals("null")) {
-            hs.curLastModified = DateUtil.flexToDate(tmpVal, df);
+        String src = null;
+        String ecn = null;
+        String cur = null;
+        
+        String line = r.readLine();
+        while (line != null) {
+            log.warn("[readProgressFile] skip: " + line);
+            String[] tokens = line.split("=");
+            if (tokens.length == 2) {
+                tokens[0] = tokens[0].trim();
+                tokens[1] = tokens[1].trim();
+                if ("source".equals(tokens[0])) {
+                    src = tokens[1];
+                } else if ("entityClassName".equals(tokens[0])) {
+                    ecn = tokens[1];
+                } else if ("curLastModified".equals(tokens[0])) {
+                    cur = tokens[1];
+                } else {
+                    log.debug("[readProgressFile] skip: " + line);
+                }
+            }
+            line = r.readLine();
+        }
+        r.close();
+        
+        if (src != null && ecn != null) {
+            HarvestState ret = new HarvestState(src, ecn);
+            if (cur != null) {
+                ret.curLastModified = DateUtil.flexToDate(cur, df);
+            }
+            log.debug("PROGRESS FILE OBJECT: " + ret);
+            return ret;
         }
 
-        r.close();
-        log.debug("PROGRESS FILE OBJECT: " + hs);
-        return hs;
+        throw new IllegalArgumentException("readProgressFile: missing or invalid content");
     }
 
     // Called from Shutdown hook function
