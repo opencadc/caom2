@@ -87,9 +87,7 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.Map;
 import org.apache.log4j.Logger;
 
 /**
