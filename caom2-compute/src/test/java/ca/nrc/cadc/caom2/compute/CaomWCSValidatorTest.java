@@ -293,10 +293,26 @@ public class CaomWCSValidatorTest {
             c.positionAxis2 = 0;
             try {
                 CaomWCSValidator.validateAxes(c);
+                Assert.fail("axis definition (0) not allowed: positionAxis2.");
             } catch (IllegalArgumentException iae) {
                 Assert.assertEquals( "Invalid Axes: axis definition (0) not allowed: positionAxis2", iae.getMessage());
                 log.info("Invalid axis (0) expected: " + iae.getMessage());
             }
+
+            // 1) pos1 & pos2 axis must both b defined
+            // position can't be null
+            c = dataGenerator.getFreshChunk();
+            c.positionAxis2 = 0;
+            c.naxis=null;
+            try {
+                CaomWCSValidator.validateAxes(c);
+                Assert.fail("axis definition (0) not allowed: positionAxis2.");
+            } catch (IllegalArgumentException iae) {
+                Assert.assertEquals( "Invalid Axes: axis definition (0) not allowed: positionAxis2", iae.getMessage());
+                log.info("Invalid axis (0) expected: " + iae.getMessage());
+            }
+
+
         } catch (Exception unexpected) {
             log.error(UNEXPECTED_EXCEPTION, unexpected);
             Assert.fail(UNEXPECTED_EXCEPTION + unexpected);
