@@ -87,7 +87,7 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.util.HashMap;
+import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 /**
@@ -291,7 +291,7 @@ public class CaomWCSValidator {
         }
     }
 
-    private static void checkDuplicateAxis(HashMap axisMap, Integer axis, String varName) {
+    private static void checkDuplicateAxis(TreeMap axisMap, Integer axis, String varName) {
         log.debug("checking duplicate: " + axis);
         if (axisMap.get(axis) != null) {
             throw new IllegalArgumentException("Duplicate axis found: (" + axis + ") " + axisMap.get(axis) + " & " + varName);
@@ -301,7 +301,7 @@ public class CaomWCSValidator {
     public static void validateAxes(Chunk chunk)  {
         // Have axisList offset by 1 because the list will be counted
         // from 1 to naxis. Nulls in the list are missing axis definitions.
-        HashMap<Integer,String> axisMap = new HashMap<>();
+        TreeMap<Integer,String> axisMap = new TreeMap<>();
 
         // Go through each axis and validate
         // If positionAxis1 is defined, positionsAxis2 must be defined and position must
