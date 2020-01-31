@@ -302,10 +302,9 @@ public class CaomWCSValidator {
         if (chunk.naxis != null) {
             // Have axisList offset by 1 because the list will be counted
             // from 1 to naxis. Nulls in the list are missing axis definitions.
-                HashMap<Integer,String> axisMap = new HashMap<>();
+            HashMap<Integer,String> axisMap = new HashMap<>();
 
             // Go through each axis and validate
-
             // If positionAxis1 is defined, positionsAxis2 must be defined and position must
             // also be defined.
             if (chunk.positionAxis1 != null || chunk.positionAxis2 != null) {
