@@ -88,6 +88,8 @@ import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.log4j.Logger;
 
 /**
@@ -291,10 +293,10 @@ public class CaomWCSValidator {
         }
     }
 
-    private static void checkDuplicateAxis(String[] axisList, Integer axis, String varName) {
+    private static void checkDuplicateAxis(HashMap axisMap, Integer axis, String varName) {
         log.debug("checking duplicate: " + axis);
-        if (axisList[axis] != null) {
-            throw new IllegalArgumentException("Duplicate axis found: (" + axis + ") " + axisList[axis] + " & " + varName);
+        if (axisMap.get(axis) != null) {
+            throw new IllegalArgumentException("Duplicate axis found: (" + axis + ") " + axisMap.get(axis) + " & " + varName);
         }
     }
 
@@ -302,7 +304,7 @@ public class CaomWCSValidator {
         if (chunk.naxis != null) {
             // Have axisList offset by 1 because the list will be counted
             // from 1 to naxis. Nulls in the list are missing axis definitions.
-            String[] axisList = new String[chunk.naxis + 1];
+                HashMap<Integer,String> axisMap = new HashMap<>();
 
             // Go through each axis and validate
 
@@ -313,10 +315,10 @@ public class CaomWCSValidator {
                     throw new IllegalArgumentException(AXES_VALIDATION_ERROR
                         + ": positionAxis1 or positionAxis2 is null.");
                 }
-                checkDuplicateAxis(axisList, chunk.positionAxis1, "positionAxis1");
-                axisList[chunk.positionAxis1] = "positionAxis1";
-                checkDuplicateAxis(axisList, chunk.positionAxis2, "positionAxis2");
-                axisList[chunk.positionAxis2] = "positionAxis2";
+                checkDuplicateAxis(axisMap, chunk.positionAxis1, "positionAxis1");
+                axisMap.put(chunk.positionAxis1,"positionAxis1");
+                checkDuplicateAxis(axisMap, chunk.positionAxis2, "positionAxis2");
+                axisMap.put(chunk.positionAxis2, "positionAxis2");
                 if (chunk.position == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, "positionAxis1", chunk.positionAxis1));
@@ -326,8 +328,8 @@ public class CaomWCSValidator {
             String axisName = "timeAxis";
             if (chunk.timeAxis != null) {
                 // Throws an illegal argument exception if it's duplicate
-                checkDuplicateAxis(axisList, chunk.timeAxis, axisName);
-                axisList[chunk.timeAxis] = axisName;
+                checkDuplicateAxis(axisMap, chunk.timeAxis, axisName);
+                axisMap.put(chunk.timeAxis, axisName);
                 if (chunk.time == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.timeAxis)
@@ -338,8 +340,8 @@ public class CaomWCSValidator {
             axisName = "energyAxis";
             if (chunk.energyAxis != null) {
                 // Throws an illegal argument exception if it's duplicate
-                checkDuplicateAxis(axisList, chunk.energyAxis, axisName);
-                axisList[chunk.energyAxis] = axisName;
+                checkDuplicateAxis(axisMap, chunk.energyAxis, axisName);
+                axisMap.put(chunk.energyAxis, axisName);
                 if (chunk.energy == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.energyAxis));
@@ -349,8 +351,8 @@ public class CaomWCSValidator {
             axisName = "customAxis";
             if (chunk.customAxis != null) {
                 // Throws an illegal argument exception if it's duplicate
-                checkDuplicateAxis(axisList, chunk.customAxis, axisName);
-                axisList[chunk.customAxis] = axisName;
+                checkDuplicateAxis(axisMap, chunk.customAxis, axisName);
+                axisMap.put(chunk.customAxis, axisName);
                 if (chunk.custom == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.customAxis));
@@ -360,8 +362,8 @@ public class CaomWCSValidator {
             axisName = "polarizationAxis";
             if (chunk.polarizationAxis != null) {
                 // Throws an illegal argument exception if it's duplicate
-                checkDuplicateAxis(axisList, chunk.polarizationAxis, axisName);
-                axisList[chunk.polarizationAxis] = axisName;
+                checkDuplicateAxis(axisMap, chunk.polarizationAxis, axisName);
+                axisMap.put(chunk.polarizationAxis, axisName);
                 if (chunk.polarization == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.polarizationAxis));
@@ -372,8 +374,8 @@ public class CaomWCSValidator {
             log.debug("OBSERVABLEAXIS: " + chunk.observableAxis + "- metadata: " + chunk.observable);
             if (chunk.observableAxis != null && chunk.observableAxis <= chunk.naxis) {
                 // Throws an illegal argument exception if it's duplicate
-                checkDuplicateAxis(axisList, chunk.observableAxis, axisName);
-                axisList[chunk.observableAxis] = axisName;
+                checkDuplicateAxis(axisMap, chunk.observableAxis, axisName);
+                axisMap.put(chunk.observableAxis, axisName);
                 if (chunk.observable == null) {
                     throw new IllegalArgumentException(
                         String.format(METADATA_NOT_FOUND, AXES_VALIDATION_ERROR, axisName, chunk.observableAxis));
@@ -382,11 +384,11 @@ public class CaomWCSValidator {
 
             // Validate the number and quality of the axis definitions
             // Count from 1, as 0 will never be filled
-            if (axisList[0] != null) {
-                throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": axis definition (0) not allowed: " + axisList[0]);
+            if (axisMap.get(0) != null) {
+                throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": axis definition (0) not allowed: " + axisMap.get(0));
             }
             for (int i = 1; i <= chunk.naxis; i++) {
-                if (axisList[i] == null) {
+                if (axisMap.get(i) == null) {
                     throw new IllegalArgumentException(AXES_VALIDATION_ERROR + ": missing axis " + i);
                 }
             }
