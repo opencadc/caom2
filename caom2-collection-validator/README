@@ -2,17 +2,36 @@ caom2-collections-validator README
 (Feb 2020)
 
 
-Description:
-
-Internal tool for validating CAOM2 collections including:
+DESCRIPTION 
+-----------
+Internal command line tool for validating CAOM2 collections including:
 - WCS 
 - core CAOM 
 - checksum
 - optional metadata compute 
 
-Output includes per-observation error messages and an aggregate report. 
+Output goes to standard out. Includes per-observation error messages and an aggregate report. 
 
 
+BUILD & USE
+-----------
+In the caom2-collection-validator root directory:
+- run 'gradle clean build'
+- cd build/distributions
+- untar the caom2-collection-validator tarball
+- cd into the caom2-collection-validator-<version>/bin directory
+- caom2-collection-validator is runnable from there
+
+See the usage statement for more information
+
+Requirments:
+- valid cert file
+- collection name
+- source (either a web service or database name & credentials)
+
+
+DETAILS
+-------
 Progress tracking & error handling:
 
 Progress is tracked using a text file: name is required on the command line. 
@@ -24,13 +43,4 @@ In this case, to start at the beginning of a collection either remove the existi
 or use one with a different name (provide a new name on the command line.)
 
 The progress file is deleted if the validation runs successfully.
-
-
-Requirments:
-- valid cert file
-- collection name
-- source (either a web service or database name & credentials)
-
-See the usage statement for more information
-
 
