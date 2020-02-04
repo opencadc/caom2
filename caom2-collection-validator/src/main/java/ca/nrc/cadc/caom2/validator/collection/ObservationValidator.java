@@ -559,17 +559,17 @@ public class ObservationValidator implements Runnable {
 
     // Called from Shutdown hook function
     public void printAggregateReport() {
-//        String aggReport =
-//            "\n---------------------------"
-//            + "\n\nFinal Report: " + "\n---------------"
-//            + "\ncollection source: " + this.srcURI
-//            + "\ncollection: " + src.getCollection()
-//            + "\ntotal observations: " + runAggregate.found
-//            + "\npassed:  " + runAggregate.passed
-//            + "\nfailed: " + runAggregate.failed
-//            + runAggregate.getDetails()
-//            + "\ntotal time: " + runAggregate.processTime
-//            + "\n---------------------------" + "\nDone! " + "\n";
+        //        String aggReport =
+        //            "\n---------------------------"
+        //            + "\n\nFinal Report: " + "\n---------------"
+        //            + "\ncollection source: " + this.srcURI
+        //            + "\ncollection: " + src.getCollection()
+        //            + "\ntotal observations: " + runAggregate.found
+        //            + "\npassed:  " + runAggregate.passed
+        //            + "\nfailed: " + runAggregate.failed
+        //            + runAggregate.getDetails()
+        //            + "\ntotal time: " + runAggregate.processTime
+        //            + "\n---------------------------" + "\nDone! " + "\n";
 
         String aggReport = "\n{\"logType\":\"summary\","
             + "\"collection\":\"" + src.getCollection() + ","
