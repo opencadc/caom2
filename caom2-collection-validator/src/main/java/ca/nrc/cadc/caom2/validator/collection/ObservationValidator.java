@@ -559,17 +559,29 @@ public class ObservationValidator implements Runnable {
 
     // Called from Shutdown hook function
     public void printAggregateReport() {
-        String aggReport =
-            "\n---------------------------"
-            + "\n\nFinal Report: " + "\n---------------"
-            + "\ncollection source: " + this.srcURI
-            + "\ncollection: " + src.getCollection()
-            + "\ntotal observations: " + runAggregate.found
-            + "\npassed:  " + runAggregate.passed
-            + "\nfailed: " + runAggregate.failed
-            + runAggregate.getDetails()
-            + "\ntotal time: " + runAggregate.processTime
-            + "\n---------------------------" + "\nDone! " + "\n";
+//        String aggReport =
+//            "\n---------------------------"
+//            + "\n\nFinal Report: " + "\n---------------"
+//            + "\ncollection source: " + this.srcURI
+//            + "\ncollection: " + src.getCollection()
+//            + "\ntotal observations: " + runAggregate.found
+//            + "\npassed:  " + runAggregate.passed
+//            + "\nfailed: " + runAggregate.failed
+//            + runAggregate.getDetails()
+//            + "\ntotal time: " + runAggregate.processTime
+//            + "\n---------------------------" + "\nDone! " + "\n";
+
+        String aggReport = "\n{\"logType\":\"summary\","
+            + "\"collection\":\"" + src.getCollection() + ","
+            + "\"totalObservations\":\"" + runAggregate.found + ","
+            + "\"passed\":\"" + runAggregate.passed + ","
+            + "\"failed\":\"" + runAggregate.failed + ","
+            + "\"wcsFailures\":\"" + runAggregate.wcsErr + ","
+            + "\"coreFailures\":\"" + runAggregate.coreErr + ","
+            + "\"checksumFailures\":\"" + runAggregate.checksumErr + ","
+            + "\"computeFailures\":\"" + runAggregate.computeErr + ","
+            + "\"sourceFailures\":\"" + runAggregate.srcErr + ","
+            + "\"milliSeconds\":\"" + runAggregate.processTime + "\"}\n";
 
         System.out.print(aggReport);
     }
@@ -604,16 +616,6 @@ public class ObservationValidator implements Runnable {
         @Override
         public String toString() {
             return "found: " + found + " passed:  " + passed + " failed: " + failed + " time: " + this.processTime;
-        }
-
-        public String getDetails() {
-            return "\nDetailed error counts (total may be higher than # failed):" + "\n---------------\n"
-                + ObservationValidator.WCS_ERROR + ": " + wcsErr + "\n"
-                + ObservationValidator.CORE_ERROR + ": " + coreErr + "\n"
-                + ObservationValidator.CHECKSUM_ERROR + ": " + checksumErr + "\n"
-                + ObservationValidator.COMPUTE_ERROR + ": " + computeErr + "\n"
-                + ObservationValidator.SOURCE_ERROR + ": " + srcErr + "\n"
-                + "For more information use caom2-validator of caom2ui for individual observations.";
         }
 
         public void addAggregate(Aggregate ag) {
