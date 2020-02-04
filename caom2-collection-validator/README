@@ -1,0 +1,36 @@
+caom2-collections-validator README
+(Feb 2020)
+
+
+Description:
+
+Internal tool for validating CAOM2 collections including:
+- WCS 
+- core CAOM 
+- checksum
+- optional metadata compute 
+
+Output includes per-observation error messages and an aggregate report. 
+
+
+Progress tracking & error handling:
+
+Progress is tracked using a text file: name is required on the command line. 
+If the application stops during validation (either by manual quit, or for a
+severe error,) the next run of the application for the same collection will start
+at the observation listed in the progress file. 
+
+In this case, to start at the beginning of a collection either remove the existing progress file
+or use one with a different name (provide a new name on the command line.)
+
+The progress file is deleted if the validation runs successfully.
+
+
+Requirments:
+- valid cert file
+- collection name
+- source (either a web service or database name & credentials)
+
+See the usage statement for more information
+
+
