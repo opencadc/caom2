@@ -572,15 +572,15 @@ public class ObservationValidator implements Runnable {
         //            + "\n---------------------------" + "\nDone! " + "\n";
 
         String aggReport = "\n{\"logType\":\"summary\","
-            + "\"collection\":\"" + src.getCollection() + ","
-            + "\"totalObservations\":\"" + runAggregate.found + ","
-            + "\"passed\":\"" + runAggregate.passed + ","
-            + "\"failed\":\"" + runAggregate.failed + ","
-            + "\"wcsFailures\":\"" + runAggregate.wcsErr + ","
-            + "\"coreFailures\":\"" + runAggregate.coreErr + ","
-            + "\"checksumFailures\":\"" + runAggregate.checksumErr + ","
-            + "\"computeFailures\":\"" + runAggregate.computeErr + ","
-            + "\"sourceFailures\":\"" + runAggregate.srcErr + ","
+            + "\"collection\":\"" + src.getCollection() + "\","
+            + "\"totalObservations\":\"" + runAggregate.found + "\","
+            + "\"passed\":\"" + runAggregate.passed + "\","
+            + "\"failed\":\"" + runAggregate.failed + "\","
+            + "\"wcsFailures\":\"" + runAggregate.wcsErr + "\","
+            + "\"coreFailures\":\"" + runAggregate.coreErr + "\","
+            + "\"checksumFailures\":\"" + runAggregate.checksumErr + "\","
+            + "\"computeFailures\":\"" + runAggregate.computeErr + "\","
+            + "\"sourceFailures\":\"" + runAggregate.srcErr + "\","
             + "\"milliSeconds\":\"" + runAggregate.processTime + "\"}\n";
 
         System.out.print(aggReport);
