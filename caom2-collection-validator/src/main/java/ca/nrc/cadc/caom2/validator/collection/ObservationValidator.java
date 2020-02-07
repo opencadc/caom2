@@ -134,7 +134,7 @@ public class ObservationValidator implements Runnable {
     private HarvestState progressRecord;
 
     // Store aggregate error count across batches
-    private Aggregate runAggregate;
+    protected Aggregate runAggregate;
 
     // Parameter values
     protected Integer batchSize;
