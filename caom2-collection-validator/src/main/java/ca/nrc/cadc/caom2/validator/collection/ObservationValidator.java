@@ -627,6 +627,7 @@ public class ObservationValidator implements Runnable {
             this.checksumErr += ag.checksumErr;
             this.processTime += ag.processTime;
             this.computeErr += ag.computeErr;
+            this.srcErr += ag.srcErr;
         }
     }
 
