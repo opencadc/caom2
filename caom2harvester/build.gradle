@@ -17,7 +17,7 @@ sourceCompatibility = 1.7
 group = 'org.opencadc'
 
 // version at release TBD
-version = '2.5.2'
+version = '2.5.1'
 ext {
     // release number for building packages (rpm, deb, etc)
     // when only library dependencies change
