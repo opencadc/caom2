@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -80,8 +80,10 @@ import ca.nrc.cadc.caom2.Requirements;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Status;
 import ca.nrc.cadc.caom2.Target;
+import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
+import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -160,6 +162,15 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                     obs.target.type = TargetType.toValue(tType);
                 Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.target.keywords")), obs.target.getKeywords());
             }
+            
+            String tpcsys = Util.getString(data, map.get("caom2:Observation.targetPosition.coordsys"));
+            if (tpcsys != null) {
+                Double tpc1 = Util.getDouble(data, map.get("caom2:Observation.targetPosition.coordinates.cval1"));
+                Double tpc2 = Util.getDouble(data, map.get("caom2:Observation.targetPosition.coordinates.cval2"));
+                obs.targetPosition = new TargetPosition(tpcsys, new Point(tpc1, tpc2));
+                obs.targetPosition.equinox = Util.getDouble(data, map.get("caom2:Observation.targetPosition.equinox"));
+            }
+            
             String telName = Util.getString(data, map.get("caom2:Observation.telescope.name"));
             if (telName != null)
             {
