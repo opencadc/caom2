@@ -41,7 +41,7 @@ dependencies {
     // support optional access-control grant generation
     compile 'org.opencadc:caom2-access-control:[2.4.0,2.5)'
     
-    testCompile 'junit:junit:4.10'
+    testCompile 'junit:junit:4.13'
 }
 
 apply from: '../opencadc.gradle'

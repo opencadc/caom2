@@ -24,7 +24,7 @@ dependencies {
     compile 'org.opencadc:caom2:[2.4.0,2.5)'
     compile 'org.opencadc:caom2-compute:[2.4.0,2.5)'
 
-    compile 'junit:junit:4.10'
+    compile 'junit:junit:4.13'
 }
 
 apply from: '../opencadc.gradle'

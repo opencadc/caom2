@@ -46,7 +46,7 @@ dependencies {
 
     runtime 'org.postgresql:postgresql:9.4.1209.jre7'
     
-    testCompile 'junit:junit:4.10'
+    testCompile 'junit:junit:4.13'
 }
 
 apply from: '../opencadc.gradle'
