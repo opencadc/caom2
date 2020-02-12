@@ -27,7 +27,7 @@ dependencies {
     compile 'org.opencadc:caom2:[2.4,2.5)'
     compile 'org.opencadc:caom2-compute:[2.4,2.5)'
     
-    testCompile 'junit:junit:4.10'
+    testCompile 'junit:junit:4.13'
 }
 
 configurations {
