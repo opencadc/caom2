@@ -29,7 +29,7 @@ dependencies {
     compile 'org.opencadc:cadc-registry:[1,2)'
     compile 'org.opencadc:cadc-vos:[1,2)'
 
-    testCompile 'junit:junit:[4,5)'
+    testCompile 'junit:junit:4.13'
 }
 
 configurations {
