@@ -213,7 +213,7 @@ public class Main {
                     System.exit(1);
                 }
             }
-            
+
             boolean computePlaneMetadata = am.isSet("compute");
 
             File progressFile = new File(progressFileName);
@@ -316,7 +316,7 @@ public class Main {
         sb.append("\n\nusage: caom2-collection-validator [-v|--verbose|-d|--debug] [-h|--help] ...");
         sb.append("\n         --collection=<name> : name of collection to retrieve> (e.g. IRIS)");
         sb.append("\n         --source=<server.database.schema> | <resourceID> | <capabilities URL>");
-        sb.append("\n         --progressFile : name of progress file. ");
+        sb.append("\n         --progressFile=<filename> : file containing information on last successfully processed observation. ");
 
         sb.append("\n\nSource selection:");
         sb.append("\n          <server.database.schema> : the server and database connection info will be found in $HOME/.dbrc");
@@ -331,8 +331,8 @@ public class Main {
         sb.append("\n\nOptional modifiers:");
         sb.append("\n         --batchSize=<number of observations per batch> (default: ").append(DEFAULT_BATCH_SIZE).append(")");
         sb.append("\n         --compute : compute plane metadata to validate it can be done. (default: false) ");
-        sb.append("\n         --minDate=<minimum Observation.maxLastModfied to consider (UTC timestamp)");
-        sb.append("\n         --maxDate=<maximum Observation.maxLastModfied to consider (UTC timestamp)");
+        sb.append("\n         --minDate=<minimum> : Observation.maxLastModfied to consider (UTC timestamp)");
+        sb.append("\n         --maxDate=<maximum> : Observation.maxLastModfied to consider (UTC timestamp)");
 
         sb.append("\n");
         log.warn(sb.toString());
