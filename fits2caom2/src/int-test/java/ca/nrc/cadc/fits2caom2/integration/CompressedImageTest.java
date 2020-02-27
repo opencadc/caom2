@@ -149,7 +149,7 @@ public class CompressedImageTest extends AbstractTest
         }
     }
 
-    @Test
+    //@Test
     public void testNotCompressedImage()
     {
         try
