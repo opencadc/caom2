@@ -379,57 +379,110 @@ public class Wcs
     {
         Dimension2D dimension = getDimension2D(utype + ".dimension", mapping);
         Coord2D refCoord = getCoord2D(utype + ".refCoord", mapping);
+        if (dimension == null || refCoord == null)
+            return null;
+
+        // Look for the CD matrix first.
         Double cd11 = getDoubleValue(utype + ".cd11", mapping);
         Double cd12 = getDoubleValue(utype + ".cd12", mapping);
         Double cd21 = getDoubleValue(utype + ".cd21", mapping);
         Double cd22 = getDoubleValue(utype + ".cd22", mapping);
-        if (dimension == null && refCoord == null &&
-            cd11 == null && cd12 == null &&
-            cd21 == null && cd22 == null)
-            return null;
-        
-        // If cd11 and cd22 are not null, and cd12 and cd21 are null,
-        // set cd12 and cd21 to 0.
         if (cd11 != null && cd22 != null && cd12 == null && cd21 == null)
         {
             cd12 = 0.0;
             cd21 = 0.0;
         }
+        if (cd11 != null && cd12 != null && cd21 != null && cd22 != null) {
+            return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
+        }
 
-        // If the cd matrix is null, try populating it using CDELT and CROTA.
-        if (cd11 == null && cd12 == null && cd21 == null && cd22 == null)
-        {
-            String cdelt1 = mapping.getKeywordValue("CDELT" + mapping.positionAxis1);
-            String cdelt2 = mapping.getKeywordValue("CDELT" + mapping.positionAxis2);
-            String crota = mapping.getKeywordValue("CROTA" + mapping.positionAxis1);
-            if (crota == null)
-                crota = mapping.getKeywordValue("CROTA" + mapping.positionAxis2);
-            if (crota == null)
-                crota = mapping.getKeywordValue("CROTA");
-            String crotsign = mapping.getKeywordValue("CROTSIGN");
-        
-            if (cdelt1 != null && cdelt2 != null && crota != null)
-            {
-                try
-                {
-                    Double cd1 = Double.valueOf(cdelt1);
-                    Double cd2 = Double.valueOf(cdelt2);
-                    Double rotation = crota == null ? 0.0 : Double.valueOf(crota);
-                    Double sign = crotsign == null ? 1.0 : Double.valueOf(crotsign);
-                    
-                    cd11 = cd1 * Math.cos(rotation) * sign;
-                    cd12 = -cd2 * Math.sin(rotation) * sign;
-                    cd21 = cd1 * Math.sin(rotation) * sign;
-                    cd22 = cd2 * Math.cos(rotation) * sign;
-                }
-                catch (NumberFormatException e) { }
+        // Try the PC matrix next.
+        int posAxis1 = mapping.positionAxis1;
+        int posAxis2 = mapping.positionAxis2;
+        String cdelt1 = mapping.getKeywordValue("CDELT" + posAxis1);
+        String cdelt2 = mapping.getKeywordValue("CDELT" + posAxis2);
+
+        if (cdelt1 != null && cdelt2 != null) {
+            Double pc11 = null;
+            Double pc12 = null;
+            Double pc21 = null;
+            Double pc22 = null;
+
+            String kw11 = String.format("PC%d_%d", posAxis1, posAxis1);
+            String s11 = mapping.getKeywordValue(kw11);
+            if (s11 == null) {
+                kw11 = String.format("PC0%d_0%d", posAxis1, posAxis1);
+                s11 = mapping.getKeywordValue(kw11);
+            }
+            if (s11 != null) {
+                pc11 = Double.parseDouble(s11);
+            }
+
+            String kw12 = String.format("PC%d_%d", posAxis1, posAxis2);
+            String s12 = mapping.getKeywordValue(kw12);
+            if (s12 == null) {
+                kw12 = String.format("PC0%d_0%d", posAxis1, posAxis2);
+                s12 = mapping.getKeywordValue(kw12);
+            }
+            if (s12 != null) {
+                pc12 = Double.parseDouble(s12);
+            }
+
+            String kw21 = String.format("PC%d_%d", posAxis2, posAxis1);
+            String s21 = mapping.getKeywordValue(kw21);
+            if (s21 == null) {
+                kw21 = String.format("PC0%d_0%d", posAxis2, posAxis1);
+                s21 = mapping.getKeywordValue(kw21);
+            }
+            if (s21 != null) {
+                pc21 = Double.parseDouble(s21);
+            }
+
+            String kw22 = String.format("PC%d_%d", posAxis2, posAxis2);
+            String s22 = mapping.getKeywordValue(kw22);
+            if (s22 == null) {
+                kw22 = String.format("PC0%d_0%d", posAxis2, posAxis2);
+                s22 = mapping.getKeywordValue(kw22);
+            }
+            if (s22 != null) {
+                pc22 = Double.parseDouble(s22);
+            }
+
+            if (pc11 != null && pc22 != null && pc12 == null && pc21 == null) {
+                pc12 = 0.0;
+                pc21 = 0.0;
+            }
+
+            if (pc11 != null && pc12 != null && pc21 != null && pc22 != null) {
+                double cd1 = Double.parseDouble(cdelt1);
+                double cd2 = Double.parseDouble(cdelt2);
+                cd11 = pc11 * cd1;
+                cd12 = pc12 * -cd2;
+                cd21 = pc21 * cd1;
+                cd22 = pc22 * cd2;
+
+                return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
             }
         }
-        
-        // If any of the cd matrix are null, return null.
-        if (cd11 == null || cd12 == null || cd21 == null || cd22 == null)
-            return null;
-        
+
+        // Try CROTA with PC matrix or default PC matrix
+        String crota = mapping.getKeywordValue("CROTA" + posAxis1);
+        if (crota == null) {
+            crota = mapping.getKeywordValue("CROTA" + posAxis2);
+        }
+        if (crota == null) {
+            crota = mapping.getKeywordValue("CROTA");
+        }
+        String crotsign = mapping.getKeywordValue("CROTSIGN");
+        double rotation = (crota == null ? 0.0 : Double.parseDouble(crota));
+        double sign = (crotsign == null ? 1.0 : Double.parseDouble(crotsign));
+
+        // Use the default PC matrix
+        cd11 = 1.0 * Math.cos(rotation) * sign;
+        cd12 = 0.0;
+        cd21 = 0.0;
+        cd22 = 1.0 * Math.cos(rotation) * sign;
+
         return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
     }
     
