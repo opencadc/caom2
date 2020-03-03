@@ -426,10 +426,10 @@ public class WcsTest
         Assert.assertEquals(4.0, coordFunction2D.getRefCoord().getCoord1().val, 0.0);
         Assert.assertEquals(5.0, coordFunction2D.getRefCoord().getCoord2().pix, 0.0);
         Assert.assertEquals(6.0, coordFunction2D.getRefCoord().getCoord2().val, 0.0);
-        Assert.assertEquals(1.0, coordFunction2D.getCd11(), 0.0);
+        Assert.assertEquals(7.0, coordFunction2D.getCd11(), 0.0);
         Assert.assertEquals(0.0, coordFunction2D.getCd12(), 0.0);
         Assert.assertEquals(0.0, coordFunction2D.getCd21(), 0.0);
-        Assert.assertEquals(1.0, coordFunction2D.getCd22(), 0.0);
+        Assert.assertEquals(8.0, coordFunction2D.getCd22(), 0.0);
         
         // Reserve the rotation.
         header = new Header();
@@ -448,10 +448,10 @@ public class WcsTest
         Assert.assertEquals(4.0, coordFunction2D.getRefCoord().getCoord1().val, 0.0);
         Assert.assertEquals(5.0, coordFunction2D.getRefCoord().getCoord2().pix, 0.0);
         Assert.assertEquals(6.0, coordFunction2D.getRefCoord().getCoord2().val, 0.0);
-        Assert.assertEquals(-1.0, coordFunction2D.getCd11(), 0.0);
+        Assert.assertEquals(-7.0, coordFunction2D.getCd11(), 0.0);
         Assert.assertEquals(0.0, coordFunction2D.getCd12(), 0.0);
         Assert.assertEquals(0.0, coordFunction2D.getCd21(), 0.0);
-        Assert.assertEquals(-1.0, coordFunction2D.getCd22(), 0.0);
+        Assert.assertEquals(-8.0, coordFunction2D.getCd22(), 0.0);
     }
 
     /**
