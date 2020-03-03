@@ -15,7 +15,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '2.3.4'
+version = '2.3.5'
 
 mainClassName = 'ca.nrc.cadc.fits2caom2.Main'
 
