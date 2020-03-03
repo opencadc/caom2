@@ -396,73 +396,111 @@ public class Wcs
             return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
         }
 
-        // Try the PC matrix next.
+        // Get the CDELT's
         int posAxis1 = mapping.positionAxis1;
         int posAxis2 = mapping.positionAxis2;
-        String cdelt1 = mapping.getKeywordValue("CDELT" + posAxis1);
-        String cdelt2 = mapping.getKeywordValue("CDELT" + posAxis2);
+        String cdelt1_kw = mapping.getKeywordValue("CDELT" + posAxis1);
+        String cdelt2_kw = mapping.getKeywordValue("CDELT" + posAxis2);
+        Double cdelt1 = null;
+        Double cdelt2 = null;
+        if (cdelt1_kw != null) {
+            try {
+                cdelt1 = Double.parseDouble(cdelt1_kw);
+            } catch (NumberFormatException e) {
+                String error = String
+                    .format("Unable to parse double for CDELT%S = %s", posAxis1, cdelt1_kw);
+                throw new IllegalArgumentException(error);
+            }
+         }
+        if (cdelt2_kw != null) {
+            try {
+                cdelt2 = Double.parseDouble(cdelt2_kw);
+            } catch (NumberFormatException e) {
+                String error = String
+                    .format("Unable to parse double for CDELT%S = %s", posAxis2, cdelt2_kw);
+                throw new IllegalArgumentException();
+            }
+        }
 
+        // The WCS FITS standard specifies that the CD and PC matrix
+        // indices are not prefixed with a 0, i.e. CD1_1 instead of
+        // CD01_01. To process data that does use 0's for the PC indices
+        // we check the headers for both.
+        Double pc11 = null;
+        Double pc12 = null;
+        Double pc21 = null;
+        Double pc22 = null;
+        String kw11 = String.format("PC%d_%d", posAxis1, posAxis1);
+        String s11 = mapping.getKeywordValue(kw11);
+        if (s11 == null) {
+            kw11 = String.format("PC0%d_0%d", posAxis1, posAxis1);
+            s11 = mapping.getKeywordValue(kw11);
+        }
+        if (s11 != null) {
+            pc11 = Double.parseDouble(s11);
+        }
+
+        String kw12 = String.format("PC%d_%d", posAxis1, posAxis2);
+        String s12 = mapping.getKeywordValue(kw12);
+        if (s12 == null) {
+            kw12 = String.format("PC0%d_0%d", posAxis1, posAxis2);
+            s12 = mapping.getKeywordValue(kw12);
+        }
+        if (s12 != null) {
+            pc12 = Double.parseDouble(s12);
+        }
+
+        String kw21 = String.format("PC%d_%d", posAxis2, posAxis1);
+        String s21 = mapping.getKeywordValue(kw21);
+        if (s21 == null) {
+            kw21 = String.format("PC0%d_0%d", posAxis2, posAxis1);
+            s21 = mapping.getKeywordValue(kw21);
+        }
+        if (s21 != null) {
+            pc21 = Double.parseDouble(s21);
+        }
+
+        String kw22 = String.format("PC%d_%d", posAxis2, posAxis2);
+        String s22 = mapping.getKeywordValue(kw22);
+        if (s22 == null) {
+            kw22 = String.format("PC0%d_0%d", posAxis2, posAxis2);
+            s22 = mapping.getKeywordValue(kw22);
+        }
+        if (s22 != null) {
+            pc22 = Double.parseDouble(s22);
+        }
+
+        if (pc11 != null && pc22 != null && pc12 == null && pc21 == null) {
+            pc12 = 0.0;
+            pc21 = 0.0;
+        }
+
+        // If CDELT's are given try the PC matrix next.
         if (cdelt1 != null && cdelt2 != null) {
-            Double pc11 = null;
-            Double pc12 = null;
-            Double pc21 = null;
-            Double pc22 = null;
-
-            String kw11 = String.format("PC%d_%d", posAxis1, posAxis1);
-            String s11 = mapping.getKeywordValue(kw11);
-            if (s11 == null) {
-                kw11 = String.format("PC0%d_0%d", posAxis1, posAxis1);
-                s11 = mapping.getKeywordValue(kw11);
-            }
-            if (s11 != null) {
-                pc11 = Double.parseDouble(s11);
-            }
-
-            String kw12 = String.format("PC%d_%d", posAxis1, posAxis2);
-            String s12 = mapping.getKeywordValue(kw12);
-            if (s12 == null) {
-                kw12 = String.format("PC0%d_0%d", posAxis1, posAxis2);
-                s12 = mapping.getKeywordValue(kw12);
-            }
-            if (s12 != null) {
-                pc12 = Double.parseDouble(s12);
-            }
-
-            String kw21 = String.format("PC%d_%d", posAxis2, posAxis1);
-            String s21 = mapping.getKeywordValue(kw21);
-            if (s21 == null) {
-                kw21 = String.format("PC0%d_0%d", posAxis2, posAxis1);
-                s21 = mapping.getKeywordValue(kw21);
-            }
-            if (s21 != null) {
-                pc21 = Double.parseDouble(s21);
-            }
-
-            String kw22 = String.format("PC%d_%d", posAxis2, posAxis2);
-            String s22 = mapping.getKeywordValue(kw22);
-            if (s22 == null) {
-                kw22 = String.format("PC0%d_0%d", posAxis2, posAxis2);
-                s22 = mapping.getKeywordValue(kw22);
-            }
-            if (s22 != null) {
-                pc22 = Double.parseDouble(s22);
-            }
-
-            if (pc11 != null && pc22 != null && pc12 == null && pc21 == null) {
-                pc12 = 0.0;
-                pc21 = 0.0;
-            }
 
             if (pc11 != null && pc12 != null && pc21 != null && pc22 != null) {
-                double cd1 = Double.parseDouble(cdelt1);
-                double cd2 = Double.parseDouble(cdelt2);
-                cd11 = pc11 * cd1;
-                cd12 = pc12 * -cd2;
-                cd21 = pc21 * cd1;
-                cd22 = pc22 * cd2;
+
+                cd11 = pc11 * cdelt1;
+                cd12 = pc12 * cdelt1;
+                cd21 = pc21 * cdelt2;
+                cd22 = pc22 * cdelt2;
 
                 return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
             }
+        }
+
+        // If the PC matrix is not defined, use the default PC matrix.
+        if (pc11 == null) {
+            pc11 = 1.0;
+        }
+        if (pc12 == null) {
+            pc12 = 0.0;
+        }
+        if (pc21 == null) {
+            pc21 = 0.0;
+        }
+        if (pc22 == null) {
+            pc22 = 1.0;
         }
 
         // Try CROTA with PC matrix or default PC matrix
@@ -477,11 +515,10 @@ public class Wcs
         double rotation = (crota == null ? 0.0 : Double.parseDouble(crota));
         double sign = (crotsign == null ? 1.0 : Double.parseDouble(crotsign));
 
-        // Use the default PC matrix
-        cd11 = 1.0 * Math.cos(rotation) * sign;
-        cd12 = 0.0;
-        cd21 = 0.0;
-        cd22 = 1.0 * Math.cos(rotation) * sign;
+        cd11 = pc11 * Math.cos(rotation) * sign;
+        cd12 = pc12 * Math.sin(rotation) * sign;
+        cd21 = pc21 * Math.sin(rotation) * sign;
+        cd22 = pc22 * Math.cos(rotation) * sign;
 
         return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
     }
