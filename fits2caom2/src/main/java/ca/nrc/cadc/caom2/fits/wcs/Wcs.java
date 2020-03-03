@@ -387,10 +387,20 @@ public class Wcs
         Double cd12 = getDoubleValue(utype + ".cd12", mapping);
         Double cd21 = getDoubleValue(utype + ".cd21", mapping);
         Double cd22 = getDoubleValue(utype + ".cd22", mapping);
-        if (cd11 != null && cd22 != null && cd12 == null && cd21 == null)
+        if (cd11 != null || cd12 != null || cd21 != null || cd22 != null)
         {
-            cd12 = 0.0;
-            cd21 = 0.0;
+            if (cd11 == null) {
+                cd11 = 0.0;
+            }
+            if (cd12 == null) {
+                cd12 = 0.0;
+            }
+            if (cd21 == null) {
+                cd21 = 0.0;
+            }
+            if (cd22 == null) {
+                cd22 = 0.0;
+            }
         }
         if (cd11 != null && cd12 != null && cd21 != null && cd22 != null) {
             return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
@@ -417,7 +427,7 @@ public class Wcs
 
         // A CD matrix cannot be generated using a PC matrix
         // if CDELTS{i,j} are not found. Return null if CDELT's are null.
-        if (cdelt1 == null && cdelt2 == null) {
+        if (cdelt1 == null || cdelt2 == null) {
             return null;
         }
 
@@ -461,9 +471,19 @@ public class Wcs
         }
         pc22 = parseDouble(s22, kw22);
 
-        if (pc11 != null && pc22 != null && pc12 == null && pc21 == null) {
-            pc12 = 0.0;
-            pc21 = 0.0;
+        if (pc11 != null || pc12 != null || pc21 != null || pc22 != null) {
+            if (pc11 == null) {
+                pc11 = 1.0;
+            }
+            if (pc12 == null) {
+                pc12 = 0.0;
+            }
+            if (pc21 == null) {
+                pc21 = 0.0;
+            }
+            if (pc22 == null) {
+                pc22 = 1.0;
+            }
         }
 
         if (pc11 == null && pc12 == null && pc21 == null && pc22 == null) {
@@ -473,31 +493,28 @@ public class Wcs
             pc21 = 0.0;
             pc22 = 1.0;
 
-            String crota1_kw = mapping.getKeywordValue("CROTA" + posAxis1);
-            String crota2_kw = mapping.getKeywordValue("CROTA" + posAxis2);
-            if (crota1_kw != null && crota2_kw == null) {
-                crota2_kw = crota1_kw;
-            } else if (crota1_kw == null && crota2_kw != null) {
-                crota1_kw = crota2_kw;
-            }
-            if (crota1_kw == null && crota2_kw == null) {
-                String crota_kw = mapping.getKeywordValue("CROTA");
-                if (crota_kw != null) {
-                    crota1_kw = crota_kw;
-                    crota2_kw = crota_kw;
+            String crota_kw = mapping.getKeywordValue("CROTA" + posAxis1);
+            Double crota = parseDouble(crota_kw, "CROTA" + posAxis1);
+            if (crota == null) {
+                crota_kw = mapping.getKeywordValue("CROTA" + posAxis2);
+                crota = parseDouble(crota_kw, "CROTA" + posAxis2);
+                if (crota != null) {
+                    crota = 90 - crota;
                 }
             }
-            Double crota1 = parseDouble(crota1_kw, "CROTA" + posAxis1);;
-            Double crota2 = parseDouble(crota2_kw, "CROTA" + posAxis1);;
+            if (crota == null) {
+                crota_kw = mapping.getKeywordValue("CROTA");
+                crota = parseDouble(crota_kw, "CROTA");
+            }
 
             String crotsign_kw = mapping.getKeywordValue("CROTSIGN");
             double crotsign = (crotsign_kw == null ? 1.0 : parseDouble(crotsign_kw,"CROTSIGN"));
 
-            if (crota1 != null && crota2 != null) {
-                pc11 = pc11 * Math.cos(crota1) * crotsign;
-                pc12 = pc12 * Math.sin(crota1) * crotsign;
-                pc21 = pc21 * Math.sin(crota2) * crotsign;
-                pc22 = pc22 * Math.cos(crota2) * crotsign;
+            if (crota != null) {
+                pc11 = Math.cos(crota) * crotsign;
+                pc12 = -Math.sin(crota) * crotsign;
+                pc21 = Math.sin(crota) * crotsign;
+                pc22 = Math.cos(crota) * crotsign;
             }
         }
 
