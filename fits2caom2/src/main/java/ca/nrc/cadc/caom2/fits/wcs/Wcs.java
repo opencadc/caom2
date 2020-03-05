@@ -401,8 +401,6 @@ public class Wcs
             if (cd22 == null) {
                 cd22 = 0.0;
             }
-        }
-        if (cd11 != null && cd12 != null && cd21 != null && cd22 != null) {
             return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
         }
 
@@ -512,7 +510,7 @@ public class Wcs
 
             if (crota != null) {
                 pc11 = Math.cos(crota) * crotsign;
-                pc12 = -Math.sin(crota) * crotsign;
+                pc12 = -1.0 * Math.sin(crota) * crotsign;
                 pc21 = Math.sin(crota) * crotsign;
                 pc22 = Math.cos(crota) * crotsign;
             }
