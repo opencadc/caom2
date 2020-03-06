@@ -70,13 +70,20 @@
 package ca.nrc.cadc.fits2caom2;
 
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.fits.FitsMapping;
 import ca.nrc.cadc.caom2.fits.FitsValuesMap;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.net.URI;
 import java.util.Map;
+import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -444,8 +451,7 @@ public class TransformMatrixTest {
     }
 
     @Test
-    public void testPCMatrixWithCROTA() throws Exception
-    {
+    public void testPCMatrixWithNoCDELT() throws Exception {
         FitsValuesMap defaults = new FitsValuesMap(null, null);
         defaults.setKeywordValue("NAXIS", "4");
         defaults.setKeywordValue("NAXIS1", "11934");
@@ -469,6 +475,106 @@ public class TransformMatrixTest {
 
         defaults.setKeywordValue("CTYPE2", "DEC--SIN");
         defaults.setKeywordValue("CRVAL2", "-5.234973888889E+01");
+        defaults.setKeywordValue("CROTA2", "5.555555555556E-04");
+        defaults.setKeywordValue("CRPIX2", "2.529000000000E+03");
+        defaults.setKeywordValue("CUNIT2", "deg");
+
+        defaults.setKeywordValue("CTYPE3", "STOKES");
+        defaults.setKeywordValue("CRVAL3", "1.000000000000E+00");
+        defaults.setKeywordValue("CDELT3", "1.000000000000E+00");
+        defaults.setKeywordValue("CRPIX3", "1.000000000000E+00");
+        defaults.setKeywordValue("CUNIT3", "");
+
+        defaults.setKeywordValue("CTYPE4", "FREQ");
+        defaults.setKeywordValue("CRVAL4", "1.294990740741E+09");
+        defaults.setKeywordValue("CDELT4", "9.999999999998E+05");
+        defaults.setKeywordValue("CRPIX4", "1.000000000000E+00");
+        defaults.setKeywordValue("CUNIT4", "Hz");
+
+        defaults.setKeywordValue("RESTFRQ", "1.420405751786E+09");
+        defaults.setKeywordValue("SPECSYS", "TOPOCENT");
+
+        defaults.setKeywordValue("PC1_1", "1.000000000000E+00");
+        defaults.setKeywordValue("PC2_1", "0.000000000000E+00");
+        defaults.setKeywordValue("PC3_1", "0.000000000000E+00");
+        defaults.setKeywordValue("PC4_1", "0.000000000000E+00");
+
+        defaults.setKeywordValue("PC1_2", "0.000000000000E+00");
+        defaults.setKeywordValue("PC2_2", "1.000000000000E+00");
+        defaults.setKeywordValue("PC3_2", "0.000000000000E+00");
+        defaults.setKeywordValue("PC4_2", "0.000000000000E+00");
+
+        defaults.setKeywordValue("PC1_3", "0.000000000000E+00");
+        defaults.setKeywordValue("PC2_3", "0.000000000000E+00");
+        defaults.setKeywordValue("PC3_3", "1.000000000000E+00");
+        defaults.setKeywordValue("PC4_3", "0.000000000000E+00");
+
+        defaults.setKeywordValue("PC1_4", "0.000000000000E+00");
+        defaults.setKeywordValue("PC2_4", "0.000000000000E+00");
+        defaults.setKeywordValue("PC3_4", "0.000000000000E+00");
+        defaults.setKeywordValue("PC4_4", "1.000000000000E+00");
+
+        String userConfig = null;
+        Map<String,String> config = Util.loadConfig(userConfig);
+        FitsMapping mapping = new FitsMapping(config, defaults, null);
+
+        URI[] uris = new URI[] { new URI("ad", "CFHT/700000o", null) };
+        mapping.uri = "ad:CFHT/700000o";
+        mapping.extension = new Integer(1);
+
+        Ingest ingest = new Ingest(COLLECTION, OBSERVATION_ID, PRODUCT_ID, uris, config);
+
+        Chunk chunk = new Chunk();
+        ingest.populateChunk(chunk, mapping);
+
+        Assert.assertNotNull(chunk);
+        Assert.assertNotNull(chunk.positionAxis1);
+        Assert.assertNotNull(chunk.positionAxis2);
+        Assert.assertNotNull(chunk.polarizationAxis);
+        Assert.assertNotNull(chunk.energyAxis);
+        Assert.assertNull(chunk.timeAxis);
+        Assert.assertNull(chunk.observableAxis);
+
+        Assert.assertTrue(chunk.positionAxis1 == 1);
+        Assert.assertTrue(chunk.positionAxis2 == 2);
+        Assert.assertTrue(chunk.polarizationAxis == 3);
+        Assert.assertTrue(chunk.energyAxis == 4);
+
+        Assert.assertNull(chunk.position);
+        Assert.assertNotNull(chunk.energy);
+        Assert.assertNotNull(chunk.polarization);
+        Assert.assertNull(chunk.time);
+        Assert.assertNull(chunk.observable);
+    }
+
+    @Test
+    public void testPCMatrixWithCROTA() throws Exception
+    {
+        FitsValuesMap defaults = new FitsValuesMap(null, null);
+        defaults.setKeywordValue("NAXIS", "4");
+        defaults.setKeywordValue("NAXIS1", "11934");
+        defaults.setKeywordValue("NAXIS2", "10399");
+        defaults.setKeywordValue("NAXIS3", "1");
+        defaults.setKeywordValue("NAXIS4", "144");
+        defaults.setKeywordValue("BSCALE", "1.000000000000E+00");
+        defaults.setKeywordValue("BZERO", "0.000000000000E+00");
+
+        defaults.setKeywordValue("BUNIT", "Jy/beam");
+        defaults.setKeywordValue("EQUINOX", "2.000000000000E+03");
+        defaults.setKeywordValue("RADESYS", "FK5");
+        defaults.setKeywordValue("LONPOLE", "1.800000000000E+02");
+        defaults.setKeywordValue("LATPOLE", "-5.234973888889E+01");
+
+        defaults.setKeywordValue("CTYPE1", "RA---SIN");
+        defaults.setKeywordValue("CRVAL1", "3.217181583333E+02");
+        defaults.setKeywordValue("CDELT1", "1.0");
+        defaults.setKeywordValue("CROTA1", "-5.555555555556E-04");
+        defaults.setKeywordValue("CRPIX1", "9.887000000000E+03");
+        defaults.setKeywordValue("CUNIT1", "deg");
+
+        defaults.setKeywordValue("CTYPE2", "DEC--SIN");
+        defaults.setKeywordValue("CRVAL2", "-5.234973888889E+01");
+        defaults.setKeywordValue("CDELT2", " 1.0");
         defaults.setKeywordValue("CROTA2", "5.555555555556E-04");
         defaults.setKeywordValue("CRPIX2", "2.529000000000E+03");
         defaults.setKeywordValue("CUNIT2", "deg");
@@ -583,11 +689,13 @@ public class TransformMatrixTest {
 
         defaults.setKeywordValue("CTYPE1", "RA---SIN");
         defaults.setKeywordValue("CRVAL1", "3.217181583333E+02");
+        defaults.setKeywordValue("CDELT1", "-5.555555555556E-04");
         defaults.setKeywordValue("CRPIX1", "9.887000000000E+03");
         defaults.setKeywordValue("CUNIT1", "deg");
 
         defaults.setKeywordValue("CTYPE2", "DEC--SIN");
         defaults.setKeywordValue("CRVAL2", "-5.234973888889E+01");
+        defaults.setKeywordValue("CDELT2", "5.555555555556E-04");
         defaults.setKeywordValue("CRPIX2", "2.529000000000E+03");
         defaults.setKeywordValue("CUNIT2", "deg");
 
@@ -605,26 +713,6 @@ public class TransformMatrixTest {
 
         defaults.setKeywordValue("RESTFRQ", "1.420405751786E+09");
         defaults.setKeywordValue("SPECSYS", "TOPOCENT");
-
-        defaults.setKeywordValue("PC1_1", "1.000000000000E+00");
-        defaults.setKeywordValue("PC2_1", "0.000000000000E+00");
-        defaults.setKeywordValue("PC3_1", "0.000000000000E+00");
-        defaults.setKeywordValue("PC4_1", "0.000000000000E+00");
-
-        defaults.setKeywordValue("PC1_2", "0.000000000000E+00");
-        defaults.setKeywordValue("PC2_2", "1.000000000000E+00");
-        defaults.setKeywordValue("PC3_2", "0.000000000000E+00");
-        defaults.setKeywordValue("PC4_2", "0.000000000000E+00");
-
-        defaults.setKeywordValue("PC1_3", "0.000000000000E+00");
-        defaults.setKeywordValue("PC2_3", "0.000000000000E+00");
-        defaults.setKeywordValue("PC3_3", "1.000000000000E+00");
-        defaults.setKeywordValue("PC4_3", "0.000000000000E+00");
-
-        defaults.setKeywordValue("PC1_4", "0.000000000000E+00");
-        defaults.setKeywordValue("PC2_4", "0.000000000000E+00");
-        defaults.setKeywordValue("PC3_4", "0.000000000000E+00");
-        defaults.setKeywordValue("PC4_4", "1.000000000000E+00");
 
         String userConfig = null;
         Map<String, String> config = Util.loadConfig(userConfig);
@@ -679,10 +767,30 @@ public class TransformMatrixTest {
         Assert.assertEquals(-52.34973888889, func.getRefCoord().getCoord2().val,
             0.0);
 
-        Assert.assertEquals(1.0, func.getCd11(), 0.1);
+        Assert.assertEquals(-5.555555555556E-04, func.getCd11(), 0.1);
         Assert.assertEquals(0.0, func.getCd12(), 0.0);
         Assert.assertEquals(0.0, func.getCd21(), 0.0);
-        Assert.assertEquals(1.0, func.getCd22(), 0.1);
+        Assert.assertEquals(5.555555555556E-04, func.getCd22(), 0.1);
     }
 
+    //@Test
+    public void testIngest() throws Exception
+    {
+        URI[] uris = new URI[] { new URI("file", "/Users/jburke/tmp/image.restored.i.SB10168.contcube.fits", null) };
+        String userConfig = null;
+        Map<String,String> config = Util.loadConfig(userConfig);
+
+        Ingest ingest = new Ingest("collection", "observationID", "productID", uris, config);
+        ingest.setMapping(Util.getFitsMapping(config, null, null));
+        ingest.setOutFile(new File("build/tmp/askap-out.xml"));
+        ingest.run();
+
+        File out = new File("build/tmp/askap-out.xml");
+        Assert.assertNotNull(out);
+
+        ObservationReader reader = new ObservationReader();
+        Observation observation = reader.read(new BufferedReader(new FileReader(out)));
+        Assert.assertNotNull(observation);
+        //out.delete();
+    }
 }
