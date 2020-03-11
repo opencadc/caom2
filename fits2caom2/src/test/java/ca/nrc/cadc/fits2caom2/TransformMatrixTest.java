@@ -70,20 +70,13 @@
 package ca.nrc.cadc.fits2caom2;
 
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.fits.FitsMapping;
 import ca.nrc.cadc.caom2.fits.FitsValuesMap;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.net.URI;
 import java.util.Map;
-import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -773,24 +766,4 @@ public class TransformMatrixTest {
         Assert.assertEquals(5.555555555556E-04, func.getCd22(), 0.1);
     }
 
-    //@Test
-    public void testIngest() throws Exception
-    {
-        URI[] uris = new URI[] { new URI("file", "/Users/jburke/tmp/image.restored.i.SB10168.contcube.fits", null) };
-        String userConfig = null;
-        Map<String,String> config = Util.loadConfig(userConfig);
-
-        Ingest ingest = new Ingest("collection", "observationID", "productID", uris, config);
-        ingest.setMapping(Util.getFitsMapping(config, null, null));
-        ingest.setOutFile(new File("build/tmp/askap-out.xml"));
-        ingest.run();
-
-        File out = new File("build/tmp/askap-out.xml");
-        Assert.assertNotNull(out);
-
-        ObservationReader reader = new ObservationReader();
-        Observation observation = reader.read(new BufferedReader(new FileReader(out)));
-        Assert.assertNotNull(observation);
-        //out.delete();
-    }
 }
