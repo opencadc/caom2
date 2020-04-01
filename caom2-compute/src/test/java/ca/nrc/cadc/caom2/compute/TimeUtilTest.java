@@ -99,7 +99,7 @@ public class TimeUtilTest {
     private static final Logger log = Logger.getLogger(TimeUtilTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.types", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.compute", Level.INFO);
     }
 
 
@@ -198,6 +198,51 @@ public class TimeUtilTest {
             Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testMultiSampleComputeFromBounds() {
+        try {
+            final double expectedLB = 54321.0;
+            final double expectedUB = 54321.5;
+            final long expectedDimension = 1L;
+            final double expectedSS = 0.3;
+
+            Plane plane = new Plane("foo");
+            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
+            plane.getArtifacts().add(a);
+            Part p = new Part(1);
+            a.getParts().add(p);
+            Chunk c = new Chunk();
+            p.getChunks().add(c);
+             
+            c.naxis = 1;
+            c.timeAxis = 1;
+            c.time = new TemporalWCS(new CoordAxis1D(new Axis("TIME", "d")));
+            c.time.getAxis().bounds = new CoordBounds1D();
+            c.time.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 54321.0), new RefCoord(1.5, 54321.1)));
+            c.time.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 54321.2), new RefCoord(1.5, 54321.3)));
+            c.time.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 54321.4), new RefCoord(1.5, 54321.5)));
+            
+            Time actual = TimeUtil.compute(plane.getArtifacts());
+
+            log.info("testMultiSampleComputeFromBounds: " + actual);
+
+            Assert.assertNotNull(actual);
+            Assert.assertNotNull(actual.bounds);
+            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
+            Assert.assertEquals(3, actual.bounds.getSamples().size());
+            
+            Assert.assertNotNull(actual.dimension);
+            Assert.assertEquals("dimension", expectedDimension, actual.dimension.longValue());
+            
+            Assert.assertNotNull(actual.sampleSize);
+            Assert.assertEquals("sampleSize", expectedSS, actual.sampleSize, 0.01);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
