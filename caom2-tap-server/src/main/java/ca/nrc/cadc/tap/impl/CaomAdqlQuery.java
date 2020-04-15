@@ -142,10 +142,14 @@ public class CaomAdqlQuery extends AdqlQuery
         tnc.put("tap_schema.key_columns", "tap_schema.key_columns11");
         TableNameReferenceConverter tnrc = new TableNameReferenceConverter(tnc.map);
         super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), tnrc, tnc));
-        
+
+        // temporary backwards compatibility hack for CAOM-2.4 column name change
         ColumnNameConverter cnc = new ColumnNameConverter(true, tapSchema);
         ColumnNameConverter.QualifiedColumn emBand = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_emBand");
         ColumnNameConverter.QualifiedColumn energyBands = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_energyBands");
+        cnc.put(emBand, energyBands);
+        emBand = new ColumnNameConverter.QualifiedColumn("caom2.EnumField", "energy_emBand");
+        energyBands = new ColumnNameConverter.QualifiedColumn("caom2.EnumField", "energy_energyBands");
         cnc.put(emBand, energyBands);
         super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), cnc, new FromItemNavigator()));
         
