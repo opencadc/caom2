@@ -86,14 +86,17 @@ import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.Base64;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.log4j.Logger;
 import org.opencadc.soda.server.AbstractSodaJobRunner;
 import org.opencadc.soda.server.Cutout;
@@ -106,6 +109,13 @@ import org.opencadc.soda.server.SodaPlugin;
 public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
     private static final Logger log = Logger.getLogger(SodaJobRunner.class);
 
+    public static final String PARAM_FARADAY = "FARADAY";
+    public static final String PARAM_RM = "RM";
+    
+    static final List<String> CUSTOM_CUT_PARAMS = Arrays.asList(
+        PARAM_FARADAY, PARAM_RM
+    );
+    
     private final RegistryClient reg;
     private final URI sodaURI;
     private final URI tapURI;
@@ -119,6 +129,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
         this.sodaURI = sc.getSodaID();
         this.tapURI = sc.getTapServiceID();
         this.artifactResolver = new CaomArtifactResolver();
+        super.getCustomCutoutParams().addAll(CUSTOM_CUT_PARAMS);
     }
 
     @Override
@@ -128,7 +139,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
 
     @Override
     public URL toURL(int serialNum, URI uri, Cutout<Shape> pos, Cutout<Interval> band, Cutout<Interval> time, Cutout<List<String>> pol, 
-                Cutout<Interval> custom, Map<String, List<String>> customParams)
+                List<Cutout<Interval>> customCutouts, Map<String, List<String>> customParams)
             throws IOException {
         String runID = job.getRunID();
         if (runID == null)
@@ -163,8 +174,19 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
                 log.warn("ignore: " + msg);
             }
 
+            // TODO: CAOM currently supports a single custom 1D axis, but we have to find the right Cutout in the list 
+            // for the data in question... temporary hack is to fail:
+            if (!customCutouts.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("cutout with: ");
+                for (Cutout<Interval> c : customCutouts) {
+                    sb.append(c.name).append(", ");
+                }
+                throw new UnsupportedOperationException(sb.substring(0, sb.length() - 3));
+            }
+            
             List<String> cutout = CutoutUtil.computeCutout(a, 
-                dali2caom2(pos.cut), dali2caom2(band.cut), dali2caom2(time.cut), dali2caom2(pol.cut), custom.name, dali2caom2(custom.cut));
+                dali2caom2(pos.cut), dali2caom2(band.cut), dali2caom2(time.cut), dali2caom2(pol.cut), null, null);
             if (cutout != null && !cutout.isEmpty())
             {
                 StorageResolver resolver = artifactResolver.getStorageResolver(uri);
@@ -213,6 +235,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             throw new RuntimeException("CONFIG: failed to find resource", ex);
         }
     }
+    
     
     
     
