@@ -104,10 +104,9 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-@Deprecated
-public class MetaQueryRunner22 implements JobRunner
+public class MetaQueryRunner23 implements JobRunner
 {
-    private static final Logger log = Logger.getLogger(MetaQueryRunner22.class);
+    private static final Logger log = Logger.getLogger(MetaQueryRunner23.class);
 
     private static final String DEFAULT_FORMAT = "text/xml";
     private static final String JSON_FORMAT = "application/json";
@@ -120,7 +119,7 @@ public class MetaQueryRunner22 implements JobRunner
     private final URI metaID;
     private final URI tapID;
 
-    public MetaQueryRunner22() 
+    public MetaQueryRunner23() 
     { 
         ServiceConfig sc = new ServiceConfig();
         this.metaID = sc.getMetaID();
@@ -216,12 +215,12 @@ public class MetaQueryRunner22 implements JobRunner
             
             if (JSON_FORMAT.equals(format))
             {
-                JsonWriter writer = new JsonWriter(true, XmlConstants.CAOM2_2_NAMESPACE);
+                JsonWriter writer = new JsonWriter(true, XmlConstants.CAOM2_3_NAMESPACE);
                 writer.write(obs, syncOutput.getOutputStream());
             }
             else
             {
-                ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
+                ObservationWriter writer = new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
                 //writer.setStylesheetURL(styleSheetURL);
                 writer.write(obs, syncOutput.getOutputStream());
             }

@@ -24,19 +24,19 @@ create table caom2.EnumField_tmp
 -- from caom.Plane
     dataProductType        varchar(16),
     calibrationLevel       integer,
-    energy_emband          varchar(32),
+    energy_energyBands     varchar(64),
     energy_bandpassName    varchar(64)
 )
 ;
 
 -- populate
 insert into caom2.EnumField_tmp
-(num_tuples,max_time_bounds_cval1,collection,telescope_name,instrument_name,type,intent,dataProductType,calibrationLevel,energy_emband,energy_bandpassName)
+(num_tuples,max_time_bounds_cval1,collection,telescope_name,instrument_name,type,intent,dataProductType,calibrationLevel,energy_energyBands,energy_bandpassName)
 select count(*),max(p.time_bounds_lower),o.collection,o.telescope_name,o.instrument_name,o.type,o.intent,
-       p.dataProductType,p.calibrationLevel,p.energy_emband,p.energy_bandpassName
+       p.dataProductType,p.calibrationLevel,p.energy_energyBands,p.energy_bandpassName
 from caom2.Observation o join caom2.Plane p on o.obsID=p.obsID
 group by o.collection,o.telescope_name,o.instrument_name,o.type,o.intent,
-         p.dataProductType,p.calibrationLevel,p.energy_emband,p.energy_bandpassName
+         p.dataProductType,p.calibrationLevel,p.energy_energyBands,p.energy_bandpassName
 ;
 
 -- drop the old table, swap in the new table, grant permissions

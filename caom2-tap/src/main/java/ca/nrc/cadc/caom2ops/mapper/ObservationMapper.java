@@ -70,7 +70,7 @@
 package ca.nrc.cadc.caom2ops.mapper;
 
 import ca.nrc.cadc.caom2.Algorithm;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Observation;
@@ -122,11 +122,11 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
             String observationID = Util.getString(data, map.get("caom2:Observation.observationID"));
             String algName = Util.getString(data, map.get("caom2:Observation.algorithm.name"));
             String mem = Util.getString(data, map.get("caom2:Observation.members"));
-            
+            String typeCode = Util.getString(data, map.get("caom2:Observation.typeCode"));
             Observation obs;
-            if (mem != null)
+            if ("C".equals(typeCode)) // used to be mem != null ... also typeCode may change to D in CAOM-2.4
             {
-                CompositeObservation co = new CompositeObservation(collection, observationID, new Algorithm(algName));
+                DerivedObservation co = new DerivedObservation(collection, observationID, new Algorithm(algName));
                 Util.decodeObservationURIs(mem, co.getMembers());
                 obs = co;
             }
@@ -139,6 +139,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 obs.intent = ObservationIntentType.toValue(intentStr);
             obs.sequenceNumber = Util.getInteger(data, map.get("caom2:Observation.sequenceNumber"));
             obs.metaRelease = Util.getDate(data, map.get("caom2:Observation.metaRelease"));
+            // TODO: fill Observation.metaReadGroups // CAOM-2.4
             
             String proposalID = Util.getString(data, map.get("caom2:Observation.proposal.id"));
             if (proposalID != null)
@@ -154,6 +155,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
             if (targetName != null)
             {
                 obs.target = new Target(targetName);
+                obs.target.targetID = Util.getURI(data, map.get("caom2:Observation.target.targetID")); // CAOM-2.4
                 obs.target.moving = Util.getBoolean(data, map.get("caom2:Observation.target.moving"));
                 obs.target.redshift = Util.getDouble(data, map.get("caom2:Observation.target.redshift"));
                 obs.target.standard = Util.getBoolean(data, map.get("caom2:Observation.target.standard"));

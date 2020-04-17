@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -137,6 +138,7 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             c.energyAxis = Util.getInteger(data, map.get("caom2:Chunk.energyAxis"));
             c.timeAxis = Util.getInteger(data, map.get("caom2:Chunk.timeAxis"));
             c.polarizationAxis = Util.getInteger(data, map.get("caom2:Chunk.polarizationAxis"));
+            c.customAxis = Util.getInteger(data, map.get("caom2:Chunk.customAxis"));
             c.observableAxis = Util.getInteger(data, map.get("caom2:Chunk.observableAxis"));
 
             // position
@@ -329,6 +331,39 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
                 axis.bounds = pbounds;
                 axis.function = pfunction;
                 c.polarization = new PolarizationWCS(axis);
+            }
+            
+            // custom
+            String cctype = Util.getString(data, map.get("caom2:Chunk.custom.axis.axis.ctype"));
+            String ccunit = Util.getString(data, map.get("caom2:Chunk.custom.axis.axis.cunit"));
+            Double ces = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.error.syser"));
+            Double cer = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.error.rnder"));
+            CoordRange1D crange = null;
+            pix1 = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.range.start.pix"));
+            val1 = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.range.start.val"));
+            pix2 = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.range.end.pix"));
+            val2 = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.range.end.val"));
+            if (pix1 != null)
+                crange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
+
+            CoordBounds1D cbounds = Util.decodeCoordBounds1D( Util.getString(data, map.get("caom2:Chunk.custom.axis.bounds")) );
+            CoordFunction1D cfunction = null;
+            naxis = Util.getLong(data, map.get("caom2:Chunk.custom.axis.function.naxis"));
+            pix = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.refCoord.pix"));
+            val = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.refCoord.val"));
+            delta = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.delta"));
+            if (naxis != null)
+                cfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
+
+            if (cctype != null)
+            {
+                CoordAxis1D axis = new CoordAxis1D(new Axis(cctype, ccunit));
+                if (ces != null || cer != null)
+                    axis.error = new CoordError(ces, cer);
+                axis.range = crange;
+                axis.bounds = cbounds;
+                axis.function = cfunction;
+                c.custom = new CustomWCS(axis);
             }
 
             // observable

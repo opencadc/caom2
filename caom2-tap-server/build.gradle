@@ -3,12 +3,15 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.4'
+    id 'checkstyle'
 }
 
 repositories {
     jcenter()
     mavenLocal()
 }
+
+apply from: '../opencadc.gradle'
 
 sourceCompatibility = 1.7
 
