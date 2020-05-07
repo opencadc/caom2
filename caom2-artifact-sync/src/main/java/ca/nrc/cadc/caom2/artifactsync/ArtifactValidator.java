@@ -495,7 +495,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             while (iter.hasNext()) {
                 ObservationState s = iter.next();
                 iter.remove(); // GC
-                ObservationResponse resp = observationDAO.getAlt(s, depth);
+                ObservationResponse resp = observationDAO.getObservationResponse(s, depth);
                 if (resp == null) {
                     log.error("Null response from Observation DAO, ObservationURI: " + s.getURI().toString() + ", depth: " + depth);
                 } else if (resp.observation == null) {
