@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2ops.mapper;
 
@@ -98,26 +98,24 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class ObservationMapper implements VOTableRowMapper<Observation>
-{
-    private static final Logger log = Logger.getLogger(ObservationMapper.class);
-    
-    private Map<String,Integer> map;
+public class ObservationMapper implements VOTableRowMapper<Observation> {
 
-    public ObservationMapper(Map<String,Integer> map)
-    {
-            this.map = map;
+    private static final Logger log = Logger.getLogger(ObservationMapper.class);
+
+    private Map<String, Integer> map;
+
+    public ObservationMapper(Map<String, Integer> map) {
+        this.map = map;
     }
-    
-    public Observation mapRow(List<Object> data, DateFormat dateFormat)
-    {
+
+    public Observation mapRow(List<Object> data, DateFormat dateFormat) {
         log.debug("mapping Observation");
         UUID id = Util.getUUID(data, map.get("caom2:Observation.id"));
-        if (id == null)
+        if (id == null) {
             return null;
-        
-        try
-        {
+        }
+
+        try {
             String collection = Util.getString(data, map.get("caom2:Observation.collection"));
             String observationID = Util.getString(data, map.get("caom2:Observation.observationID"));
             String algName = Util.getString(data, map.get("caom2:Observation.algorithm.name"));
@@ -129,42 +127,42 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 DerivedObservation co = new DerivedObservation(collection, observationID, new Algorithm(algName));
                 Util.decodeObservationURIs(mem, co.getMembers());
                 obs = co;
-            }
-            else
+            } else {
                 obs = new SimpleObservation(collection, observationID);
-            
+            }
+
             obs.type = Util.getString(data, map.get("caom2:Observation.type"));
             String intentStr = Util.getString(data, map.get("caom2:Observation.intent"));
-            if (intentStr != null)
+            if (intentStr != null) {
                 obs.intent = ObservationIntentType.toValue(intentStr);
+            }
             obs.sequenceNumber = Util.getInteger(data, map.get("caom2:Observation.sequenceNumber"));
             obs.metaRelease = Util.getDate(data, map.get("caom2:Observation.metaRelease"));
             // TODO: fill Observation.metaReadGroups // CAOM-2.4
-            
+
             String proposalID = Util.getString(data, map.get("caom2:Observation.proposal.id"));
-            if (proposalID != null)
-            {
+            if (proposalID != null) {
                 obs.proposal = new Proposal(proposalID);
                 obs.proposal.pi = Util.getString(data, map.get("caom2:Observation.proposal.pi"));
                 obs.proposal.project = Util.getString(data, map.get("caom2:Observation.proposal.project"));
                 obs.proposal.title = Util.getString(data, map.get("caom2:Observation.proposal.title"));
                 Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.proposal.keywords")), obs.proposal.getKeywords());
             }
-            
+
             String targetName = Util.getString(data, map.get("caom2:Observation.target.name"));
-            if (targetName != null)
-            {
+            if (targetName != null) {
                 obs.target = new Target(targetName);
                 obs.target.targetID = Util.getURI(data, map.get("caom2:Observation.target.targetID")); // CAOM-2.4
                 obs.target.moving = Util.getBoolean(data, map.get("caom2:Observation.target.moving"));
                 obs.target.redshift = Util.getDouble(data, map.get("caom2:Observation.target.redshift"));
                 obs.target.standard = Util.getBoolean(data, map.get("caom2:Observation.target.standard"));
                 String tType = Util.getString(data, map.get("caom2:Observation.target.type"));
-                if (tType != null)
+                if (tType != null) {
                     obs.target.type = TargetType.toValue(tType);
+                }
                 Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.target.keywords")), obs.target.getKeywords());
             }
-            
+
             String tpcsys = Util.getString(data, map.get("caom2:Observation.targetPosition.coordsys"));
             if (tpcsys != null) {
                 Double tpc1 = Util.getDouble(data, map.get("caom2:Observation.targetPosition.coordinates.cval1"));
@@ -172,58 +170,52 @@ public class ObservationMapper implements VOTableRowMapper<Observation>
                 obs.targetPosition = new TargetPosition(tpcsys, new Point(tpc1, tpc2));
                 obs.targetPosition.equinox = Util.getDouble(data, map.get("caom2:Observation.targetPosition.equinox"));
             }
-            
+
             String telName = Util.getString(data, map.get("caom2:Observation.telescope.name"));
-            if (telName != null)
-            {
+            if (telName != null) {
                 obs.telescope = new Telescope(telName);
                 obs.telescope.geoLocationX = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationX"));
                 obs.telescope.geoLocationY = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationY"));
                 obs.telescope.geoLocationZ = Util.getDouble(data, map.get("caom2:Observation.telescope.geoLocationZ"));
                 Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.telescope.keywords")), obs.telescope.getKeywords());
             }
-            
+
             String instName = Util.getString(data, map.get("caom2:Observation.instrument.name"));
-            if (instName != null)
-            {
+            if (instName != null) {
                 obs.instrument = new Instrument(instName);
                 Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.instrument.keywords")), obs.instrument.getKeywords());
             }
-            
+
             String reqFlag = Util.getString(data, map.get("caom2:Observation.requirements.flag"));
-            if (reqFlag != null)
-            {
+            if (reqFlag != null) {
                 obs.requirements = new Requirements(Status.toValue(reqFlag));
             }
             obs.environment = new Environment();
             obs.environment.ambientTemp = Util.getDouble(data, map.get("caom2:Observation.environment.ambientTemp"));
             obs.environment.elevation = Util.getDouble(data, map.get("caom2:Observation.environment.elevation"));
-            obs.environment.humidity  = Util.getDouble(data, map.get("caom2:Observation.environment.humidity"));
+            obs.environment.humidity = Util.getDouble(data, map.get("caom2:Observation.environment.humidity"));
             obs.environment.photometric = Util.getBoolean(data, map.get("caom2:Observation.environment.photometric"));
             obs.environment.seeing = Util.getDouble(data, map.get("caom2:Observation.environment.seeing"));
             obs.environment.tau = Util.getDouble(data, map.get("caom2:Observation.environment.tau"));
             obs.environment.wavelengthTau = Util.getDouble(data, map.get("caom2:Observation.environment.wavelengthTau"));
-            
-            
+
             Date lastModified = Util.getDate(data, map.get("caom2:Observation.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Observation.maxLastModified"));
             Util.assignLastModified(obs, lastModified, "lastModified");
             Util.assignLastModified(obs, maxLastModified, "maxLastModified");
-            
+
             URI metaChecksum = Util.getURI(data, map.get("caom2:Observation.metaChecksum"));
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Observation.accMetaChecksum"));
             Util.assignMetaChecksum(obs, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(obs, accMetaChecksum, "accMetaChecksum");
-            
+
             Util.assignID(obs, id);
 
-            return obs;   		
-        }
-        catch(URISyntaxException ex)
-        {
+            return obs;
+        } catch (URISyntaxException ex) {
             throw new UnexpectedContentException("invalid URI", ex);
+        } finally {
         }
-        finally { }
     }
 
 }

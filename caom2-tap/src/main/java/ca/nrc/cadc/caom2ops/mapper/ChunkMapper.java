@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2ops.mapper;
 
@@ -103,34 +103,34 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
-*
-* @author pdowler
-*/
-public class ChunkMapper implements VOTableRowMapper<Chunk>
-{
+ *
+ * @author pdowler
+ */
+public class ChunkMapper implements VOTableRowMapper<Chunk> {
+
     private static final Logger log = Logger.getLogger(ChunkMapper.class);
-    
-    private Map<String,Integer> map;
 
-    public ChunkMapper(Map<String,Integer> map)
-    {
-            this.map = map;
+    private Map<String, Integer> map;
+
+    public ChunkMapper(Map<String, Integer> map) {
+        this.map = map;
     }
-    public Chunk mapRow(List<Object> data, DateFormat dateFormat)
-    {
-        log.debug("mapping Chunk");
-            UUID id = Util.getUUID(data, map.get("caom2:Chunk.id"));
-        if (id == null)
-            return null;
 
-        try
-        {
+    public Chunk mapRow(List<Object> data, DateFormat dateFormat) {
+        log.debug("mapping Chunk");
+        UUID id = Util.getUUID(data, map.get("caom2:Chunk.id"));
+        if (id == null) {
+            return null;
+        }
+
+        try {
             Chunk c = new Chunk();
 
             String pt = Util.getString(data, map.get("caom2:Chunk.productType"));
             log.debug("found c.productType = " + pt);
-            if (pt != null)
+            if (pt != null) {
                 c.productType = ProductType.toValue(pt);
+            }
 
             c.naxis = Util.getInteger(data, map.get("caom2:Chunk.naxis"));
             c.positionAxis1 = Util.getInteger(data, map.get("caom2:Chunk.positionAxis1"));
@@ -159,12 +159,13 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             Double end1val = Util.getDouble(data, map.get("caom2:Chunk.position.axis.range.end.coord1.val"));
             Double end2pix = Util.getDouble(data, map.get("caom2:Chunk.position.axis.range.end.coord2.pix"));
             Double end2val = Util.getDouble(data, map.get("caom2:Chunk.position.axis.range.end.coord2.val"));
-            if (start1pix != null)
+            if (start1pix != null) {
                 posrange = new CoordRange2D(
                         new Coord2D(new RefCoord(start1pix, start1val), new RefCoord(start2pix, start2val)),
                         new Coord2D(new RefCoord(end1pix, end1val), new RefCoord(end2pix, end2val)));
+            }
 
-            CoordBounds2D posbounds = Util.decodeCoordBounds2D( Util.getString(data, map.get("caom2:Chunk.position.axis.bounds")) );
+            CoordBounds2D posbounds = Util.decodeCoordBounds2D(Util.getString(data, map.get("caom2:Chunk.position.axis.bounds")));
 
             CoordFunction2D posfunction = null; // Util.decodeCoordFunction2D( Util.getString(data, map.get(CHUNK_POS_AXIS_FUNCTION)) );
             Long naxis1 = Util.getLong(data, map.get("caom2:Chunk.position.axis.function.dimension.naxis1"));
@@ -177,21 +178,23 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             Double cd12 = Util.getDouble(data, map.get("caom2:Chunk.position.axis.function.cd12"));
             Double cd21 = Util.getDouble(data, map.get("caom2:Chunk.position.axis.function.cd21"));
             Double cd22 = Util.getDouble(data, map.get("caom2:Chunk.position.axis.function.cd22"));
-            if (naxis1 != null)
+            if (naxis1 != null) {
                 posfunction = new CoordFunction2D(new Dimension2D(naxis1, naxis2),
                         new Coord2D(new RefCoord(c1pix, c1val), new RefCoord(c2pix, c2val)),
                         cd11, cd12, cd21, cd22);
+            }
 
             String coordsys = Util.getString(data, map.get("caom2:Chunk.position.coordsys"));
             Double equinox = Util.getDouble(data, map.get("caom2:Chunk.position.equinox"));
             Double posres = Util.getDouble(data, map.get("caom2:Chunk.position.resolution"));
-            if (posctype1 != null)
-            {
+            if (posctype1 != null) {
                 CoordAxis2D axis = new CoordAxis2D(new Axis(posctype1, poscunit1), new Axis(posctype2, poscunit2));
-                if (e1s != null || e1r != null)
+                if (e1s != null || e1r != null) {
                     axis.error1 = new CoordError(e1s, e1r);
-                if (e2s != null || e2r != null)
+                }
+                if (e2s != null || e2r != null) {
                     axis.error2 = new CoordError(e2s, e2r);
+                }
                 axis.range = posrange;
                 axis.bounds = posbounds;
                 axis.function = posfunction;
@@ -211,17 +214,19 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             Double val1 = Util.getDouble(data, map.get("caom2:Chunk.energy.axis.range.start.val"));
             Double pix2 = Util.getDouble(data, map.get("caom2:Chunk.energy.axis.range.end.pix"));
             Double val2 = Util.getDouble(data, map.get("caom2:Chunk.energy.axis.range.end.val"));
-            if (pix1 != null)
+            if (pix1 != null) {
                 enrange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
+            }
 
-            CoordBounds1D enbounds = Util.decodeCoordBounds1D( Util.getString(data, map.get("caom2:Chunk.energy.axis.bounds")) );
+            CoordBounds1D enbounds = Util.decodeCoordBounds1D(Util.getString(data, map.get("caom2:Chunk.energy.axis.bounds")));
             CoordFunction1D enfunction = null; // Util.decodeCoordFunction1D( Util.getString(data, map.get("caom2:Chunk.energy.axis.function")) );
             Long naxis = Util.getLong(data, map.get("caom2:Chunk.energy.axis.function.naxis"));
             Double pix = Util.getDouble(data, map.get("caom2:Chunk.energy.axis.function.refCoord.pix"));
             Double val = Util.getDouble(data, map.get("caom2:Chunk.energy.axis.function.refCoord.val"));
             Double delta = Util.getDouble(data, map.get("caom2:Chunk.energy.axis.function.delta"));
-            if (naxis != null)
+            if (naxis != null) {
                 enfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
+            }
 
             String specsys = Util.getString(data, map.get("caom2:Chunk.energy.specsys"));
             String ssysobs = Util.getString(data, map.get("caom2:Chunk.energy.ssysobs"));
@@ -235,11 +240,11 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             Double enres = Util.getDouble(data, map.get("caom2:Chunk.energy.resolvingPower"));
             String species = Util.getString(data, map.get("caom2:Chunk.energy.transition.species"));
             String trans = Util.getString(data, map.get("caom2:Chunk.energy.transition.transition"));
-            if (enctype != null)
-            {
+            if (enctype != null) {
                 CoordAxis1D axis = new CoordAxis1D(new Axis(enctype, encunit));
-                if (enes != null || ener != null)
+                if (enes != null || ener != null) {
                     axis.error = new CoordError(enes, ener);
+                }
                 axis.range = enrange;
                 axis.bounds = enbounds;
                 axis.function = enfunction;
@@ -253,8 +258,9 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
                 c.energy.velang = velang;
                 c.energy.bandpassName = bandpassName;
                 c.energy.resolvingPower = enres;
-                if (species != null)
+                if (species != null) {
                     c.energy.transition = new EnergyTransition(species, trans);
+                }
             }
 
             // time
@@ -267,28 +273,30 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             val1 = Util.getDouble(data, map.get("caom2:Chunk.time.axis.range.start.val"));
             pix2 = Util.getDouble(data, map.get("caom2:Chunk.time.axis.range.end.pix"));
             val2 = Util.getDouble(data, map.get("caom2:Chunk.time.axis.range.end.val"));
-            if (pix1 != null)
+            if (pix1 != null) {
                 trange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
+            }
 
-            CoordBounds1D tbounds = Util.decodeCoordBounds1D( Util.getString(data, map.get("caom2:Chunk.time.axis.bounds")) );
+            CoordBounds1D tbounds = Util.decodeCoordBounds1D(Util.getString(data, map.get("caom2:Chunk.time.axis.bounds")));
             CoordFunction1D tfunction = null; // Util.decodeCoordFunction1D( Util.getString(data, map.get("caom2:Chunk.time.axis.function")) );
             naxis = Util.getLong(data, map.get("caom2:Chunk.time.axis.function.naxis"));
             pix = Util.getDouble(data, map.get("caom2:Chunk.time.axis.function.refCoord.pix"));
             val = Util.getDouble(data, map.get("caom2:Chunk.time.axis.function.refCoord.val"));
             delta = Util.getDouble(data, map.get("caom2:Chunk.time.axis.function.delta"));
-            if (naxis != null)
+            if (naxis != null) {
                 tfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
+            }
 
             String timesys = Util.getString(data, map.get("caom2:Chunk.time.timesys"));
             String trefpos = Util.getString(data, map.get("caom2:Chunk.time.trepos"));
             Double mjdref = Util.getDouble(data, map.get("caom2:Chunk.time.mjdref"));
             Double exposure = Util.getDouble(data, map.get("caom2:Chunk.time.exposure"));
             Double tres = Util.getDouble(data, map.get("caom2:Chunk.time.resolution"));
-            if (tctype != null)
-            {
+            if (tctype != null) {
                 CoordAxis1D axis = new CoordAxis1D(new Axis(tctype, tcunit));
-                if (tes != null || ter != null)
+                if (tes != null || ter != null) {
                     axis.error = new CoordError(tes, ter);
+                }
                 axis.range = trange;
                 axis.bounds = tbounds;
                 axis.function = tfunction;
@@ -310,29 +318,31 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             val1 = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.range.start.val"));
             pix2 = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.range.end.pix"));
             val2 = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.range.end.val"));
-            if (pix1 != null)
+            if (pix1 != null) {
                 prange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
+            }
 
-            CoordBounds1D pbounds = Util.decodeCoordBounds1D( Util.getString(data, map.get("caom2:Chunk.polarization.axis.bounds")) );
+            CoordBounds1D pbounds = Util.decodeCoordBounds1D(Util.getString(data, map.get("caom2:Chunk.polarization.axis.bounds")));
             CoordFunction1D pfunction = null; // Util.decodeCoordFunction1D( Util.getString(data, map.get("caom2:Chunk.polarization.function")) );
             naxis = Util.getLong(data, map.get("caom2:Chunk.polarization.axis.function.naxis"));
             pix = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.function.refCoord.pix"));
             val = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.function.refCoord.val"));
             delta = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.function.delta"));
-            if (naxis != null)
+            if (naxis != null) {
                 pfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
+            }
 
-            if (pctype != null)
-            {
+            if (pctype != null) {
                 CoordAxis1D axis = new CoordAxis1D(new Axis(pctype, pcunit));
-                if (pes != null || per != null)
+                if (pes != null || per != null) {
                     axis.error = new CoordError(pes, per);
+                }
                 axis.range = prange;
                 axis.bounds = pbounds;
                 axis.function = pfunction;
                 c.polarization = new PolarizationWCS(axis);
             }
-            
+
             // custom
             String cctype = Util.getString(data, map.get("caom2:Chunk.custom.axis.axis.ctype"));
             String ccunit = Util.getString(data, map.get("caom2:Chunk.custom.axis.axis.cunit"));
@@ -343,23 +353,25 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             val1 = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.range.start.val"));
             pix2 = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.range.end.pix"));
             val2 = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.range.end.val"));
-            if (pix1 != null)
+            if (pix1 != null) {
                 crange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
+            }
 
-            CoordBounds1D cbounds = Util.decodeCoordBounds1D( Util.getString(data, map.get("caom2:Chunk.custom.axis.bounds")) );
+            CoordBounds1D cbounds = Util.decodeCoordBounds1D(Util.getString(data, map.get("caom2:Chunk.custom.axis.bounds")));
             CoordFunction1D cfunction = null;
             naxis = Util.getLong(data, map.get("caom2:Chunk.custom.axis.function.naxis"));
             pix = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.refCoord.pix"));
             val = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.refCoord.val"));
             delta = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.delta"));
-            if (naxis != null)
+            if (naxis != null) {
                 cfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
+            }
 
-            if (cctype != null)
-            {
+            if (cctype != null) {
                 CoordAxis1D axis = new CoordAxis1D(new Axis(cctype, ccunit));
-                if (ces != null || cer != null)
+                if (ces != null || cer != null) {
                     axis.error = new CoordError(ces, cer);
+                }
                 axis.range = crange;
                 axis.bounds = cbounds;
                 axis.function = cfunction;
@@ -373,12 +385,12 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             String oia = Util.getString(data, map.get("caom2:Chunk.observable.independent.axis.ctype"));
             String oiu = Util.getString(data, map.get("caom2:Chunk.observable.independent.axis.cunit"));
             Long oib = Util.getLong(data, map.get("caom2:Chunk.observable.independent.bin"));
-            if (oda != null)
-            {
+            if (oda != null) {
                 Slice dep = new Slice(new Axis(oda, odu), odb);
                 c.observable = new ObservableAxis(dep);
-                if (oia != null)
+                if (oia != null) {
                     c.observable.independent = new Slice(new Axis(oia, oiu), oib);
+                }
             }
 
             Date lastModified = Util.getDate(data, map.get("caom2:Chunk.lastModified"));
@@ -387,23 +399,19 @@ public class ChunkMapper implements VOTableRowMapper<Chunk>
             log.debug("found: chunk.maxLastModified = " + maxLastModified);
             Util.assignLastModified(c, lastModified, "lastModified");
             Util.assignLastModified(c, maxLastModified, "maxLastModified");
-            
+
             URI metaChecksum = Util.getURI(data, map.get("caom2:Chunk.metaChecksum"));
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Chunk.accMetaChecksum"));
             Util.assignMetaChecksum(c, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(c, accMetaChecksum, "accMetaChecksum");
-            
+
             Util.assignID(c, id);
 
             return c;
-        }
-        catch(URISyntaxException ex)
-        {
+        } catch (URISyntaxException ex) {
             throw new UnexpectedContentException("invalid URI", ex);
+        } finally {
         }
-        finally { }
     }
 
 }
-
-
