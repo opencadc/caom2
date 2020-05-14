@@ -183,7 +183,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                         log.debug("harvesState: " + format(state.curID) + ", " + this.df.format(state.curLastModified));
                     }
                     if (curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
-                        Observation observation = this.observationDAO.get(curBatchLeader.getURI());
+                        Observation observation = this.observationDAO.get(curBatchLeader.getID());
                         log.debug("current batch: " + format(observation.getID()) + ", " + this.df.format(curBatchLeader.getMaxLastModified()));
                         if (state.curID != null && state.curID.equals(observation.getID())) {
                             iter.remove();
@@ -198,7 +198,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
                 try {
                     this.observationDAO.getTransactionManager().startTransaction();
-                    Observation observation = this.observationDAO.get(observationState.getURI());
+                    Observation observation = this.observationDAO.get(observationState.getID());
                     
                     if (observation == null) {
                         log.debug("Observation no longer exists: " + observationState.getURI());

@@ -577,7 +577,7 @@ public class SQLGenerator {
         columnMap.put(PartSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "partID"});
         columnMap.put(ChunkSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "chunkID"});
 
-        columnMap.put(ObservationState.class, new String[]{"collection", "observationID", "maxLastModified", "accMetaChecksum"});
+        columnMap.put(ObservationState.class, new String[]{"collection", "observationID", "maxLastModified", "accMetaChecksum", "obsID"});
     }
 
     private String[] addExtraColumns(String[] origCols, String[] extraCols) {
@@ -3983,6 +3983,8 @@ public class SQLGenerator {
 
             ret.maxLastModified = Util.getDate(rs, col++, utcCalendar);
             ret.accMetaChecksum = Util.getURI(rs, col++);
+            
+            ret.id = Util.getUUID(rs, col++);
 
             return ret;
         }
