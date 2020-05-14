@@ -4,7 +4,6 @@ dist: trusty
 sudo: required
 
 jdk:
-  - openjdk7
   - oraclejdk8
 before_script: openssl s_client -CApath /etc/ssl/certs/ -connect plugins.gradle.org:443 </dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/gradle.crt; sudo keytool -importcert -noprompt -file /tmp/gradle.crt -trustcacerts -keystore $JAVA_HOME/jre/lib/security/cacerts -alias root -storepass changeit;
 
@@ -13,9 +12,7 @@ script:
   - for mod in caom2-access-control caom2-persist caom2-repo caom2persistence caom2-artifact-sync caom2-repo-server caom2harvester caom2-test-repo caom2-collection-validator; do
       cd $mod;
       gradle --info assemble javadoc install || break -1;
-      if [[ $TRAVIS_JDK_VERSION == 'oraclejdk8' ]]; then
-        gradle checkstyleMain || break -1;
-      fi;
+      gradle checkstyleMain || break -1;
       cd ..;
     done
 
