@@ -92,7 +92,6 @@ import ca.nrc.cadc.caom2.wcs.Slice;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
-import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -408,9 +407,8 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             Util.assignID(c, id);
 
             return c;
-        } catch (URISyntaxException ex) {
-            throw new UnexpectedContentException("invalid URI", ex);
-        } finally {
+        } catch (Exception ex) {
+            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
         }
     }
 

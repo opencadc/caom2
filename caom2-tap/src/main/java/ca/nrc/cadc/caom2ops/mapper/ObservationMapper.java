@@ -84,7 +84,7 @@ import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2ops.Util;
+import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -122,8 +122,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation> {
             String mem = Util.getString(data, map.get("caom2:Observation.members"));
             String typeCode = Util.getString(data, map.get("caom2:Observation.typeCode"));
             Observation obs;
-            if ("C".equals(typeCode)) // used to be mem != null ... also typeCode may change to D in CAOM-2.4
-            {
+            if ("C".equals(typeCode)) { // used to be mem != null ... also typeCode may change to D in CAOM-2.4
                 DerivedObservation co = new DerivedObservation(collection, observationID, new Algorithm(algName));
                 Util.decodeObservationURIs(mem, co.getMembers());
                 obs = co;
@@ -138,7 +137,10 @@ public class ObservationMapper implements VOTableRowMapper<Observation> {
             }
             obs.sequenceNumber = Util.getInteger(data, map.get("caom2:Observation.sequenceNumber"));
             obs.metaRelease = Util.getDate(data, map.get("caom2:Observation.metaRelease"));
-            // TODO: fill Observation.metaReadGroups // CAOM-2.4
+            List<URI> mrg = Util.getURIList(data, map.get("caom2:Observation.metaReadGroups")); // CAOM-2.4
+            if (mrg != null) {
+                obs.getMetaReadGroups().addAll(mrg);
+            }
 
             String proposalID = Util.getString(data, map.get("caom2:Observation.proposal.id"));
             if (proposalID != null) {
@@ -212,9 +214,8 @@ public class ObservationMapper implements VOTableRowMapper<Observation> {
             Util.assignID(obs, id);
 
             return obs;
-        } catch (URISyntaxException ex) {
-            throw new UnexpectedContentException("invalid URI", ex);
-        } finally {
+        } catch (Exception ex) {
+            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
         }
     }
 

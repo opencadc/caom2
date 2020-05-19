@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2ops.mapper;
 
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -132,9 +131,8 @@ public class PartMapper implements VOTableRowMapper<Part> {
             Util.assignID(part, id);
 
             return part;
-        } catch (URISyntaxException ex) {
-            throw new UnexpectedContentException("invalid URI", ex);
-        } finally {
+        } catch (Exception ex) {
+            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
         }
     }
 }

@@ -94,7 +94,6 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -142,9 +141,15 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
             }
 
             plane.dataRelease = Util.getDate(data, map.get("caom2:Plane.dataRelease"));
-            // TODO: fill Plane.dataReadGroups // CAOM-2.4
+            List<URI> drg = Util.getURIList(data, map.get("caom2:Plane.metaReadGroups")); // CAOM-2.4
+            if (drg != null) {
+                plane.getDataReadGroups().addAll(drg);
+            }
             plane.metaRelease = Util.getDate(data, map.get("caom2:Plane.metaRelease"));
-            // TODO: fill Plane.metaReadGroups // CAOM-2.4
+            List<URI> mrg = Util.getURIList(data, map.get("caom2:Plane.metaReadGroups")); // CAOM-2.4
+            if (mrg != null) {
+                plane.getMetaReadGroups().addAll(mrg);
+            }
 
             plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
 
@@ -335,9 +340,8 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
             Util.assignID(plane, id);
 
             return plane;
-        } catch (URISyntaxException ex) {
-            throw new UnexpectedContentException("invalid URI", ex);
-        } finally {
+        } catch (Exception ex) {
+            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
         }
     }
 }

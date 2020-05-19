@@ -69,92 +69,165 @@
 
 package ca.nrc.cadc.caom2ops.mapper;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import org.apache.log4j.Logger;
 
 /**
  *
- * @author pdowler
+ * @author yeunga
  */
-public class ArtifactMapper implements VOTableRowMapper<Artifact> {
+public class Util extends CaomUtil {
 
-    private static final Logger log = Logger.getLogger(ArtifactMapper.class);
-
-    private Map<String, Integer> map;
-
-    public ArtifactMapper(Map<String, Integer> map) {
-        this.map = map;
-    }
-
-    /**
-     * Map columns from the current row into an Artifact, starting at the
-     * specified column offset.
-     *
-     * @param data
-     * @param dateFormat
-     * @return an artifact
-     */
-    public Artifact mapRow(List<Object> data, DateFormat dateFormat) {
-        log.debug("mapping Artifact");
-        UUID id = Util.getUUID(data, map.get("caom2:Artifact.id"));
-        if (id == null) {
+    public static Object getObject(List<Object> data, Integer col) {
+        if (col == null) {
             return null;
         }
+        return data.get(col);
+    }
 
-        try {
-            URI uri = Util.getURI(data, map.get("caom2:Artifact.uri"));
-            ProductType pt = null;
-            String pts = Util.getString(data, map.get("caom2:Artifact.productType"));
-            if (pts != null) {
-                pt = ProductType.toValue(pts);
-            } else {
-                pt = ProductType.SCIENCE;
-                log.warn("assigning default Artifact.productType = " + pt + " for " + uri);
-            }
-            ReleaseType rt = null;
-            String rts = Util.getString(data, map.get("caom2:Artifact.releaseType"));
-            if (rts != null) {
-                rt = ReleaseType.toValue(rts);
-            } else {
-                rt = ReleaseType.DATA;
-                log.warn("assigning default Artifact.releaseType = " + rt + " for " + uri);
-            }
-
-            Artifact artifact = new Artifact(uri, pt, rt);
-
-            artifact.contentType = Util.getString(data, map.get("caom2:Artifact.contentType"));
-            artifact.contentLength = Util.getLong(data, map.get("caom2:Artifact.contentLength"));
-            artifact.contentChecksum = Util.getURI(data, map.get("caom2:Artifact.contentChecksum"));
-            artifact.contentRelease = Util.getDate(data, map.get("caom2:Artifact.contentRelease")); // CAOM-2.4
-            List<URI> crg = Util.getURIList(data, map.get("caom2:Artifact.contentReadGroups")); // CAOM-2.4
-            if (crg != null) {
-                artifact.getContentReadGroups().addAll(crg);
-            }
-
-            Date lastModified = Util.getDate(data, map.get("caom2:Artifact.lastModified"));
-            Date maxLastModified = Util.getDate(data, map.get("caom2:Artifact.maxLastModified"));
-            Util.assignLastModified(artifact, lastModified, "lastModified");
-            Util.assignLastModified(artifact, maxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(data, map.get("caom2:Artifact.metaChecksum"));
-            URI accMetaChecksum = Util.getURI(data, map.get("caom2:Artifact.accMetaChecksum"));
-            Util.assignMetaChecksum(artifact, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(artifact, accMetaChecksum, "accMetaChecksum");
-
-            Util.assignID(artifact, id);
-
-            return artifact;
-        } catch (Exception ex) {
-            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
+    public static String getString(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
         }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (String) o;
+    }
+
+    public static URI getURI(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (URI) o;
+    }
+    
+    public static List<URI> getURIList(List<Object> data, Integer col)
+            throws URISyntaxException {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        String s = (String) o;
+        String[] ss = s.split(" ");
+        List<URI> ret = new ArrayList<>();
+        for (String u : ss) {
+            ret.add(new URI(u));
+        }
+        return ret;
+    }
+
+    public static Boolean getBoolean(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        // TAP-specific hack
+        if (o instanceof Integer) {
+            Integer i = (Integer) o;
+            if (i == 1) {
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        }
+        return (Boolean) o;
+    }
+
+    public static UUID getUUID(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (UUID) o;
+    }
+
+    public static Long getLong(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Long) o;
+    }
+
+    public static Integer getInteger(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Integer) o;
+    }
+
+    public static Float getFloat(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Float) o;
+    }
+
+    public static Double getDouble(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Double) o;
+    }
+
+    public static List<Double> getDoubleList(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        double[] vals = (double[]) o;
+        List<Double> ret = new ArrayList<Double>(vals.length);
+        for (double d : vals) {
+            ret.add(d);
+        }
+        return ret;
+    }
+
+    public static Date getDate(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Date) o;
     }
 }

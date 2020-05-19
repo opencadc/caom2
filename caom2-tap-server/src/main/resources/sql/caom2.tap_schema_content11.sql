@@ -69,6 +69,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'intent', 'intended purpose of data (one of: science, calibration)', 'caom2:Observation.intent', NULL, NULL, 'char', '32*', NULL, 0,0,1, 7),
 ( 'caom2.Observation', 'sequenceNumber', 'sequence number assigned by the observatory', 'caom2:Observation.sequenceNumber', NULL, NULL, 'int', NULL, NULL, 0,0,0, 8),
 ( 'caom2.Observation', 'metaRelease', 'date the metadata for an observation is public (UTC)', 'caom2:Observation.metaRelease', NULL, NULL, 'char', '23*','timestamp', 0,0,0, 9),
+( 'caom2.Observation', 'metaReadGroups', 'GMS groups that are authorized to see metadata', 'caom2:Observation.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 10),
 
 ( 'caom2.Observation', 'proposal_id', 'collection-specific unique proposal identifier', 'caom2:Observation.proposal.id', NULL, NULL, 'char', '128*',NULL, 0,1,0 , 20),
 ( 'caom2.Observation', 'proposal_pi', 'proposal principal investigator', 'caom2:Observation.proposal.pi', NULL, NULL, 'char', '128*',NULL, 0,0,0 , 21),
@@ -125,9 +126,11 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'obsID', 'foreign key', NULL, NULL, NULL,                              'char','36','uuid', 0,1,0 , 2),
 ( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 0,1,0 , 3),
 
-( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '64*', NULL, 1,1,1 , NULL),
-( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 4),
-( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 5),
+( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '64*', NULL, 1,1,1 , 4),
+( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 5),
+( 'caom2.Plane', 'metaReadGroups', 'GMS groups that are authorized to see metadata', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 6),
+( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 7),
+( 'caom2.Plane', 'dataReadGroups', 'GMS groups that are authorized to see data', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 8),
 
 ( 'caom2.Plane', 'dataProductType', 'IVOA ObsCore data product type', 	'caom2:Plane.dataProductType', NULL, NULL, 'char', '128*', NULL, 1,0,1 , 10),
 ( 'caom2.Plane', 'calibrationLevel', 'IVOA ObsCore calibration level (0,1,2,3,...)', 'caom2:Plane.calibrationLevel', NULL, NULL, 'int', NULL, NULL, 1,0,1 , 11),
@@ -205,11 +208,15 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Artifact', 'contentLength', 'size of the representation at uri', 'caom2:Artifact.contentLength', NULL, 'byte', 'long', NULL, NULL, 1,0,0 , 7),
 ( 'caom2.Artifact', 'contentChecksum', 'checksum of the content (URI of the form <algorithm>:<value>)', 'caom2:Artifact.contentChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 8),
 
-( 'caom2.Artifact', 'accessURL',     'access URL for the complete file', NULL, NULL, NULL, 'char', '*','clob', 0,0,0, 9),
+( 'caom2.Artifact', 'contentRelease', 'date the data for an artifact is public (UTC) (default: inherit from Plane)', 'caom2:Artifact.contentRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 20),
+( 'caom2.Artifact', 'contentReadGroups', 'GMS groups that are authorized to retrieve the artifact', 'caom2:Artifact.contentReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 21),
 
-( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 10),
-( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 11),
-( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 12)
+-- virtual column where URL generated in TAP service
+( 'caom2.Artifact', 'accessURL',     'access URL for the complete file', NULL, NULL, NULL, 'char', '*','clob', 0,0,0, 30),
+
+( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 40),
+( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form <algorithm>:<value>)', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 41),
+( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form <algorithm>:<value>)', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 42)
 ;
 
 -- Part
