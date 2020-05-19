@@ -3,8 +3,8 @@ alter table <schema>.Observation
     add column target_id   varchar(128),
     add column metaProducer varchar(128);
 
-drop index i_composite2simple;
-drop index i_simple2composite;
+drop index <schema>.i_composite2simple;
+drop index <schema>.i_simple2composite;
 
 alter table <schema>.ObservationMember
     rename column compositeID to parentID;
@@ -12,9 +12,9 @@ alter table <schema>.ObservationMember
 alter table <schema>.ObservationMember
     rename column simpleID to memberID;
 
-create unique index i_parent2member on <schema>.ObservationMember (parentID,memberID);
+create unique index <schema>.i_parent2member on <schema>.ObservationMember (parentID,memberID);
 
-create unique index i_member2parent on <schema>.ObservationMember (memberID,parentID);
+create unique index <schema>.i_member2parent on <schema>.ObservationMember (memberID,parentID);
 
 alter table <schema>.Plane 
     add column observable_ucd varchar(64),

@@ -164,6 +164,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             ready = true;
         } else if (src.getResourceType() == HarvestResource.SOURCE_URI) {
             this.repoClient = new RepoClient(src.getResourceID(), 1);
+            
         } else {
             this.repoClient = new RepoClient(src.getCapabilitiesURL(), 1);
         }
@@ -179,7 +180,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             if (repoClient.isDelAvailable()) {
                 ready = true;
             } else {
-                log.error("Not available deletion endpoint in " + repoClient.toString());
+                log.warn("Not available deletion endpoint in " + repoClient.toString());
             }
         }
     }
@@ -200,7 +201,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
     public void run() {
 
         if (!ready) {
-            log.error("Deletion Harvester not ready");
             return;
         }
 
