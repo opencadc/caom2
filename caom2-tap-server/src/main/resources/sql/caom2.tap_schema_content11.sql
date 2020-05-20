@@ -130,7 +130,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 5),
 ( 'caom2.Plane', 'metaReadGroups', 'GMS groups that are authorized to see metadata [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 6),
 ( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 7),
-( 'caom2.Plane', 'dataReadGroups', 'GMS groups that are authorized to see data [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 8),
+( 'caom2.Plane', 'dataReadGroups', 'GMS groups that are authorized to see data [new in 2.4]', 'caom2:Plane.dataReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 8),
 ( 'caom2.Plane', 'dataProductType', 'IVOA ObsCore data product type', 	'caom2:Plane.dataProductType', NULL, NULL, 'char', '128*', NULL, 1,0,1 , 10),
 ( 'caom2.Plane', 'calibrationLevel', 'IVOA ObsCore calibration level (0,1,2,3,...)', 'caom2:Plane.calibrationLevel', NULL, NULL, 'int', NULL, NULL, 1,0,1 , 11),
 
