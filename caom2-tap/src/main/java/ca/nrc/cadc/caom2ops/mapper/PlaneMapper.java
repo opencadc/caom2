@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2ops.mapper;
 
@@ -94,7 +94,6 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -109,45 +108,51 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class PlaneMapper implements VOTableRowMapper<Plane>
-{
-    private static final Logger log = Logger.getLogger(PlaneMapper.class);
-    
-    private Map<String,Integer> map;
+public class PlaneMapper implements VOTableRowMapper<Plane> {
 
-    public PlaneMapper(Map<String,Integer> map)
-    {
-            this.map = map;
+    private static final Logger log = Logger.getLogger(PlaneMapper.class);
+
+    private Map<String, Integer> map;
+
+    public PlaneMapper(Map<String, Integer> map) {
+        this.map = map;
     }
-    
-    public Plane mapRow(List<Object> data, DateFormat dateFormat)
-    {
+
+    public Plane mapRow(List<Object> data, DateFormat dateFormat) {
         log.debug("mapping Plane");
         UUID id = Util.getUUID(data, map.get("caom2:Plane.id"));
-        if (id == null)
+        if (id == null) {
             return null;
-        
-        try
-        {
+        }
+
+        try {
             String productID = Util.getString(data, map.get("caom2:Plane.productID"));
-            
+
             Plane plane = new Plane(productID);
-            
+
             Integer cal = Util.getInteger(data, map.get("caom2:Plane.calibrationLevel"));
-            if (cal != null)
+            if (cal != null) {
                 plane.calibrationLevel = CalibrationLevel.toValue(cal);
-            
+            }
+
             String dpType = Util.getString(data, map.get("caom2:Plane.dataProductType"));
-            if (dpType != null)
+            if (dpType != null) {
                 plane.dataProductType = DataProductType.toValue(dpType);
-            
+            }
+
             plane.dataRelease = Util.getDate(data, map.get("caom2:Plane.dataRelease"));
-            // TODO: fill Plane.dataReadGroups // CAOM-2.4
+            List<URI> drg = Util.getURIList(data, map.get("caom2:Plane.metaReadGroups")); // CAOM-2.4
+            if (drg != null) {
+                plane.getDataReadGroups().addAll(drg);
+            }
             plane.metaRelease = Util.getDate(data, map.get("caom2:Plane.metaRelease"));
-            // TODO: fill Plane.metaReadGroups // CAOM-2.4
-            
+            List<URI> mrg = Util.getURIList(data, map.get("caom2:Plane.metaReadGroups")); // CAOM-2.4
+            if (mrg != null) {
+                plane.getMetaReadGroups().addAll(mrg);
+            }
+
             plane.creatorID = Util.getURI(data, map.get("caom2:Plane.creatorID"));
-              
+
             // position
             ca.nrc.cadc.dali.Shape posBounds = (ca.nrc.cadc.dali.Shape) Util.getObject(data, map.get("caom2:Plane.position.bounds"));
             double[] posBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.samples"));
@@ -178,7 +183,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 } else {
                     throw new RuntimeException("OOPS: unexpected type for caom2:Plane.position.bounds: " + posBounds.getClass().getName());
                 }
-                
+
                 Long dim1 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis1"));
                 Long dim2 = Util.getLong(data, map.get("caom2:Plane.position.dimension.naxis2"));
                 if (dim1 != null && dim2 != null) {
@@ -192,25 +197,21 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 plane.position.sampleSize = Util.getDouble(data, map.get("caom2:Plane.position.sampleSize"));
                 plane.position.timeDependent = Util.getBoolean(data, map.get("caom2:Plane.position.timeDependent"));
             }
-            
+
             // energy
-            ca.nrc.cadc.dali.DoubleInterval nrgBounds 
+            ca.nrc.cadc.dali.DoubleInterval nrgBounds
                     = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.energy.bounds"));
             double[] nrgBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.samples"));
-            if (nrgBounds != null)
-            {
+            if (nrgBounds != null) {
                 plane.energy = new Energy();
                 plane.energy.bounds = new SampledInterval(nrgBounds.getLower(), nrgBounds.getUpper());
-                if (nrgBoundsSamples != null)
-                {
+                if (nrgBoundsSamples != null) {
                     //for (ca.nrc.cadc.dali.DoubleInterval si : nrgSamples)
-                    for (int i = 0; i < nrgBoundsSamples.length; i += 2)
-                    {
+                    for (int i = 0; i < nrgBoundsSamples.length; i += 2) {
                         //plane.energy.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
-                        plane.energy.bounds.getSamples().add(new Interval(nrgBoundsSamples[i], nrgBoundsSamples[i+1]));
+                        plane.energy.bounds.getSamples().add(new Interval(nrgBoundsSamples[i], nrgBoundsSamples[i + 1]));
                     }
-                }
-                else // HACK: backwards compat
+                } else // HACK: backwards compat
                 {
                     plane.energy.bounds.getSamples().add(new Interval(nrgBounds.getLower(), nrgBounds.getUpper()));
                 }
@@ -233,25 +234,22 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                     plane.energy.transition = new EnergyTransition(spec, trans);
                 }
             }
-            
+
             // time
-            ca.nrc.cadc.dali.DoubleInterval timBounds 
+            ca.nrc.cadc.dali.DoubleInterval timBounds
                     = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.time.bounds"));
             double[] timBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.samples"));
-            if (timBounds != null)
-            {
+            if (timBounds != null) {
                 plane.time = new Time();
                 plane.time.bounds = new SampledInterval(timBounds.getLower(), timBounds.getUpper());
                 if (timBoundsSamples != null) // actual sub-samples
                 {
                     //for (ca.nrc.cadc.dali.DoubleInterval si : timSamples)
-                    for (int i = 0; i < timBoundsSamples.length; i += 2)
-                    {
+                    for (int i = 0; i < timBoundsSamples.length; i += 2) {
                         //plane.time.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
-                        plane.time.bounds.getSamples().add(new Interval(timBoundsSamples[i],timBoundsSamples[i+1]));
+                        plane.time.bounds.getSamples().add(new Interval(timBoundsSamples[i], timBoundsSamples[i + 1]));
                     }
-                }
-                else // HACK: backwards compat
+                } else // HACK: backwards compat
                 {
                     plane.time.bounds.getSamples().add(new Interval(timBounds.getLower(), timBounds.getUpper()));
                 }
@@ -267,33 +265,31 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
 
             // polarization
             String polStates = Util.getString(data, map.get("caom2:Plane.polarization.states"));
-            if (polStates != null)
-            {
+            if (polStates != null) {
                 plane.polarization = new Polarization();
                 plane.polarization.states = new ArrayList<PolarizationState>();
                 Util.decodeStates(polStates, plane.polarization.states);
                 plane.polarization.dimension = Util.getLong(data, map.get("caom2:Plane.polarization.dimension"));
             }
-            
+
             // custom
             String customCtype = Util.getString(data, map.get("caom2:Plane.custom.ctype")); // CAOM 2.4
             if (customCtype != null) {
                 plane.custom = new CustomAxis(customCtype);
-                ca.nrc.cadc.dali.DoubleInterval cBounds 
-                    = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.custom.bounds"));
+                ca.nrc.cadc.dali.DoubleInterval cBounds
+                        = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.custom.bounds"));
                 double[] cBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.time.custom.samples"));
-                if (cBounds != null)
-                {
+                if (cBounds != null) {
                     plane.custom.bounds = new SampledInterval(cBounds.getLower(), cBounds.getUpper());
                     if (cBoundsSamples != null) {
                         for (int i = 0; i < cBoundsSamples.length; i += 2) {
-                            plane.custom.bounds.getSamples().add(new Interval(cBoundsSamples[i], cBoundsSamples[i+1]));
+                            plane.custom.bounds.getSamples().add(new Interval(cBoundsSamples[i], cBoundsSamples[i + 1]));
                         }
                     }
                     plane.custom.dimension = Util.getLong(data, map.get("caom2:Plane.custom.dimension"));
                 }
             }
-            
+
             Metrics metrics = new Metrics();
             metrics.background = Util.getDouble(data, map.get("caom2:Plane.metrics.background"));
             metrics.backgroundStddev = Util.getDouble(data, map.get("caom2:Plane.metrics.backgroundStddev"));
@@ -305,19 +301,19 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
             if (metrics.background != null || metrics.backgroundStddev != null
                     || metrics.fluxDensityLimit != null || metrics.magLimit != null
                     || metrics.sourceNumberDensity != null || metrics.sampleSNR != null) {
-                    plane.metrics = metrics;
+                plane.metrics = metrics;
             }
-            
+
             String provName = Util.getString(data, map.get("caom2:Plane.provenance.name"));
-            if (provName != null)
-            {
+            if (provName != null) {
                 plane.provenance = new Provenance(provName);
                 plane.provenance.lastExecuted = Util.getDate(data, map.get("caom2:Plane.provenance.lastExecuted"));
                 plane.provenance.producer = Util.getString(data, map.get("caom2:Plane.provenance.producer"));
                 plane.provenance.project = Util.getString(data, map.get("caom2:Plane.provenance.project"));
                 String sref = Util.getString(data, map.get("caom2:Plane.provenance.reference"));
-                if (sref != null)
+                if (sref != null) {
                     plane.provenance.reference = new URI(sref);
+                }
                 plane.provenance.runID = Util.getString(data, map.get("caom2:Plane.provenance.runID"));
                 plane.provenance.version = Util.getString(data, map.get("caom2:Plane.provenance.version"));
                 String inputs = Util.getString(data, map.get("caom2:Plane.provenance.inputs"));
@@ -325,29 +321,27 @@ public class PlaneMapper implements VOTableRowMapper<Plane>
                 String keywords = Util.getString(data, map.get("caom2:Plane.provenance.keywords"));
                 Util.decodeKeywordList(keywords, plane.provenance.getKeywords());
             }
-            
+
             String qualityFlag = Util.getString(data, map.get("caom2:Plane.quality.flag"));
-            if (qualityFlag != null)
+            if (qualityFlag != null) {
                 plane.quality = new DataQuality(Quality.toValue(qualityFlag));
-            
+            }
+
             Date lastModified = Util.getDate(data, map.get("caom2:Plane.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Plane.maxLastModified"));
             Util.assignLastModified(plane, lastModified, "lastModified");
             Util.assignLastModified(plane, maxLastModified, "maxLastModified");
-            
+
             URI metaChecksum = Util.getURI(data, map.get("caom2:Plane.metaChecksum"));
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Plane.accMetaChecksum"));
             Util.assignMetaChecksum(plane, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(plane, accMetaChecksum, "accMetaChecksum");
-            
+
             Util.assignID(plane, id);
 
             return plane;
+        } catch (Exception ex) {
+            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
         }
-        catch(URISyntaxException ex)
-        {
-            throw new UnexpectedContentException("invalid URI", ex);
-        }
-        finally { }
     }
 }

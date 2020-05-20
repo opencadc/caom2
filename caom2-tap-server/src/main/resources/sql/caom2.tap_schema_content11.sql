@@ -67,7 +67,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'intent', 'intended purpose of data (one of: science, calibration)', 'caom2:Observation.intent', NULL, NULL, 'char', '32*', NULL, 0,0,1, 7),
 ( 'caom2.Observation', 'sequenceNumber', 'sequence number assigned by the observatory', 'caom2:Observation.sequenceNumber', NULL, NULL, 'int', NULL, NULL, 0,0,0, 8),
 ( 'caom2.Observation', 'metaRelease', 'date the metadata for an observation is public (UTC)', 'caom2:Observation.metaRelease', NULL, NULL, 'char', '23*','timestamp', 0,0,0, 9),
---( 'caom2.Observation', 'metaReadGroups', 'GMS groups that are authorized to see metadata [new in 2.4]', 'caom2:Observation.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 10),
+( 'caom2.Observation', 'metaReadGroups', 'GMS groups that are authorized to see metadata', 'caom2:Observation.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 10),
 
 ( 'caom2.Observation', 'proposal_id', 'collection-specific unique proposal identifier', 'caom2:Observation.proposal.id', NULL, NULL, 'char', '128*',NULL, 0,1,0 , 20),
 ( 'caom2.Observation', 'proposal_pi', 'proposal principal investigator', 'caom2:Observation.proposal.pi', NULL, NULL, 'char', '128*',NULL, 0,0,0 , 21),
@@ -76,7 +76,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'proposal_keywords', 'proposal keywords (separated by |)', 'caom2:Observation.proposal.keywords', NULL, NULL, 'char', '*',NULL, 0,0,0 , 24),
 
 ( 'caom2.Observation', 'target_name', 'name of intended target', 'caom2:Observation.target.name', NULL, NULL, 'char', '32*',NULL, 1,0,0 , 30),
---( 'caom2.Observation', 'target_targetID', 'identifier of intended target [new in 2.4]', 'caom2:Observation.target.targetID', NULL, NULL, 'char', '32*','uri', 1,0,0 , 31),
+( 'caom2.Observation', 'target_targetID', 'identifier of intended target [new in 2.4]', 'caom2:Observation.target.targetID', NULL, NULL, 'char', '32*','uri', 1,0,0 , 31),
 ( 'caom2.Observation', 'target_type', 'classification of intended target', 'caom2:Observation.target.type', NULL, NULL, 'char', '32*',NULL, 1,0,0 , 32),
 ( 'caom2.Observation', 'target_standard', 'intended target is a standard (0=false, 1=true)', 'caom2:Observation.target.standard', NULL, NULL, 'int', NULL,NULL, 0,0,0 , 33),
 ( 'caom2.Observation', 'target_redshift', 'redshift of intended target', 'caom2:Observation.target.redshift', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 34),
@@ -110,7 +110,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'members', 'members of a composite observation (space-separated list of Observation URIs)', 'caom2:Observation.members', NULL, NULL, 'char','*',NULL, 0,0,0 , 80),
 ( 'caom2.Observation', 'typeCode', 'single character code to denote type: S(impleObservation) or C(ompositeOvservation)', 'caom2:Observation.typeCode', NULL, NULL, 'char',NULL,NULL, 0,0,0 , 81),
 
---( 'caom2.Observation', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Observation.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 120)
+( 'caom2.Observation', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Observation.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 120),
 ( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 121),
 ( 'caom2.Observation', 'maxLastModified', 'timestamp of last modification of this observation', 'caom2:Observation.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 122),
 ( 'caom2.Observation', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Observation.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 123),
@@ -128,10 +128,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '64*', NULL, 1,1,1 , 4),
 ( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 5),
---( 'caom2.Plane', 'metaReadGroups', 'GMS groups that are authorized to see metadata [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 6),
+( 'caom2.Plane', 'metaReadGroups', 'GMS groups that are authorized to see metadata [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 6),
 ( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 7),
---( 'caom2.Plane', 'dataReadGroups', 'GMS groups that are authorized to see data [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 8),
-
+( 'caom2.Plane', 'dataReadGroups', 'GMS groups that are authorized to see data [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 8),
 ( 'caom2.Plane', 'dataProductType', 'IVOA ObsCore data product type', 	'caom2:Plane.dataProductType', NULL, NULL, 'char', '128*', NULL, 1,0,1 , 10),
 ( 'caom2.Plane', 'calibrationLevel', 'IVOA ObsCore calibration level (0,1,2,3,...)', 'caom2:Plane.calibrationLevel', NULL, NULL, 'int', NULL, NULL, 1,0,1 , 11),
 
@@ -157,7 +156,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'double', '*', 'caom2:multipolygon', 0,0,0 , 50),
 ( 'caom2.Plane', 'position_bounds_size', 'size of the polygon bounds (diameter of minimum spanning circle)', 'caom2:Plane.position.bounds.size', NULL, 'deg', 'double', NULL, NULL, 0,0,0 , 51),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 52),
---( 'caom2.Plane', 'position_resolutionBounds', 'range of spatial resolution (FWHM) [new in 2.4]', 'caom2:Plane.position.resolutionBounds', NULL, 'arcsec', 'double', '2', 'interval', 0,0,0 , 52),
+( 'caom2.Plane', 'position_resolutionBounds', 'range of spatial resolution (FWHM) [new in 2.4]', 'caom2:Plane.position.resolutionBounds', NULL, 'arcsec', 'double', '2', 'interval', 0,0,0 , 52),
 ( 'caom2.Plane', 'position_sampleSize', 'median sample (pixel) size on spatial axes', 'caom2:Plane.position.sampleSize', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 53),
 ( 'caom2.Plane', 'position_dimension_naxis1', 'dimensions (number of pixels) along one spatial axis', 'caom2:Plane.position.dimension.naxis1', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 54),
 ( 'caom2.Plane', 'position_dimension_naxis2', 'dimensions (number of pixels) along other spatial axis', 'caom2:Plane.position.dimension.naxis2', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 55),
@@ -170,11 +169,12 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'energy_bounds_width', 'width of the energy bounds', 'caom2:Plane.energy.bounds.width', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 64),
 ( 'caom2.Plane', 'energy_dimension', 'dimension (number of pixels) along energy axis', 'caom2:Plane.energy.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 65),
 ( 'caom2.Plane', 'energy_resolvingPower', 'median spectral resolving power (R)', 'caom2:Plane.energy.resolvingPower', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 66),
---( 'caom2.Plane', 'energy_resolvingPowerBounds', 'range of spectral resolving power (R) [new in 2.4]', 'caom2:Plane.energy.resolvingPowerBounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 67),
+( 'caom2.Plane', 'energy_resolvingPowerBounds', 'range of spectral resolving power (R) [new in 2.4]', 'caom2:Plane.energy.resolvingPowerBounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 67),
 ( 'caom2.Plane', 'energy_sampleSize', 'median sample (pixel) size on energy axis', 'caom2:Plane.energy.sampleSize', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 68),
 -- cardinality and name change: temporarily allow old name
 ( 'caom2.Plane', 'energy_emBand', 'energy band names (Radio,Millimeter,Infrared,Optical,UV,EUV,X-ray,Gamma-ray), separated by | [deprecated]', 'caom2:Plane.energy.emBand', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 69),
---( 'caom2.Plane', 'energy_energyBands', 'energy band names (Radio,Millimeter,Infrared,Optical,UV,EUV,X-ray,Gamma-ray), separated by | [new in 2.4]', 'caom2:Plane.energy.energyBands', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 69),
+( 'caom2.Plane', 'energy_energyBands', 'energy band names (Radio,Millimeter,Infrared,Optical,UV,EUV,X-ray,Gamma-ray), separated by | [new in 2.4]', 'caom2:Plane.energy.energyBands', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 69),
+
 ( 'caom2.Plane', 'energy_bandpassName', 'collection-specific name for energy band (e.g. filter name)', 'caom2:Plane.energy.bandpassName', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 70),
 ( 'caom2.Plane', 'energy_transition_species', 'atom or molecule', 'caom2:Plane.energy.transition.species', NULL, NULL, 'char', '32*',NULL, 0,0,0 , 71),
 ( 'caom2.Plane', 'energy_transition_transition', 'specific energy transition of species', 'caom2:Plane.energy.transition.transition', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 72),
@@ -189,22 +189,22 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'time_bounds_width', 'width of the time bounds', 'caom2:Plane.time.bounds.width', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 83),
 ( 'caom2.Plane', 'time_dimension', 'dimension (number of pixels) along time axis', 'caom2:Plane.time.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 84),
 ( 'caom2.Plane', 'time_resolution', 'median resolution on the time axis', 'caom2:Plane.time.resolution', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 85),
---( 'caom2.Plane', 'time_resolutionBounds', 'range of resolution on the time axis [new in 2.4]', 'caom2:Plane.time.resolutionBounds', NULL, 'd', 'double', '2', 'interval', 0,0,0 , 86),
+( 'caom2.Plane', 'time_resolutionBounds', 'range of resolution on the time axis [new in 2.4]', 'caom2:Plane.time.resolutionBounds', NULL, 'd', 'double', '2', 'interval', 0,0,0 , 86),
 ( 'caom2.Plane', 'time_sampleSize', 'median sample (pixel) size on time axis', 'caom2:Plane.time.sampleSize', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 87),
 ( 'caom2.Plane', 'time_exposure', 'median exposure time per pixel', 'caom2:Plane.time.exposure', NULL, 's', 'double', NULL, NULL, 0,0,0 , 88),
 
 ( 'caom2.Plane', 'polarization_states', 'polarization letter codes in canonical order, separated by /', 'caom2:Plane.polarization.states', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 90),
 ( 'caom2.Plane', 'polarization_dimension', 'number of samples (pixels) along polarization axis', 'caom2:Plane.polarization.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 91),
 
---( 'caom2.Plane', 'custom_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Plane.custom.ctype', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 100),
---( 'caom2.Plane', 'custom_bounds', 'custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 101),
---( 'caom2.Plane', 'custom_bounds_samples', 'detailed custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds.samples', NULL, NULL, 'double', '*', 'caom2:multiinterval', 0,0,0 , 102),
---( 'caom2.Plane', 'custom_bounds_lower', 'lower bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.lower', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 103),
---( 'caom2.Plane', 'custom_bounds_upper', 'upper bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.upper', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 104),
---( 'caom2.Plane', 'custom_bounds_width', 'width of the custom bounds [new in 2.4]', 'caom2:Plane.custom.bounds.width', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 105),
---( 'caom2.Plane', 'custom_dimension', 'dimension (number of pixels) along custom axis [new in 2.4]', 'caom2:Plane.custom.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 106),
+( 'caom2.Plane', 'custom_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Plane.custom.ctype', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 100),
+( 'caom2.Plane', 'custom_bounds', 'custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 101),
+( 'caom2.Plane', 'custom_bounds_samples', 'detailed custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds.samples', NULL, NULL, 'double', '*', 'caom2:multiinterval', 0,0,0 , 102),
+( 'caom2.Plane', 'custom_bounds_lower', 'lower bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.lower', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 103),
+( 'caom2.Plane', 'custom_bounds_upper', 'upper bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.upper', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 104),
+( 'caom2.Plane', 'custom_bounds_width', 'width of the custom bounds [new in 2.4]', 'caom2:Plane.custom.bounds.width', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 105),
+( 'caom2.Plane', 'custom_dimension', 'dimension (number of pixels) along custom axis [new in 2.4]', 'caom2:Plane.custom.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 106),
 
---( 'caom2.Plane', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Plane.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 120)
+( 'caom2.Plane', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Plane.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 120),
 ( 'caom2.Plane', 'lastModified', 'timestamp of last modification of this row', 'caom2:Plane.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 121),
 ( 'caom2.Plane', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Plane.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 122),
 ( 'caom2.Plane', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Plane.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 123)
@@ -221,13 +221,13 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Artifact', 'contentType',   'content-type of the representation at uri', 'caom2:Artifact.contentType', NULL, NULL, 'char', '128*', NULL, 1,0,0 , 6),
 ( 'caom2.Artifact', 'contentLength', 'size of the representation at uri', 'caom2:Artifact.contentLength', NULL, 'byte', 'long', NULL, NULL, 1,0,0 , 7),
 ( 'caom2.Artifact', 'contentChecksum', 'checksum of the content (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.contentChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 8),
---( 'caom2.Artifact', 'contentRelease', 'date the data for an artifact is public (UTC) (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 20),
---( 'caom2.Artifact', 'contentReadGroups', 'GMS groups that are authorized to retrieve the artifact (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 21),
+( 'caom2.Artifact', 'contentRelease', 'date the data for an artifact is public (UTC) (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 20),
+( 'caom2.Artifact', 'contentReadGroups', 'GMS groups that are authorized to retrieve the artifact (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 21),
 
 -- virtual column where URL generated in TAP service
 ( 'caom2.Artifact', 'accessURL',     'access URL for the complete file', NULL, NULL, NULL, 'char', '*','clob', 0,0,0, 30),
 
---( 'caom2.Artifact', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Artifact.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 40)
+( 'caom2.Artifact', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Artifact.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 40),
 ( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 41),
 ( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 42),
 ( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 43)
@@ -241,7 +241,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Part', 'name',          'name of this part', 'caom2:Part.name', NULL, NULL, 'char', '128*', NULL, 1,0,0 , 3),
 ( 'caom2.Part', 'productType',   'product type (science, calibration, auxiliary, preview, info)', 'caom2:Part.productType', NULL, NULL, 'char', '32*', NULL, 1,0,0 , 4),
 
---( 'caom2.Part', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Part.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 10)
+( 'caom2.Part', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Part.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 10),
 ( 'caom2.Part', 'lastModified',  'timestamp of last modification of this row', 'caom2:Part.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 11),
 ( 'caom2.Part', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Part.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 12),
 ( 'caom2.Part', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Part.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 13)
@@ -260,7 +260,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'energyAxis', 'axis for the energy coordinate', 'caom2:Chunk.energyAxis', NULL, NULL, 'int', NULL, NULL, 1,0,0 , 13),
 ( 'caom2.Chunk', 'timeAxis', 'axis for the time coordinate', 'caom2:Chunk.timeAxis', NULL, NULL, 'int', NULL, NULL, 1,0,0 , 14),
 ( 'caom2.Chunk', 'polarizationAxis', 'axis for the polarization coordinate', 'caom2:Chunk.polarizationAxis', NULL, NULL, 'int', NULL, NULL, 1,0,0 , 15),
---( 'caom2.Chunk', 'customAxis', 'axis for a custom coordinate [new in 2.4]', 'caom2:Chunk.customAxis', NULL, NULL, 'int', NULL, NULL, 1,0,0 , 16),
+( 'caom2.Chunk', 'customAxis', 'axis for a custom coordinate [new in 2.4]', 'caom2:Chunk.customAxis', NULL, NULL, 'int', NULL, NULL, 1,0,0 , 16),
 ( 'caom2.Chunk', 'observableAxis', 'axis for the observable quantity', 'caom2:Chunk.observableAxis', NULL, NULL, 'int', NULL, NULL, 1,0,0 , 17),
 
 ( 'caom2.Chunk', 'position_coordsys', 'coordinate system name', 'caom2:Chunk.position.coordsys', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 20),
@@ -353,19 +353,19 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'polarization_axis_function_refCoord_val', 'coordinate function for polarization axis', 'caom2:Chunk.polarization.axis.function.refCoord.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 151),
 ( 'caom2.Chunk', 'polarization_axis_function_delta', 'coordinate function for polarization axis', 'caom2:Chunk.polarization.axis.function.delta', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 152),
 
---( 'caom2.Chunk', 'custom_axis_axis_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.axis.ctype', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 160),
---( 'caom2.Chunk', 'custom_axis_axis_cunit', 'coordinate unit for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.axis.cunit', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 161),
---( 'caom2.Chunk', 'custom_axis_error_syser', 'systematic coordinate error for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.error.syser', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 162),
---( 'caom2.Chunk', 'custom_axis_error_rnder', 'random coordinate error for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.error.rnder', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 163),
---( 'caom2.Chunk', 'custom_axis_range_start_pix', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.start.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 164),
---( 'caom2.Chunk', 'custom_axis_range_start_val', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.start.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 165),
---( 'caom2.Chunk', 'custom_axis_range_end_pix', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.end.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 166),
---( 'caom2.Chunk', 'custom_axis_range_end_val', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.end.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 167),
---( 'caom2.Chunk', 'custom_axis_bounds', 'coordinate bounds for custom axis (string-encoded) [new in 2.4]', 'caom2:Chunk.custom.axis.bounds', NULL, NULL, 'char', NULL, NULL, 1,0,0 , 168),
---( 'caom2.Chunk', 'custom_axis_function_naxis', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.naxis', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 169),
---( 'caom2.Chunk', 'custom_axis_function_refCoord_pix', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.refCoord.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 170),
---( 'caom2.Chunk', 'custom_axis_function_refCoord_val', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.refCoord.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 171),
---( 'caom2.Chunk', 'custom_axis_function_delta', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.delta', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 172),
+( 'caom2.Chunk', 'custom_axis_axis_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.axis.ctype', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 160),
+( 'caom2.Chunk', 'custom_axis_axis_cunit', 'coordinate unit for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.axis.cunit', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 161),
+( 'caom2.Chunk', 'custom_axis_error_syser', 'systematic coordinate error for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.error.syser', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 162),
+( 'caom2.Chunk', 'custom_axis_error_rnder', 'random coordinate error for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.error.rnder', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 163),
+( 'caom2.Chunk', 'custom_axis_range_start_pix', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.start.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 164),
+( 'caom2.Chunk', 'custom_axis_range_start_val', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.start.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 165),
+( 'caom2.Chunk', 'custom_axis_range_end_pix', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.end.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 166),
+( 'caom2.Chunk', 'custom_axis_range_end_val', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.end.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 167),
+( 'caom2.Chunk', 'custom_axis_bounds', 'coordinate bounds for custom axis (string-encoded) [new in 2.4]', 'caom2:Chunk.custom.axis.bounds', NULL, NULL, 'char', NULL, NULL, 1,0,0 , 168),
+( 'caom2.Chunk', 'custom_axis_function_naxis', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.naxis', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 169),
+( 'caom2.Chunk', 'custom_axis_function_refCoord_pix', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.refCoord.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 170),
+( 'caom2.Chunk', 'custom_axis_function_refCoord_val', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.refCoord.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 171),
+( 'caom2.Chunk', 'custom_axis_function_delta', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.delta', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 172),
 
 ( 'caom2.Chunk', 'observable_independent_axis_ctype', 'independent observable axis coordinate type', 'caom2:Chunk.observable.independent.axis.ctype', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 183),
 ( 'caom2.Chunk', 'observable_independent_axis_cunit', 'independent observable axis coordinate unit', 'caom2:Chunk.observable.independent.axis.cunit', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 184),
@@ -374,7 +374,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'observable_dependent_axis_cunit', 'dependent observable axis coordinate unit', 'caom2:Chunk.observable.dependent.axis.cunit', NULL, NULL, 'char', '8*', NULL, 1,0,0 , 187),
 ( 'caom2.Chunk', 'observable_dependent_bin', 'dependent observable pixel value', 'caom2:Chunk.observable.dependent.bin', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 188),
 
---( 'caom2.Chunk', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Chunk.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 200)
+( 'caom2.Chunk', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Chunk.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 200),
 ( 'caom2.Chunk', 'lastModified',  'timestamp of last modification of this row', 'caom2:Chunk.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 201),
 ( 'caom2.Chunk', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Chunk.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 202),
 ( 'caom2.Chunk', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Chunk.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 203)
@@ -382,10 +382,10 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 -- join tables
 insert into tap_schema.columns11 (table_name,column_name,description,datatype,arraysize,xtype,principal,indexed,std) values
-('caom2.ObservationMember', 'compositeID', 'composite observation identifier', 'char', '36','uuid', 0,1,0),
-('caom2.ObservationMember', 'simpleID', 'simple observation identifier', 'char', '*', 'uri', 0,1,0),
---('caom2.ObservationMember', 'parentID', 'parent observation identifier [changed in 2.4]', 'char', '36','uuid', 0,1,0),
---('caom2.ObservationMember', 'memberID', 'member observation identifier [changed in 2.4]', 'char', '*', 'uri', 0,1,0),
+--('caom2.ObservationMember', 'compositeID', 'composite observation identifier', 'char', '36','uuid', 0,1,0),
+--('caom2.ObservationMember', 'simpleID', 'simple observation identifier', 'char', '*', 'uri', 0,1,0),
+('caom2.ObservationMember', 'parentID', 'parent observation identifier [changed in 2.4]', 'char', '36','uuid', 0,1,0),
+('caom2.ObservationMember', 'memberID', 'member observation identifier [changed in 2.4]', 'char', '*', 'uri', 0,1,0),
 
 ('caom2.ProvenanceInput', 'outputID', 'output plane identifier', 'char', '36','uuid', 0,1,0),
 ('caom2.ProvenanceInput', 'inputID', 'input plane identifier', 'char', '*', 'uri', 0,1,0)
@@ -414,10 +414,10 @@ insert into tap_schema.key_columns11 (key_id,from_column,target_column) values
 ('caom2-p-a', 'artifactID', 'artifactID'),
 ('caom2-c-p', 'partID', 'partID'),
 
-('caom2-composite-member', 'obsID', 'compositeID' ),
-('caom2-member-simple', 'simpleID', 'observationURI'),
---('caom2-composite-member', 'obsID', 'parentID' ),
---('caom2-member-simple', 'memberID', 'observationURI'),
+--('caom2-composite-member', 'obsID', 'compositeID' ),
+--('caom2-member-simple', 'simpleID', 'observationURI'),
+('caom2-composite-member', 'obsID', 'parentID' ),
+('caom2-member-simple', 'memberID', 'observationURI'),
 
 ('caom2-plane-prov', 'planeID', 'outputID' ),
 ('caom2-prov-input', 'inputID', 'planeURI')

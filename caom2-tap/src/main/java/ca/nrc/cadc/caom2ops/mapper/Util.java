@@ -69,49 +69,165 @@
 
 package ca.nrc.cadc.caom2ops.mapper;
 
-import ca.nrc.cadc.dali.tables.votable.VOTableField;
-import java.util.HashMap;
+import ca.nrc.cadc.caom2.util.CaomUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import org.apache.log4j.Logger;
+import java.util.UUID;
 
 /**
  *
- * @author pdowler
+ * @author yeunga
  */
-public class VOTableUtil {
+public class Util extends CaomUtil {
 
-    private static final Logger log = Logger.getLogger(VOTableUtil.class);
-
-    /**
-     * Construct a map of utype values to column index for a table data. The map
-     * can be used with a VOTableRowMapper to construct an object from a row.
-     *
-     * @param fields
-     * @return a map of utype or column name to column-index
-     */
-    public static Map<String, Integer> buildUTypeMap(final List<VOTableField> fields) {
-        Map<String, Integer> rowMap = new HashMap<>();
-        for (int index = 0; index < fields.size(); index++) {
-            VOTableField field = fields.get(index);
-            // foreign key columns have null utype so utype should be unique now
-            if (field.utype != null) {
-                Integer cur = rowMap.get(field.utype);
-                if (cur != null) {
-                    throw new IllegalStateException("found multiple columns with utype " + field.utype
-                            + ": " + cur + " and " + index);
-                }
-                log.debug(field.utype + " -> " + index);
-                rowMap.put(field.utype, index);
-            } else {
-                // add field name to map if no utype
-                String fake = "column-name:" + field.getName();
-                log.debug(fake + " -> " + index);
-
-                rowMap.put(fake, index);
-            }
+    public static Object getObject(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
         }
+        return data.get(col);
+    }
 
-        return rowMap;
+    public static String getString(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (String) o;
+    }
+
+    public static URI getURI(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (URI) o;
+    }
+    
+    public static List<URI> getURIList(List<Object> data, Integer col)
+            throws URISyntaxException {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        String s = (String) o;
+        String[] ss = s.split(" ");
+        List<URI> ret = new ArrayList<>();
+        for (String u : ss) {
+            ret.add(new URI(u));
+        }
+        return ret;
+    }
+
+    public static Boolean getBoolean(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        // TAP-specific hack
+        if (o instanceof Integer) {
+            Integer i = (Integer) o;
+            if (i == 1) {
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        }
+        return (Boolean) o;
+    }
+
+    public static UUID getUUID(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (UUID) o;
+    }
+
+    public static Long getLong(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Long) o;
+    }
+
+    public static Integer getInteger(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Integer) o;
+    }
+
+    public static Float getFloat(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Float) o;
+    }
+
+    public static Double getDouble(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Double) o;
+    }
+
+    public static List<Double> getDoubleList(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        double[] vals = (double[]) o;
+        List<Double> ret = new ArrayList<Double>(vals.length);
+        for (double d : vals) {
+            ret.add(d);
+        }
+        return ret;
+    }
+
+    public static Date getDate(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Date) o;
     }
 }
