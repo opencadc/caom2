@@ -137,7 +137,8 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     protected Format<Object> getMultiIntervalFormat(TapSelectItem columnDesc) {
         if (columnDesc.utype != null
             && (columnDesc.utype.equals("caom2:Plane.energy.bounds.samples")
-                || columnDesc.utype.equals("caom2:Plane.time.bounds.samples"))) {
+                || columnDesc.utype.equals("caom2:Plane.time.bounds.samples"))
+                || columnDesc.utype.equals("caom2:Plane.custom.bounds.samples")) {
             return new IntervalFormat(true); // varsize by definition
         }
         return super.getMultiIntervalFormat(columnDesc);
