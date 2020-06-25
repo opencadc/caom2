@@ -71,6 +71,7 @@ package ca.nrc.cadc.fits2caom2.integration;
 import javax.security.auth.Subject;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.fits.IngestableFile;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.net.URI;
@@ -212,7 +213,8 @@ public class IngestableFileIntTest
             assertNotNull("File returned by Get should not be null", file);
 
             // case3: get from ad with authentication.
-            File certFile = new File(System.getProperty("user.home") + "/.pub/proxy.pem");
+            String fname = System.getProperty("user.name") + ".pem";
+            File certFile = FileUtil.getFileFromResource(fname, VOSUriTest.class);
             Subject s = SSLUtil.createSubject(certFile);
             
             uri = new URI("ad", "TEST/simple_fits", null);

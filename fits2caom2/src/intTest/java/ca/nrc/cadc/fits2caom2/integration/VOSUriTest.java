@@ -72,6 +72,7 @@ import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileReader;
@@ -109,7 +110,8 @@ public class VOSUriTest extends AbstractTest
     public static void setUpClass()
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
-        SSL_CERT = new File(System.getProperty("user.home") + "/.pub/proxy.pem");
+        String fname = System.getProperty("user.name") + ".pem";
+        SSL_CERT = FileUtil.getFileFromResource(fname, VOSUriTest.class);
     }
 
     @Test
@@ -125,7 +127,7 @@ public class VOSUriTest extends AbstractTest
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250,
-                "--default=src/int-test/resources/simplefits.default"
+                "--default=src/intTest/resources/simplefits.default"
             };
 
             Subject subject = SSLUtil.createSubject(SSL_CERT);
@@ -171,7 +173,7 @@ public class VOSUriTest extends AbstractTest
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250 +"," + VOS_URI_BLAST_350,
-                "--default=src/int-test/resources/simplefits.default"
+                "--default=src/intTest/resources/simplefits.default"
             };
 
             Subject subject = SSLUtil.createSubject(SSL_CERT);
@@ -217,8 +219,8 @@ public class VOSUriTest extends AbstractTest
                 "--observationID=VOSpaceFile",
                 "--productID=productID",
                 "--uri=" + VOS_URI_BLAST_250,
-                "--local=src/int-test/resources/mef.fits",
-                "--default=src/int-test/resources/multiextensionfits.default"
+                "--local=src/intTest/resources/mef.fits",
+                "--default=src/intTest/resources/multiextensionfits.default"
             };
 
             Subject subject = SSLUtil.createSubject(SSL_CERT);

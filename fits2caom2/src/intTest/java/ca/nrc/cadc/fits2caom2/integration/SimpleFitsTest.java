@@ -108,7 +108,7 @@ public class SimpleFitsTest extends AbstractTest
                 "--observationID=SimpleFits",
                 "--productID=productID",
                 "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=src/int-test/resources/simplefits.default"
+                "--default=src/intTest/resources/simplefits.default"
             };
 
             doTest(args);

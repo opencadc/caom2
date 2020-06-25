@@ -104,8 +104,8 @@ public class MetaDataTest extends AbstractTest
                 "--observationID=MetaData",
                 "--productID=productID",
                 "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=src/int-test/resources/metadata.default",
-                "--override=src/int-test/resources/metadata.override"
+                "--default=src/intTest/resources/metadata.default",
+                "--override=src/intTest/resources/metadata.override"
             };
 
             doTest(args);

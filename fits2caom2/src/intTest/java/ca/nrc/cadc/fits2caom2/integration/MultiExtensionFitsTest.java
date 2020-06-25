@@ -104,7 +104,7 @@ public class MultiExtensionFitsTest extends AbstractTest
                 "--observationID=MultiExtensionFits",
                 "--productID=productID",
                 "--uri=ad:MACHO/cal000312b,ad:MACHO/cal000312r",
-                "--default=src/int-test/resources/multiextensionfits.default"
+                "--default=src/intTest/resources/multiextensionfits.default"
             };
 
             doTest(args);

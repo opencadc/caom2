@@ -99,8 +99,8 @@ public class UriAndLocalFromFileTest extends AbstractTest
                 "--collection=TEST",
                 "--observationID=MultiExtensionFits",
                 "--productID=productID",
-                "--uri=@src/int-test/resources/uriOnly.txt",
-                "--default=src/int-test/resources/simplefits.default"
+                "--uri=@src/intTest/resources/uriOnly.txt",
+                "--default=src/intTest/resources/simplefits.default"
             };
 
             doTest(args);
@@ -128,7 +128,7 @@ public class UriAndLocalFromFileTest extends AbstractTest
                 "--observationID=MultiExtensionFits",
                 "--productID=productID",
                 "--uri=@foo.txt",
-                "--default=src/int-test/resources/simplefits.default"
+                "--default=src/intTest/resources/simplefits.default"
             };
 
             try

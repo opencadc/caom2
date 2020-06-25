@@ -110,7 +110,7 @@ public class ImageFileTest extends AbstractTest
                 "--collection=TEST",
                 "--observationID=ImageFile",
                 "--productID=productID",
-                "--uri=file://" + userDir + "/src/int-test/resources/image.png"
+                "--uri=file://" + userDir + "/src/intTest/resources/image.png"
             };
 
             doTest(args);

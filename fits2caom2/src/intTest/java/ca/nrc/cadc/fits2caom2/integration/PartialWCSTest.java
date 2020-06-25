@@ -101,7 +101,7 @@ public class PartialWCSTest extends AbstractTest
                 "--observationID=AllowPartialWCS",
                 "--productID=productID",
                 "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=src/int-test/resources/partialWCS.default"
+                "--default=src/intTest/resources/partialWCS.default"
             };
 
             try
@@ -133,7 +133,7 @@ public class PartialWCSTest extends AbstractTest
                 "--observationID=AllowPartialWCS",
                 "--productID=productID",
                 "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=src/int-test/resources/partialWCS.default",
+                "--default=src/intTest/resources/partialWCS.default",
                 "--ignorePartialWCS"
             };
 
