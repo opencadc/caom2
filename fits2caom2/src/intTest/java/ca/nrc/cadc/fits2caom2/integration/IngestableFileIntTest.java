@@ -96,7 +96,8 @@ public class IngestableFileIntTest
     @BeforeClass
     public static void setUpClass()
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.fits", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
     }
     
     /**
@@ -112,8 +113,7 @@ public class IngestableFileIntTest
             // case 1: get from ad without authentication
             URI uri = new URI("ad", "TEST/simple_fits", null);
             File localFile = null;
-            boolean sslEnabled = false;
-            IngestableFile ingestableFile = new IngestableFile(uri, localFile, sslEnabled);
+            IngestableFile ingestableFile = new IngestableFile(uri, localFile);
             try
             {
                 ingestableFile.get();
@@ -126,38 +126,11 @@ public class IngestableFileIntTest
 
             // case 2: get from vos without authentication
             uri = new URI("vos", "//cadc.nrc.ca~vospace/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/private_file.txt", null);
-            ingestableFile = new IngestableFile(uri, localFile, sslEnabled);
+            ingestableFile = new IngestableFile(uri, localFile);
             try
             {
                 ingestableFile.get();
                 fail("Get from vospace should fail without authentication");
-            }
-            catch (RuntimeException e)
-            {
-                log.debug(e.getMessage());
-            }
-
-            // case 3: get from ad without certificates initialized
-            uri = new URI("ad", "TEST/simple_fits", null);
-            sslEnabled = true;
-            ingestableFile = new IngestableFile(uri, localFile, sslEnabled);
-            try
-            {
-                ingestableFile.get();
-                fail("Get from ad should fail without certificates initialized");
-            }
-            catch (RuntimeException e)
-            {
-                log.debug(e.getMessage());
-            }
-
-            // case 4: get from vos without certificates initialized
-            uri = new URI("vos", "//cadc.nrc.ca~vospace/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/private_file.txt", null);
-            ingestableFile = new IngestableFile(uri, localFile, sslEnabled);
-            try
-            {
-                ingestableFile.get();
-                fail("Get from vospace should fail without certificates initialized");
             }
             catch (RuntimeException e)
             {
@@ -183,8 +156,7 @@ public class IngestableFileIntTest
             // case 1: get from ad without authenticating
             URI uri = new URI("ad", "TEST/public_mef_fits", null);
             File localFile = null;
-            boolean sslEnabled = false;
-            IngestableFile ingestableFile = new IngestableFile(uri, localFile, sslEnabled);
+            IngestableFile ingestableFile = new IngestableFile(uri, localFile);
             File file = null;
             try
             {
@@ -199,8 +171,7 @@ public class IngestableFileIntTest
             // case 2: get from vos without authenticating
             uri = new URI("vos", "//cadc.nrc.ca~vospace/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits", null);
             localFile = null;
-            sslEnabled = false;
-            ingestableFile = new IngestableFile(uri, localFile, sslEnabled);
+            ingestableFile = new IngestableFile(uri, localFile);
             file = null;
             try
             {
@@ -213,13 +184,11 @@ public class IngestableFileIntTest
             assertNotNull("File returned by Get should not be null", file);
 
             // case3: get from ad with authentication.
-            String fname = System.getProperty("user.name") + ".pem";
-            File certFile = FileUtil.getFileFromResource(fname, VOSUriTest.class);
+            File certFile = FileUtil.getFileFromResource("fits2caom2.pem", VOSUriTest.class);
             Subject s = SSLUtil.createSubject(certFile);
             
             uri = new URI("ad", "TEST/simple_fits", null);
-            sslEnabled = true;
-            final IngestableFile ingestableFile2 = new IngestableFile(uri, localFile, sslEnabled);
+            final IngestableFile ingestableFile2 = new IngestableFile(uri, localFile);
             file = null;
             try
             {
@@ -248,11 +217,11 @@ public class IngestableFileIntTest
             {
                 fail("Get should not throw a runtime exception " + e.getMessage());
             }
+            assertNotNull("File returned by Get should not be null", file);
 
             // case 4: get from vos with authentication.
             uri = new URI("vos", "//cadc.nrc.ca~vospace/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits", null);
-            sslEnabled = true;
-            final IngestableFile ingestableFile3 = new IngestableFile(uri, localFile, sslEnabled);
+            final IngestableFile ingestableFile3 = new IngestableFile(uri, localFile);
             file = null;
             try
             {

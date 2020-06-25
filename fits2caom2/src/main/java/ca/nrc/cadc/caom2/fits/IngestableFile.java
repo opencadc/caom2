@@ -70,6 +70,7 @@ package ca.nrc.cadc.caom2.fits;
 
 import ca.nrc.cadc.ad.AdSchemeHandler;
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -110,7 +111,6 @@ public class IngestableFile
 
     private URI uri;
     private File localFile;
-    private boolean sslEnabled;
 
     private File file;
     private String tmpDirPath;
@@ -127,13 +127,11 @@ public class IngestableFile
      *
      * @param uri URI to the file
      * @param localFile just use local file
-     * @param sslEnabled certificates are available for a secure download.
      */
-    public IngestableFile(URI uri, File localFile, boolean sslEnabled)
+    public IngestableFile(URI uri, File localFile)
     {
         this.uri = uri;
         this.localFile = localFile;
-        this.sslEnabled = sslEnabled;
         this.tmpDirPath = TEMP_DEFAULT;
         this.uriIsFile = false;
     }
@@ -239,7 +237,7 @@ public class IngestableFile
         {
             // Anonymous HTTP download
             schemeHandler = new AdSchemeHandler();
-            url = schemeHandler.getURL(uri, false);
+            url = schemeHandler.getURL(uri);
         }
         else
         {
@@ -252,10 +250,10 @@ public class IngestableFile
         if (download.getThrowable() != null && 
             download.getThrowable() instanceof AccessControlException)
         {
-            if (sslEnabled && uri.getScheme().equalsIgnoreCase("ad"))
+            if (uri.getScheme().equalsIgnoreCase("ad"))
             {
                 // Authenticated HTTPS download
-                url = schemeHandler.getURL(uri, true);
+                url = schemeHandler.getURL(uri);
             }
             
             log.debug(op + uri + " -- trying " + url);
@@ -353,14 +351,17 @@ public class IngestableFile
         URI serverUri = src.getServiceURI();
         log.debug("server uri: " + serverUri);
 
-        if (this.sslEnabled)
-        {
-            protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+        /*
+        // this is correct fo4r VOSpace-2.1 transfer negotiation
+        AuthMethod am = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
+        if (AuthMethod.CERT.equals(am)) {
+            Protocol p = new Protocol(VOS.PROTOCOL_HTTPS_GET);
+            p.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
+            protocols.add(p);
         }
-        else
-        {
-            protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
-        }
+        */
+        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
 
         // schema validation is always enabled
         VOSpaceClient client = new VOSpaceClient(serverUri);

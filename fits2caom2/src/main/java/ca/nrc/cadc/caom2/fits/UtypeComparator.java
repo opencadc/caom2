@@ -79,19 +79,18 @@ public class UtypeComparator implements Comparator<String>
     /**
      * utype order should be:
      * 
-     *  CompositeObservation
+     *  DerivedObservation
      *  Observation
      *  Plane
-     *  Metric
      *  Artifact
      *  Part
      *  Chunk
      */
     public int compare(String s1, String s2)
     {
-        if (s1.startsWith("Co"))
+        if (s1.startsWith("De"))
         {
-            if (s2.startsWith("Co"))
+            if (s2.startsWith("De"))
             {
                 return s1.compareTo(s2);
             }
@@ -122,21 +121,6 @@ public class UtypeComparator implements Comparator<String>
                 return s1.compareTo(s2);
             }
             else if (s2.startsWith("Co") || s2.startsWith("Ob"))
-            {
-                return 1;
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        else if (s1.startsWith("Me"))
-        {
-            if (s2.startsWith("Me"))
-            {
-                return s1.compareTo(s2);
-            }
-            else if (s2.startsWith("Co") || s2.startsWith("Ob") || s2.startsWith("Pl"))
             {
                 return 1;
             }

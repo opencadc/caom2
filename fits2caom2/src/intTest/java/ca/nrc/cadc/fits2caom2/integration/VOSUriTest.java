@@ -110,8 +110,7 @@ public class VOSUriTest extends AbstractTest
     public static void setUpClass()
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
-        String fname = System.getProperty("user.name") + ".pem";
-        SSL_CERT = FileUtil.getFileFromResource(fname, VOSUriTest.class);
+        SSL_CERT = FileUtil.getFileFromResource("fits2caom2.pem", VOSUriTest.class);
     }
 
     @Test
