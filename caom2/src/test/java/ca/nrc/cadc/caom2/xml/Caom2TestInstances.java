@@ -408,7 +408,7 @@ public class Caom2TestInstances
 
                 p.polarization = new Polarization();
                 p.polarization.dimension = 3l;
-                p.polarization.states = new ArrayList<>();
+                p.polarization.states = new TreeSet<PolarizationState>();
                 p.polarization.states.add(PolarizationState.I);
                 p.polarization.states.add(PolarizationState.Q);
                 p.polarization.states.add(PolarizationState.U);

@@ -96,12 +96,11 @@ import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.log4j.Level;
@@ -298,30 +297,57 @@ public class CaomUtilTest
     {
         try
         {
-            List<PolarizationState> pol = new ArrayList<PolarizationState>();
-            List<PolarizationState> apol = new ArrayList<PolarizationState>();
+            SortedSet<PolarizationState> pol = new TreeSet<>();
+            SortedSet<PolarizationState> apol = new TreeSet<>();
             String actual = CaomUtil.encodeStates(pol);
             Assert.assertNull(actual);
             
             pol.add(PolarizationState.I);
             actual = CaomUtil.encodeStates(pol);
-            Assert.assertEquals("/I/", actual);
+            Assert.assertEquals("/I/", actual); // leading and trailing /
             
             CaomUtil.decodeStates(actual, apol);
             Assert.assertEquals(1, apol.size());
-            Assert.assertEquals(PolarizationState.I, apol.get(0));
+            Iterator<PolarizationState> iter = apol.iterator();
+            Assert.assertEquals(PolarizationState.I, iter.next());
             
             pol.add(PolarizationState.Q);
             pol.add(PolarizationState.U);
             actual = CaomUtil.encodeStates(pol);
-            Assert.assertEquals("/I/Q/U/", actual);
+            Assert.assertEquals("/I/Q/U/", actual); // leading and trailing /, canonical order
             
             pol.clear();
             pol.add(PolarizationState.U);
             pol.add(PolarizationState.Q);
             pol.add(PolarizationState.I);
             actual = CaomUtil.encodeStates(pol);
-            Assert.assertEquals("/I/Q/U/", actual); // canonical order
+            Assert.assertEquals("/I/Q/U/", actual); // leading and trailing /, canonical order
+            
+            apol.clear();
+            CaomUtil.decodeStates(actual, apol);
+            iter = apol.iterator();
+            Assert.assertEquals(PolarizationState.I, iter.next());
+            Assert.assertEquals(PolarizationState.Q, iter.next());
+            Assert.assertEquals(PolarizationState.U, iter.next());
+            Assert.assertFalse(iter.hasNext());
+            
+            pol.clear();
+            pol.add(PolarizationState.LR);
+            pol.add(PolarizationState.LL);
+            pol.add(PolarizationState.RL);
+            pol.add(PolarizationState.RR);
+            actual = CaomUtil.encodeStates(pol);
+            Assert.assertEquals("/RR/LL/RL/LR/", actual); // leading and trailing /, canonical order
+            
+            apol.clear();
+            CaomUtil.decodeStates(actual, apol);
+            iter = apol.iterator();
+            Assert.assertEquals(PolarizationState.RR, iter.next());
+            Assert.assertEquals(PolarizationState.LL, iter.next());
+            Assert.assertEquals(PolarizationState.RL, iter.next());
+            Assert.assertEquals(PolarizationState.LR, iter.next());
+            Assert.assertFalse(iter.hasNext());
+            
         }
         catch(Exception unexpected)
         {

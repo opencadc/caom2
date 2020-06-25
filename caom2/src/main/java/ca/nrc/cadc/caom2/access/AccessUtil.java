@@ -71,7 +71,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ReleaseType;
 import java.net.URI;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -96,14 +96,18 @@ public class AccessUtil {
      * @return correctly deduced permissions
      */
     public static ArtifactAccess getArtifactAccess(Artifact artifact,
-            Date metaRelease, List<URI> metaReadAccessGroups,
-            Date dataRelease, List<URI> dataReadAccessGroups) {
+            Date metaRelease, Set<URI> metaReadAccessGroups,
+            Date dataRelease, Set<URI> dataReadAccessGroups) {
         ArtifactAccess ret = new ArtifactAccess(artifact);
         ret.releaseDate = getReleaseDate(artifact, metaRelease, dataRelease);
         if (ret.releaseDate != null && ret.releaseDate.getTime() < System.currentTimeMillis()) {
             ret.isPublic = true;
         }
-        if (ReleaseType.META.equals(artifact.getReleaseType())) {
+        // only one of the following applies
+        if (!artifact.getContentReadGroups().isEmpty()) {
+            // override plane
+            ret.getReadGroups().addAll(artifact.getContentReadGroups());
+        } else if (ReleaseType.META.equals(artifact.getReleaseType())) {
             ret.getReadGroups().addAll(metaReadAccessGroups);
         } else if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
             ret.getReadGroups().addAll(dataReadAccessGroups);
@@ -121,6 +125,7 @@ public class AccessUtil {
      */
     public static Date getReleaseDate(Artifact artifact, Date metaRelease, Date dataRelease) {
         if (artifact.contentRelease != null) {
+            // override plane
             return artifact.contentRelease;
         }
         if (ReleaseType.META.equals(artifact.getReleaseType())) {
@@ -129,6 +134,6 @@ public class AccessUtil {
         if (ReleaseType.DATA.equals(artifact.getReleaseType())) {
             return dataRelease;
         }
-        throw new IllegalStateException("expected value for ReleaseType: " + artifact.getReleaseType());
+        throw new IllegalStateException("BUG: unexpected value for ReleaseType: " + artifact.getReleaseType());
     }
 }

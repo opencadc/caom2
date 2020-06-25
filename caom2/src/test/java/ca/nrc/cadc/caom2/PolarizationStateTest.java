@@ -70,7 +70,8 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.util.Log4jInit;
-import java.util.Set;
+import java.util.Iterator;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -135,18 +136,26 @@ public class PolarizationStateTest
     }
     
     @Test
-    public void testChecksum()
+    public void testRoundtripNumeric()
     {
         try
         {
-            // correctness is a 100% duplicate of the enum code itself, but
-            // we can test uniqueness
-            Set<Integer> values = new TreeSet<Integer>();
             for (PolarizationState c : PolarizationState.values())
             {
-                int i = c.checksum();
-                boolean added = values.add(i);
-                Assert.assertTrue("added " + i, added);
+                log.debug("testing: " + c);
+                int i = PolarizationState.intValue(c);
+                PolarizationState c2 = PolarizationState.toValue(i);
+                Assert.assertEquals(c, c2);
+            }
+            
+            try 
+            {
+                PolarizationState c = PolarizationState.toValue("FOO");
+                Assert.fail("expected IllegalArgumentException, got: " + c);
+            } 
+            catch(IllegalArgumentException expected) 
+            {
+                log.debug("caught expected exception: " + expected);
             }
         }
         catch(Exception unexpected)
@@ -157,43 +166,23 @@ public class PolarizationStateTest
     }
     
     @Test
-    public void testFromWCS()
+    public void testFullyOrdered()
     {
         try
         {
-            Assert.assertEquals(PolarizationState.I, PolarizationState.toValue(1));
-            Assert.assertEquals(PolarizationState.Q, PolarizationState.toValue(2));
-            Assert.assertEquals(PolarizationState.U, PolarizationState.toValue(3));
-            Assert.assertEquals(PolarizationState.V, PolarizationState.toValue(4));
+            SortedSet<PolarizationState> states = new TreeSet<>();
+            int num = 0;
+            for (PolarizationState c : PolarizationState.values()) {
+                states.add(c);
+                num++;
+            }
+            Assert.assertEquals(num, states.size());
             
-            Assert.assertEquals(PolarizationState.POLI, PolarizationState.toValue(5));
-            Assert.assertEquals(PolarizationState.FPOLI, PolarizationState.toValue(6));
-            Assert.assertEquals(PolarizationState.POLA, PolarizationState.toValue(7));
-            Assert.assertEquals(PolarizationState.EPOLI, PolarizationState.toValue(8));
-            Assert.assertEquals(PolarizationState.CPOLI, PolarizationState.toValue(9));
-            Assert.assertEquals(PolarizationState.NPOLI, PolarizationState.toValue(10));
-            
-            Assert.assertEquals(PolarizationState.RR, PolarizationState.toValue(-1));
-            Assert.assertEquals(PolarizationState.LL, PolarizationState.toValue(-2));
-            Assert.assertEquals(PolarizationState.RL, PolarizationState.toValue(-3));
-            Assert.assertEquals(PolarizationState.LR, PolarizationState.toValue(-4));
-            Assert.assertEquals(PolarizationState.XX, PolarizationState.toValue(-5));
-            Assert.assertEquals(PolarizationState.YY, PolarizationState.toValue(-6));
-            Assert.assertEquals(PolarizationState.XY, PolarizationState.toValue(-7));
-            Assert.assertEquals(PolarizationState.YX, PolarizationState.toValue(-8));
-            
-            
-            try 
-            {
-                for (int i : new int[] { 0, 11, -9})
-                {   
-                    PolarizationState c = PolarizationState.toValue(i);
-                    Assert.fail("expected IllegalArgumentException, got: " + c);
-                }
-            } 
-            catch(IllegalArgumentException expected) 
-            {
-                log.debug("caught expected exception: " + expected);
+            // verify set order and declared order the same
+            Iterator<PolarizationState> iter = states.iterator();
+            for (PolarizationState o : PolarizationState.values()) {
+                PolarizationState s = iter.next();
+                Assert.assertEquals(o, s);
             }
         }
         catch(Exception unexpected)
