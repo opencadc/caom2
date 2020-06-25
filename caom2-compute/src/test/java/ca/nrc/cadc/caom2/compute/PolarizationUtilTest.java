@@ -90,6 +90,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.URI;
+import java.util.Iterator;
 
 /**
  * @author pdowler
@@ -209,7 +210,7 @@ public class PolarizationUtilTest {
                 Assert.assertNotNull(actual);
                 Assert.assertNotNull(actual.states);
                 Assert.assertEquals(1, actual.states.size());
-                Assert.assertEquals(pol, actual.states.get(0));
+                Assert.assertEquals(pol, actual.states.iterator().next());
                 Assert.assertNotNull(actual.dimension);
                 Assert.assertEquals(1, actual.dimension.intValue());
             }
@@ -240,9 +241,10 @@ public class PolarizationUtilTest {
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.states);
             Assert.assertEquals(3, actual.states.size());
-            Assert.assertEquals(PolarizationState.I, actual.states.get(0));
-            Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
-            Assert.assertEquals(PolarizationState.U, actual.states.get(2));
+            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertEquals(PolarizationState.I, iter.next());
+            Assert.assertEquals(PolarizationState.Q, iter.next());
+            Assert.assertEquals(PolarizationState.U, iter.next());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(3, actual.dimension.intValue());
         } catch (Exception unexpected) {
@@ -270,10 +272,11 @@ public class PolarizationUtilTest {
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.states);
             Assert.assertEquals(4, actual.states.size());
-            Assert.assertEquals(PolarizationState.I, actual.states.get(0));
-            Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
-            Assert.assertEquals(PolarizationState.U, actual.states.get(2));
-            Assert.assertEquals(PolarizationState.V, actual.states.get(3));
+            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertEquals(PolarizationState.I, iter.next());
+            Assert.assertEquals(PolarizationState.Q, iter.next());
+            Assert.assertEquals(PolarizationState.U, iter.next());
+            Assert.assertEquals(PolarizationState.V, iter.next());
 
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(4, actual.dimension.intValue());
@@ -302,8 +305,9 @@ public class PolarizationUtilTest {
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.states);
             Assert.assertEquals(2, actual.states.size());
-            Assert.assertEquals(PolarizationState.RR, actual.states.get(0));
-            Assert.assertEquals(PolarizationState.LL, actual.states.get(1));
+            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertEquals(PolarizationState.RR, iter.next());
+            Assert.assertEquals(PolarizationState.LL, iter.next());
 
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(2, actual.dimension.intValue());
@@ -332,10 +336,11 @@ public class PolarizationUtilTest {
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.states);
             Assert.assertEquals(4, actual.states.size());
-            Assert.assertEquals(PolarizationState.I, actual.states.get(0));
-            Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
-            Assert.assertEquals(PolarizationState.U, actual.states.get(2));
-            Assert.assertEquals(PolarizationState.V, actual.states.get(3));
+            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertEquals(PolarizationState.I, iter.next());
+            Assert.assertEquals(PolarizationState.Q, iter.next());
+            Assert.assertEquals(PolarizationState.U, iter.next());
+            Assert.assertEquals(PolarizationState.V, iter.next());
 
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(4, actual.dimension.intValue());
@@ -381,8 +386,9 @@ public class PolarizationUtilTest {
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.states);
             Assert.assertEquals(2, actual.states.size());
-            Assert.assertEquals(PolarizationState.I, actual.states.get(0));
-            Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
+            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertEquals(PolarizationState.I, iter.next());
+            Assert.assertEquals(PolarizationState.Q, iter.next());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(2, actual.dimension.intValue());
         } catch (Exception unexpected) {
@@ -426,8 +432,9 @@ public class PolarizationUtilTest {
             Assert.assertNotNull(actual);
             Assert.assertNotNull(actual.states);
             Assert.assertEquals(2, actual.states.size());
-            Assert.assertEquals(PolarizationState.I, actual.states.get(0));
-            Assert.assertEquals(PolarizationState.Q, actual.states.get(1));
+            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertEquals(PolarizationState.I, iter.next());
+            Assert.assertEquals(PolarizationState.Q, iter.next());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(2, actual.dimension.intValue());
         } catch (Exception unexpected) {
