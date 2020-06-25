@@ -11,58 +11,20 @@ repositories {
     mavenLocal()
 }
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '1.1.18'
+version = '1.2'
 
 dependencies {
     compile 'log4j:log4j:1.2.17'
 
-    compile 'org.opencadc:cadc-util:[1.2.3,1.3)'
+    compile 'org.opencadc:cadc-util:[1.3,1.4)'
     compile 'org.opencadc:cadc-registry:[1.5,1.6)'
 
     testCompile 'junit:junit:4.13'
 }
 
-// enable intTest
-configurations {
-    intTestCompile.extendsFrom testCompile
-    intTestRuntime.extendsFrom testRuntime
-}
-
-sourceSets {
-    intTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/intTest/java')
-        }
-
-        // set the intTest resource directory
-        resources.srcDir file('src/intTest/resources')
-    }
-}
-
-tasks.withType(Test) {
-    // reset the report destinations so that intTests go to their
-    // own page
-    //reports.html.destination = file("${reporting.baseDir}/${name}")
-    reports.html.destination = file(reporting.baseDir.getAbsolutePath() + '/' + name)
-
-    // Assign all Java system properties from
-    // the command line to the tests
-    systemProperties System.properties
-}
-
-task intTest(type: Test) {
-    // set the configuration context
-    testClassesDirs = sourceSets.intTest.output.classesDirs
-    classpath = sourceSets.intTest.runtimeClasspath
-
-    // run the tests always
-    outputs.upToDateWhen { false }
-}
-
 apply from: '../opencadc.gradle'
+
