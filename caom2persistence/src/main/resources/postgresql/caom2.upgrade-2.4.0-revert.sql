@@ -21,6 +21,9 @@ create unique index i_composite2simple on caom2.ObservationMember (compositeID,s
 
 create unique index i_simple2composite on caom2.ObservationMember (simpleID,compositeID);
 
+alter table caom2.Observation
+    drop column target_targetID;
+
 alter table caom2.Plane 
     drop column observable_ucd,
     drop column metrics_sampleSNR,

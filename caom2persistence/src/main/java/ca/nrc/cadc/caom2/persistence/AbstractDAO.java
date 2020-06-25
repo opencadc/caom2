@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
@@ -76,11 +77,18 @@ import ca.nrc.cadc.db.DatabaseTransactionManager;
 import ca.nrc.cadc.db.TransactionManager;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -192,4 +200,16 @@ public class AbstractDAO {
         }
     }
 
+    protected Date getCurrentTime(JdbcTemplate jdbc) {
+        checkInit();
+        String tsSQL = gen.getCurrentTimeSQL();
+
+        Date now = (Date) jdbc.queryForObject(tsSQL, new RowMapper() {
+            @Override
+            public Object mapRow(ResultSet rs, int i) throws SQLException {
+                return Util.getDate(rs, 1, Calendar.getInstance(DateUtil.LOCAL));
+            }
+        });
+        return now;
+    }
 }

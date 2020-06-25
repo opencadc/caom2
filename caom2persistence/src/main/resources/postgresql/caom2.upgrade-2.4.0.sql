@@ -1,6 +1,6 @@
 
 alter table <schema>.Observation 
-    add column target_id   varchar(128),
+    add column target_targetID   varchar(128),
     add column metaProducer varchar(128);
 
 drop index <schema>.i_composite2simple;

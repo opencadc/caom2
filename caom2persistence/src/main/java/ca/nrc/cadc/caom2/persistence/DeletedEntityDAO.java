@@ -124,17 +124,13 @@ public class DeletedEntityDAO extends AbstractDAO {
         try {
             DeletedEntity cur = get(de.getClass(), de.getID(), jdbc);
             boolean update = (cur != null);
-            if (de.getLastModified() == null) {
+            if (de.lastModified == null) {
                 String tsSQL = gen.getCurrentTimeSQL();
                 log.debug("PUT: " + tsSQL);
 
-                // make call to server before startTransaction
-                Date now = (Date) jdbc.queryForObject(tsSQL, new RowMapper() {
-                    @Override
-                    public Object mapRow(ResultSet rs, int i) throws SQLException {
-                        return Util.getDate(rs, 1, Calendar.getInstance(DateUtil.LOCAL));
-                    }
-                });
+                // get current timestamp from server so that lastModified is closer to
+                // monatonically increasing than if we use client machine clock
+                Date now = getCurrentTime(jdbc);
                 DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
                 log.debug("current time: " + df.format(now));
                 // if not null, the entity was harvested so keep original timestamp

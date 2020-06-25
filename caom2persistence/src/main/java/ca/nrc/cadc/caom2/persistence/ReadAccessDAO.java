@@ -78,10 +78,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -174,8 +175,8 @@ public class ReadAccessDAO extends AbstractDAO {
         public ReleaseType releaseType;
         public Date metaRelease;
         public Date dataRelease;
-        public final List<URI> metaReadAccessGroups = new ArrayList<>();
-        public final List<URI> dataReadAccessGroups = new ArrayList<>();
+        public final Set<URI> metaReadAccessGroups = new TreeSet<>();
+        public final Set<URI> dataReadAccessGroups = new TreeSet<>();
     }
     
     private class ArtifactAccessMapper implements RowMapper {

@@ -69,9 +69,15 @@
 
 package ca.nrc.cadc.caom2.persistence;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.Plane;
+import static ca.nrc.cadc.caom2.persistence.AbstractObservationDAOTest.log;
 import ca.nrc.cadc.date.DateUtil;
 import java.text.DateFormat;
 import java.util.Date;
@@ -82,6 +88,7 @@ import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -114,14 +121,35 @@ public abstract class AbstractDeletedEntityDAOTest {
         }
     }
 
-    //@Before
+    Class[] ENTITY_CLASSES =
+    {
+        // including join tables before FK targets
+        ObservationMember.class, ProvenanceInput.class, Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
+    };
+    
+    @Before
     public void setup()
-            throws Exception {
-        log.debug("clearing old tables...");
+        throws Exception
+    {
+        log.info("clearing old tables...");
         SQLGenerator gen = dao.getSQLGenerator();
         DataSource ds = dao.getDataSource();
-        // TODO?
-        log.debug("clearing old tables... OK");
+        for (Class c : ENTITY_CLASSES)
+        {
+            String cn = c.getSimpleName();
+            String s = gen.getTable(c);
+            
+            String sql = "delete from " + s;
+            log.debug("setup: " + sql);
+            ds.getConnection().createStatement().execute(sql);
+            if (Observation.class.equals(c))
+            {
+                sql = sql.replace(cn, "DeletedObservation");
+                log.debug("setup: " + sql);
+                ds.getConnection().createStatement().execute(sql);
+            }
+        }
+        log.info("clearing old tables... OK");
     }
 
     @Test
@@ -137,9 +165,11 @@ public abstract class AbstractDeletedEntityDAOTest {
 
             log.info("put: " + o1);
             dao.put(o1);
+            Assert.assertNotNull("side effect: DeletedObservation.lastModified", o1.lastModified);
             
             DeletedEntity per = dao.get(DeletedObservation.class, id1);
-            Assert.assertNotNull(per);
+            Assert.assertNotNull("found DeletedObservation " + id1, per);
+            Assert.assertNotNull("DeletedObservation.lastModified", per.lastModified);
             
             dao.delete(per);
             
@@ -197,22 +227,23 @@ public abstract class AbstractDeletedEntityDAOTest {
             Thread.sleep(10L);
             dao.put(o5);
 
-            Date start = new Date(o1.getLastModified().getTime() - 100L); // past
+            Assert.assertNotNull("DeletedObservation.lastModified", o1.lastModified);
+            Date start = new Date(o1.lastModified.getTime() - 100L); // past
             Date end = null;
             Integer batchSize = new Integer(3);
             List<DeletedEntity> dels;
             
             // get first batch
             dels = dao.getList(DeletedObservation.class, start, end, batchSize);
-            Assert.assertNotNull(dels);
+            Assert.assertNotNull("deleted list", dels);
             Assert.assertEquals(3, dels.size());
             Assert.assertEquals(o1.getID(), dels.get(0).getID());
             Assert.assertEquals(o2.getID(), dels.get(1).getID());
             Assert.assertEquals(o3.getID(), dels.get(2).getID());
 
             // get next batch
-            dels = dao.getList(DeletedObservation.class, o3.getLastModified(), end, batchSize);
-            Assert.assertNotNull(dels);
+            dels = dao.getList(DeletedObservation.class, o3.lastModified, end, batchSize);
+            Assert.assertNotNull("deleted list/next batch", dels);
             Assert.assertEquals(3, dels.size()); // o3 gets picked up by the >=
             Assert.assertEquals(o3.getID(), dels.get(0).getID());
             Assert.assertEquals(o4.getID(), dels.get(1).getID());

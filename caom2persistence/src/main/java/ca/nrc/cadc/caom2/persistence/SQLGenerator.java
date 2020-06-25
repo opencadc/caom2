@@ -154,7 +154,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
@@ -163,6 +162,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
@@ -349,7 +349,7 @@ public class SQLGenerator {
             "collection", "observationID", "algorithm_name",
             "type", "intent", "sequenceNumber", "metaRelease",
             "proposal_id", "proposal_pi", "proposal_project", "proposal_title", "proposal_keywords",
-            "target_name", "target_id", "target_type", "target_standard",
+            "target_name", "target_targetID", "target_type", "target_standard",
             "target_redshift", "target_moving", "target_keywords",
             "targetPosition_coordsys", "targetPosition_equinox", "targetPosition_coordinates_cval1", "targetPosition_coordinates_cval2",
             "requirements_flag",
@@ -3377,7 +3377,7 @@ public class SQLGenerator {
             Polarization pol = new Polarization();
             String polStr = rs.getString(col++);
             if (polStr != null) {
-                pol.states = new ArrayList<PolarizationState>();
+                pol.states = new TreeSet<PolarizationState>();
                 Util.decodeStates(polStr, pol.states);
             }
             pol.dimension = Util.getLong(rs, col++);
