@@ -297,7 +297,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
             // create an observation using subject1
             Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-            putObservation(observation, subject1, 413, "too large:", null);
+            putObservation(observation, subject1, 413, null, null);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -391,7 +391,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
 
             // create an observation using subject1
             Observation observation = createVeryLargeObservation(TEST_COLLECTION, observationID);
-            postObservation(observation, subject1, 413, "too large:", null);
+            postObservation(observation, subject1, 413, null, null);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

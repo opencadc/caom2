@@ -114,8 +114,6 @@ import org.opencadc.gms.GroupURI;
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
-    
-
     public static final String ERROR_MIMETYPE = "text/plain";
 
     public static final int MAX_LIST_SIZE = 100000;
@@ -299,7 +297,7 @@ public abstract class RepoAction extends RestAction {
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkReadPermission(String collection) throws AccessControlException,
+    protected void checkReadPermission() throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
         if (!readable) {
             if (!writable) {
@@ -387,13 +385,13 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "permission denied (credentials not found): " + getURI().getCollection());
+                "permission denied (credentials not found): " + collection);
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "permission denied (user not found): " + getURI().getCollection());
+                "permission denied (user not found): " + collection);
         }
 
-        throw new AccessControlException("permission denied: " + getURI().getCollection());
+        throw new AccessControlException("permission denied: " + collection);
     }
 
     protected void validate(Observation obs) 
