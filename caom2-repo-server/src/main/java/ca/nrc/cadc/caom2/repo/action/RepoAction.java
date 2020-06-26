@@ -387,13 +387,13 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "permission denied (credentials not found): " + getURI());
+                "permission denied (credentials not found): " + getURI().getCollection());
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "permission denied (user not found): " + getURI());
+                "permission denied (user not found): " + getURI().getCollection());
         }
 
-        throw new AccessControlException("permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + getURI().getCollection());
     }
 
     protected void validate(Observation obs) 
