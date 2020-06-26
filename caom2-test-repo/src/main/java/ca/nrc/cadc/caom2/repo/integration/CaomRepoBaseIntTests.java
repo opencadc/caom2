@@ -76,7 +76,7 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
@@ -299,7 +299,7 @@ class CaomRepoBaseIntTests {
         ObservationReader reader = new ObservationReader();
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        HttpDownload get = new HttpDownload(url, bos);
+        HttpGet get = new HttpGet(url, bos);
 
         Subject.doAs(subject, new RunnableAction(get));
 
@@ -310,8 +310,10 @@ class CaomRepoBaseIntTests {
         }
 
         if (expectedMessage != null) {
-            String message = bos.toString().trim();
+            Assert.assertNotNull(get.getThrowable());
+            String message = get.getThrowable().getMessage();
             Assert.assertNotNull(message);
+            message = message.trim();
             if (exactMatch) {
                 Assert.assertEquals("Wrong response message", expectedMessage, message);
             } else {

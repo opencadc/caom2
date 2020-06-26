@@ -376,7 +376,6 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
 
         if (expectedMessage != null) {
             Assert.assertNotNull(get.getThrowable());
-            //String message = bos.toString().trim();
             String message = get.getThrowable().getMessage();
             Assert.assertNotNull(message);
             message = message.trim();
