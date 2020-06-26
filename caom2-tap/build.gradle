@@ -13,7 +13,7 @@ repositories {
 
 apply from: '../opencadc.gradle'
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
@@ -28,7 +28,7 @@ dependencies {
     compile 'org.opencadc:cadc-registry:[1.5.0,)'
     compile 'org.opencadc:cadc-tap:[1.0,)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
-    compile 'org.opencadc:caom2:[2.4,2.5)'
+    compile 'org.opencadc:caom2:[2.4.3,2.5)'
     compile 'org.opencadc:caom2-artifact-resolvers:[1.1.4,)'
  
     testCompile 'junit:junit:[4.0,5.0)'

@@ -31,7 +31,7 @@ delete from tap_schema.schemas11 where schema_name = 'caom2'
 select 'after cleanup' AS "after cleanup",table_name from tap_schema.tables11 where schema_name= 'caom2';
 
 insert into tap_schema.schemas11 (schema_name,description,utype) values
-('caom2', 'Common Archive Observation Model, version 2.3', 'caom2')
+('caom2', 'Common Archive Observation Model, version 2.4', 'caom2')
 ;
 
 -- index start at 20

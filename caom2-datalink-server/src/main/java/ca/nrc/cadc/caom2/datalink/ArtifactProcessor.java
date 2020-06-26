@@ -282,7 +282,7 @@ public class ArtifactProcessor
         public String bandMax;
         public String timeMin;
         public String timeMax;
-        public List<PolarizationState> pol;
+        public Set<PolarizationState> pol;
         public String customParam;
         public String customMin;
         public String customMax;
@@ -346,7 +346,6 @@ public class ArtifactProcessor
         }
 
         Polarization pol = PolarizationUtil.compute(aset);
-        List<PolarizationState> polStates = null;
         if (pol != null && pol.dimension != null && pol.dimension > 1)
         {
             ret.pol = pol.states;
@@ -445,7 +444,7 @@ public class ArtifactProcessor
             sp = new ServiceParameter("POL", "char", "*", "phys.polarization.state");
             for (PolarizationState s : ab.pol)
             {
-                sp.getOptions().add(s.stringValue());
+                sp.getOptions().add(s.getValue());
             }
             sd.getInputParams().add(sp);
         }

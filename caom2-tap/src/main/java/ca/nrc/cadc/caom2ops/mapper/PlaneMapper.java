@@ -74,12 +74,10 @@ import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Metrics;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Quality;
@@ -95,12 +93,12 @@ import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 
@@ -267,7 +265,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
             String polStates = Util.getString(data, map.get("caom2:Plane.polarization.states"));
             if (polStates != null) {
                 plane.polarization = new Polarization();
-                plane.polarization.states = new ArrayList<PolarizationState>();
+                plane.polarization.states = new TreeSet<>();
                 Util.decodeStates(polStates, plane.polarization.states);
                 plane.polarization.dimension = Util.getLong(data, map.get("caom2:Plane.polarization.dimension"));
             }
