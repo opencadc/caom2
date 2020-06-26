@@ -344,12 +344,12 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "read permission denied (credentials not found): " + getURI());
+                "permission denied (credentials not found): " + collection);
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "read permission denied (user not found): " + getURI());
+                "permission denied (user not found): " + collection);
         }
-        throw new AccessControlException("permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + collection);
     }
 
     /**
@@ -387,10 +387,10 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "read permission denied (credentials not found): " + getURI());
+                "permission denied (credentials not found): " + getURI());
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "read permission denied (user not found): " + getURI());
+                "permission denied (user not found): " + getURI());
         }
 
         throw new AccessControlException("permission denied: " + getURI());
