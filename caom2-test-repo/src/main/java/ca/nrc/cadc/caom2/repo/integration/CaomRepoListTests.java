@@ -379,6 +379,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
             //String message = bos.toString().trim();
             String message = get.getThrowable().getMessage();
             Assert.assertNotNull(message);
+            message = message.trim();
             if (exactMatch) {
                 Assert.assertEquals("Wrong response message", expectedMessage, message);
             } else {
