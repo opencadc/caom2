@@ -81,6 +81,7 @@ import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
@@ -364,7 +365,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
         URL url = this.buildURL(uri, maxRec, start, end, subject, order);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        HttpDownload get = new HttpDownload(url, bos);
+        HttpGet get = new HttpGet(url, bos);
         Subject.doAs(subject, new RunnableAction(get));
 
         int response = get.getResponseCode();
@@ -374,7 +375,9 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
         }
 
         if (expectedMessage != null) {
-            String message = bos.toString().trim();
+            Assert.assertNotNull(get.getThrowable());
+            //String message = bos.toString().trim();
+            String message = get.getThrowable().getMessage();
             Assert.assertNotNull(message);
             if (exactMatch) {
                 Assert.assertEquals("Wrong response message", expectedMessage, message);
