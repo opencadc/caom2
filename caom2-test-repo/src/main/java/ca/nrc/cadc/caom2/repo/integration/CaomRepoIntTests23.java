@@ -181,7 +181,7 @@ public class CaomRepoIntTests23 extends CaomRepoBaseIntTests {
         putObservation(observation, subject1, 200, "OK", null);
 
         // get the observation using subject3
-        getObservation(uri, subject3, 403, "permission denied: " + uri, EXPECTED_CAOM_VERSION);
+        getObservation(uri, subject3, 403, "permission denied: " + TEST_COLLECTION, EXPECTED_CAOM_VERSION);
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);
@@ -287,7 +287,7 @@ public class CaomRepoIntTests23 extends CaomRepoBaseIntTests {
 
         // create an observation using subject2
         SimpleObservation observation = new SimpleObservation(TEST_COLLECTION, observationID);
-        putObservation(observation, subject2, 403, "permission denied: " + uri, null);
+        putObservation(observation, subject2, 403, "permission denied: " + TEST_COLLECTION, null);
     }
 
     @Test
@@ -375,7 +375,7 @@ public class CaomRepoIntTests23 extends CaomRepoBaseIntTests {
         putObservation(observation, subject1, 200, "OK", null);
 
         // overwrite the observation with a post
-        postObservation(observation, subject2, 403, "permission denied: " + uri, null);
+        postObservation(observation, subject2, 403, "permission denied: " + TEST_COLLECTION, null);
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);
@@ -482,7 +482,7 @@ public class CaomRepoIntTests23 extends CaomRepoBaseIntTests {
         putObservation(observation, subject1, 200, "OK", null);
 
         // delete the observation using subject 2
-        putObservation(observation, subject2, 403, "permission denied: " + uri, null);
+        putObservation(observation, subject2, 403, "permission denied: " + TEST_COLLECTION, null);
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);
