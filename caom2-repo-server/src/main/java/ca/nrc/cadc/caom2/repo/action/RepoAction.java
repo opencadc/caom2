@@ -90,6 +90,7 @@ import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import com.csvreader.CsvWriter;
+import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -276,21 +277,17 @@ public abstract class RepoAction extends RestAction {
     
     // read the input stream (POST and PUT) and extract the observation from the XML
     // document
-    protected Observation getInputObservation() throws IOException {
-        /*
-         * // check content-type of input once we have a client that can set it List<String> types =
-         * syncInput.getHeaders("Content-Type"); if (types.isEmpty()) throw new
-         * IllegalArgumentException("no Content-Type found"); String contentType = types.get(0); if
-         * (!CAOM_MIMETYPE.equalsIgnoreCase(contentType)) throw new
-         * IllegalArgumentException("unexpected Content-Type found: " + contentType);
-         */
-
+    protected Observation getInputObservation() throws ObservationParsingException {
+        Object o = syncInput.getContent(ObservationInlineContentHandler.ERROR_KEY);
+        if (o != null) {
+            ObservationParsingException ex = (ObservationParsingException) o;
+            throw new IllegalArgumentException("invalid input: " + uri, ex);
+        }
         Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
         if (obs != null) {
             return (Observation) obs;
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**

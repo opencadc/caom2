@@ -180,17 +180,11 @@ public class AccessQueryRunner implements JobRunner {
                 if (raa == null) {
                     throw new ResourceNotFoundException("not found: " + id);
                 }
-                List<URI> metaReadAccessGroups = new ArrayList<URI>();
-                List<URI> dataReadAccessGroups = new ArrayList<URI>();
-                for (URI mra : raa.metaReadAccessGroups) {
-                    metaReadAccessGroups.add(mra);
-                }
-                for (URI dra : raa.dataReadAccessGroups) {
-                    dataReadAccessGroups.add(dra);
-                }
+                
                 ArtifactAccess aa = AccessUtil.getArtifactAccess(raa.artifact, 
-                        raa.metaRelease, metaReadAccessGroups, 
-                        raa.dataRelease, dataReadAccessGroups);
+                        raa.metaRelease, raa.metaReadAccessGroups, 
+                        raa.dataRelease, raa.dataReadAccessGroups);
+                
                 ArtifactAccessWriter w = new ArtifactAccessWriter();
                 syncOutput.setHeader("Content-Type", "text/xml");
                 syncOutput.setCode(200);
