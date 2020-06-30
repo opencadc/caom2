@@ -68,10 +68,15 @@
 */
 package ca.nrc.cadc.fits2caom2;
 
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.fits.TruncatedFileException;
+import nom.tam.util.ArrayDataInput;
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
@@ -103,11 +108,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import nom.tam.fits.Fits;
-import nom.tam.fits.FitsException;
-import nom.tam.fits.Header;
-import nom.tam.fits.TruncatedFileException;
-import nom.tam.util.ArrayDataInput;
 import org.apache.log4j.Logger;
 
 /**
@@ -131,9 +131,7 @@ public class Ingest implements Runnable
     private FitsMapping mapping;
     private File in;
     private File out;
-    private boolean sslEnabled;
 
-    private boolean dryrun;
     private boolean keepFiles;
     private boolean strictFitsParse = false;
     private boolean ignorePartialWCS = false;
@@ -157,11 +155,6 @@ public class Ingest implements Runnable
             throw new IllegalArgumentException("BUG: config cannot be null");
     }
 
-    public void setDryrun(boolean dryrun)
-    {
-        this.dryrun = dryrun;
-    }
-    
     public void setKeepFiles(boolean keepFiles)
     {
         this.keepFiles = keepFiles;
@@ -192,11 +185,6 @@ public class Ingest implements Runnable
         this.out = out;
     }
 
-    public void setSSLEnabled(boolean sslEnabled)
-    {
-        this.sslEnabled = sslEnabled;
-    }
-
     public void setIgnorePartialWCS(boolean ignorePartialWCS)
     {
         this.ignorePartialWCS = ignorePartialWCS;
@@ -225,9 +213,9 @@ public class Ingest implements Runnable
         for (int i = 0; i < uris.length; i++)
         {
             if (localFiles != null)
-                ingestFiles.add(new IngestableFile(uris[i], localFiles[i], sslEnabled));
+                ingestFiles.add(new IngestableFile(uris[i], localFiles[i]));
             else
-                ingestFiles.add(new IngestableFile(uris[i], null, sslEnabled));
+                ingestFiles.add(new IngestableFile(uris[i], null));
         }
         return ingestFiles;
     }
@@ -247,7 +235,7 @@ public class Ingest implements Runnable
             long start = System.currentTimeMillis();
 
             // Composite or Simple Observation
-            String members = mapping.getMapping("CompositeObservation.members");
+            String members = mapping.getMapping("DerivedObservation.members");
             boolean simple = members == null ? true : false;
             log.debug("simple " + simple);
             
@@ -269,18 +257,15 @@ public class Ingest implements Runnable
                 {
                     String algorithmName = mapping.getMapping("Observation.algorithm.name");
                     Algorithm algorithm = new Algorithm(algorithmName);
-                    CompositeObservation co = new CompositeObservation(collection, observationID, algorithm);
+                    DerivedObservation co = new DerivedObservation(collection, observationID, algorithm);
                     observation = co;
                 }
             }
             
             populateObservation(observation, ingestFiles);
             
-            if (!dryrun)
-            {
-                ObservationWriter w = new ObservationWriter();
-                w.write(observation, new FileWriter(out));
-            }
+            ObservationWriter w = new ObservationWriter();
+            w.write(observation, new FileWriter(out));
             
             long duration = System.currentTimeMillis() - start;
             log.info("Wrote Observation[" + collection + "/" + observationID + "/" + productID + "] to " + out.getName() + " in " + duration + "ms");
@@ -374,8 +359,9 @@ public class Ingest implements Runnable
 
             // Populate the Observation.
             fitsMapper.populate(Observation.class, observation, "Observation");
-            if (observation instanceof CompositeObservation)
-                fitsMapper.populate(CompositeObservation.class, observation, "CompositeObservation");
+            if (observation instanceof DerivedObservation) {
+                fitsMapper.populate(DerivedObservation.class, observation, "DerivedObservation");
+            }
             log.debug("Observation.environment: " + observation.environment);
 
             // Populate an existing or new Plane.

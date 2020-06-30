@@ -71,10 +71,13 @@ package ca.nrc.cadc.caom2.access;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -86,6 +89,10 @@ import org.junit.Test;
 public class AccessUtilTest {
     private static final Logger log = Logger.getLogger(AccessUtilTest.class);
 
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+    }
+    
     public AccessUtilTest() { 
     }
     
@@ -158,9 +165,9 @@ public class AccessUtilTest {
             Date pastDataRelease = new Date(System.currentTimeMillis() - 3600L);
             Date futureDataRelease = new Date(System.currentTimeMillis() + 3600L);
             
-            List<URI> dataReadGroups = new ArrayList<URI>();
+            Set<URI> dataReadGroups = new TreeSet<URI>();
             dataReadGroups.add(URI.create("ivo://cadc.nrc.ca/gms?DATA-READ"));
-            List<URI> metaReadGroups = new ArrayList<URI>();
+            Set<URI> metaReadGroups = new TreeSet<URI>();
             metaReadGroups.add(URI.create("ivo://cadc.nrc.ca/gms?META-READ"));
             ArtifactAccess actual;
             
@@ -203,10 +210,68 @@ public class AccessUtilTest {
         }
     }
     
-    private void assertListEquals(List<URI> expected, List<URI> actual) {
+    @Test
+    public void testArtifactAccessOverride() {
+        try {
+            Artifact data = new Artifact(URI.create("foo:bar/baz"), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact meta = new Artifact(URI.create("foo:bar/baz"), ProductType.PREVIEW, ReleaseType.META);
+            
+            Date pastMetaRelease = new Date(System.currentTimeMillis() - 2000L);
+            Date futureMetaRelease = new Date(System.currentTimeMillis() + 2000L);
+            
+            Date pastDataRelease = new Date(System.currentTimeMillis() - 4000L);
+            Date futureDataRelease = new Date(System.currentTimeMillis() + 4000L);
+            
+            Date pastArtifactRelease = new Date(System.currentTimeMillis() - 3000L);
+            Date futureArtifactRelease = new Date(System.currentTimeMillis() + 3000L);
+            data.getContentReadGroups().add(URI.create("ivo://cadc.nrc.ca/gms?DATA-OVERRIDE"));
+            meta.getContentReadGroups().add(URI.create("ivo://cadc.nrc.ca/gms?META-OVERRIDE"));
+            
+            Set<URI> dataReadGroups = new TreeSet<URI>();
+            dataReadGroups.add(URI.create("ivo://cadc.nrc.ca/gms?DATA-READ"));
+            Set<URI> metaReadGroups = new TreeSet<URI>();
+            metaReadGroups.add(URI.create("ivo://cadc.nrc.ca/gms?META-READ"));
+            ArtifactAccess actual;
+            
+            data.contentRelease = pastArtifactRelease;
+            actual = AccessUtil.getArtifactAccess(data, pastMetaRelease, metaReadGroups, pastDataRelease, dataReadGroups);
+            Assert.assertNotNull(actual);
+            Assert.assertEquals(pastArtifactRelease, actual.releaseDate);
+            Assert.assertTrue(actual.isPublic);
+            
+            meta.contentRelease = pastArtifactRelease;
+            actual = AccessUtil.getArtifactAccess(meta, pastMetaRelease, metaReadGroups, pastDataRelease, dataReadGroups);
+            Assert.assertNotNull(actual);
+            Assert.assertEquals(pastArtifactRelease, actual.releaseDate);
+            Assert.assertTrue(actual.isPublic);
+            
+            data.contentRelease = futureArtifactRelease;
+            actual = AccessUtil.getArtifactAccess(data, futureMetaRelease, metaReadGroups, futureDataRelease, dataReadGroups);
+            Assert.assertNotNull(actual);
+            Assert.assertEquals(futureArtifactRelease, actual.releaseDate);
+            Assert.assertFalse(actual.isPublic);
+            
+            meta.contentRelease = futureArtifactRelease;
+            actual = AccessUtil.getArtifactAccess(meta, futureMetaRelease, metaReadGroups, futureDataRelease, dataReadGroups);
+            Assert.assertNotNull(actual);
+            Assert.assertEquals(futureArtifactRelease, actual.releaseDate);
+            Assert.assertFalse(actual.isPublic);
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    private void assertListEquals(Set<URI> expected, Set<URI> actual) {
         Assert.assertEquals(expected.size(), actual.size());
-        for (URI e : expected) {
-            Assert.assertTrue(actual.contains(e));
+        Iterator<URI> ei = expected.iterator();
+        Iterator<URI> ai = actual.iterator();
+        while (ei.hasNext()) {
+            URI e = ei.next();
+            URI a = ai.next();
+            log.info("assertListEquals: " + e + " vs " + a);
+            Assert.assertEquals(e, a);
         }
     }
 }

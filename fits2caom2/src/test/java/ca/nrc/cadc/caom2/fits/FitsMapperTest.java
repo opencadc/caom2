@@ -72,7 +72,6 @@ import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CompositeObservation;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
@@ -105,6 +104,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import junit.framework.Assert;
+import ca.nrc.cadc.caom2.DerivedObservation;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.BeforeClass;
@@ -119,7 +119,7 @@ public class FitsMapperTest
     private static Logger log = Logger.getLogger(FitsValuesMap.class);
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
     
     static FitsMapping simpleMapping;
@@ -162,7 +162,7 @@ public class FitsMapperTest
     {
         Class[] classes = new Class[]
         {
-            CompositeObservation.class,
+            DerivedObservation.class,
             SimpleObservation.class,
             Observation.class,
             Proposal.class,
@@ -180,7 +180,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            0, 0, 11, 3, 0, 4, 1, 3, 0, 12, 5, 1, 3, 13
+            0, 0, 11, 3, 0, 5, 1, 3, 0, 14, 6, 1, 4, 15
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
@@ -231,7 +231,7 @@ public class FitsMapperTest
         Class[] classes = new Class[]
         {
             Observation.class,
-            CompositeObservation.class,
+            DerivedObservation.class,
             Proposal.class,
             Target.class,
             Telescope.class,
@@ -243,7 +243,7 @@ public class FitsMapperTest
         
         int[] members = new int[]
         {
-            1, 1, 1, 1, 1, 1, 2, 0, 2
+            1, 1, 1, 1, 1, 1, 2, 1, 2
         };
         
         FitsMapper mapper = new FitsMapper(simpleMapping);
@@ -266,7 +266,7 @@ public class FitsMapperTest
         {
             Observation.class,
             SimpleObservation.class,
-            CompositeObservation.class
+            DerivedObservation.class
         };
         
         int[] members = new int[]
@@ -355,12 +355,12 @@ public class FitsMapperTest
         throws Exception
     {
         Algorithm algorithm = new Algorithm("algo name");
-        CompositeObservation composite = new CompositeObservation("collection", "obsID", algorithm);
+        DerivedObservation composite = new DerivedObservation("collection", "obsID", algorithm);
         
         Assert.assertEquals("algo name", composite.getAlgorithm().getName());
         
         FitsMapper mapper = new FitsMapper(compositeMapping);
-        mapper.invokePublicSetMethods(CompositeObservation.class, composite, "Observation", compositeMapping);
+        mapper.invokePublicSetMethods(DerivedObservation.class, composite, "Observation", compositeMapping);
         
         Assert.assertNotNull(composite);
         Assert.assertNotNull(composite.getAlgorithm());
@@ -429,13 +429,13 @@ public class FitsMapperTest
     }
     
     @Test
-    public void testPopulateCompositeObservation()
+    public void testPopulateDerivedObservation()
         throws Exception
     {
         FitsMapper mapper = new FitsMapper(compositeMapping);
         Algorithm algorithm = new Algorithm("algorithm name");
-        CompositeObservation observation = new CompositeObservation("theCollection", "theObservationID", algorithm);
-        mapper.populate(CompositeObservation.class, observation, "CompositeObservation");
+        DerivedObservation observation = new DerivedObservation("theCollection", "theObservationID", algorithm);
+        mapper.populate(DerivedObservation.class, observation, "DerivedObservation");
         Assert.assertNotNull(observation);
         
         Assert.assertEquals("theCollection", observation.getCollection());

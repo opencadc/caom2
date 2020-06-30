@@ -96,7 +96,7 @@ public class AbstractTest
     protected void doTest(String[] args)
         throws Exception
     {
-        doTest(args, "build/tmp/int-test-output.xml");
+        doTest(args, "build/tmp/intTest-output.xml");
     }
 
     protected void doTest(String[] args, String outFilename)
@@ -126,7 +126,7 @@ public class AbstractTest
 //        String userDir = System.getProperty("user.dir");
 //
 //        String[] exec = new String[args.length + 3];
-//        exec[0] = userDir + "/src/int-tests/scripts/fits2caom2";
+//        exec[0] = userDir + "/src/intTests/scripts/fits2caom2";
 //        exec[1] = "-d";
 //        exec[2] = "--out="+outFilename;
 //

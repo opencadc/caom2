@@ -86,9 +86,8 @@ public interface SchemeHandler
      * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
      *         the uri is malformed such that a URL cannot be generated, or the uri is null
      * @param uri the URI to convert
-     * @param secure generates a secure URL if true
      * @return a URL to the identified resource
      */
-    public URL getURL(URI uri, boolean secure)
+    public URL getURL(URI uri)
         throws IllegalArgumentException;
 }

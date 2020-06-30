@@ -505,10 +505,14 @@ public final class CutoutUtil {
     static StringBuilder initCutout(String partName, Part p) {
         StringBuilder sb = new StringBuilder();
         sb.append("[").append(partName).append("]");
-        sb.append("[");
+        if (!p.getChunks().isEmpty()) {
+            sb.append("[");
 
-        // create template cutout for each axis in the data array in the right order
-        for (Chunk c : p.getChunks()) {
+            // create template cutout for each axis in the data array in the right order
+            // if there are multiple chunks, they should only differ in observable 
+        
+            Chunk c = p.getChunks().iterator().next();
+            //for (Chunk c : p.getChunks()) {
             int n = 0;
             if (c.naxis != null) {
                 n = c.naxis;
@@ -530,11 +534,12 @@ public final class CutoutUtil {
                     sb.append(OBS_CUT).append(",");
                 }
             }
-        }
-        if (sb.indexOf(",") > 0) {
-            sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
-        } else {
-            sb.append("]");
+            //}
+            if (sb.indexOf(",") > 0) {
+                sb.setCharAt(sb.length() - 1, ']'); // last comma to ]
+            } else {
+                sb.append("]");
+            }
         }
 
         log.debug("cutout template: " + sb.toString());

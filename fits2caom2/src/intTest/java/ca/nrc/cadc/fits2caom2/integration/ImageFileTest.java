@@ -68,11 +68,12 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.FileReader;
+import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -82,33 +83,34 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class SimpleFitsTest extends AbstractTest
+public class ImageFileTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(SimpleFitsTest.class);
+    private static final Logger log = Logger.getLogger(ImageFileTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public SimpleFitsTest()
+    public ImageFileTest()
     {
         super();
     }
 
     @Test
-    public void testSimpleFits()
+    public void testImageFile()
     {
         try
         {
             log.debug("testSimpleFits");
+            
+            String userDir = System.getProperty("user.dir");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=SimpleFits",
+                "--observationID=ImageFile",
                 "--productID=productID",
-                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=src/int-test/resources/simplefits.default"
+                "--uri=file://" + userDir + "/src/intTest/resources/image.png"
             };
 
             doTest(args);
@@ -118,9 +120,9 @@ public class SimpleFitsTest extends AbstractTest
             ObservationReader or = new ObservationReader();
             Observation o = or.read(new FileReader("build/tmp/SimpleFitsTest.xml"));
             Assert.assertNotNull(o);
-            Chunk c = o.getPlanes().iterator().next().getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
-            Assert.assertNotNull("chunk.position", c.position);
-            Assert.assertNotNull("chunk.position.axis.function", c.position.getAxis().function);
+            Set<Artifact> artifacts = o.getPlanes().iterator().next().getArtifacts();
+            Assert.assertNotNull("plane.artifacts", artifacts);
+            Assert.assertEquals(1, artifacts.size());
 
             log.info("testSimpleFits passed.");
         }

@@ -78,40 +78,39 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class MetaDataTest extends AbstractTest
+public class MultiExtensionFitsTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(MetaDataTest.class);
+    private static final Logger log = Logger.getLogger(MultiExtensionFitsTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public MetaDataTest()
+    public MultiExtensionFitsTest()
     {
         super();
     }
 
     @Test
-    public void testMetaData()
+    public void testMultiExtensionFits()
     {
         try
         {
-            log.debug("testMetaData");
+            log.debug("testMultiExtensionFits");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=MetaData",
+                "--observationID=MultiExtensionFits",
                 "--productID=productID",
-                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
-                "--default=src/int-test/resources/metadata.default",
-                "--override=src/int-test/resources/metadata.override"
+                "--uri=ad:MACHO/cal000312b,ad:MACHO/cal000312r",
+                "--default=src/intTest/resources/multiextensionfits.default"
             };
 
             doTest(args);
             doTest(args);
 
-            log.info("testMetaData passed.");
+            log.info("testMultiExtensionFits passed.");
         }
         catch (Exception unexpected)
         {

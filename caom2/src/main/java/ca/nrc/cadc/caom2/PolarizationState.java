@@ -84,17 +84,17 @@ import java.util.Comparator;
  * 
  * @author pdowler
  */
-public enum PolarizationState implements CaomEnum<String> {
+public enum PolarizationState implements CaomEnum<String>, Comparable<PolarizationState> {
     I("I"), Q("Q"), U("U"), V("V"), 
+    RR("RR"), LL("LL"), RL("RL"), LR("LR"), XX("XX"), YY("YY"), XY("XY"), YX("YX"),
     POLI("POLI"),   // linear polarized intensity sqrt(Q^2 + U^2)
     FPOLI("FPOLI"), // fractional linear polarization POLI/I, code used in AIPS
     POLA("POLA"),   // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
     EPOLI("EPOLI"), // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
     CPOLI("CPOLI"), // circular polarization intensity |V|
-    NPOLI("NPOLI"), // unpolarized intensity I - EPOLI
-    RR("RR"), LL("LL"), RL("RL"), LR("LR"), XX("XX"), YY("YY"), XY("XY"), YX("YX");
+    NPOLI("NPOLI"); // unpolarized intensity I - EPOLI
 
-    private String value;
+    private final String value;
 
     private PolarizationState(String value) {
         this.value = value;
@@ -104,19 +104,17 @@ public enum PolarizationState implements CaomEnum<String> {
         return value;
     }
 
-    /**
-     * @return
-     * @deprecated use getValue()
-     */
-    public String stringValue() {
-        return value;
-    }
-
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "[" + value + "]";
     }
 
+    /**
+     * Convert FITS WCS coordinate value to state.
+     * 
+     * @param val FITS WCS coordinate value
+     * @return state constant for specified FITS WCS coordinate value
+     */
     public static PolarizationState toValue(int val) {
         switch (val) {
             case 1:
@@ -170,6 +168,12 @@ public enum PolarizationState implements CaomEnum<String> {
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
+    /**
+     * Get the FITS WCS coordinate value for the specified state.
+     * 
+     * @param ps
+     * @return FITS WCS coordinate value
+     */
     public static int intValue(PolarizationState ps) {
         switch (ps) {
             case I:
@@ -212,27 +216,5 @@ public enum PolarizationState implements CaomEnum<String> {
                 break;
         }
         throw new IllegalArgumentException("invalid polarization code: " + ps);
-    }
-
-    public int checksum() {
-        return intValue(this);
-    }
-
-    public static class PolStateComparator
-            implements Comparator<PolarizationState>, Serializable {
-        private static final long serialVersionUID = 201706071000L;
-
-        public int compare(PolarizationState lhs, PolarizationState rhs) {
-            int ri = intValue(rhs);
-            int li = intValue(lhs);
-            if (li < ri) {
-                return -1;
-            }
-            if (li > ri) {
-                return 1;
-            }
-            return 0;
-        }
-
     }
 }

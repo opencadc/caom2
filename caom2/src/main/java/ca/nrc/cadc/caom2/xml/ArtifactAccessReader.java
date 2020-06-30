@@ -83,6 +83,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -137,7 +138,7 @@ public class ArtifactAccessReader {
         ret.releaseDate = getDate(root.getChildTextTrim(ENAMES.releaseDate.name()));
         ret.isPublic = getBoolean(root.getChildTextTrim(ENAMES.isPublic.name()));
         
-        getGroupList(ret.getReadGroups(), ENAMES.readGroups.name(), root.getChildren(ENAMES.readGroups.name()));
+        getReadGroups(ret.getReadGroups(), ENAMES.readGroups.name(), root.getChildren(ENAMES.readGroups.name()));
         
         return ret;
     }
@@ -195,7 +196,7 @@ public class ArtifactAccessReader {
         return ret;
     }
     
-    private void getGroupList(List<URI> fill, String ename, List<Element> elements) {
+    private void getReadGroups(Set<URI> fill, String ename, List<Element> elements) {
         if (elements == null || elements.isEmpty()) {
             return;
         }

@@ -70,9 +70,9 @@ package ca.nrc.cadc.caom2.access;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -84,7 +84,7 @@ public class ArtifactAccess {
 
     private final Artifact artifact;
     
-    private final List<URI> readGroups = new ArrayList<URI>();
+    private final Set<URI> readGroups = new TreeSet<URI>();
     
     /**
      * Flag denoting that the resource described by the URI is publicly readable.
@@ -119,9 +119,9 @@ public class ArtifactAccess {
     /**
      * Get the list of groups with read-access to the  Artifact URI.
      * 
-     * @return list of groups with read-access
+     * @return set of groups with read-access
      */
-    public List<URI> getReadGroups() {
+    public Set<URI> getReadGroups() {
         return readGroups;
     }
 

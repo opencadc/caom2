@@ -88,8 +88,8 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
 
     // mutable contents
     private final Set<Artifact> artifacts = new TreeSet<Artifact>();
-    private final Set<URI> metaReadGroups = new TreeSet<URI>();
-    private final Set<URI> dataReadGroups = new TreeSet<URI>();
+    private final TreeSet<URI> metaReadGroups = new TreeSet<URI>();
+    private final TreeSet<URI> dataReadGroups = new TreeSet<URI>();
 
     // mutable state
     public URI creatorID;

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2014.                            (c) 2014.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -66,6 +66,7 @@
 *
 ************************************************************************
 */
+
 package ca.nrc.cadc.fits2caom2.integration;
 
 import ca.nrc.cadc.util.Log4jInit;
@@ -74,43 +75,71 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- * @author jburke
- */
-public class MultiExtensionFitsTest extends AbstractTest
+public class PartialWCSTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(MultiExtensionFitsTest.class);
+    private static final Logger log = Logger.getLogger(PartialWCSTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public MultiExtensionFitsTest()
+    public PartialWCSTest()
     {
         super();
     }
 
     @Test
-    public void testMultiExtensionFits()
+    public void testAllowPartialWCS()
     {
         try
         {
-            log.debug("testMultiExtensionFits");
+            log.debug("testAllowPartialWCS");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=MultiExtensionFits",
+                "--observationID=AllowPartialWCS",
                 "--productID=productID",
-                "--uri=ad:MACHO/cal000312b,ad:MACHO/cal000312r",
-                "--default=src/int-test/resources/multiextensionfits.default"
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=src/intTest/resources/partialWCS.default"
+            };
+
+            try
+            {
+                doTest(args);
+                Assert.fail("Expected exception");
+            }
+            catch (Exception expected) {}
+
+            log.info("testAllowPartialWCS passed.");
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testIgnorePartialWCS()
+    {
+        try
+        {
+            log.debug("testIgnorePartialWCS");
+
+            String[] args = new String[]
+            {
+                "--collection=TEST",
+                "--observationID=AllowPartialWCS",
+                "--productID=productID",
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=src/intTest/resources/partialWCS.default",
+                "--ignorePartialWCS"
             };
 
             doTest(args);
-            doTest(args);
 
-            log.info("testMultiExtensionFits passed.");
+            log.info("testIgnorePartialWCS passed.");
         }
         catch (Exception unexpected)
         {

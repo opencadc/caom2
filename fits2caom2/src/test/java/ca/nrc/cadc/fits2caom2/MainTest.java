@@ -110,7 +110,7 @@ public class MainTest
         
         // collection, observationID, productID, uri, out,
         // local, in, config, default, override,
-        // temp, netrc, test, keep, no-retrieve
+        // temp, netrc, keep, no-retrieve
         allArguments = new String[]
         {
             "--" + Argument.COLLECTION + "=arg.collection",
@@ -129,7 +129,6 @@ public class MainTest
             "-"  + Argument.NETRC_SHORT,
             "--" + Argument.NETRC,
             "--" + Argument.KEEP,
-            "--" + Argument.TEST,
             "--" + CertCmdArgUtil.ARG_CERT + "=src/test/resources/fakeproxy.pem"
         };
     }

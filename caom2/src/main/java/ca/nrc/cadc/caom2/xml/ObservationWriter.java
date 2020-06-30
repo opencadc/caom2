@@ -978,7 +978,7 @@ public class ObservationWriter implements Serializable {
         if (comp.states != null) {
             Element pe = getCaom2Element("states");
             for (PolarizationState s : comp.states) {
-                addElement("state", s.stringValue(), pe);
+                addElement("state", s.getValue(), pe);
             }
             e.addContent(pe);
         }

@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.Date;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
@@ -103,8 +104,8 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
     public Date metaRelease;
 
     // mutable contents
-    private final Set<Plane> planes = new TreeSet<Plane>();
-    private final Set<URI> metaReadGroups = new TreeSet<URI>();
+    private final SortedSet<Plane> planes = new TreeSet<Plane>();
+    private final SortedSet<URI> metaReadGroups = new TreeSet<URI>();
 
     protected Observation(String collection, String observationID,
             Algorithm algorithm) {

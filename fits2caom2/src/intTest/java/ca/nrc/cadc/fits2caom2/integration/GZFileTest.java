@@ -104,9 +104,9 @@ public class GZFileTest extends AbstractTest
                 "--observationID=GZFileTest",
                 "--productID=productID",
                 "--uri=ad:CFHT/1003700o",
-                "--config=src/int-test/resources/gzfiletest.config",
-                "--default=src/int-test/resources/gzfiletest.default",
-                "--override=src/int-test/resources/gzfiletest.override"
+                "--config=src/intTest/resources/gzfiletest.config",
+                "--default=src/intTest/resources/gzfiletest.default",
+                "--override=src/intTest/resources/gzfiletest.override"
             };
 
             doTest(args);

@@ -97,7 +97,6 @@ public abstract class Argument
     public static final String OVERRIDE = "override";
     public static final String PRODUCT_ID = "productID";
     public static final String TEMP = "temp";
-    public static final String TEST = "test";
     public static final String URI = "uri";
     public static final String VERSION = "version";
 
@@ -118,7 +117,7 @@ public abstract class Argument
         DUMPCONFIG, H, HELP, IGNORE_PARTIAL_WCS, IN,
         KEEP, LOCAL, NETRC_SHORT, NETRC, LOG,
         OBSERVATION_ID, OUT, OVERRIDE, PRODUCT_ID,
-        TEST, TEMP, URI,
+        TEMP, URI,
         LOG_DEBUG_SHORT, LOG_QUIET, LOG_QUIET_SHORT, 
         LOG_VERBOSE, LOG_VERBOSE_SHORT
     };
@@ -152,8 +151,6 @@ public abstract class Argument
         sb.append("\t--").append(Argument.LOCAL).append("=\t\t\t < list of files in local filesystem > (same order as ").append(Argument.URI).append(")").append(NEWLINE);
         sb.append("\t--").append(Argument.LOG).append("=\t\t\t < log file name > (instead of console)").append(NEWLINE);
         sb.append("\t--").append(Argument.IGNORE_PARTIAL_WCS).append("\t\t do not stop and exit upon finding partial WCS").append(NEWLINE);
-        sb.append("\t--").append(Argument.TEST).append("\t\t\t test mode, do not persist to database").append(NEWLINE);
-//        sb.append("\t--").append(Argument.VERSION).append("\t\t output the version number of fits2caom2 and included jars").append(NEWLINE);
         sb.append("\t").append(CertCmdArgUtil.getCertArgUsage()).append(NEWLINE);
         return sb.toString();
     }

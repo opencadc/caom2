@@ -111,6 +111,12 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
     public static final DataProductType EVENT = new DataProductType("event");
     
     /**
+     * Incorrect value from ObsCore WD that was actually used.
+     */
+    @Deprecated
+    public static final DataProductType EVENTLIST = new DataProductType("eventlist");
+    
+    /**
      * ObsCore-1.0 cube.
      */
     public static final DataProductType CUBE = new DataProductType("cube");
@@ -133,7 +139,7 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
 
     public static final DataProductType[] values() {
         return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENT };
+                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENT, EVENTLIST };
     }
 
     private DataProductType(String value) {

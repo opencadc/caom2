@@ -68,12 +68,7 @@
 */
 package ca.nrc.cadc.fits2caom2.integration;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.FileReader;
-import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -83,48 +78,40 @@ import org.junit.Test;
  *
  * @author jburke
  */
-public class ImageFileTest extends AbstractTest
+public class MetaDataTest extends AbstractTest
 {
-    private static final Logger log = Logger.getLogger(ImageFileTest.class);
+    private static final Logger log = Logger.getLogger(MetaDataTest.class);
     static
     {
         Log4jInit.setLevel("ca.nrc.cadc.fits2caom2", Level.INFO);
     }
 
-    public ImageFileTest()
+    public MetaDataTest()
     {
         super();
     }
 
     @Test
-    public void testImageFile()
+    public void testMetaData()
     {
         try
         {
-            log.debug("testSimpleFits");
-            
-            String userDir = System.getProperty("user.dir");
+            log.debug("testMetaData");
 
             String[] args = new String[]
             {
                 "--collection=TEST",
-                "--observationID=ImageFile",
+                "--observationID=MetaData",
                 "--productID=productID",
-                "--uri=file://" + userDir + "/src/int-test/resources/image.png"
+                "--uri=ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03",
+                "--default=src/intTest/resources/metadata.default",
+                "--override=src/intTest/resources/metadata.override"
             };
 
             doTest(args);
-            doTest(args, "build/tmp/SimpleFitsTest.xml");
+            doTest(args);
 
-            // check that CDi_j worked
-            ObservationReader or = new ObservationReader();
-            Observation o = or.read(new FileReader("build/tmp/SimpleFitsTest.xml"));
-            Assert.assertNotNull(o);
-            Set<Artifact> artifacts = o.getPlanes().iterator().next().getArtifacts();
-            Assert.assertNotNull("plane.artifacts", artifacts);
-            Assert.assertEquals(1, artifacts.size());
-
-            log.info("testSimpleFits passed.");
+            log.info("testMetaData passed.");
         }
         catch (Exception unexpected)
         {

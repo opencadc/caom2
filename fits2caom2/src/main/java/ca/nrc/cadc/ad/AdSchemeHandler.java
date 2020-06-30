@@ -70,6 +70,7 @@
 package ca.nrc.cadc.ad;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import java.io.UnsupportedEncodingException;
@@ -96,8 +97,6 @@ public class AdSchemeHandler implements SchemeHandler
     private URI dataURI;
 
     private RegistryClient rc;
-    private String baseHttpURL;
-    private String baseHttpsURL;
 
     public AdSchemeHandler()
     {
@@ -117,20 +116,15 @@ public class AdSchemeHandler implements SchemeHandler
      * Convert a URI to a URL.
      *
      * @param uri the URI to convert to an URL.
-     * @param secure generate a secure HTTP URL.
      * @throws IllegalArgumentException if the URI scheme is invalid
      * @return a URL to the identified resource
      */
-    public URL getURL(URI uri, boolean secure)
+    public URL getURL(URI uri)
     {
         if (!SCHEME.equals(uri.getScheme()))
             throw new IllegalArgumentException("invalid scheme in " + uri);
 
-        AuthMethod authMethod = AuthMethod.ANON;
-        if (secure)
-        {
-            authMethod = AuthMethod.CERT;
-        }
+        AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
 
         String path = getPath(uri);
         URL serviceURL = rc.getServiceURL(dataURI, Standards.DATA_10, authMethod);

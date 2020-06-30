@@ -92,7 +92,6 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -103,14 +102,13 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author pdowler
@@ -175,6 +173,52 @@ public class CutoutUtilTest {
             String rox = sb.toString();
             log.info("reverse axes: " + rox);
             Assert.assertEquals("[name][oo,pp,tt,ee,py,px]", rox);
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testInitCutoutMultipleChunks() {
+        try {
+            Part p = new Part("name");
+            Chunk c1 = new Chunk();
+            p.getChunks().add(c1);
+            Chunk c2 = new Chunk();
+            p.getChunks().add(c2);
+            StringBuilder sb;
+            
+            // no axes
+            sb = CutoutUtil.initCutout(p.getName(), p);
+            String nox = sb.toString();
+            log.info("no axes: " + nox);
+            Assert.assertEquals("[name][]", nox);
+            
+            // all axes in typical order
+            c1.naxis = 2;
+            c1.energyAxis = 1;
+            c1.observableAxis = 2;
+            // these have no effect with naxis=2
+            c1.positionAxis1 = 3;
+            c1.positionAxis2 = 4;
+            c1.timeAxis = 5;
+            c1.polarizationAxis = 6;
+            
+            sb = CutoutUtil.initCutout(p.getName(), p);
+            String tox = sb.toString();
+            log.info("one chunk of spectrum in an image array (energy+observable): " + tox);
+            Assert.assertEquals("[name][ee,oo]", tox);
+            
+            c2.naxis = 2;
+            c2.energyAxis = 1;
+            c2.observableAxis = 2;
+            
+            sb = CutoutUtil.initCutout(p.getName(), p);
+            tox = sb.toString();
+            log.info("two chunks of spectrum in an image array (energy+observable): " + tox);
+            Assert.assertEquals("[name][ee,oo]", tox);
             
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

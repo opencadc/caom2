@@ -88,15 +88,15 @@ public class AdSchemeHandlerTest
 {
     private static final Logger log = Logger.getLogger(AdSchemeHandlerTest.class);
 
-    private URL baseHttpURL;
-    private URL baseHttpsURL;
+    private URL baseAnonURL;
+    private URL baseCertURL;
 
     public AdSchemeHandlerTest()
         throws Exception
     {
         RegistryClient rc = new RegistryClient();
-        this.baseHttpURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), Standards.DATA_10, AuthMethod.ANON);
-        this.baseHttpsURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), Standards.DATA_10, AuthMethod.CERT);
+        this.baseAnonURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), Standards.DATA_10, AuthMethod.ANON);
+        this.baseCertURL = rc.getServiceURL(new URI("ivo://cadc.nrc.ca/data"), Standards.DATA_10, AuthMethod.CERT);
     }
 
     @BeforeClass
@@ -116,19 +116,19 @@ public class AdSchemeHandlerTest
             AdSchemeHandler schemeHandler = new AdSchemeHandler();
 
             URI uri = new URI("ad", "ARCHIVE/fileID", null);
-            URL url = schemeHandler.getURL(uri, false);
+            URL url = schemeHandler.getURL(uri);
 
             Assert.assertNotNull(url);
-            Assert.assertEquals("protocol", baseHttpURL.getProtocol(), url.getProtocol());
-            Assert.assertEquals("hostname", baseHttpURL.getHost(), url.getHost());
-            Assert.assertEquals("path", baseHttpURL.getPath() + "/ARCHIVE/fileID", url.getPath());
+            Assert.assertEquals("protocol", baseAnonURL.getProtocol(), url.getProtocol());
+            Assert.assertEquals("hostname", baseAnonURL.getHost(), url.getHost());
+            Assert.assertEquals("path", baseAnonURL.getPath() + "/ARCHIVE/fileID", url.getPath());
 
-            url = schemeHandler.getURL(uri, true);
+            url = schemeHandler.getURL(uri);
 
             Assert.assertNotNull(url);
-            Assert.assertEquals("protocol", baseHttpsURL.getProtocol(), url.getProtocol());
-            Assert.assertEquals("hostname", baseHttpsURL.getHost(), url.getHost());
-            Assert.assertEquals("path", baseHttpsURL.getPath() + "/ARCHIVE/fileID", url.getPath());
+            Assert.assertEquals("protocol", baseCertURL.getProtocol(), url.getProtocol());
+            Assert.assertEquals("hostname", baseCertURL.getHost(), url.getHost());
+            Assert.assertEquals("path", baseCertURL.getPath() + "/ARCHIVE/fileID", url.getPath());
         }
         catch(Exception unexpected)
         {

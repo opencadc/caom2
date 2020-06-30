@@ -160,6 +160,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.jdom2.Attribute;
@@ -1171,7 +1172,7 @@ public class ObservationReader implements Serializable {
         Element cur = getChildElement("states", element, namespace, false);
         if (cur != null) {
             List<Element> ces = cur.getChildren();
-            pol.states = new ArrayList<PolarizationState>(ces.size());
+            pol.states = new TreeSet<PolarizationState>();
             for (Element e : ces) {
                 String ss = e.getTextTrim();
                 PolarizationState ps = PolarizationState.valueOf(ss);

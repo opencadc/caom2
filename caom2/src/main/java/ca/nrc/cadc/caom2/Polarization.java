@@ -70,14 +70,14 @@
 package ca.nrc.cadc.caom2;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.SortedSet;
 
 /**
  *
  * @author pdowler
  */
 public class Polarization implements Serializable {
-    public List<PolarizationState> states;
+    public SortedSet<PolarizationState> states;
     public Long dimension;
 
     @Override
@@ -86,7 +86,7 @@ public class Polarization implements Serializable {
         sb.append(this.getClass().getSimpleName()).append("[");
         if (states != null) {
             for (PolarizationState s : states) {
-                sb.append(s.stringValue()).append(",");
+                sb.append(s.getValue()).append(",");
             }
         }
         sb.append("d=").append(dimension).append("]");

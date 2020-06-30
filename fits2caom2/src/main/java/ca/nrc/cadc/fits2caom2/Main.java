@@ -168,7 +168,6 @@ public class Main
             else
             {
                 log.debug("SSL credentials found: running ingest as " + subject);
-                ingest.setSSLEnabled(true);
                 Subject.doAs(subject, new RunnableAction(ingest));
             }
         }
@@ -215,7 +214,6 @@ public class Main
 
         // Optional command line arguments.
         ingest.setKeepFiles(argsMap.isSet(Argument.KEEP));
-        ingest.setDryrun(argsMap.isSet(Argument.TEST));
         ingest.setIgnorePartialWCS(argsMap.isSet(Argument.IGNORE_PARTIAL_WCS));
         
         // always set this option

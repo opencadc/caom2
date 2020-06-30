@@ -75,7 +75,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.text.DateFormat;
-import java.util.List;
+import java.util.Set;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -151,7 +151,7 @@ public class ArtifactAccessWriter {
         parent.addContent(uri);
     }
     
-    private void addGroups(List<URI> groups, Element parent) {
+    private void addGroups(Set<URI> groups, Element parent) {
         for (URI u : groups) {
             Element uri = new Element(ArtifactAccessReader.ENAMES.uri.name());
             uri.setText(u.toASCIIString());

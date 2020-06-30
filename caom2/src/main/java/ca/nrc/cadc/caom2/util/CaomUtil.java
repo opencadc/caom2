@@ -91,13 +91,11 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 
@@ -219,29 +217,23 @@ public class CaomUtil implements Serializable {
     }
     
     // IVOA ObsCore-1.0 Data Model, B.6.6
-    public static String encodeStates(List<PolarizationState> states) {
+    public static String encodeStates(SortedSet<PolarizationState> states) {
         if (states == null || states.isEmpty()) {
             return null;
         }
         StringBuilder sb = new StringBuilder();
 
-        // sort into canonical order
-        List<PolarizationState> tmp = new ArrayList<PolarizationState>(
-                states.size());
-        tmp.addAll(states);
-        Collections.sort(tmp, new PolarizationState.PolStateComparator());
-
-        Iterator<PolarizationState> i = tmp.iterator();
+        Iterator<PolarizationState> i = states.iterator();
         sb.append(POL_STATE_SEPARATOR); // leading
         while (i.hasNext()) {
             PolarizationState s = i.next();
-            sb.append(s.stringValue());
+            sb.append(s.getValue());
             sb.append(POL_STATE_SEPARATOR); // trailing
         }
         return sb.toString();
     }
 
-    public static void decodeStates(String val, List<PolarizationState> out) {
+    public static void decodeStates(String val, SortedSet<PolarizationState> out) {
         if (val == null) {
             return;
         }
