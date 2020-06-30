@@ -208,7 +208,7 @@ public class CutoutUtilTest {
             
             sb = CutoutUtil.initCutout(p.getName(), p);
             String tox = sb.toString();
-            log.info("spectrum in an image array (energy+observable): " + tox);
+            log.info("one chunk of spectrum in an image array (energy+observable): " + tox);
             Assert.assertEquals("[name][ee,oo]", tox);
             
             c2.naxis = 2;
@@ -217,7 +217,7 @@ public class CutoutUtilTest {
             
             sb = CutoutUtil.initCutout(p.getName(), p);
             tox = sb.toString();
-            log.info("spectrum in an image array (energy+observable): " + tox);
+            log.info("two chunks of spectrum in an image array (energy+observable): " + tox);
             Assert.assertEquals("[name][ee,oo]", tox);
             
         } catch (Exception unexpected) {
