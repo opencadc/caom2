@@ -82,6 +82,7 @@ import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
@@ -90,7 +91,6 @@ import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import com.csvreader.CsvWriter;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -289,9 +289,8 @@ public abstract class RepoAction extends RestAction {
     }
 
     /**
-     * Check if the caller can read the specified resource.
+     * Check if the caller can read the resource.
      *
-     * @param collection
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
@@ -351,15 +350,14 @@ public abstract class RepoAction extends RestAction {
     }
 
     /**
-     * Check if the caller can create or modify the specified resource.
+     * Check if the caller can create or modify the resource.
      *
-     * @param uri
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkWritePermission(ObservationURI uri) throws AccessControlException,
+    protected void checkWritePermission() throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
         if (!writable) {
             if (readable) {

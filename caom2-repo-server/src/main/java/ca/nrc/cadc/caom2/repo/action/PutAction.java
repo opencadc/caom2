@@ -92,7 +92,7 @@ public class PutAction extends RepoAction {
         ObservationURI uri = getURI();
         log.debug("START: " + uri);
 
-        checkWritePermission(uri);
+        checkWritePermission();
 
         Observation obs = getInputObservation();
 
