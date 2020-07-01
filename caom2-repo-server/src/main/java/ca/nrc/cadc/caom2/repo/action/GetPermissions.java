@@ -114,20 +114,15 @@ public class GetPermissions extends GetAction {
             throw new IllegalArgumentException("invalid input: " + path);
         }
 
-        doGetPermissions(collection, artifactURI);
+        //checkReadPermission();
+        
+        doGetPermissions(artifactURI);
     }
 
-    /**
-     * Get the access permissions for the given ArtifactURI.
-     * 
-     * @param collection the collection containing the artifact.
-     * @param artifactURI the ArtifactURI.
-     * @throws Exception
-     */
-    protected void doGetPermissions(String collection, URI artifactURI) throws Exception {
+    protected void doGetPermissions(URI artifactURI) throws Exception {
         log.debug("START: " + artifactURI);
 
-        checkReadPermission(collection);
+        
 
         ReadAccessDAO readAccessDAO = getReadAccessDAO(artifactURI);
         ReadAccessDAO.RawArtifactAccess raa = readAccessDAO.getArtifactAccess(artifactURI);

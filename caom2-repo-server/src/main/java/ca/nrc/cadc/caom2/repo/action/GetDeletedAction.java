@@ -107,7 +107,7 @@ public class GetDeletedAction extends RepoAction {
     protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
         log.debug("START: " + getCollection());
 
-        checkReadPermission(getCollection());
+        checkReadPermission();
 
         DeletedEntityDAO dao = getDeletedDAO();
 
@@ -135,8 +135,8 @@ public class GetDeletedAction extends RepoAction {
             writer.write(ddo.getID().toString());
             writer.write(ddo.getURI().getCollection());
             writer.write(ddo.getURI().getObservationID());
-            if (ddo.getLastModified() != null) {
-                writer.write(df.format(ddo.getLastModified()));
+            if (ddo.lastModified != null) {
+                writer.write(df.format(ddo.lastModified));
             } else {
                 writer.write("");
             }

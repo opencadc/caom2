@@ -428,19 +428,11 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
         boolean txnOpen = false;
         try {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            
             // get current timestamp from server so that lastModified is closer to
             // monatonically increasing than if we use client machine clock
-            String tsSQL = gen.getCurrentTimeSQL();
-            log.debug("PUT: " + tsSQL);
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-
-            // make call to server before startTransaction
-            Date now = (Date) jdbc.queryForObject(tsSQL, new RowMapper() {
-                @Override
-                public Object mapRow(ResultSet rs, int i) throws SQLException {
-                    return Util.getDate(rs, 1, Calendar.getInstance(DateUtil.LOCAL));
-                }
-            });
+            Date now = getCurrentTime(jdbc);
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             log.debug("current time: " + df.format(now));
 
@@ -449,6 +441,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             //       if they violate unique keys
             String sql = gen.getSelectSQL(obs.getID(), SQLGenerator.MAX_DEPTH, true);
             log.debug("PUT: " + sql);
+            
             final ObservationSkeleton dirtyRead = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
 
             log.debug("starting transaction");

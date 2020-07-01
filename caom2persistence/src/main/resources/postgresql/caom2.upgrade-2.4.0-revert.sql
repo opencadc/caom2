@@ -5,11 +5,11 @@
 start transaction;
 
 alter table caom2.Observation 
-    drop column target_id, 
+    drop column target_targetID, 
     drop column metaProducer;
 
-drop index i_parent2member;
-drop index i_member2parent;
+drop index caom2.i_parent2member;
+drop index caom2.i_member2parent;
 
 alter table caom2.ObservationMember
     rename column parentID to compositeID;

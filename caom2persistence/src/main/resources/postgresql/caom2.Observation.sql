@@ -17,7 +17,7 @@ create table <schema>.Observation
     proposal_keywords citext,
 
     target_name varchar(64),
-    target_id   varchar(128),
+    target_targetID varchar(128),
     target_type varchar(64),
     target_standard integer,
     target_redshift double precision,

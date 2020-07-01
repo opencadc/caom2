@@ -119,7 +119,7 @@ public class GetAction extends RepoAction {
     protected void doGetObservation(ObservationURI uri) throws Exception {
         log.debug("START: " + uri);
 
-        checkReadPermission(uri.getCollection());
+        checkReadPermission();
 
         ObservationDAO dao = getDAO();
         ObservationResponse resp = dao.getObservationResponse(uri);
@@ -146,7 +146,7 @@ public class GetAction extends RepoAction {
     protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
         log.debug("START: " + getCollection());
 
-        checkReadPermission(getCollection());
+        checkReadPermission();
 
         ObservationDAO dao = getDAO();
 

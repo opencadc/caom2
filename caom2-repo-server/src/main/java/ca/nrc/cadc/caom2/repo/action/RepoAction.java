@@ -82,6 +82,7 @@ import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
@@ -112,8 +113,6 @@ import org.opencadc.gms.GroupURI;
  */
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
-
-    
 
     public static final String ERROR_MIMETYPE = "text/plain";
 
@@ -276,33 +275,28 @@ public abstract class RepoAction extends RestAction {
     
     // read the input stream (POST and PUT) and extract the observation from the XML
     // document
-    protected Observation getInputObservation() throws IOException {
-        /*
-         * // check content-type of input once we have a client that can set it List<String> types =
-         * syncInput.getHeaders("Content-Type"); if (types.isEmpty()) throw new
-         * IllegalArgumentException("no Content-Type found"); String contentType = types.get(0); if
-         * (!CAOM_MIMETYPE.equalsIgnoreCase(contentType)) throw new
-         * IllegalArgumentException("unexpected Content-Type found: " + contentType);
-         */
-
+    protected Observation getInputObservation() throws ObservationParsingException {
+        Object o = syncInput.getContent(ObservationInlineContentHandler.ERROR_KEY);
+        if (o != null) {
+            ObservationParsingException ex = (ObservationParsingException) o;
+            throw new IllegalArgumentException("invalid input: " + uri, ex);
+        }
         Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
         if (obs != null) {
             return (Observation) obs;
-        } else {
-            return null;
         }
+        return null;
     }
 
     /**
-     * Check if the caller can read the specified resource.
+     * Check if the caller can read the resource.
      *
-     * @param collection
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkReadPermission(String collection) throws AccessControlException,
+    protected void checkReadPermission() throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
         if (!readable) {
             if (!writable) {
@@ -347,24 +341,23 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "read permission denied (credentials not found): " + getURI());
+                "permission denied (credentials not found): " + collection);
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "read permission denied (user not found): " + getURI());
+                "permission denied (user not found): " + collection);
         }
-        throw new AccessControlException("permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + collection);
     }
 
     /**
-     * Check if the caller can create or modify the specified resource.
+     * Check if the caller can create or modify the resource.
      *
-     * @param uri
      * @throws AccessControlException
      * @throws java.security.cert.CertificateException
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkWritePermission(ObservationURI uri) throws AccessControlException,
+    protected void checkWritePermission() throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
         if (!writable) {
             if (readable) {
@@ -390,13 +383,13 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "read permission denied (credentials not found): " + getURI());
+                "permission denied (credentials not found): " + collection);
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "read permission denied (user not found): " + getURI());
+                "permission denied (user not found): " + collection);
         }
 
-        throw new AccessControlException("permission denied: " + getURI());
+        throw new AccessControlException("permission denied: " + collection);
     }
 
     protected void validate(Observation obs) 

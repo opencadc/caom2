@@ -81,6 +81,7 @@ import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
@@ -147,7 +148,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
 
         // Check that we have no permission to list the observations
         checkObservationList(0, SCHEME + TEST_COLLECTION, maxRec, start, null,
-            subject3, null, null, 403, "permission denied: ", false);
+            subject3, null, null, 403, "permission denied: " + TEST_COLLECTION, true);
 
         // cleanup (ok to fail)
         for (Observation obs : observations) {
@@ -364,7 +365,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
         URL url = this.buildURL(uri, maxRec, start, end, subject, order);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        HttpDownload get = new HttpDownload(url, bos);
+        HttpGet get = new HttpGet(url, bos);
         Subject.doAs(subject, new RunnableAction(get));
 
         int response = get.getResponseCode();
@@ -374,8 +375,10 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
         }
 
         if (expectedMessage != null) {
-            String message = bos.toString().trim();
+            Assert.assertNotNull(get.getThrowable());
+            String message = get.getThrowable().getMessage();
             Assert.assertNotNull(message);
+            message = message.trim();
             if (exactMatch) {
                 Assert.assertEquals("Wrong response message", expectedMessage, message);
             } else {

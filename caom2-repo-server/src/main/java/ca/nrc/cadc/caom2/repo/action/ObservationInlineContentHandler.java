@@ -88,17 +88,13 @@ public class ObservationInlineContentHandler implements InlineContentHandler {
     // 20MB XML Doc size limit
     private static final long DOCUMENT_SIZE_MAX = 20971520L;
 
-    public static final String CONTENT_KEY = "obs_name";
+    public static final String CONTENT_KEY = "observation";
+    public static final String ERROR_KEY = "fail";
 
     public ObservationInlineContentHandler() {
     }
 
-    // TODO: Put a check to ensure that this method is only called once.
-    // For now we just assume that it is and the name associated with
-    // the observation is hardcoded.
-    /**
-     * Receive data.
-     */
+    @Override
     public Content accept(String name, String contentType, InputStream inputStream)
             throws InlineContentException, IOException {
         if (inputStream == null) {
@@ -117,10 +113,10 @@ public class ObservationInlineContentHandler implements InlineContentHandler {
             content.value = observation;
             return content;
         } catch (ObservationParsingException ex) {
-            throw new InlineContentException("Failed to parse observation from document", ex);
-        } catch (ByteLimitExceededException ex) {
-            log.debug(ex.getMessage(), ex);
-            throw new ByteLimitExceededException("too large: ", ex.getLimit());
+            InlineContentHandler.Content content = new InlineContentHandler.Content();
+            content.name = CONTENT_KEY;
+            content.value = ex;
+            return content;
         }
     }
 

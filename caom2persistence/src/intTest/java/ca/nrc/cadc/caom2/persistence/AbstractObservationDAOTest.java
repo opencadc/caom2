@@ -152,6 +152,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Level;
@@ -197,8 +198,6 @@ public abstract class AbstractObservationDAOTest
         Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.DEBUG);
     }
 
-    boolean deletionTrack;
-    boolean useLongForUUID;
     ObservationDAO dao;
     DeletedEntityDAO ded;
     TransactionManager txnManager;
@@ -209,12 +208,9 @@ public abstract class AbstractObservationDAOTest
         ObservationMember.class, ProvenanceInput.class, Chunk.class, Part.class, Artifact.class, Plane.class, Observation.class
     };
 
-    protected AbstractObservationDAOTest(Class genClass, String server, String database, String schema, 
-            boolean useLongForUUID, boolean deletionTrack)
+    protected AbstractObservationDAOTest(Class genClass, String server, String database, String schema)
         throws Exception
     {
-        this.useLongForUUID = useLongForUUID;
-        this.deletionTrack = deletionTrack;
         try
         {
             Map<String,Object> config = new TreeMap<String,Object>();
@@ -253,7 +249,7 @@ public abstract class AbstractObservationDAOTest
             String sql = "delete from " + s;
             log.debug("setup: " + sql);
             ds.getConnection().createStatement().execute(sql);
-            if (deletionTrack && Observation.class.equals(c))
+            if (Observation.class.equals(c))
             {
                 sql = sql.replace(cn, "DeletedObservation");
                 log.debug("setup: " + sql);
@@ -1720,9 +1716,12 @@ public abstract class AbstractObservationDAOTest
             {
                 Assert.assertNotNull("polarization.states", actual.polarization.states);
                 Assert.assertEquals("polarization.states.size", expected.polarization.states.size(), actual.polarization.states.size());
-                for (int i=0; i<expected.polarization.states.size(); i++)
+                Iterator<PolarizationState> ei = expected.polarization.states.iterator();
+                Iterator<PolarizationState> ai = actual.polarization.states.iterator();
+                while (ei.hasNext())
                 {
-                    Assert.assertEquals("polarization.states " + i, expected.polarization.states.get(i), actual.polarization.states.get(i));
+                    
+                    Assert.assertEquals("polarization.state", ei.next(), ai.next());
                 }
                 Assert.assertEquals("polarization.dimension", expected.polarization.dimension, actual.polarization.dimension);
             }
@@ -2102,7 +2101,7 @@ public abstract class AbstractObservationDAOTest
 
             p.polarization = new Polarization();
             p.polarization.dimension = 3L;
-            p.polarization.states = new ArrayList<>();
+            p.polarization.states = new TreeSet<>();
             p.polarization.states.add(PolarizationState.I);
             p.polarization.states.add(PolarizationState.Q);
             p.polarization.states.add(PolarizationState.U);
