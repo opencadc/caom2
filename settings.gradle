@@ -1,0 +1,2 @@
+rootProject.name = 'caom2db'
+include 'caom2-access-control', 'caom2-persist', 'caom2-repo', 'caom2persistence', 'caom2-artifact-sync', 'caom2-repo-server', 'caom2-test-repo', 'caom2harvester', 'caom2-collection-validator', 'caom2-remove'
