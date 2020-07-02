@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,104 +67,167 @@
 ************************************************************************
  */
 
-package ca.nrc.cadc.tap.impl;
+package ca.nrc.cadc.caom2ops.mapper;
 
-import ca.nrc.cadc.dali.util.Format;
-import ca.nrc.cadc.tap.TapSelectItem;
-import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
-import ca.nrc.cadc.tap.caom2.IntervalFormat;
-import ca.nrc.cadc.tap.caom2.PositionBoundsRegionFormat;
-import ca.nrc.cadc.tap.caom2.PositionBoundsSamplesFormat;
-import ca.nrc.cadc.tap.caom2.PositionBoundsShapeFormat;
-import ca.nrc.cadc.tap.writer.format.PostgreSQLFormatFactory;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.caom2.util.CaomUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 /**
  *
- *
+ * @author yeunga
  */
-public class CaomFormatFactory extends PostgreSQLFormatFactory {
+public class Util extends CaomUtil {
 
-    private static Logger log = Logger.getLogger(CaomFormatFactory.class);
-
-    public CaomFormatFactory() {
-        super();
+    public static Object getObject(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        return data.get(col);
     }
 
-    @Override
-    public Format<Object> getFormat(TapSelectItem d) {
-        Format<Object> ret = super.getFormat(d);
-        log.debug("fomatter: " + d + " " + ret.getClass().getName());
+    public static String getString(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (String) o;
+    }
+
+    public static URI getURI(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (URI) o;
+    }
+    
+    public static List<URI> getURIList(List<Object> data, Integer col)
+            throws URISyntaxException {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        String s = (String) o;
+        String[] ss = s.split(" ");
+        List<URI> ret = new ArrayList<>();
+        for (String u : ss) {
+            ret.add(new URI(u));
+        }
         return ret;
     }
-    
-    @Override
-    protected Format<Object> getShapeFormat(TapSelectItem columnDesc) {
-        // actual output format controlled by the tap_schema: utype and xtype
-        if (columnDesc.utype != null
-                && (columnDesc.utype.equals("caom2:Plane.position.bounds")
-                    || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
-            return new PositionBoundsShapeFormat();
+
+    public static Boolean getBoolean(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
         }
-        return super.getShapeFormat(columnDesc);
-    }
-
-    @Override
-    protected Format<Object> getMultiPolygonFormat(TapSelectItem columnDesc) {
-        if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds.samples")) {
-            return new PositionBoundsSamplesFormat();
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
         }
-        return super.getMultiPolygonFormat(columnDesc);
-    }
-
-    @Override
-    public Format<Object> getRegionFormat(TapSelectItem columnDesc) {
-        // actual output format controlled by the tap_schema: utype and xtype
-        if (columnDesc.utype != null
-                && (columnDesc.utype.equals("caom2:Plane.position.bounds")
-                    || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
-            return new PositionBoundsShapeFormat();
-        }
-        return super.getRegionFormat(columnDesc);
-    }
-
-    @Override
-    public Format<Object> getIntervalFormat(TapSelectItem columnDesc) {
-        return new IntervalFormat(columnDesc.getDatatype().isVarSize());
-    }
-
-    @Override
-    protected Format<Object> getMultiIntervalFormat(TapSelectItem columnDesc) {
-        if (columnDesc.utype != null
-            && (columnDesc.utype.equals("caom2:Plane.energy.bounds.samples")
-                || columnDesc.utype.equals("caom2:Plane.time.bounds.samples")
-                || columnDesc.utype.equals("caom2:Plane.custom.bounds.samples"))) {
-            return new IntervalFormat(true); // varsize by definition
-        }
-        return super.getMultiIntervalFormat(columnDesc);
-    }
-    
-    @Override
-    public Format<Object> getClobFormat(TapSelectItem columnDesc) {
-
-        // function with CLOB argument
-        if (columnDesc != null) {
-            // caom2.Artifact, caom2.SIAv1
-            if ("caom2.Artifact".equalsIgnoreCase(columnDesc.tableName)
-                    || "caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName)) {
-                if ("accessURL".equalsIgnoreCase(columnDesc.getColumnName())) {
-                    return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
-                }
+        // TAP-specific hack
+        if (o instanceof Integer) {
+            Integer i = (Integer) o;
+            if (i == 1) {
+                return Boolean.TRUE;
             }
-
-            // ivoa.ObsCore
-            if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName)) {
-                if ("access_url".equalsIgnoreCase(columnDesc.getColumnName())) {
-                    return new DataLinkURLFormat(job.getID());
-                }
-            }
+            return Boolean.FALSE;
         }
+        return (Boolean) o;
+    }
 
-        return super.getClobFormat(columnDesc);
+    public static UUID getUUID(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (UUID) o;
+    }
+
+    public static Long getLong(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Long) o;
+    }
+
+    public static Integer getInteger(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Integer) o;
+    }
+
+    public static Float getFloat(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Float) o;
+    }
+
+    public static Double getDouble(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Double) o;
+    }
+
+    public static List<Double> getDoubleList(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        double[] vals = (double[]) o;
+        List<Double> ret = new ArrayList<Double>(vals.length);
+        for (double d : vals) {
+            ret.add(d);
+        }
+        return ret;
+    }
+
+    public static Date getDate(List<Object> data, Integer col) {
+        if (col == null) {
+            return null;
+        }
+        Object o = data.get(col);
+        if (o == null) {
+            return null;
+        }
+        return (Date) o;
     }
 }

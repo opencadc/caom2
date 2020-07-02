@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,13 +65,12 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2ops.mapper;
 
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -82,43 +81,42 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
-*
-* @author pdowler
-*/
-public class PartMapper implements VOTableRowMapper<Part>
-{
-    private static final Logger log = Logger.getLogger(PartMapper.class);
-    
-    private Map<String,Integer> map;
+ *
+ * @author pdowler
+ */
+public class PartMapper implements VOTableRowMapper<Part> {
 
-    public PartMapper(Map<String,Integer> map)
-    {
-            this.map = map;
+    private static final Logger log = Logger.getLogger(PartMapper.class);
+
+    private Map<String, Integer> map;
+
+    public PartMapper(Map<String, Integer> map) {
+        this.map = map;
     }
 
     /**
-     * Map columns from the current row into an Artifact, starting at the 
+     * Map columns from the current row into an Artifact, starting at the
      * specified column offset.
-     * 
+     *
      * @param data
-     * @param dateFormat 
+     * @param dateFormat
      * @return a part
      */
-    public Part mapRow(List<Object> data, DateFormat dateFormat)
-    {
+    public Part mapRow(List<Object> data, DateFormat dateFormat) {
         log.debug("mapping Part");
         UUID id = Util.getUUID(data, map.get("caom2:Part.id"));
-        if (id == null)
+        if (id == null) {
             return null;
+        }
 
-        try
-        {
+        try {
             String pName = Util.getString(data, map.get("caom2:Part.name"));
             Part part = new Part(pName);
 
             String pType = Util.getString(data, map.get("caom2:Part.productType"));
-            if (pType != null)
+            if (pType != null) {
                 part.productType = ProductType.toValue(pType);
+            }
 
             Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
             Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
@@ -131,15 +129,10 @@ public class PartMapper implements VOTableRowMapper<Part>
             Util.assignMetaChecksum(part, accMetaChecksum, "accMetaChecksum");
 
             Util.assignID(part, id);
-            
+
             return part;
+        } catch (Exception ex) {
+            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
         }
-        catch(URISyntaxException ex)
-        {
-            throw new UnexpectedContentException("invalid URI", ex);
-        }
-        finally { }
     }
 }
-
-

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,14 +65,13 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2ops.mapper;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2ops.Util;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -83,83 +82,79 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 /**
-*
-* @author pdowler
-*/
-public class ArtifactMapper implements VOTableRowMapper<Artifact>
-{
-    private static final Logger log = Logger.getLogger(ArtifactMapper.class);
-    
-    private Map<String,Integer> map;
+ *
+ * @author pdowler
+ */
+public class ArtifactMapper implements VOTableRowMapper<Artifact> {
 
-    public ArtifactMapper(Map<String,Integer> map)
-    {
-            this.map = map;
+    private static final Logger log = Logger.getLogger(ArtifactMapper.class);
+
+    private Map<String, Integer> map;
+
+    public ArtifactMapper(Map<String, Integer> map) {
+        this.map = map;
     }
 
     /**
-     * Map columns from the current row into an Artifact, starting at the 
+     * Map columns from the current row into an Artifact, starting at the
      * specified column offset.
-     * 
+     *
      * @param data
      * @param dateFormat
      * @return an artifact
      */
-    public Artifact mapRow(List<Object> data, DateFormat dateFormat)
-    {
+    public Artifact mapRow(List<Object> data, DateFormat dateFormat) {
         log.debug("mapping Artifact");
         UUID id = Util.getUUID(data, map.get("caom2:Artifact.id"));
-        if (id == null)
+        if (id == null) {
             return null;
+        }
 
-        String suri = Util.getString(data, map.get("caom2:Artifact.uri"));
-        try
-        {
-            URI uri = new URI(suri);
+        try {
+            URI uri = Util.getURI(data, map.get("caom2:Artifact.uri"));
             ProductType pt = null;
             String pts = Util.getString(data, map.get("caom2:Artifact.productType"));
-            if (pts != null)
+            if (pts != null) {
                 pt = ProductType.toValue(pts);
-            else
-            {
+            } else {
                 pt = ProductType.SCIENCE;
                 log.warn("assigning default Artifact.productType = " + pt + " for " + uri);
             }
             ReleaseType rt = null;
             String rts = Util.getString(data, map.get("caom2:Artifact.releaseType"));
-            if (rts != null)
+            if (rts != null) {
                 rt = ReleaseType.toValue(rts);
-            else
-            {
+            } else {
                 rt = ReleaseType.DATA;
-                log.warn("assigning default Artifact.releaseType = " + rt + " for "+uri);
+                log.warn("assigning default Artifact.releaseType = " + rt + " for " + uri);
             }
-            
+
             Artifact artifact = new Artifact(uri, pt, rt);
 
             artifact.contentType = Util.getString(data, map.get("caom2:Artifact.contentType"));
             artifact.contentLength = Util.getLong(data, map.get("caom2:Artifact.contentLength"));
             artifact.contentChecksum = Util.getURI(data, map.get("caom2:Artifact.contentChecksum"));
             artifact.contentRelease = Util.getDate(data, map.get("caom2:Artifact.contentRelease")); // CAOM-2.4
-            // TODO: fill Artifact.contentReadGroups // CAOM-2.4
+            List<URI> crg = Util.getURIList(data, map.get("caom2:Artifact.contentReadGroups")); // CAOM-2.4
+            if (crg != null) {
+                artifact.getContentReadGroups().addAll(crg);
+            }
 
             Date lastModified = Util.getDate(data, map.get("caom2:Artifact.lastModified"));
             Date maxLastModified = Util.getDate(data, map.get("caom2:Artifact.maxLastModified"));
             Util.assignLastModified(artifact, lastModified, "lastModified");
             Util.assignLastModified(artifact, maxLastModified, "maxLastModified");
-            
+
             URI metaChecksum = Util.getURI(data, map.get("caom2:Artifact.metaChecksum"));
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Artifact.accMetaChecksum"));
             Util.assignMetaChecksum(artifact, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(artifact, accMetaChecksum, "accMetaChecksum");
-            
+
             Util.assignID(artifact, id);
 
             return artifact;
-        }
-        catch(URISyntaxException ex)
-        {
-            throw new UnexpectedContentException("invalid URI", ex);
+        } catch (Exception ex) {
+            throw new UnexpectedContentException("invalid content: " + ex.getMessage(), ex);
         }
     }
 }
