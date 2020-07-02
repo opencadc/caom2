@@ -27,9 +27,9 @@ public class EnergyConverter implements Serializable {
     private static final double[] enMult = new double[] { 1.0, 1.0e3, 1.0e6, 1.0e9 };
 
     private static final String[] waveUnits = new String[] { "m", "cm", "mm",
-                                                             "um", "µm", "nm", "A" };
+                                                             "um", "µm", "nm", "Angstrom", "A" }; // A  deprecated
     private static final double[] waveMult = new double[] { 1.0, 1.0e-2, 1.0e-3,
-                                                            1.0e-6, 1.0e-6, 1.0e-9, 1.0e-10, };
+                                                            1.0e-6, 1.0e-6, 1.0e-9, 1.0e-10, 1.0e-10, };
 
     // Lay out the actual units only once, then coalesce them.
     static {
