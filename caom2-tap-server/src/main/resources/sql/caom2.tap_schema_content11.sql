@@ -206,8 +206,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Plane', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Plane.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 120),
 ( 'caom2.Plane', 'lastModified', 'timestamp of last modification of this row', 'caom2:Plane.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 121),
-( 'caom2.Plane', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Plane.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 122),
-( 'caom2.Plane', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Plane.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 123)
+( 'caom2.Plane', 'maxLastModified', 'timestamp of last modification of this Plane', 'caom2:Plane.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 122),
+( 'caom2.Plane', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Plane.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 123),
+( 'caom2.Plane', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Plane.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 124)
 ;
 
 -- Artifact
@@ -229,8 +230,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Artifact', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Artifact.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 40),
 ( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 41),
-( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 42),
-( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 43)
+( 'caom2.Artifact', 'maxLastModified',  'timestamp of last modification of this Artifact', 'caom2:Artifact.maxLastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 42),
+( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 43),
+( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 44)
 ;
 
 -- Part
@@ -242,9 +244,10 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Part', 'productType',   'product type (science, calibration, auxiliary, preview, info)', 'caom2:Part.productType', NULL, NULL, 'char', '32*', NULL, 1,0,0 , 4),
 
 ( 'caom2.Part', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Part.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 10),
-( 'caom2.Part', 'lastModified',  'timestamp of last modification of this row', 'caom2:Part.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 11),
-( 'caom2.Part', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Part.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 12),
-( 'caom2.Part', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Part.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 13)
+( 'caom2.Part', 'lastModified',  'timestamp of last modification of this row', 'caom2:Part.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 20),
+( 'caom2.Part', 'maxLastModified',  'timestamp of last modification of this Part', 'caom2:Part.maxLastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 21),
+( 'caom2.Part', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Part.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 22),
+( 'caom2.Part', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Part.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 23)
 ;
 
 -- Chunk
@@ -376,8 +379,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Chunk', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Chunk.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 200),
 ( 'caom2.Chunk', 'lastModified',  'timestamp of last modification of this row', 'caom2:Chunk.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 201),
-( 'caom2.Chunk', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Chunk.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 202),
-( 'caom2.Chunk', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Chunk.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 203)
+( 'caom2.Chunk', 'maxLastModified',  'timestamp of last modification of this Chunk', 'caom2:Chunk.maxLastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0 , 202),
+( 'caom2.Chunk', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Chunk.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 203),
+( 'caom2.Chunk', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Chunk.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 204)
 ;
 
 -- join tables

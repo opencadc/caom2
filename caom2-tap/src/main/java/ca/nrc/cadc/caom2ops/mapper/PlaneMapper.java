@@ -139,7 +139,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
             }
 
             plane.dataRelease = Util.getDate(data, map.get("caom2:Plane.dataRelease"));
-            List<URI> drg = Util.getURIList(data, map.get("caom2:Plane.metaReadGroups")); // CAOM-2.4
+            List<URI> drg = Util.getURIList(data, map.get("caom2:Plane.dataReadGroups")); // CAOM-2.4
             if (drg != null) {
                 plane.getDataReadGroups().addAll(drg);
             }
