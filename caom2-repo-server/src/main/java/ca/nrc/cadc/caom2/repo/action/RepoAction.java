@@ -279,7 +279,7 @@ public abstract class RepoAction extends RestAction {
         Object o = syncInput.getContent(ObservationInlineContentHandler.ERROR_KEY);
         if (o != null) {
             ObservationParsingException ex = (ObservationParsingException) o;
-            throw new IllegalArgumentException("invalid input: " + uri, ex);
+            throw new IllegalArgumentException("invalid input: " + uri + " reason: " + ex.getMessage(), ex);
         }
         Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
         if (obs != null) {
@@ -430,7 +430,7 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (IllegalArgumentException ex) {
             log.debug(ex.getMessage(), ex);
-            throw new IllegalArgumentException("invalid input: " + uri, ex);
+            throw new IllegalArgumentException("invalid input: " + uri + " reason: " + ex.getMessage(), ex);
         }
     }
 
