@@ -100,7 +100,7 @@ public class PostAction extends RepoAction {
         Observation obs = getInputObservation();
 
         if (!uri.equals(obs.getURI())) {
-            throw new IllegalArgumentException("invalid input: " + uri);
+            throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
         }
 
         ObservationDAO dao = getDAO();
