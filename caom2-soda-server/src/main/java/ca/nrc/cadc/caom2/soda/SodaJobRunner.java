@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -191,7 +191,14 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             {
                 StorageResolver resolver = artifactResolver.getStorageResolver(uri);
                 if (resolver instanceof CutoutGenerator) {
-                    URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), cutout);
+                    // get the optional label parameter value
+                	List<String> labels = customParams.get(PARAM_LABEL);
+                	String label = null;
+                	if (labels.size() > 0) {
+                		label = labels.get(0);
+                	}
+                	
+                    URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), cutout, label);
                     log.debug("cutout URL: " + url.toExternalForm());
                     return url;
                 } else {
@@ -235,10 +242,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             throw new RuntimeException("CONFIG: failed to find resource", ex);
         }
     }
-    
-    
-    
-    
+        
     private ca.nrc.cadc.caom2.types.Interval dali2caom2(Interval dali) {
         if (dali == null) {
             return null;

@@ -81,13 +81,14 @@ import java.util.List;
 public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGenerator
 {    
     @Override
-    public URL toURL(URI uri, List<String> cutouts) 
+    public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
         URL base = super.toURL(uri);
         if (cutouts == null || cutouts.isEmpty()) {
             return base;
         }
 
+        String filename = AdCutoutGenerator.generateFilename(uri, label);
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
         if (sb.indexOf("?") > 0) {
@@ -96,7 +97,7 @@ public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGen
             sb.append("?");
         }
         sb.append("view=cutout");
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts);
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
         
         try {
             return new URL(sb.toString());

@@ -103,18 +103,22 @@ public class AdCutoutGeneratorIntTest {
     }
 
     @Test
-    public void testValidCutoutUrl() throws Exception {
+    public void testValidCutoutUrlWithNoLabel() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
+        	String label = null;
             List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
-            URL url = resolver.toURL(new URI(FILE_URI), cutouts);
+            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
             
             urlList.add(url);
             for (URL u : urlList) {
                 log.debug("opening connection to: " + u.toString());
+                String urlString = url.toExternalForm();
+                String msg = "url should not contain fo parameter: " + urlString;
+                Assert.assertFalse(msg, urlString.contains("fo="));
                 OutputStream out = new ByteArrayOutputStream();
                 HttpDownload head = new HttpDownload(u, out);
                 head.setHeadOnly(true); // head requests work with data ws
@@ -128,15 +132,51 @@ public class AdCutoutGeneratorIntTest {
             Assert.fail("Unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testValidCutoutUrlWithLabel() throws Exception {
+        log.info("starting testValidCutoutUrl");
+        try {
+        	String label = "label1";
+        	String expected_filename = label + "__" + "806045o.fits";
+            List<URL> urlList = new ArrayList<URL>();
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
+            
+            urlList.add(url);
+            for (URL u : urlList) {
+                log.debug("opening connection to: " + u.toString());
+                String urlString = url.toExternalForm();
+                String msg = "url should contain fo parameter without compression extension: " + urlString;
+                Assert.assertTrue(msg, urlString.contains("fo=" + expected_filename));
+                OutputStream out = new ByteArrayOutputStream();
+                HttpDownload head = new HttpDownload(u, out);
+                head.setHeadOnly(true); // head requests work with data ws
+                head.run();
+                Assert.assertEquals(200, head.getResponseCode());
+                log.info("response code: " + head.getResponseCode());
+                String cdis = head.getResponseHeader("Content-Disposition");
+                String actual_filename = cdis.split("=")[1];
+                Assert.assertEquals("incorrect filename", expected_filename, actual_filename);
+            }
+
+        } catch (Exception unexpected) {
+            log.error("Unexpected exception", unexpected);
+            Assert.fail("Unexpected exception: " + unexpected);
+        }
+    }
     
     @Test
     public void testInvalidCutoutUrl() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
+        	String label = null;
             List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(INVALID_CUTOUT);
-            URL url = resolver.toURL(new URI(FILE_URI), cutouts);
+            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
             
             urlList.add(url);
             for (URL u : urlList) {

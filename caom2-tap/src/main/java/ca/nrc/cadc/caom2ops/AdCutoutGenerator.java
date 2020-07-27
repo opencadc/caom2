@@ -2,7 +2,7 @@
  ************************************************************************
  ****  C A N A D I A N   A S T R O N O M Y   D A T A   C E N T R E  *****
  *
- * (c) 2011.                            (c) 2011.
+ * (c) 2020.                            (c) 2020.
  * National Research Council            Conseil national de recherches
  * Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
  * All rights reserved                  Tous droits reserves
@@ -43,9 +43,9 @@ import java.util.List;
  * @author yeunga
  */
 public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
-
+	
     @Override
-    public URL toURL(URI uri, List<String> cutouts) {
+    public URL toURL(URI uri, List<String> cutouts, String label) {
         URL base = super.toURL(uri);
         if (cutouts == null || cutouts.isEmpty()) {
             return base;
@@ -53,7 +53,8 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
 
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        appendCutoutQueryString(sb, cutouts);
+        String filename = generateFilename(uri, label);
+        appendCutoutQueryString(sb, cutouts, filename);
 
         try {
             return new URL(sb.toString());
@@ -62,13 +63,51 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
         }
     }
 
+	static String removeCompressionExtension(String uriFilename) {
+		String filename = uriFilename;
+		int i = uriFilename.lastIndexOf('.');
+		if (i != -1 && i < uriFilename.length() - 1) {
+			String ext = uriFilename.substring(i + 1, uriFilename.length());
+			if (ext.equalsIgnoreCase("cf") || ext.equalsIgnoreCase("z") || 
+			    ext.equalsIgnoreCase("gz") || ext.equalsIgnoreCase("fz")) {
+				filename = uriFilename.substring(0, i);
+			}
+		}
+		
+		return filename;
+	}
+	
+	static String generateFilename(URI uri, String label) {
+		String filename = null;
+		if (label != null) {
+			String ssp = uri.getSchemeSpecificPart();
+	        int i = ssp.lastIndexOf('/');
+	        if (i != -1 && i < ssp.length() - 1) {
+	            filename = label + "__" + 
+	                removeCompressionExtension(ssp.substring(i + 1, ssp.length()));
+	        }
+		}
+
+		return filename;
+	}
+
     // package access so other CutoutGenrator implementations can use it
-    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts) {
+    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename) {
         if (cutouts != null && !cutouts.isEmpty()) {
             boolean add = (sb.indexOf("?") > 0); // already has query params
             if (!add) {
                 sb.append("?");
             }
+             
+            if (filename != null) {
+                if (add) {
+                    sb.append("&");
+                }
+                add = true;
+            	sb.append("fo=");
+            	sb.append(filename);
+            }
+            
             for (String cutout : cutouts) {
                 if (add) {
                     sb.append("&");

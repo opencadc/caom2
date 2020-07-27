@@ -87,8 +87,9 @@ public interface CutoutGenerator
      *         the uri is malformed such that a URL cannot be generated, or the uri is null
      * @param uri the URI to convert
      * @param cutouts list of cutout representations
+     * @param label optional label to be prepended to the filename
      * @return a URL to the identified resource
      */
-    public URL toURL(URI uri, List<String> cutouts)
+    public URL toURL(URI uri, List<String> cutouts, String label)
         throws IllegalArgumentException;
 }
