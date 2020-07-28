@@ -188,9 +188,9 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                     plane.position.dimension = new Dimension2D(dim1, dim2);
                 }
                 plane.position.resolution = Util.getDouble(data, map.get("caom2:Plane.position.resolution"));
-                double[] rBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.resolutionBounds")); // CAOM 2.4
-                if (rBounds != null) {
-                    plane.position.resolutionBounds = new Interval(rBounds[0], rBounds[1]);
+                double[] resBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.position.bounds.resolutionBounds")); // CAOM 2.4
+                if (resBounds != null) {
+                    plane.position.resolutionBounds = new Interval(resBounds[0], resBounds[1]);
                 }
                 plane.position.sampleSize = Util.getDouble(data, map.get("caom2:Plane.position.sampleSize"));
                 plane.position.timeDependent = Util.getBoolean(data, map.get("caom2:Plane.position.timeDependent"));
@@ -209,8 +209,8 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                         //plane.energy.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
                         plane.energy.bounds.getSamples().add(new Interval(nrgBoundsSamples[i], nrgBoundsSamples[i + 1]));
                     }
-                } else // HACK: backwards compat
-                {
+                } else {
+                    // HACK: backwards compat
                     plane.energy.bounds.getSamples().add(new Interval(nrgBounds.getLower(), nrgBounds.getUpper()));
                 }
                 plane.energy.bandpassName = Util.getString(data, map.get("caom2:Plane.energy.bandpassName"));
@@ -220,9 +220,9 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                     CaomUtil.decodeBands(ebs, plane.energy.getEnergyBands());
                 }
                 plane.energy.resolvingPower = Util.getDouble(data, map.get("caom2:Plane.energy.resolvingPower"));
-                double[] rBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.resolvingPowerBounds")); // CAOM 2.4
-                if (rBounds != null) {
-                    plane.energy.resolvingPowerBounds = new Interval(rBounds[0], rBounds[1]);
+                double[] resBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.energy.bounds.resolvingPowerBounds")); // CAOM 2.4
+                if (resBounds != null) {
+                    plane.energy.resolvingPowerBounds = new Interval(resBounds[0], resBounds[1]);
                 }
                 plane.energy.restwav = Util.getDouble(data, map.get("caom2:Plane.energy.restwav"));
                 plane.energy.sampleSize = Util.getDouble(data, map.get("caom2:Plane.energy.sampleSize"));
@@ -240,22 +240,22 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
             if (timBounds != null) {
                 plane.time = new Time();
                 plane.time.bounds = new SampledInterval(timBounds.getLower(), timBounds.getUpper());
-                if (timBoundsSamples != null) // actual sub-samples
-                {
+                if (timBoundsSamples != null) {
+                    // actual sub-samples
                     //for (ca.nrc.cadc.dali.DoubleInterval si : timSamples)
                     for (int i = 0; i < timBoundsSamples.length; i += 2) {
                         //plane.time.bounds.getSamples().add(new SubInterval(si.getLower(), si.getUpper()));
                         plane.time.bounds.getSamples().add(new Interval(timBoundsSamples[i], timBoundsSamples[i + 1]));
                     }
-                } else // HACK: backwards compat
-                {
+                } else {
+                    // HACK: backwards compat
                     plane.time.bounds.getSamples().add(new Interval(timBounds.getLower(), timBounds.getUpper()));
                 }
                 plane.time.dimension = Util.getLong(data, map.get("caom2:Plane.time.dimension"));
                 plane.time.resolution = Util.getDouble(data, map.get("caom2:Plane.time.resolution"));
-                double[] rBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.resolutionBounds")); // CAOM 2.4
-                if (rBounds != null) {
-                    plane.time.resolutionBounds = new Interval(rBounds[0], rBounds[1]);
+                double[] resBounds = (double[]) Util.getObject(data, map.get("caom2:Plane.time.bounds.resolutionBounds")); // CAOM 2.4
+                if (resBounds != null) {
+                    plane.time.resolutionBounds = new Interval(resBounds[0], resBounds[1]);
                 }
                 plane.time.exposure = Util.getDouble(data, map.get("caom2:Plane.time.exposure"));
                 plane.time.sampleSize = Util.getDouble(data, map.get("caom2:Plane.time.sampleSize"));
@@ -274,14 +274,14 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
             String customCtype = Util.getString(data, map.get("caom2:Plane.custom.ctype")); // CAOM 2.4
             if (customCtype != null) {
                 plane.custom = new CustomAxis(customCtype);
-                ca.nrc.cadc.dali.DoubleInterval cBounds
+                ca.nrc.cadc.dali.DoubleInterval cusBounds
                         = (ca.nrc.cadc.dali.DoubleInterval) Util.getObject(data, map.get("caom2:Plane.custom.bounds"));
-                double[] cBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.time.custom.samples"));
-                if (cBounds != null) {
-                    plane.custom.bounds = new SampledInterval(cBounds.getLower(), cBounds.getUpper());
-                    if (cBoundsSamples != null) {
-                        for (int i = 0; i < cBoundsSamples.length; i += 2) {
-                            plane.custom.bounds.getSamples().add(new Interval(cBoundsSamples[i], cBoundsSamples[i + 1]));
+                double[] cusBoundsSamples = (double[]) Util.getObject(data, map.get("caom2:Plane.time.custom.samples"));
+                if (cusBounds != null) {
+                    plane.custom.bounds = new SampledInterval(cusBounds.getLower(), cusBounds.getUpper());
+                    if (cusBoundsSamples != null) {
+                        for (int i = 0; i < cusBoundsSamples.length; i += 2) {
+                            plane.custom.bounds.getSamples().add(new Interval(cusBoundsSamples[i], cusBoundsSamples[i + 1]));
                         }
                     }
                     plane.custom.dimension = Util.getLong(data, map.get("caom2:Plane.custom.dimension"));

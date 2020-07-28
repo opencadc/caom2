@@ -43,7 +43,7 @@ import java.util.List;
  * @author yeunga
  */
 public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
-	
+
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) {
         URL base = super.toURL(uri);
@@ -63,33 +63,33 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
         }
     }
 
-	static String removeCompressionExtension(String uriFilename) {
-		String filename = uriFilename;
-		int i = uriFilename.lastIndexOf('.');
-		if (i != -1 && i < uriFilename.length() - 1) {
-			String ext = uriFilename.substring(i + 1, uriFilename.length());
-			if (ext.equalsIgnoreCase("cf") || ext.equalsIgnoreCase("z") || 
-			    ext.equalsIgnoreCase("gz") || ext.equalsIgnoreCase("fz")) {
-				filename = uriFilename.substring(0, i);
-			}
-		}
-		
-		return filename;
-	}
-	
-	static String generateFilename(URI uri, String label) {
-		String filename = null;
-		if (label != null) {
-			String ssp = uri.getSchemeSpecificPart();
-	        int i = ssp.lastIndexOf('/');
-	        if (i != -1 && i < ssp.length() - 1) {
-	            filename = label + "__" + 
-	                removeCompressionExtension(ssp.substring(i + 1, ssp.length()));
-	        }
-		}
+    static String removeCompressionExtension(String uriFilename) {
+        String filename = uriFilename;
+        int i = uriFilename.lastIndexOf('.');
+        if (i != -1 && i < uriFilename.length() - 1) {
+            String ext = uriFilename.substring(i + 1, uriFilename.length());
+            if (ext.equalsIgnoreCase("cf") || ext.equalsIgnoreCase("z")
+                || ext.equalsIgnoreCase("gz") || ext.equalsIgnoreCase("fz")) {
+                filename = uriFilename.substring(0, i);
+            }
+        }
 
-		return filename;
-	}
+        return filename;
+    }
+
+    static String generateFilename(URI uri, String label) {
+        String filename = null;
+        if (label != null) {
+            String ssp = uri.getSchemeSpecificPart();
+            int i = ssp.lastIndexOf('/');
+            if (i != -1 && i < ssp.length() - 1) {
+                filename = label + "__"
+                    + removeCompressionExtension(ssp.substring(i + 1, ssp.length()));
+            }
+        }
+
+        return filename;
+    }
 
     // package access so other CutoutGenrator implementations can use it
     static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename) {
@@ -104,8 +104,8 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
                     sb.append("&");
                 }
                 add = true;
-            	sb.append("fo=");
-            	sb.append(filename);
+                sb.append("fo=");
+                sb.append(filename);
             }
             
             for (String cutout : cutouts) {

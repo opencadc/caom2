@@ -73,20 +73,17 @@ package ca.nrc.cadc.caom2ops;
  *
  * @author pdowler
  */
-public class DefaultFault extends Exception
-{
-    public DefaultFault(String s)
-    {
+public class DefaultFault extends Exception {
+    public DefaultFault(String s) {
         super(s);
     }
-    public DefaultFault(String s, Throwable cause)
-    {
+    
+    public DefaultFault(String s, Throwable cause) {
         super(s, cause);
     }
     
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + ": " + getMessage();
     }
 }

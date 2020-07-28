@@ -67,7 +67,6 @@
 
 package ca.nrc.cadc.caom2ops;
 
-
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcGeminiResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
