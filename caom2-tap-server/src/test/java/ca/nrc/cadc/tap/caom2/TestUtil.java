@@ -78,6 +78,8 @@ import ca.nrc.cadc.tap.schema.TapDataType;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.tap.schema.TapSchemaDAO;
 import ca.nrc.cadc.uws.Job;
+
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import javax.security.auth.Subject;
@@ -164,8 +166,10 @@ public class TestUtil
             List<GroupURI> memberships = new ArrayList<GroupURI>();
             if (cur == subjectWithGroups)
             {
-                memberships.add(new GroupURI("ivo://example.org/gms?666"));
-                memberships.add(new GroupURI("ivo://example.org/gms?777"));
+                URI guri = URI.create("ivo://example.org/gms?666");
+                memberships.add(new GroupURI(guri));
+                guri = URI.create("ivo://example.org/gms?777");
+                memberships.add(new GroupURI(guri));
             }
             log.info("TestGMSClient: " + memberships.size() + " groups");
             return memberships;
