@@ -84,7 +84,7 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
             int i = ssp.lastIndexOf('/');
             if (i != -1 && i < ssp.length() - 1) {
                 filename = label + "__"
-                    + removeCompressionExtension(ssp.substring(i + 1, ssp.length()));
+                    + removeCompressionExtension(ssp.substring(i + 1));
             }
         }
 
