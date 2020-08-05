@@ -109,6 +109,7 @@ import org.opencadc.soda.server.SodaPlugin;
 public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
     private static final Logger log = Logger.getLogger(SodaJobRunner.class);
 
+    public static final String PARAM_LABEL = "LABEL";
     public static final String PARAM_FARADAY = "FARADAY";
     public static final String PARAM_RM = "RM";
     
