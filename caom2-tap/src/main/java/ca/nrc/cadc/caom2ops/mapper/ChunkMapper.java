@@ -263,6 +263,7 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             }
 
             // time
+            final String tctype = Util.getString(data, map.get("caom2:Chunk.time.axis.axis.ctype"));
             String tcunit = Util.getString(data, map.get("caom2:Chunk.time.axis.axis.cunit"));
             Double tes = Util.getDouble(data, map.get("caom2:Chunk.time.axis.error.syser"));
             Double ter = Util.getDouble(data, map.get("caom2:Chunk.time.axis.error.rnder"));
@@ -290,7 +291,6 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             Double mjdref = Util.getDouble(data, map.get("caom2:Chunk.time.mjdref"));
             Double exposure = Util.getDouble(data, map.get("caom2:Chunk.time.exposure"));
             Double tres = Util.getDouble(data, map.get("caom2:Chunk.time.resolution"));
-            String tctype = Util.getString(data, map.get("caom2:Chunk.time.axis.axis.ctype"));
             if (tctype != null) {
                 CoordAxis1D axis = new CoordAxis1D(new Axis(tctype, tcunit));
                 if (tes != null || ter != null) {
@@ -308,6 +308,7 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             }
 
             // polarization
+            final String pctype = Util.getString(data, map.get("caom2:Chunk.polarization.axis.axis.ctype"));
             String pcunit = Util.getString(data, map.get("caom2:Chunk.polarization.axis.axis.cunit"));
             Double pes = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.error.syser"));
             Double per = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.error.rnder"));
@@ -326,7 +327,6 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             pix = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.function.refCoord.pix"));
             val = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.function.refCoord.val"));
             delta = Util.getDouble(data, map.get("caom2:Chunk.polarization.axis.function.delta"));
-            String pctype = Util.getString(data, map.get("caom2:Chunk.polarization.axis.axis.ctype"));
             if (naxis != null) {
                 pfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
             }
@@ -343,6 +343,7 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             }
 
             // custom
+            final String cctype = Util.getString(data, map.get("caom2:Chunk.custom.axis.axis.ctype"));
             String ccunit = Util.getString(data, map.get("caom2:Chunk.custom.axis.axis.cunit"));
             Double ces = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.error.syser"));
             Double cer = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.error.rnder"));
@@ -361,7 +362,6 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             pix = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.refCoord.pix"));
             val = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.refCoord.val"));
             delta = Util.getDouble(data, map.get("caom2:Chunk.custom.axis.function.delta"));
-            String cctype = Util.getString(data, map.get("caom2:Chunk.custom.axis.axis.ctype"));
             if (naxis != null) {
                 cfunction = new CoordFunction1D(naxis, delta, new RefCoord(pix, val));
             }
