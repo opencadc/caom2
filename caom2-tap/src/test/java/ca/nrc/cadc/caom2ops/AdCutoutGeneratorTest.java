@@ -134,6 +134,27 @@ public class AdCutoutGeneratorTest {
     }
 
     @Test
+    public void testToURLWithInvalidLabel() {
+        try {
+            String label = "label1%";
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(FILE_URI);
+            adResolver.setAuthMethod(AuthMethod.ANON);
+            URL url = adResolver.toURL(uri, cutouts, label);
+            Assert.fail("should have thrown a UsageFault due to an invalid label");
+        } catch (UsageFault uf) {
+            // expected, success
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
     public void testToURLWithUncompressedFilename() {
         try {
         	String label = "label1";
