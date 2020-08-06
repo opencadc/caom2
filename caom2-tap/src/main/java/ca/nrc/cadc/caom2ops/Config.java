@@ -69,15 +69,13 @@
 
 package ca.nrc.cadc.caom2ops;
 
-
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class Config 
-{
+public class Config {
     private static final Logger log = Logger.getLogger(Config.class);
 
     public static final String POOL_CONFIG = "cvo-pool-config.properties";

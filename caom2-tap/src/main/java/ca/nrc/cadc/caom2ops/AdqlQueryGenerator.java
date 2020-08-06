@@ -79,8 +79,7 @@ import org.apache.log4j.Logger;
  * Generates an ADQL query to select necessary metadata for all artifacts planes.
  * @author pdowler
  */
-public class AdqlQueryGenerator 
-{
+public class AdqlQueryGenerator {
     private static final Logger log = Logger.getLogger(AdqlQueryGenerator.class);
 
     // use the obsID FK column and an alias because FK columns don't have a utype 
@@ -114,8 +113,7 @@ public class AdqlQueryGenerator
         + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID";
     
     // used by meta
-    public String getADQL(final ObservationURI uri)
-    {
+    public String getADQL(final ObservationURI uri) {
         StringBuilder sb = new StringBuilder("SELECT ");
         sb.append(SELECT_OBS2CHUNK);
         sb.append(" FROM ");
@@ -127,27 +125,25 @@ public class AdqlQueryGenerator
     }
     
     // used by datalink
-    public String getADQL(final PublisherID uri, boolean artifactOnly)
-    {
+    public String getADQL(final PublisherID uri, boolean artifactOnly) {
         StringBuilder sb = new StringBuilder("SELECT ");
         sb.append(SELECT_READABLE).append(",");
-        if (artifactOnly)
-        {
+        if (artifactOnly) {
             sb.append(SELECT_ARTIFACT);
             sb.append(" FROM ");
             sb.append(PLANE2ARTIFACT);
-        }
-        else
-        {
+        } else {
             sb.append(SELECT_ARTIFACT2CHUNK);
             sb.append(" FROM ");
             sb.append(PLANE2CHUNK);
         }
+        
         sb.append(" WHERE Plane.publisherID = '");
         sb.append(uri.getURI().toASCIIString());
         sb.append("'");
-        if (!artifactOnly)
+        if (!artifactOnly) {
             sb.append(" ORDER BY Artifact.artifactID, Part.partID");
+        }
         
         String ret = sb.toString();
         log.debug(ret);
@@ -155,27 +151,25 @@ public class AdqlQueryGenerator
     }
     
     // used by datalink
-    public String getADQL(final PlaneURI uri, boolean artifactOnly)
-    {
+    public String getADQL(final PlaneURI uri, boolean artifactOnly) {
         StringBuilder sb = new StringBuilder("SELECT ");
         sb.append(SELECT_READABLE).append(",");
-        if (artifactOnly)
-        {
+        if (artifactOnly) {
             sb.append(SELECT_ARTIFACT);
             sb.append(" FROM ");
             sb.append(PLANE2ARTIFACT);
-        }
-        else
-        {
+        } else {
             sb.append(SELECT_ARTIFACT2CHUNK);
             sb.append(" FROM ");
             sb.append(PLANE2CHUNK);
         }
+        
         sb.append(" WHERE Plane.planeURI = '");
         sb.append(uri.getURI().toASCIIString());
         sb.append("'");
-        if (!artifactOnly)
+        if (!artifactOnly) {
             sb.append(" ORDER BY Artifact.artifactID, Part.partID");
+        }
         
         String ret = sb.toString();
         log.debug(ret);
@@ -183,8 +177,7 @@ public class AdqlQueryGenerator
     }
 
     // used by cutout
-    public String getArtifactADQL(final URI uri)
-    {
+    public String getArtifactADQL(final URI uri) {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
         sb.append(SELECT_ARTIFACT2CHUNK);

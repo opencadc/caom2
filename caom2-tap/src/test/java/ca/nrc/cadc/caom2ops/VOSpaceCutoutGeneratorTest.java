@@ -99,6 +99,7 @@ public class VOSpaceCutoutGeneratorTest {
     private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
     private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String FILE_URI_COMPRESSED = "vos://cadc.nrc.ca!vospace/FOO/bar.CF";
     private static final String PROTOCOL = "ivo://ivoa.net/vospace/core#httpsget"; // assumption
 
     VOSpaceCutoutGenerator vosResolver = new VOSpaceCutoutGenerator();
@@ -108,8 +109,9 @@ public class VOSpaceCutoutGeneratorTest {
     }
 
     @Test
-    public void testToURL() {
+    public void testToURLWithNoLabel() {
         try {
+        	String label = null;
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
@@ -117,9 +119,12 @@ public class VOSpaceCutoutGeneratorTest {
             cutouts.add(CUTOUT4);
             URI uri = new URI(FILE_URI);
             vosResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = vosResolver.toURL(uri, cutouts);
+            URL url = vosResolver.toURL(uri, cutouts, label);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
+            String urlString = url.toExternalForm();
+            String msg = "url should not contain fo parameter: " + urlString;
+            Assert.assertFalse(msg, urlString.contains("fo="));
             String[] paramArray = NetUtil.decode(url.getQuery()).split("&");
             Assert.assertEquals(FILE_URI.toString(), paramArray[0].split("=")[1]);
             Assert.assertEquals(VOSpaceResolver.pullFromVoSpaceValue, paramArray[1].split("=")[1]);
@@ -129,6 +134,72 @@ public class VOSpaceCutoutGeneratorTest {
             Assert.assertEquals(CUTOUT2, paramArray[5].split("=")[1]);
             Assert.assertEquals(CUTOUT3, paramArray[6].split("=")[1]);
             Assert.assertEquals(CUTOUT4, paramArray[7].split("=")[1]);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testToURLWithUncompressedFilename() {
+        try {
+        	String label = "label1";
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(FILE_URI);
+            vosResolver.setAuthMethod(AuthMethod.ANON);
+            URL url = vosResolver.toURL(uri, cutouts, label);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            String urlString = url.toExternalForm();
+            String msg = "url should contain fo parameter: " + urlString;
+            Assert.assertTrue(msg, urlString.contains("fo=label1__bar"));
+            String[] paramArray = NetUtil.decode(url.getQuery()).split("&");
+            Assert.assertEquals(FILE_URI.toString(), paramArray[0].split("=")[1]);
+            Assert.assertEquals(VOSpaceResolver.pullFromVoSpaceValue, paramArray[1].split("=")[1]);
+            Assert.assertEquals(PROTOCOL, paramArray[2].split("=")[1]);
+            Assert.assertEquals("cutout", paramArray[3].split("=")[1]);
+            Assert.assertEquals("label1__bar", paramArray[4].split("=")[1]);
+            Assert.assertEquals(CUTOUT1, paramArray[5].split("=")[1]);
+            Assert.assertEquals(CUTOUT2, paramArray[6].split("=")[1]);
+            Assert.assertEquals(CUTOUT3, paramArray[7].split("=")[1]);
+            Assert.assertEquals(CUTOUT4, paramArray[8].split("=")[1]);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testToURLWithCompressedFilename() {
+        try {
+        	String label = "label2";
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(FILE_URI_COMPRESSED);
+            vosResolver.setAuthMethod(AuthMethod.ANON);
+            URL url = vosResolver.toURL(uri, cutouts, label);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            String urlString = url.toExternalForm();
+            String msg = "url should contain fo parameter without compression extension: " + urlString;
+            Assert.assertTrue(msg, urlString.contains("fo=label2__bar"));
+            String[] paramArray = NetUtil.decode(url.getQuery()).split("&");
+            Assert.assertEquals(FILE_URI_COMPRESSED.toString(), paramArray[0].split("=")[1]);
+            Assert.assertEquals(VOSpaceResolver.pullFromVoSpaceValue, paramArray[1].split("=")[1]);
+            Assert.assertEquals(PROTOCOL, paramArray[2].split("=")[1]);
+            Assert.assertEquals("cutout", paramArray[3].split("=")[1]);
+            Assert.assertEquals("label2__bar", paramArray[4].split("=")[1]);
+            Assert.assertEquals(CUTOUT1, paramArray[5].split("=")[1]);
+            Assert.assertEquals(CUTOUT2, paramArray[6].split("=")[1]);
+            Assert.assertEquals(CUTOUT3, paramArray[7].split("=")[1]);
+            Assert.assertEquals(CUTOUT4, paramArray[8].split("=")[1]);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

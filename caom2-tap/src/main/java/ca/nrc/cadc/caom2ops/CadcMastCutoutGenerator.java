@@ -67,9 +67,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
-
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver;
-import ca.nrc.cadc.net.NetUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -86,7 +84,7 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
     public CadcMastCutoutGenerator() { }
 
     @Override
-    public URL toURL(URI uri, List<String> cutouts) 
+    public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
         URL base = super.toURL(uri);
         if (cutouts == null || cutouts.isEmpty()) {
@@ -95,7 +93,8 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
         
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts);
+        String filename = AdCutoutGenerator.generateFilename(uri, label);
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
         
         try {
             return new URL(sb.toString());

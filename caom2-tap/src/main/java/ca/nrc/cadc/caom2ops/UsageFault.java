@@ -73,16 +73,13 @@ package ca.nrc.cadc.caom2ops;
  *
  * @author pdowler
  */
-public class UsageFault extends IllegalArgumentException
-{
-    public UsageFault(String s)
-    {
+public class UsageFault extends IllegalArgumentException {
+    public UsageFault(String s) {
         super(s);
     }
     
     @Override
-    public String toString()
-    {
+    public String toString() {
         return this.getClass().getSimpleName() + ": " + getMessage();
     }
 }
