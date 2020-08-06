@@ -29,6 +29,7 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.AdResolver;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.NetUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -80,11 +81,16 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
     static String generateFilename(URI uri, String label) {
         String filename = null;
         if (label != null) {
-            String ssp = uri.getSchemeSpecificPart();
-            int i = ssp.lastIndexOf('/');
-            if (i != -1 && i < ssp.length() - 1) {
-                filename = label + "__"
-                    + removeCompressionExtension(ssp.substring(i + 1));
+            try {
+                CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
+                String ssp = uri.getSchemeSpecificPart();
+                int i = ssp.lastIndexOf('/');
+                if (i != -1 && i < ssp.length() - 1) {
+                    filename = label + "__"
+                        + removeCompressionExtension(ssp.substring(i + 1));
+                }
+            } catch (IllegalArgumentException ex) {
+                throw new UsageFault(ex.getMessage());
             }
         }
 
