@@ -84,8 +84,8 @@ import java.util.Date;
 import java.util.Iterator;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
-import org.opencadc.inventory.permissions.ReadGrant;
-import org.opencadc.inventory.permissions.xml.GrantWriter;
+import org.opencadc.permissions.ReadGrant;
+import org.opencadc.permissions.xml.GrantWriter;
 
 public class GetPermissions extends GetAction {
 
