@@ -118,7 +118,7 @@ public abstract class RepoAction extends RestAction {
 
     public static final int MAX_LIST_SIZE = 100000;
 
-    private static final GroupURI CADC_GROUP_URI = new GroupURI("ivo://cadc.nrc.ca/gms?CADC");
+    private static final GroupURI CADC_GROUP_URI = new GroupURI(URI.create("ivo://cadc.nrc.ca/gms?CADC"));
 
     private String collection;
     protected ObservationURI uri;
