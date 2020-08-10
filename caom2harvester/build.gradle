@@ -16,7 +16,6 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-// version at release TBD
 version = '2.5.1'
 ext {
     // release number for building packages (rpm, deb, etc)
@@ -33,9 +32,9 @@ dependencies {
     compile 'org.springframework:spring-jdbc:2.5.6.SEC01'
     
     compile 'org.opencadc:cadc-util:1.2.0'
-    compile 'org.opencadc:caom2:[2.4,2.5)'
-    compile 'org.opencadc:caom2persistence:[2.4,2.5)'
-    compile 'org.opencadc:caom2-repo:[1.3,1.4)'
+    compile 'org.opencadc:caom2:[2.4.3,2.5)'
+    compile 'org.opencadc:caom2persistence:[2.4.4,2.5)'
+    compile 'org.opencadc:caom2-repo:[1.4,1.5)'
     compile 'org.opencadc:caom2-persist:[2.4,2.5)'
     
     // needed to run plane metadata compute plugin (--compute)
@@ -63,3 +62,4 @@ distributions {
         }
     }
 }
+
