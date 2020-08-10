@@ -119,13 +119,6 @@ public class GetPermissions extends GetAction {
         doGetPermissions(artifactURI);
     }
 
-    /**
-     * Get the access permissions for the given ArtifactURI.
-     * 
-     * @param collection the collection containing the artifact.
-     * @param artifactURI the ArtifactURI.
-     * @throws Exception
-     */
     protected void doGetPermissions(URI artifactURI) throws Exception {
         log.debug("START: " + artifactURI);
 

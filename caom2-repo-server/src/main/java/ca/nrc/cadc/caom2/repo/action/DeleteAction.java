@@ -91,7 +91,7 @@ public class DeleteAction extends RepoAction {
         ObservationURI uri = getURI();
         log.debug("START: " + uri);
 
-        checkWritePermission(uri);
+        checkWritePermission();
 
         ObservationDAO dao = getDAO();
         ObservationState s = dao.getState(uri);
