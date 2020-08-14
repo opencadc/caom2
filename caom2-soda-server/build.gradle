@@ -17,7 +17,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '1.6.1'
+version = '1.6.2'
 
 dependencies {
     compile 'log4j:log4j:[1.2.0,)'
