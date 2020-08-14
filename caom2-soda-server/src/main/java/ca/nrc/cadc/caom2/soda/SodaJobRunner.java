@@ -195,7 +195,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
                     // get the optional label parameter value
                 	List<String> labels = customParams.get(PARAM_LABEL);
                 	String label = null;
-                	if (labels.size() > 0) {
+                	if (labels != null && labels.size() > 0) {
                 		label = labels.get(0);
                 	}
                 	
