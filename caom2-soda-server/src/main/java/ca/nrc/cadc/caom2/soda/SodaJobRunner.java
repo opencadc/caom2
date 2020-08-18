@@ -193,12 +193,13 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
                 StorageResolver resolver = artifactResolver.getStorageResolver(uri);
                 if (resolver instanceof CutoutGenerator) {
                     // get the optional label parameter value
-                	List<String> labels = customParams.get(PARAM_LABEL);
-                	String label = null;
-                	if (labels != null && !labels.isEmpty()) {
-                		label = labels.get(0);
-                	}
-                	
+                    List<String> labels = customParams.get(PARAM_LABEL);
+                    String label = null;
+                    // ignore LABEL parameter for async mode
+                    if (syncOutput != null && labels != null && !labels.isEmpty()) {
+                        label = labels.get(0);
+                    }
+                
                     URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), cutout, label);
                     log.debug("cutout URL: " + url.toExternalForm());
                     return url;
