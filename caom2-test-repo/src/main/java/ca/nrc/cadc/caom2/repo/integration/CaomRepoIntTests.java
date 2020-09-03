@@ -434,7 +434,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
     public void testPostValidationFails() throws Throwable {
         String observationID = generateID("testPostValidationFails");
         String path = TEST_COLLECTION + "/" + observationID;
-        String uri = SCHEME + path;
+        final String uri = SCHEME + path;
 
         // Create one to overwrite with a post (ok to fail)
         SimpleObservation initialOb = new SimpleObservation(TEST_COLLECTION, observationID);
