@@ -440,10 +440,12 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         SimpleObservation initialOb = new SimpleObservation(TEST_COLLECTION, observationID);
         putObservation(initialOb, subject1, null, null, null);
 
-        Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
+        // make invalid
+        initialOb.instrument = new Instrument("INSTR");
+        initialOb.instrument.getKeywords().add("FOO|BAR"); // reserved character
 
-        // create an observation using subject1
-        postObservation(observation, subject1, 400, "invalid input: " + uri, null);
+        // try to update 
+        postObservation(initialOb, subject1, 400, "invalid input: " + uri, null);
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);
