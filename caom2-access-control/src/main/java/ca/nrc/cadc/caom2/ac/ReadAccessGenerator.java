@@ -197,14 +197,7 @@ public class ReadAccessGenerator {
         log.debug("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
         if (!pub) {
             // Create a Group for this proposalID if it doesn't exist
-            GroupURI proposalGroupID = null;
-            try {
-                proposalGroupID = getProposalGroupID(collection, observation.proposal);
-            } catch (URISyntaxException ex) {
-                log.warn("invalid proposal_id to group name: " + observation.proposal);
-                throw new IllegalArgumentException(ex);
-            }
-
+            GroupURI proposalGroupID = getProposalGroupID(collection, observation.proposal);
             checkProposalGroup(proposalGroupID);
             generateTuples(observation, now, proposalGroupID);
         }
@@ -245,22 +238,14 @@ public class ReadAccessGenerator {
     }
 
     // package access for testing
-    GroupURI getProposalGroupID(final String collection, final Proposal proposal)
-            throws URISyntaxException {
-        if (proposal == null) {
+    GroupURI getProposalGroupID(final String collection, final Proposal proposal) {
+        if (proposal == null || proposal.getID().trim().isEmpty()) {
             return null;
         }
-        if (proposal.getID().trim().isEmpty()) { // whitespace only
-            return null;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(groupBaseURI.toString());
-        sb.append("?");
-        sb.append(collection);
-        sb.append("-");
-        sb.append(proposal.getID().trim());
-        return new GroupURI(sb.toString());
+        
+        String groupName = collection + "-" + proposal.getID();
+        log.debug("getProposalGroupID: " + groupBaseURI + " " + groupName);
+        return new GroupURI(groupBaseURI, groupName);
     }
     
     void createObservationMetaReadAccess(Observation o, Date now, GroupURI proposalGroupID) {
