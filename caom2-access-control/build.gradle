@@ -17,7 +17,7 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.4.2'
+version = '2.4.3'
 
 dependencies {
     compile 'log4j:log4j:1.2.17'
@@ -26,7 +26,7 @@ dependencies {
     compile 'org.opencadc:cadc-log:[1.1,1.2)'
     compile 'org.opencadc:cadc-cdp:[1.1.1,2)'
     compile 'org.opencadc:caom2:[2.4.0, 2.5)'
-    compile 'org.opencadc:cadc-gms:[1.0,2.0)'
+    compile 'org.opencadc:cadc-gms:[1.0.2,2.0)'
     compile 'org.opencadc:cadc-access-control:[1.1.4,1.2)'
     compile 'org.opencadc:cadc-registry:[1.5,1.6)'
     

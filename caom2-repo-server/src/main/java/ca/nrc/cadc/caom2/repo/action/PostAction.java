@@ -104,14 +104,10 @@ public class PostAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
-        ObservationState s = dao.getState(uri);
+        ObservationState s = dao.getState(obs.getID());
 
         if (s == null) {
             throw new ResourceNotFoundException("not found: " + uri);
-        }
-        if (!s.getID().equals(obs.getID())) {
-            // trying to update with non-matching uuid
-            // TODO: test for current exception/message and improve on it here
         }
         
         validate(obs);
