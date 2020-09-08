@@ -1,4 +1,4 @@
-name: Java+Docker CI
+name: Java CI
 
 on: 
   pull_request:
