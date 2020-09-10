@@ -106,21 +106,40 @@ public class Wcs
         Integer[] axis = new Integer[] { null, null };
         if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.position")))
         {
+            String posCtype1 = mapping.getConfig().get("Chunk.position.axis.axis1.ctype");
+            String posCtype2 = mapping.getConfig().get("Chunk.position.axis.axis2.ctype");
+            
             for (int i = 1; i <= naxis.intValue(); i++)
             {
-                String ctype = mapping.getKeywordValue("CTYPE" + i);
+                String key = "CTYPE" + i;
+                String ctype = mapping.getKeywordValue(key);
+                if (ctype != null && !Ctypes.isPositionCtype(ctype)) {
+                    
+                    if (posCtype1 != null && posCtype1.startsWith(key)) {
+                        key = posCtype1;
+                    } else if (posCtype2 != null && posCtype2.startsWith(key)) {
+                        key = posCtype2;
+                    } else {
+                        key = null;
+                    }
+                    
+                    // use alt axis description
+                    if (key != null) {
+                        ctype = mapping.getKeywordValue(key);
+                    }
+                }
                 if (ctype == null)
                     continue;
                 if (Ctypes.isPositionCtype(ctype))
                 {
                     if (axis[0] == null)
                     {
-                        axis[0] = Integer.valueOf(i);
+                        axis[0] = i;
                         ctype0 = ctype;
                     }
                     else
                     {
-                        axis[1] = Integer.valueOf(i);
+                        axis[1] = i;
                         ctype1 = ctype;
                     }
                 }
@@ -128,8 +147,8 @@ public class Wcs
         }
         if (axis[0] != null && axis[1] != null)
         {
-            log.info(mapping.uri + "[" + mapping.extension + "] CTYPE" + axis[0] + "=" + ctype0 + " - positionAxis" + axis[0]);
-            log.info(mapping.uri + "[" + mapping.extension + "] CTYPE" + axis[1] + "=" + ctype1 + " - positionAxis" + axis[1]);
+            log.info(mapping.uri + "[" + mapping.extension + "] CTYPE" + axis[0] + "=" + ctype0 + " - positionAxis1=" + axis[0]);
+            log.info(mapping.uri + "[" + mapping.extension + "] CTYPE" + axis[1] + "=" + ctype1 + " - positionAxis2=" + axis[1]);
         }
         return axis;
     }
@@ -138,11 +157,25 @@ public class Wcs
     {
         String ctype = null;
         Integer axis = null;
+        String altCtype = mapping.getConfig().get("Chunk.energy.axis.axis.ctype");
+        
         if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.energy")))
         {
             for (int i = 1; i <= naxis.intValue(); i++)
             {
-                ctype = mapping.getKeywordValue("CTYPE" + i);
+                String key = "CTYPE" + i;
+                ctype = mapping.getKeywordValue(key);
+                if (ctype != null && !Ctypes.isEnergyCtype(ctype)) {
+                    if (altCtype != null && altCtype.startsWith(key)) {
+                        key = altCtype;
+                    } else {
+                        key = null;
+                    }
+                    // use alt axis description if configured explicitly
+                    if (key != null) {
+                        ctype = mapping.getKeywordValue(key);
+                    }
+                }
                 if (ctype == null)
                     continue;
                 if (Ctypes.isEnergyCtype(ctype))
@@ -153,7 +186,7 @@ public class Wcs
             }
         }
         if (axis != null)
-            log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - energyAxis" + axis);
+            log.info(mapping.uri + "[" + mapping.extension + "] CYTPE" + axis + "=" + ctype + " - energyAxis=" + axis);
         return axis;
     }
     
@@ -161,11 +194,24 @@ public class Wcs
     {
         String ctype = null;
         Integer axis = null;
+        String altCtype = mapping.getConfig().get("Chunk.time.axis.axis.ctype");
         if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.time")))
         {
             for (int i = 1; i <= naxis.intValue(); i++)
             {
-                ctype = mapping.getKeywordValue("CTYPE" + i);
+                String key = "CTYPE" + i;
+                ctype = mapping.getKeywordValue(key);
+                if (ctype != null && !Ctypes.isTimeCtype(ctype)) {
+                    if (altCtype != null && altCtype.startsWith(key)) {
+                        key = altCtype;
+                    } else {
+                        key = null;
+                    }
+                    // use alt axis description if configured explicitly
+                    if (key != null) {
+                        ctype = mapping.getKeywordValue(key);
+                    }
+                }
                 if (ctype == null)
                     continue;
                 if (Ctypes.isTimeCtype(ctype))
@@ -184,11 +230,24 @@ public class Wcs
     {
         String ctype = null;
         Integer axis = null;
+        String altCtype = mapping.getConfig().get("Chunk.polarization.axis.axis.ctype");
         if (naxis != null && !FitsMapping.IGNORE.equals(mapping.getConfig().get("Chunk.polarization")))
         {
             for (int i = 1; i <= naxis.intValue(); i++)
             {
-                ctype = mapping.getKeywordValue("CTYPE" + i);
+                String key = "CTYPE" + i;
+                ctype = mapping.getKeywordValue(key);
+                if (ctype != null && !Ctypes.isPolarizationCtype(ctype)) {
+                    if (altCtype != null && altCtype.startsWith(key)) {
+                        key = altCtype;
+                    } else {
+                        key = null;
+                    }
+                    // use alt axis description if configured explicitly
+                    if (key != null) {
+                        ctype = mapping.getKeywordValue(key);
+                    }
+                }
                 if (ctype == null)
                     continue;
                 if (Ctypes.isPolarizationCtype(ctype))

@@ -27,6 +27,7 @@ import ca.nrc.cadc.fits2caom2.Util;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import nom.tam.fits.Header;
 import org.apache.log4j.Level;
 import org.junit.Assert;
@@ -73,6 +74,54 @@ public class WcsTest
         junit.framework.Assert.assertNotNull(axes[1]);
         junit.framework.Assert.assertEquals(1, axes[0], 0.0);
         junit.framework.Assert.assertEquals(2, axes[1], 0.0);
+    }
+    
+    @Test
+    public void testGetAltConfig() throws Exception
+    {
+        Map<String,String> alt = new TreeMap<>();
+        alt.putAll(config);
+        alt.put("Chunk.position.axis.axis1.ctype", "CTYPE2A");
+        alt.put("Chunk.position.axis.axis2.ctype", "CTYPE3A");
+        alt.put("Chunk.energy.axis.axis.ctype", "CTYPE1A");
+        alt.put("Chunk.polarization.axis.axis.ctype", "CTYPE4A");
+        alt.put("Chunk.time.axis.axis.ctype", "CTYPE5A");
+        
+        Integer naxis = 5;
+        FitsMapping mapping = new FitsMapping(alt, null, null);
+        mapping.header = new Header();
+        // unrecognizable primary axis descriptions
+        mapping.header.addValue("CTYPE2", "FOO-LONG", null);
+        mapping.header.addValue("CTYPE3", "FOO-LAT", null);
+        mapping.header.addValue("CTYPE1", "FOO-NRG", null);
+        mapping.header.addValue("CTYPE4", "FOO-POL", null);
+        mapping.header.addValue("CTYPE5", "FOO-TIM", null);
+        // alternate axis descriptions
+        mapping.header.addValue("CTYPE2A", "RA", null);
+        mapping.header.addValue("CTYPE3A", "DEC", null);
+        mapping.header.addValue("CTYPE1A", "WAVE", null);
+        mapping.header.addValue("CTYPE4A", "STOKES", null);
+        mapping.header.addValue("CTYPE5A", "TIME", null);
+        
+        Integer[] pos = Wcs.getPositionAxis(naxis, mapping);
+        
+        Assert.assertNotNull(pos);
+        Assert.assertNotNull(pos[0]);
+        Assert.assertNotNull(pos[1]);
+        Assert.assertEquals(2, pos[0].intValue());
+        Assert.assertEquals(3, pos[1].intValue());
+        
+        Integer en = Wcs.getEnergyAxis(naxis, mapping);
+        Assert.assertNotNull(en);
+        Assert.assertEquals(1, en.intValue());
+        
+        Integer tm = Wcs.getTimeAxis(naxis, mapping);
+        Assert.assertNotNull(tm);
+        Assert.assertEquals(5, tm.intValue());
+        
+        Integer pol = Wcs.getPolarizationAxis(naxis, mapping);
+        Assert.assertNotNull(pol);
+        Assert.assertEquals(4, pol.intValue());
     }
     
     @Test
