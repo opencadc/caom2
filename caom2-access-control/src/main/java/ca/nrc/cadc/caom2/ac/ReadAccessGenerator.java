@@ -349,9 +349,17 @@ public class ReadAccessGenerator {
                     gmsClient.createGroup(proposalGroup);
                     log.debug("created group: " + proposalGroupName);
                 } else {
-                    proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
-                    gmsClient.updateGroup(proposalGroup);
-                    log.debug("updated group: " + proposalGroupName);
+                    Group g = new Group(staffGroupURI);
+                    if (!proposalGroup.getGroupAdmins().contains(g)) {
+                        proposalGroup.getGroupAdmins().add(g);
+                        try {
+                            gmsClient.updateGroup(proposalGroup);
+                            log.debug("updated group: " + proposalGroupName);
+                        } catch (ReaderException | URISyntaxException oops) {
+                            log.warn("updated group: " + proposalGroupName + "but GMSClient failed to read response... assuming OK");
+                        }
+                        
+                    }
                 }
             } catch (GroupNotFoundException ex) {
                 throw new RuntimeException("CONFIG: group not found " + proposalGroupName + " or " + staffGroupURI + " for update");
@@ -359,8 +367,8 @@ public class ReadAccessGenerator {
                 throw new RuntimeException("CONFIG: group collision " + proposalGroupName + " for create (right after negative check)");
             } catch (UserNotFoundException ex) {
                 throw new RuntimeException("BUG: unexpected failure (reasons)", ex);
-            } catch (ReaderException | WriterException | URISyntaxException ex) {
-                throw new RuntimeException("BUG: bad api exposing internal failure", ex);
+            } catch (WriterException ex) {
+                throw new TransientException("failed to update proposal group: " + proposalGroupName, ex);
             }
 
             // cache groups we have already updated
