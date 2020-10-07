@@ -105,7 +105,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>, ShutdownListener {
+public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, ShutdownListener {
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
@@ -116,6 +116,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private ArtifactDAO artifactDAO;
     private String source;
     private int batchSize;
+    private boolean loop;
     private int threads;
     private boolean tolerateNullChecksum;
     private Date startDate = null;
@@ -129,7 +130,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     long start;
 
     public DownloadArtifactFiles(ArtifactDAO artifactDAO, HarvestResource harvestResource, ArtifactStore artifactStore,
-            int threads, int batchSize, Integer retryAfterHours, boolean tolerateNullChecksum) {
+            int threads, int batchSize, boolean loop, Integer retryAfterHours, boolean tolerateNullChecksum) {
         this.artifactStore = artifactStore;
 
         this.artifactDAO = artifactDAO;
@@ -138,6 +139,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
         this.threads = threads;
         this.batchSize = batchSize;
+        this.loop = loop;
         this.tolerateNullChecksum = tolerateNullChecksum;
         this.stopDate = new Date();
         if (retryAfterHours == null) {
@@ -150,22 +152,27 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     }
 
     @Override
-    public Integer run() throws Exception {
+    public Void run() throws Exception {
 
-        log.debug("Querying for skip records between " + startDate + " and " + stopDate);
-        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
         executor = Executors.newFixedThreadPool(threads);
-
-        Integer workCount = artifacts.size();
         List<Callable<ArtifactDownloadResult>> tasks = new ArrayList<Callable<ArtifactDownloadResult>>();
-
-        for (HarvestSkipURI skip : artifacts) {
-            ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
-            tasks.add(downloader);
-        }
-        // set the start date so that the next batch resumes after our last record
-        if (workCount > 0) {
-            startDate = artifacts.get(workCount - 1).getTryAfter();
+        boolean moreArtifacts = true;
+        
+        // get all artifacts for this run
+        while (moreArtifacts) {
+            log.debug("Querying for skip records between " + startDate + " and " + stopDate);
+            List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
+            for (HarvestSkipURI skip : artifacts) {
+                ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
+                tasks.add(downloader);
+            }
+            
+            if ((artifacts.size() < batchSize) || (!loop)) {
+                moreArtifacts = false;
+            } else {
+                // set the start date so that the next batch resumes after our last record
+                startDate = artifacts.get(batchSize - 1).getTryAfter();
+            }
         }
 
         // reset each batch
@@ -212,8 +219,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
             executor = null;
             logBatchEnd(results.size(), successes, totalElapsedTime, totalBytes);
         }
-
-        return workCount;
+        
+        return null;
     }
 
     class ArtifactDownloader implements Callable<ArtifactDownloadResult>, InputStreamWrapper {
