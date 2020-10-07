@@ -217,7 +217,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, S
                 executor.shutdownNow();
             }
             executor = null;
-            logBatchEnd(results.size(), successes, totalElapsedTime, totalBytes);
+            logDownloadEnd(results.size(), successes, totalElapsedTime, totalBytes);
         }
         
         return null;
@@ -479,10 +479,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, S
         threadLog.info(startMessage.toString());
     }
 
-    private void logBatchEnd(long total, long successes, long totalElapsedTime, long totalBytes) {
+    private void logDownloadEnd(long total, long successes, long totalElapsedTime, long totalBytes) {
         final long end = System.currentTimeMillis() - start;
         StringBuilder endMessage = new StringBuilder();
-        endMessage.append("ENDBATCH: {");
+        endMessage.append("ENDDOWNLOAD: {");
         endMessage.append("\"total\":\"").append(total).append("\"");
         endMessage.append(",");
         endMessage.append("\"successCount\":\"").append(successes).append("\"");
@@ -511,7 +511,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, S
 
             if (results == null) {
                 StringBuilder endMessage = new StringBuilder();
-                endMessage.append("ENDBATCH: {");
+                endMessage.append("ENDDOWNLOAD: {");
                 endMessage.append("\"total\":\"0\"");
                 endMessage.append(",");
                 endMessage.append("\"successCount\":\"0\"");
@@ -547,7 +547,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, S
                     }
                 }
 
-                logBatchEnd(total, successes, totalElapsedTime, totalBytes);
+                logDownloadEnd(total, successes, totalElapsedTime, totalBytes);
             }
 
             try {
