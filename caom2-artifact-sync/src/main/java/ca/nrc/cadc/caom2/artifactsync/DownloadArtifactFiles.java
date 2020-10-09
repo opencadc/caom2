@@ -103,9 +103,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import javax.lang.model.type.NullType;
+
 import org.apache.log4j.Logger;
 
-public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, ShutdownListener {
+public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType>, ShutdownListener {
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
@@ -152,7 +154,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, S
     }
 
     @Override
-    public Void run() throws Exception {
+    public NullType run() throws Exception {
 
         executor = Executors.newFixedThreadPool(threads);
         results = new ArrayList<Future<ArtifactDownloadResult>>();

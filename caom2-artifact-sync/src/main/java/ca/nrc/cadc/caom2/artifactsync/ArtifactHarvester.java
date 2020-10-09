@@ -95,9 +95,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.UUID;
 
+import javax.lang.model.type.NullType;
+
 import org.apache.log4j.Logger;
 
-public class ArtifactHarvester implements PrivilegedExceptionAction<Void>, ShutdownListener {
+public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, ShutdownListener {
 
     public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
@@ -151,7 +153,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Void>, Shutd
     }
 
     @Override
-    public Void run() throws Exception {
+    public NullType run() throws Exception {
         int loopNum = 1;
         boolean stop = false;
         do {
