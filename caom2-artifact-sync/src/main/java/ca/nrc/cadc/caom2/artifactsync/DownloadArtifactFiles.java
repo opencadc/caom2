@@ -103,9 +103,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import javax.lang.model.type.NullType;
+
 import org.apache.log4j.Logger;
 
-public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>, ShutdownListener {
+public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType>, ShutdownListener {
 
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
@@ -116,6 +118,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     private ArtifactDAO artifactDAO;
     private String source;
     private int batchSize;
+    private boolean loop;
     private int threads;
     private boolean tolerateNullChecksum;
     private Date startDate = null;
@@ -129,7 +132,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     long start;
 
     public DownloadArtifactFiles(ArtifactDAO artifactDAO, HarvestResource harvestResource, ArtifactStore artifactStore,
-            int threads, int batchSize, Integer retryAfterHours, boolean tolerateNullChecksum) {
+            int threads, int batchSize, boolean loop, Integer retryAfterHours, boolean tolerateNullChecksum) {
         this.artifactStore = artifactStore;
 
         this.artifactDAO = artifactDAO;
@@ -138,6 +141,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
         this.threads = threads;
         this.batchSize = batchSize;
+        this.loop = loop;
         this.tolerateNullChecksum = tolerateNullChecksum;
         this.stopDate = new Date();
         if (retryAfterHours == null) {
@@ -150,37 +154,36 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
     }
 
     @Override
-    public Integer run() throws Exception {
+    public NullType run() throws Exception {
 
-        log.debug("Querying for skip records between " + startDate + " and " + stopDate);
-        List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
         executor = Executors.newFixedThreadPool(threads);
-
-        Integer workCount = artifacts.size();
-        List<Callable<ArtifactDownloadResult>> tasks = new ArrayList<Callable<ArtifactDownloadResult>>();
-
-        for (HarvestSkipURI skip : artifacts) {
-            ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
-            tasks.add(downloader);
-        }
-        // set the start date so that the next batch resumes after our last record
-        if (workCount > 0) {
-            startDate = artifacts.get(workCount - 1).getTryAfter();
+        results = new ArrayList<Future<ArtifactDownloadResult>>();
+        boolean moreArtifacts = true;
+        
+        // get all artifacts for this run and submit the results asynchronously
+        start = System.currentTimeMillis();
+        while (moreArtifacts) {
+            log.debug("Querying for skip records between " + startDate + " and " + stopDate);
+            List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
+            for (HarvestSkipURI skip : artifacts) {
+                ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
+                results.add(executor.submit(downloader));
+            }
+            
+            if ((artifacts.size() < batchSize) || (!loop)) {
+                moreArtifacts = false;
+            } else {
+                // set the start date so that the next batch resumes after our last record
+                startDate = artifacts.get(batchSize - 1).getTryAfter();
+            }
         }
 
         // reset each batch
         long successes = 0;
         long totalElapsedTime = 0;
         long totalBytes = 0;
-        results = new ArrayList<Future<ArtifactDownloadResult>>();
-        start = System.currentTimeMillis();
 
         try {
-            // submit the results asynchronously
-            for (Callable<ArtifactDownloadResult> task : tasks) {
-                results.add(executor.submit(task));
-            }
-
             // let pool know no new tasks can be added
             executor.shutdown();
 
@@ -210,10 +213,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                 executor.shutdownNow();
             }
             executor = null;
-            logBatchEnd(results.size(), successes, totalElapsedTime, totalBytes);
+            logDownloadEnd(results.size(), successes, totalElapsedTime, totalBytes);
         }
-
-        return workCount;
+        
+        return null;
     }
 
     class ArtifactDownloader implements Callable<ArtifactDownloadResult>, InputStreamWrapper {
@@ -472,10 +475,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
         threadLog.info(startMessage.toString());
     }
 
-    private void logBatchEnd(long total, long successes, long totalElapsedTime, long totalBytes) {
+    private void logDownloadEnd(long total, long successes, long totalElapsedTime, long totalBytes) {
         final long end = System.currentTimeMillis() - start;
         StringBuilder endMessage = new StringBuilder();
-        endMessage.append("ENDBATCH: {");
+        endMessage.append("ENDDOWNLOAD: {");
         endMessage.append("\"total\":\"").append(total).append("\"");
         endMessage.append(",");
         endMessage.append("\"successCount\":\"").append(successes).append("\"");
@@ -504,7 +507,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
 
             if (results == null) {
                 StringBuilder endMessage = new StringBuilder();
-                endMessage.append("ENDBATCH: {");
+                endMessage.append("ENDDOWNLOAD: {");
                 endMessage.append("\"total\":\"0\"");
                 endMessage.append(",");
                 endMessage.append("\"successCount\":\"0\"");
@@ -540,7 +543,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Integer>
                     }
                 }
 
-                logBatchEnd(total, successes, totalElapsedTime, totalBytes);
+                logDownloadEnd(total, successes, totalElapsedTime, totalBytes);
             }
 
             try {

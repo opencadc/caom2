@@ -152,7 +152,7 @@ public class Discover extends Caom2ArtifactSync {
                             artifactDAO.setConfig(daoConfig);
     
                             this.downloader = new DownloadArtifactFiles(
-                                    artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, retryAfterHours, tolerateNullChecksum);
+                                artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, this.loop, retryAfterHours, tolerateNullChecksum);
                             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
                             listeners.add(downloader);
                             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
@@ -162,7 +162,7 @@ public class Discover extends Caom2ArtifactSync {
                         observationDAO.setConfig(this.daoConfig);
     
                         this.harvester = new ArtifactHarvester(
-                                observationDAO, harvestResource, artifactStore, this.batchSize);
+                                observationDAO, harvestResource, artifactStore, this.batchSize, this.loop);
                         List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
                         listeners.add(harvester);
                         Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
@@ -204,45 +204,24 @@ public class Discover extends Caom2ArtifactSync {
     public void execute() throws Exception {
         if (!this.isDone) {
             this.setExitValue(2);
-            int loopNum = 1;
-            boolean stop = false;
-            do {
-                if (loop) {
-                    log.info("-- STARTING LOOP #" + loopNum + " --");
-                }
-
-                stop = this.executeCommand();
-
-                if (loop) {
-                    log.info("-- ENDING LOOP #" + loopNum + " --");
-                }
-
-                loopNum++;
-                
-                // re-initialize the subject
-                this.createSubject(am);
-                
-            } while (loop && !stop); // continue if work was done
-
+            this.executeCommand();
             this.setExitValue(0); // finished cleanly
         }
     }
     
-    protected boolean executeCommand() throws Exception {
-        boolean stop = false;
+    protected void executeCommand() throws Exception {
         if (this.subject != null) {
             if (this.mode.equals("download")) {
-                stop = Subject.doAs(this.subject, downloader) == 0;
+                Subject.doAs(this.subject, downloader);
             } else {
-                stop = Subject.doAs(this.subject, harvester) == 0;
+                Subject.doAs(this.subject, harvester);
             }
         } else {
             if (this.mode.equals("download")) {
-                stop = downloader.run() == 0;
+                downloader.run();
             } else {
-                stop = harvester.run() == 0;
+                harvester.run();
             }
         }
-        return stop;
     }
 }
