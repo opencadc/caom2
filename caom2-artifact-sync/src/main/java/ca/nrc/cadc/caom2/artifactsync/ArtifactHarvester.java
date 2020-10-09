@@ -462,8 +462,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Void>, Shutd
     }
     
     private void logBatchEnd() {
+        logBatchEnd("ENDBATCH");
+    }
+
+    private void logBatchEnd(String endString) {
         StringBuilder batchMessage = new StringBuilder();
-        batchMessage.append("ENDBATCH: {");
+        batchMessage.append(endString + ": {");
         batchMessage.append("\"total\":\"").append(this.processedCount).append("\"");
         batchMessage.append(",");
         batchMessage.append("\"added\":\"").append(this.downloadCount).append("\"");
@@ -477,7 +481,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Void>, Shutd
 
     @Override
     public void shutdown() {
-        logBatchEnd();
+        logBatchEnd("ENDDISCOVER");
     }
     
 }

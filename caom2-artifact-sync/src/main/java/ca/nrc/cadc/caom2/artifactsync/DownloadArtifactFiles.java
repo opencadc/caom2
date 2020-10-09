@@ -155,16 +155,17 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, S
     public Void run() throws Exception {
 
         executor = Executors.newFixedThreadPool(threads);
-        List<Callable<ArtifactDownloadResult>> tasks = new ArrayList<Callable<ArtifactDownloadResult>>();
+        results = new ArrayList<Future<ArtifactDownloadResult>>();
         boolean moreArtifacts = true;
         
-        // get all artifacts for this run
+        // get all artifacts for this run and submit the results asynchronously
+        start = System.currentTimeMillis();
         while (moreArtifacts) {
             log.debug("Querying for skip records between " + startDate + " and " + stopDate);
             List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
             for (HarvestSkipURI skip : artifacts) {
                 ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
-                tasks.add(downloader);
+                results.add(executor.submit(downloader));
             }
             
             if ((artifacts.size() < batchSize) || (!loop)) {
@@ -179,15 +180,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<Void>, S
         long successes = 0;
         long totalElapsedTime = 0;
         long totalBytes = 0;
-        results = new ArrayList<Future<ArtifactDownloadResult>>();
-        start = System.currentTimeMillis();
 
         try {
-            // submit the results asynchronously
-            for (Callable<ArtifactDownloadResult> task : tasks) {
-                results.add(executor.submit(task));
-            }
-
             // let pool know no new tasks can be added
             executor.shutdown();
 
