@@ -75,10 +75,13 @@ import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.rest.InlineContentHandler;
+import ca.nrc.cadc.rest.RestAction;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -87,42 +90,43 @@ import org.opencadc.gms.GroupURI;
 import org.opencadc.permissions.ReadGrant;
 import org.opencadc.permissions.xml.GrantWriter;
 
-public class GetPermissions extends GetAction {
+public class GetPermissionsAction extends RestAction {
 
-    private static final Logger log = Logger.getLogger(GetPermissions.class);
+    private static final Logger log = Logger.getLogger(GetPermissionsAction.class);
 
     // hours until the grant expires
     private static final int HOURS_UNTIL_EXPIRES = 24;
 
-    GetPermissions() {}
+    private static final String PARAM_ID = "ID";
+
+    @Override
+    protected InlineContentHandler getInlineContentHandler() {
+        return null;
+    }
 
     @Override
     public void doAction() throws Exception {
         log.debug("GET ACTION");
 
-        String path = syncInput.getPath();
-        if (path == null) {
-            throw new IllegalArgumentException("null path");
-        }
-        String[] parts = path.split("/");
-        String collection = parts[0];
+        String id = syncInput.getParameter(PARAM_ID);
+        log.debug(PARAM_ID + ": " + id);
 
-        URI artifactURI;
-        if (parts.length > 1) {
-            artifactURI = URI.create("caom:" + path);
-        } else {
-            throw new IllegalArgumentException("invalid input: " + path);
+        if (id == null) {
+            throw new IllegalArgumentException("missing required parameter, " + PARAM_ID);
         }
 
-        //checkReadPermission();
+        URI assetID;
+        try {
+            assetID = new URI(id);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("invalid " + PARAM_ID + " parameter, not a valid URI: " + id);
+        }
         
-        doGetPermissions(artifactURI);
+        doGetPermissions(assetID);
     }
 
     protected void doGetPermissions(URI artifactURI) throws Exception {
         log.debug("START: " + artifactURI);
-
-        
 
         ReadAccessDAO readAccessDAO = getReadAccessDAO(artifactURI);
         ReadAccessDAO.RawArtifactAccess raa = readAccessDAO.getArtifactAccess(artifactURI);
