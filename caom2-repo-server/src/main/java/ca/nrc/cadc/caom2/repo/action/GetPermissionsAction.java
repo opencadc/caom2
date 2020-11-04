@@ -69,14 +69,17 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
+import ca.nrc.cadc.caom2.repo.PropertiesAuthorization;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -85,6 +88,7 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
+import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.permissions.ReadGrant;
@@ -97,7 +101,12 @@ public class GetPermissionsAction extends RestAction {
     // hours until the grant expires
     private static final int HOURS_UNTIL_EXPIRES = 24;
 
+    private static final String PARAM_OP = "OP";
     private static final String PARAM_ID = "ID";
+
+    public enum Operation {
+        read
+    }
 
     @Override
     protected InlineContentHandler getInlineContentHandler() {
@@ -108,9 +117,20 @@ public class GetPermissionsAction extends RestAction {
     public void doAction() throws Exception {
         log.debug("GET ACTION");
 
+        String op = syncInput.getParameter(PARAM_OP);
         String id = syncInput.getParameter(PARAM_ID);
+        log.debug(PARAM_OP + ": " + op);
         log.debug(PARAM_ID + ": " + id);
 
+        if (op == null) {
+            throw new IllegalArgumentException("missing required parameter, " + PARAM_OP + "=" + Operation.read);
+        }
+        try {
+            Operation.valueOf(op);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("invalid " + PARAM_OP + " parameter, must be "
+                                                   + PARAM_OP + "=" + Operation.read);
+        }
         if (id == null) {
             throw new IllegalArgumentException("missing required parameter, " + PARAM_ID);
         }
@@ -121,7 +141,14 @@ public class GetPermissionsAction extends RestAction {
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("invalid " + PARAM_ID + " parameter, not a valid URI: " + id);
         }
-        
+
+        String context = syncInput.getContextPath();
+        context = context.startsWith("/") ? context.substring(1) : context;
+        String propertiesFilename = context + "-authorization.properties";
+
+        PropertiesAuthorization propertiesAuthorization = new PropertiesAuthorization();
+        propertiesAuthorization.authorize(AuthenticationUtil.getCurrentSubject(), propertiesFilename);
+
         doGetPermissions(assetID);
     }
 
