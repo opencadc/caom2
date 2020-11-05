@@ -124,10 +124,12 @@ public class PropertiesAuthorization {
      *
      * @param subject Subject to authorize.
      * @param propertiesFilename Properties file with authorized users and groups.
+     * @param denyAccessWithoutConfig if the properties file is missing or cannot be read
+     *                                throw an AccessControlException
      * @throws AccessControlException if the Subject does not match a user, or is not a member of a group,
      *                                given in the properties file.
      */
-    public void authorize(final Subject subject, final String propertiesFilename)
+    public void authorize(final Subject subject, final String propertiesFilename, boolean denyAccessWithoutConfig)
         throws AccessControlException {
         if (subject == null) {
             throw new IllegalArgumentException(PropertiesAuthorization.class.getSimpleName() + ": null " + "subject");
@@ -135,14 +137,19 @@ public class PropertiesAuthorization {
         if (propertiesFilename == null) {
             throw new IllegalArgumentException(PropertiesAuthorization.class.getSimpleName() + ": null " + "propertiesFilename");
         }
-        log.debug("Subject:" + subject.toString());
+        log.debug("Subject: " + subject.toString());
         log.debug("Properties filename: " + propertiesFilename);
 
         // Get the properties file.
         PropertiesReader propertiesReader = getPropertiesReader(propertiesFilename);
         if (propertiesReader == null) {
-            log.debug(propertiesFilename + " not found or cannot be read, access authorized");
-            return;
+            if (denyAccessWithoutConfig) {
+                log.debug(propertiesFilename + " not found or cannot be read");
+                throw new AccessControlException(propertiesFilename + " not found or cannot be read");
+            } else {
+                log.debug(propertiesFilename + " not found or cannot be read, access authorized");
+                return;
+            }
         }
 
         // first check if request user matches authorized config file users
@@ -155,10 +162,15 @@ public class PropertiesAuthorization {
         // Check for groups configured in servlet init or properties file.
         Set<GroupURI> groupUris = getAuthorizedGroupUris(propertiesReader);
 
-        // If no user or groups configured, then public access.
+        // If no user or groups configured.
         if (authorizedUsers.isEmpty() && groupUris.isEmpty()) {
-            log.debug("Authorization not configured, access authorized.");
-            return;
+            if (denyAccessWithoutConfig) {
+                log.debug(propertiesFilename + " - users or groups not configured");
+                throw new AccessControlException(propertiesFilename + " - users or groups not configured");
+            } else {
+                log.debug("Users or groups not configured, access authorized.");
+                return;
+            }
         }
 
         // Check if calling user is a member of a properties file group.
