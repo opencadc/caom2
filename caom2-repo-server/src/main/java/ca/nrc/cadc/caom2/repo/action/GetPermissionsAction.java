@@ -74,12 +74,11 @@ import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
-import ca.nrc.cadc.caom2.repo.PropertiesAuthorization;
+import ca.nrc.cadc.caom2.repo.PropertyAuthorizer;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
-import ca.nrc.cadc.util.PropertiesReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -88,7 +87,6 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
-import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.permissions.ReadGrant;
@@ -146,8 +144,8 @@ public class GetPermissionsAction extends RestAction {
         context = context.startsWith("/") ? context.substring(1) : context;
         String propertiesFilename = context + "-perms.properties";
 
-        PropertiesAuthorization propertiesAuthorization = new PropertiesAuthorization();
-        propertiesAuthorization.authorize(AuthenticationUtil.getCurrentSubject(), propertiesFilename, true);
+        PropertyAuthorizer propertiesAuthorization = new PropertyAuthorizer(propertiesFilename);
+        propertiesAuthorization.authorize();
 
         doGetPermissions(assetID);
     }

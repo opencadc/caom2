@@ -71,7 +71,9 @@ package ca.nrc.cadc.caom2.repo;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
-import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
@@ -79,8 +81,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessControlException;
 import java.security.Principal;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
+import java.security.cert.CertificateException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -97,138 +98,88 @@ import org.opencadc.gms.GroupUtil;
  * and URI's for authorized groups.
  * </p>
  * <p>
- * The properties file contains of two keys, using multiple lines to specify multiple users for groups:
- * <code>users = user DN</code>
- * <code>groups = group URI</code>
+ * The properties file contains of two keys, using multiple lines to specify multiple users or groups:
+ * <code>user = user DN</code>
+ * <code>group = group URI</code>
  * </p>
  * <code>
- * users = cn=user_1,ou=cadc,o=hia,c=ca
- * users = cn=user_2,ou=cadc,o=hia,c=ca
- * groups = ivo://cadc.nrc.ca/gms?GROUP_1
- * groups = ivo://cadc.nrc.ca/gms?GROUP_2
+ * user = cn=user_1,ou=cadc,o=hia,c=ca
+ * user = cn=user_2,ou=cadc,o=hia,c=ca
+ * group = ivo://cadc.nrc.ca/gms?GROUP_1
+ * group = ivo://cadc.nrc.ca/gms?GROUP_2
  * </code>
  */
-public class PropertiesAuthorization {
-    private static final Logger log = Logger.getLogger(PropertiesAuthorization.class);
+public class PropertyAuthorizer {
+    private static final Logger log = Logger.getLogger(PropertyAuthorizer.class);
 
-    static final String USER_DNS_PROPERTY = "users";
-    static final String GROUP_URIS_PROPERTY = "groups";
+    static final String USER_DNS_PROPERTY = "user";
+    static final String GROUP_URIS_PROPERTY = "group";
 
-    public PropertiesAuthorization() {
+    private final String propertiesFilename;
+
+    public PropertyAuthorizer(final String propertiesFilename) {
+        if (propertiesFilename == null) {
+            throw new IllegalArgumentException(PropertyAuthorizer.class.getSimpleName() + ": null " + "propertiesFilename");
+        }
+        this.propertiesFilename = propertiesFilename;
     }
 
     /**
-     * Check if the Subject matches a user DN, or is a member of a group,
-     * given in the properties file.
-     * If the properties file does not exist, or is empty, the Subject is authorized.
+     * Check if the calling Subject matches a user DN, or is a member of a group,
+     * in the properties file.
      *
-     * @param subject Subject to authorize.
-     * @param propertiesFilename Properties file with authorized users and groups.
-     * @param denyAccessWithoutConfig if the properties file is missing or cannot be read
-     *                                throw an AccessControlException
      * @throws AccessControlException if the Subject does not match a user, or is not a member of a group,
      *                                given in the properties file.
+     * @throws ResourceNotFoundException if the properties file cannot be found or read.
      */
-    public void authorize(final Subject subject, final String propertiesFilename, boolean denyAccessWithoutConfig)
-        throws AccessControlException {
-        if (subject == null) {
-            throw new IllegalArgumentException(PropertiesAuthorization.class.getSimpleName() + ": null " + "subject");
-        }
-        if (propertiesFilename == null) {
-            throw new IllegalArgumentException(PropertiesAuthorization.class.getSimpleName() + ": null " + "propertiesFilename");
-        }
+    public void authorize()
+        throws AccessControlException, ResourceNotFoundException {
+        Subject subject = AuthenticationUtil.getCurrentSubject();
         log.debug("Subject: " + subject.toString());
-        log.debug("Properties filename: " + propertiesFilename);
 
         // Get the properties file.
-        PropertiesReader propertiesReader = getPropertiesReader(propertiesFilename);
+        PropertiesReader propertiesReader = getPropertiesReader(this.propertiesFilename);
         if (propertiesReader == null) {
-            if (denyAccessWithoutConfig) {
-                log.debug(propertiesFilename + " not found or cannot be read");
-                throw new AccessControlException(propertiesFilename + " not found or cannot be read");
-            } else {
-                log.debug(propertiesFilename + " not found or cannot be read, access authorized");
-                return;
-            }
+            throw new ResourceNotFoundException("Properties file " + propertiesFilename + " not found or cannot be read");
         }
 
         // first check if request user matches authorized config file users
         Set<Principal> authorizedUsers = getAuthorizedUserPrincipals(propertiesReader);
         if (isAuthorizedUser(subject, authorizedUsers)) {
-            log.debug(subject.getPrincipals(X500Principal.class) + " is an authorized user");
+            log.debug("Subject is an authorized user");
             return;
         }
 
         // Check for groups configured in servlet init or properties file.
-        Set<GroupURI> groupUris = getAuthorizedGroupUris(propertiesReader);
+        Set<GroupURI> authorizedGroupURIs = getAuthorizedGroupUris(propertiesReader);
 
         // If no user or groups configured.
-        if (authorizedUsers.isEmpty() && groupUris.isEmpty()) {
-            if (denyAccessWithoutConfig) {
-                log.debug(propertiesFilename + " - users or groups not configured");
-                throw new AccessControlException(propertiesFilename + " - users or groups not configured");
-            } else {
-                log.debug("Users or groups not configured, access authorized.");
-                return;
-            }
+        if (authorizedUsers.isEmpty() && authorizedGroupURIs.isEmpty()) {
+            throw new AccessControlException(propertiesFilename + " - users or groups not configured");
         }
 
         // Check if calling user is a member of a properties file group.
+        // Assuming the list of authorized groups is small (likely one?),
+        // and calling isMember() for each group, instead of getMemberships()
+        // to get the list of all groups the user belongs to.
         try {
-            if (CredUtil.checkCredentials(subject)) {
-                URI serviceID = null;
-                GroupClient groupClient = null;
-                for (GroupURI groupUri : groupUris) {
-                    if (!groupUri.getServiceID().equals(serviceID)) {
-                        serviceID = groupUri.getServiceID();
-                        groupClient = GroupUtil.getGroupClient(serviceID);
-                    }
-                    GroupMemberAction memberCheck = new GroupMemberAction(groupClient, groupUri);
-                    if (isAuthorizedGroup(memberCheck, subject)) {
-                        log.info(subject.getPrincipals(X500Principal.class) + " is a member of " + groupUri);
+            if (CredUtil.checkCredentials()) {
+                LocalAuthority loc = new LocalAuthority();
+                URI resourceID = loc.getServiceURI(Standards.GMS_SEARCH_01.toString());
+                GroupClient client = GroupUtil.getGroupClient(resourceID);
+                for (GroupURI authorizedGroupURI : authorizedGroupURIs) {
+                    if (client.isMember(authorizedGroupURI)) {
+                        log.info("authorized group: " + authorizedGroupURI);
                         return;
                     }
                 }
             }
-        } catch (Exception e) {
-            log.warn("Credential check failed: " + e.getMessage());
+        } catch (CertificateException ex) {
+            throw new AccessControlException("read permission denied (invalid delegated client certificate)");
         }
 
         // If all authorization failed, throw AccessControlException.
         throw new AccessControlException("User and group authorization failed.");
-    }
-
-
-    /**
-     * Check that the subject can perform the action to authorize access.
-     *
-     * @param action The PrivilegedExceptionAction
-     * @param subject The Subject to authorize
-     * @return true if the calling user is a member of an authorized group, false otherwise.
-     */
-    private boolean isAuthorizedGroup(PrivilegedExceptionAction action, Subject subject)
-        throws TransientException {
-        try {
-            if (subject == null) {
-                action.run();
-            } else {
-                try {
-                    Subject.doAs(subject, action);
-                } catch (PrivilegedActionException e) {
-                    throw e.getException();
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            if (e instanceof AccessControlException) {
-                log.debug("Group authorization failed: " + e.getMessage());
-            } else if (e instanceof TransientException) {
-                throw (TransientException) e;
-            } else {
-                throw new IllegalStateException(e);
-            }
-        }
-        return false;
     }
 
     /**
@@ -300,7 +251,7 @@ public class PropertiesAuthorization {
                 }
             }
         } catch (IllegalArgumentException e) {
-            log.info("No authorized groupURI's configured");
+            log.info("Authorized groupURI's not configured");
         }
         return groupUris;
     }
@@ -320,30 +271,6 @@ public class PropertiesAuthorization {
             }
         }
         return reader;
-    }
-
-    static class GroupMemberAction implements PrivilegedExceptionAction<Object> {
-
-        private final GroupClient groupClient;
-        private final GroupURI groupURI;
-
-        GroupMemberAction(final GroupClient groupClient, final GroupURI groupURI) {
-            this.groupClient = groupClient;
-            this.groupURI = groupURI;
-        }
-
-        @Override
-        public Object run() throws Exception {
-            // GMSClient can throw a RuntimeException for an auth failure.
-            try {
-                if (!groupClient.isMember(groupURI)) {
-                    throw new AccessControlException("not a member of " + groupURI);
-                }
-            } catch (RuntimeException e) {
-                throw new AccessControlException(e.getMessage());
-            }
-            return null;
-        }
     }
 
 }
