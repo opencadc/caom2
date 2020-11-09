@@ -434,16 +434,18 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
     public void testPostValidationFails() throws Throwable {
         String observationID = generateID("testPostValidationFails");
         String path = TEST_COLLECTION + "/" + observationID;
-        String uri = SCHEME + path;
+        final String uri = SCHEME + path;
 
         // Create one to overwrite with a post (ok to fail)
         SimpleObservation initialOb = new SimpleObservation(TEST_COLLECTION, observationID);
         putObservation(initialOb, subject1, null, null, null);
 
-        Observation observation = createInvalidObservation(TEST_COLLECTION, observationID);
+        // make invalid
+        initialOb.instrument = new Instrument("INSTR");
+        initialOb.instrument.getKeywords().add("FOO|BAR"); // reserved character
 
-        // create an observation using subject1
-        postObservation(observation, subject1, 400, "invalid input: " + uri, null);
+        // try to update 
+        postObservation(initialOb, subject1, 400, "invalid input: " + uri, null);
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);

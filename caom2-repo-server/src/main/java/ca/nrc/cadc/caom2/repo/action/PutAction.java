@@ -101,7 +101,7 @@ public class PutAction extends RepoAction {
         }
 
         ObservationDAO dao = getDAO();
-        ObservationState s = dao.getState(uri);
+        ObservationState s = dao.getState(obs.getID());
         
         if (s != null) {
             throw new ResourceAlreadyExistsException("already exists: " + uri);

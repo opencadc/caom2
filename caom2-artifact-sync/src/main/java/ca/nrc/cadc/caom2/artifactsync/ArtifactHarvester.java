@@ -95,9 +95,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.UUID;
 
+import javax.lang.model.type.NullType;
+
 import org.apache.log4j.Logger;
 
-public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, ShutdownListener {
+public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, ShutdownListener {
 
     public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
@@ -112,6 +114,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     private String collection; 
     private StoragePolicy storagePolicy;
     private int batchSize;
+    private boolean loop;
     private String source;
     private Date startDate;
     private DateFormat df;
@@ -130,11 +133,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     Date start = new Date();
 
     public ArtifactHarvester(ObservationDAO observationDAO, HarvestResource harvestResource,
-                             ArtifactStore artifactStore, int batchSize) {
+                             ArtifactStore artifactStore, int batchSize, boolean loop) {
 
         this.observationDAO = observationDAO;
         this.artifactStore = artifactStore;
         this.batchSize = batchSize;
+        this.loop = loop;
         this.source = harvestResource.getIdentifier();
         this.collection = harvestResource.getCollection();
         this.storagePolicy = artifactStore.getStoragePolicy(collection);
@@ -149,14 +153,32 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     }
 
     @Override
-    public Integer run() throws Exception {
+    public NullType run() throws Exception {
+        int loopNum = 1;
+        boolean stop = false;
+        do {
+            if (loop) {
+                log.info("-- STARTING LOOP #" + loopNum + " --");
+            }
+
+            stop = runIt();
+
+            if (loop) {
+                log.info("-- ENDING LOOP #" + loopNum + " --");
+            }
+
+            loopNum++;
+        } while (loop && !stop); // continue if work was done
+        
+        return null;
+    }
+    
+    private Boolean runIt() throws Exception {
 
         this.downloadCount = 0;
         this.processedCount = 0;
         this.start = new Date();
         
-        int num = 0;
-
         try {
             // Determine the state of the last run
             HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
@@ -192,8 +214,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                 }
             }
 
-            num = observationStates.size();
-            log.info("Found: " + num);
+            log.info("Found: " + observationStates.size());
             for (ObservationState observationState : observationStates) {
 
                 try {
@@ -308,7 +329,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
                 }
             }
 
-            return num;
+            return (observationStates.size() < batchSize + 1);
         } finally {
             logBatchEnd();
         }
@@ -443,8 +464,12 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
     }
     
     private void logBatchEnd() {
+        logBatchEnd("ENDBATCH");
+    }
+
+    private void logBatchEnd(String endString) {
         StringBuilder batchMessage = new StringBuilder();
-        batchMessage.append("ENDBATCH: {");
+        batchMessage.append(endString + ": {");
         batchMessage.append("\"total\":\"").append(this.processedCount).append("\"");
         batchMessage.append(",");
         batchMessage.append("\"added\":\"").append(this.downloadCount).append("\"");
@@ -458,7 +483,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<Integer>, Sh
 
     @Override
     public void shutdown() {
-        logBatchEnd();
+        logBatchEnd("ENDDISCOVER");
     }
     
 }

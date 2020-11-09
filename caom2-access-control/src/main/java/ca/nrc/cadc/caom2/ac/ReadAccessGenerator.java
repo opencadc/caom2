@@ -197,14 +197,7 @@ public class ReadAccessGenerator {
         log.debug("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
         if (!pub) {
             // Create a Group for this proposalID if it doesn't exist
-            GroupURI proposalGroupID = null;
-            try {
-                proposalGroupID = getProposalGroupID(collection, observation.proposal);
-            } catch (URISyntaxException ex) {
-                log.warn("invalid proposal_id to group name: " + observation.proposal);
-                throw new IllegalArgumentException(ex);
-            }
-
+            GroupURI proposalGroupID = getProposalGroupID(collection, observation.proposal);
             checkProposalGroup(proposalGroupID);
             generateTuples(observation, now, proposalGroupID);
         }
@@ -245,22 +238,14 @@ public class ReadAccessGenerator {
     }
 
     // package access for testing
-    GroupURI getProposalGroupID(final String collection, final Proposal proposal)
-            throws URISyntaxException {
-        if (proposal == null) {
+    GroupURI getProposalGroupID(final String collection, final Proposal proposal) {
+        if (proposal == null || proposal.getID().trim().isEmpty()) {
             return null;
         }
-        if (proposal.getID().trim().isEmpty()) { // whitespace only
-            return null;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(groupBaseURI.toString());
-        sb.append("?");
-        sb.append(collection);
-        sb.append("-");
-        sb.append(proposal.getID().trim());
-        return new GroupURI(sb.toString());
+        
+        String groupName = collection + "-" + proposal.getID();
+        log.debug("getProposalGroupID: " + groupBaseURI + " " + groupName);
+        return new GroupURI(groupBaseURI, groupName);
     }
     
     void createObservationMetaReadAccess(Observation o, Date now, GroupURI proposalGroupID) {
@@ -364,9 +349,17 @@ public class ReadAccessGenerator {
                     gmsClient.createGroup(proposalGroup);
                     log.debug("created group: " + proposalGroupName);
                 } else {
-                    proposalGroup.getGroupAdmins().add(new Group(staffGroupURI));
-                    gmsClient.updateGroup(proposalGroup);
-                    log.debug("updated group: " + proposalGroupName);
+                    Group g = new Group(staffGroupURI);
+                    if (!proposalGroup.getGroupAdmins().contains(g)) {
+                        proposalGroup.getGroupAdmins().add(g);
+                        try {
+                            gmsClient.updateGroup(proposalGroup);
+                            log.debug("updated group: " + proposalGroupName);
+                        } catch (ReaderException | URISyntaxException oops) {
+                            log.warn("updated group: " + proposalGroupName + "but GMSClient failed to read response... assuming OK");
+                        }
+                        
+                    }
                 }
             } catch (GroupNotFoundException ex) {
                 throw new RuntimeException("CONFIG: group not found " + proposalGroupName + " or " + staffGroupURI + " for update");
@@ -374,8 +367,8 @@ public class ReadAccessGenerator {
                 throw new RuntimeException("CONFIG: group collision " + proposalGroupName + " for create (right after negative check)");
             } catch (UserNotFoundException ex) {
                 throw new RuntimeException("BUG: unexpected failure (reasons)", ex);
-            } catch (ReaderException | WriterException | URISyntaxException ex) {
-                throw new RuntimeException("BUG: bad api exposing internal failure", ex);
+            } catch (WriterException ex) {
+                throw new TransientException("failed to update proposal group: " + proposalGroupName, ex);
             }
 
             // cache groups we have already updated
