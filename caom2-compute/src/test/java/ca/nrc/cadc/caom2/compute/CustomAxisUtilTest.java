@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -84,6 +85,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
+import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -191,6 +193,24 @@ public class CustomAxisUtilTest {
             Plane plane = new Plane("foo");
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.assertNull(ca);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testSkippableCompute() {
+        try {
+            Plane plane = getTestSetFunction(1, 1, 1, false);
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+            CoordAxis1D axis = new CoordAxis1D(new Axis(TEST_CTYPE, TEST_CUNIT));
+            c.custom = new CustomWCS(axis);
+            
+            CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
+
+            Assert.assertNull("no custom bounds", ca.bounds);
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

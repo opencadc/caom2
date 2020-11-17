@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.ProductType;
@@ -124,6 +125,26 @@ public class TimeUtilTest {
             Assert.assertNull(tim.exposure);
             Assert.assertNull(tim.resolution);
             Assert.assertNull(tim.sampleSize);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testSkippableCompute() {
+        log.debug("testSkippableCompute: START");
+        try {
+            Plane plane = getTestSetFunction(1, 1, 1, false);
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+            CoordAxis1D axis = new CoordAxis1D(new Axis("TIME", "d"));
+            c.time = new TemporalWCS(axis);
+            c.time.timesys = "UTC";
+            
+            Time t = TimeUtil.compute(plane.getArtifacts());
+
+            Assert.assertNull("no time bounds", t.bounds);
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

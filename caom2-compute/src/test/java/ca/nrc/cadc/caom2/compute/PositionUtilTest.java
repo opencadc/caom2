@@ -469,7 +469,6 @@ public class PositionUtilTest {
         }
     }
 
-    //TODO: look at what tests here need to be expanded or changed to cover the toICRSPolygon function...
     @Test
     public void testInvalidCoordFunctionToICRSPolygon() {
         try {
@@ -486,6 +485,24 @@ public class PositionUtilTest {
             Assert.fail("expected WCSLibRuntimeException");
         } catch (WCSLibRuntimeException expected) {
             log.info("caught expected exception: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testSkippableToICRSPolygon() {
+        // some SpatialWCS but not enough to compute should not fail
+        try {
+            Axis axis1 = new Axis("RA---TAN", "deg");
+            Axis axis2 = new Axis("DEC--TAN", "deg");
+            CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
+            SpatialWCS wcs = new SpatialWCS(axis);
+            
+            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            
+            Assert.assertNull("no polygon", poly);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
