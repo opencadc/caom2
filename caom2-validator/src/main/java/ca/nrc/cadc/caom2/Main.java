@@ -78,6 +78,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.springframework.jdbc.support.MetaDataAccessException;
 
 /**
  *
@@ -115,12 +116,28 @@ public final class Main {
             ObservationReader r = new ObservationReader();
             Observation obs = r.read(new FileReader(f));
             
-            if (am.getPositionalArgs().size() == 2) {
-                File out = new File(am.getPositionalArgs().get(1));
-                ObservationWriter w = new ObservationWriter();
-                w.write(obs, new FileWriter(out));
-                log.info("wrote copy: " + out.getAbsolutePath());
+            if (am.isSet("compute")) {
+                MetadataCompute mc = new MetadataCompute(obs);
+                mc.run();
+                if (am.getPositionalArgs().size() == 2) {
+                    File out = new File(am.getPositionalArgs().get(1));
+                    ObservationWriter w = new ObservationWriter();
+                    w.write(obs, new FileWriter(out));
+                    log.info("computed metadata: " + out.getAbsolutePath());
+                } else {
+                    usage();
+                    System.exit(1);
+                }
+            } else {
+                // optional pretty print
+                if (am.getPositionalArgs().size() == 2) {
+                    File out = new File(am.getPositionalArgs().get(1));
+                    ObservationWriter w = new ObservationWriter();
+                    w.write(obs, new FileWriter(out));
+                    log.info("pretty print: " + out.getAbsolutePath());
+                }
             }
+            
             
             List<Runnable> validators = new ArrayList<>();
             
@@ -167,12 +184,15 @@ public final class Main {
     private static void usage() {
         StringBuilder sb = new StringBuilder();
         String lineSep = System.getProperty("line.separator");
-        sb.append(lineSep).append("usage: caom2 [-h|--help] [-v|--verbose|-d|--debug] <validation options> <observation xml file> [<output file>}");
+        sb.append(lineSep).append("usage: caom2 [-h|--help] [-v|--verbose|-d|--debug] <validation options> <observation xml file> [<output file>]");
+        sb.append(lineSep).append("usage: caom2 [-h|--help] [-v|--verbose|-d|--debug] --compute <observation xml file> <output file>");
         sb.append(lineSep).append("       <validation options> is one or more of:");
         sb.append(lineSep).append("");
         sb.append(lineSep).append("       --core : data model validation not enforced by XML schema");
         sb.append(lineSep).append("       --checksum [--acc] [--depth=1..5] : recompute and compare metaChecksum values");
         sb.append(lineSep).append("       --wcs : enable WCS validation");
+        sb.append(lineSep).append("");
+        sb.append(lineSep).append("        --compute : compute plane metadata (requires output file)");
         sb.append(lineSep).append("");
         sb.append(lineSep).append("       <output file> : reserialise to another file (pretty-print)");
         System.out.println(sb.toString());
