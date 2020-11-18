@@ -538,17 +538,19 @@ public final class PositionUtil {
 
         MultiPolygon poly = toPolygon(wcs, coordsys.swappedAxes);
 
-        toICRS(coordsys, poly.getVertices());
+        if (poly != null) {
+            toICRS(coordsys, poly.getVertices());
 
-        Point c = poly.getCenter();
-        if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2)) {
-            throw new IllegalPolygonException("computed polygon has invalid center: " + c);
-        }
+            Point c = poly.getCenter();
+            if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2)) {
+                throw new IllegalPolygonException("computed polygon has invalid center: " + c);
+            }
 
-        if (wcs.getAxis().function != null && wcs.getAxis().bounds == null) {
-            // toPolygon used the wcs function to compute polygon: enforce MAX_SANE_AREA
-            if (poly.getArea() > MAX_SANE_AREA) {
-                throw new IllegalPolygonException("area too large: " + poly.getArea() + " sq. deg. -- assuming invalid WCS");
+            if (wcs.getAxis().function != null && wcs.getAxis().bounds == null) {
+                // toPolygon used the wcs function to compute polygon: enforce MAX_SANE_AREA
+                if (poly.getArea() > MAX_SANE_AREA) {
+                    throw new IllegalPolygonException("area too large: " + poly.getArea() + " sq. deg. -- assuming invalid WCS");
+                }
             }
         }
 

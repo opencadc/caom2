@@ -144,6 +144,25 @@ public class EnergyUtilTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testSkippableCompute() {
+        log.debug("testSkippableCompute: START");
+        try {
+            Plane plane = getTestSetFunction(1, 1, 1);
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+            CoordAxis1D axis = new CoordAxis1D(new Axis("WAV", "m"));
+            c.energy = new SpectralWCS(axis, "TOPOCENT");
+            
+            Energy e = EnergyUtil.compute(plane.getArtifacts());
+
+            Assert.assertNull("no energy bounds", e.bounds);
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testComputeFromRange() {
@@ -359,7 +378,7 @@ public class EnergyUtilTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
+    
     @Test
     public void testGetBoundsWaveBounds() {
         try {

@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
+import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Polarization;
@@ -83,6 +84,7 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
+import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -129,6 +131,25 @@ public class PolarizationUtilTest {
             Assert.assertNotNull(pol);
             Assert.assertNull(pol.states);
             Assert.assertNull(pol.dimension);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testSkippableCompute() {
+        log.debug("testSkippableCompute: START");
+        try {
+            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
+            CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES"));
+            c.polarization = new PolarizationWCS(axis);
+            
+            Polarization p = PolarizationUtil.compute(plane.getArtifacts());
+
+            Assert.assertNull("no polarization states", p.states);
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
