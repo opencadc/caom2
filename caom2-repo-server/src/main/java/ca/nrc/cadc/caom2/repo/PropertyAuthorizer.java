@@ -128,9 +128,9 @@ public class PropertyAuthorizer {
      * Check if the calling Subject matches a user DN, or is a member of a group,
      * in the properties file.
      *
-     * @throws AccessControlException if the Subject does not match a user, or is not a member of a group,
+     * @throws AccessControlException if the allowed users and groups properties file is not found or cannot be read,
+     *                                if the Subject does not match a user, or is not a member of a group,
      *                                given in the properties file.
-     * @throws ResourceNotFoundException if the properties file cannot be found or read.
      */
     public void authorize()
         throws AccessControlException, ResourceNotFoundException {
@@ -140,7 +140,7 @@ public class PropertyAuthorizer {
         // Get the properties file.
         PropertiesReader propertiesReader = getPropertiesReader(this.propertiesFilename);
         if (propertiesReader == null) {
-            throw new ResourceNotFoundException("Properties file " + propertiesFilename + " not found or cannot be read");
+            throw new AccessControlException("Properties file " + propertiesFilename + " not found or cannot be read");
         }
 
         // first check if request user matches authorized config file users
