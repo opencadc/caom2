@@ -253,7 +253,7 @@ public class PropertyAuthorizer {
                 }
             }
         } catch (IllegalArgumentException e) {
-            log.info("Authorized groupURI's not configured");
+            log.debug("Authorized groupURI's not configured");
         }
         return groupUris;
     }
