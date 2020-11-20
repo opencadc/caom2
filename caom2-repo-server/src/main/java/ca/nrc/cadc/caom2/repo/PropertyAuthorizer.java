@@ -140,7 +140,7 @@ public class PropertyAuthorizer {
         // Get the properties file.
         PropertiesReader propertiesReader = getPropertiesReader(this.propertiesFilename);
         if (propertiesReader == null) {
-            throw new AccessControlException("Properties file " + propertiesFilename + " not found or cannot be read");
+            throw new AccessControlException("no grants configured");
         }
 
         // first check if request user matches authorized config file users
@@ -155,7 +155,7 @@ public class PropertyAuthorizer {
 
         // If no user or groups configured.
         if (authorizedUsers.isEmpty() && authorizedGroupURIs.isEmpty()) {
-            throw new AccessControlException(propertiesFilename + " - users or groups not configured");
+            throw new AccessControlException("no grants configured");
         }
 
         // Check if calling user is a member of a properties file group.
@@ -169,17 +169,19 @@ public class PropertyAuthorizer {
                 GroupClient client = GroupUtil.getGroupClient(resourceID);
                 for (GroupURI authorizedGroupURI : authorizedGroupURIs) {
                     if (client.isMember(authorizedGroupURI)) {
-                        log.info("authorized group: " + authorizedGroupURI);
+                        log.debug("authorized group: " + authorizedGroupURI);
                         return;
                     }
                 }
+            } else {
+                throw new AccessControlException("permission denied (anon access or invalid credentials)");
             }
         } catch (CertificateException ex) {
-            throw new AccessControlException("read permission denied (invalid delegated client certificate)");
+            throw new AccessControlException("permission denied (invalid delegated client certificate)");
         }
 
         // If all authorization failed, throw AccessControlException.
-        throw new AccessControlException("User and group authorization failed.");
+        throw new AccessControlException("permission denied");
     }
 
     /**
