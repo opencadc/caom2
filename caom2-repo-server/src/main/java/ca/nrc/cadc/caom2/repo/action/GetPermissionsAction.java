@@ -69,16 +69,21 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
 import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
+import ca.nrc.cadc.caom2.repo.PropertyAuthorizer;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.rest.InlineContentHandler;
+import ca.nrc.cadc.rest.RestAction;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -87,42 +92,66 @@ import org.opencadc.gms.GroupURI;
 import org.opencadc.permissions.ReadGrant;
 import org.opencadc.permissions.xml.GrantWriter;
 
-public class GetPermissions extends GetAction {
+public class GetPermissionsAction extends RestAction {
 
-    private static final Logger log = Logger.getLogger(GetPermissions.class);
+    private static final Logger log = Logger.getLogger(GetPermissionsAction.class);
 
     // hours until the grant expires
     private static final int HOURS_UNTIL_EXPIRES = 24;
 
-    GetPermissions() {}
+    private static final String PARAM_OP = "OP";
+    private static final String PARAM_ID = "ID";
+
+    public enum Operation {
+        read
+    }
+
+    @Override
+    protected InlineContentHandler getInlineContentHandler() {
+        return null;
+    }
 
     @Override
     public void doAction() throws Exception {
         log.debug("GET ACTION");
 
-        String path = syncInput.getPath();
-        if (path == null) {
-            throw new IllegalArgumentException("null path");
-        }
-        String[] parts = path.split("/");
-        String collection = parts[0];
+        String op = syncInput.getParameter(PARAM_OP);
+        String id = syncInput.getParameter(PARAM_ID);
+        log.debug(PARAM_OP + ": " + op);
+        log.debug(PARAM_ID + ": " + id);
 
-        URI artifactURI;
-        if (parts.length > 1) {
-            artifactURI = URI.create("caom:" + path);
-        } else {
-            throw new IllegalArgumentException("invalid input: " + path);
+        if (op == null) {
+            throw new IllegalArgumentException("missing required parameter, " + PARAM_OP + "=" + Operation.read);
+        }
+        try {
+            Operation.valueOf(op);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("invalid " + PARAM_OP + " parameter, must be "
+                                                   + PARAM_OP + "=" + Operation.read);
+        }
+        if (id == null) {
+            throw new IllegalArgumentException("missing required parameter, " + PARAM_ID);
         }
 
-        //checkReadPermission();
-        
-        doGetPermissions(artifactURI);
+        URI assetID;
+        try {
+            assetID = new URI(id);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("invalid " + PARAM_ID + " parameter, not a valid URI: " + id);
+        }
+
+        String context = syncInput.getContextPath();
+        context = context.startsWith("/") ? context.substring(1) : context;
+        String propertiesFilename = context + "-perms.properties";
+
+        PropertyAuthorizer propertiesAuthorization = new PropertyAuthorizer(propertiesFilename);
+        propertiesAuthorization.authorize();
+
+        doGetPermissions(assetID);
     }
 
     protected void doGetPermissions(URI artifactURI) throws Exception {
         log.debug("START: " + artifactURI);
-
-        
 
         ReadAccessDAO readAccessDAO = getReadAccessDAO(artifactURI);
         ReadAccessDAO.RawArtifactAccess raa = readAccessDAO.getArtifactAccess(artifactURI);
