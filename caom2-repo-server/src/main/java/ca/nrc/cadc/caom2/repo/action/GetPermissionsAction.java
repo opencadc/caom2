@@ -142,7 +142,7 @@ public class GetPermissionsAction extends RestAction {
 
         String context = syncInput.getContextPath();
         context = context.startsWith("/") ? context.substring(1) : context;
-        String propertiesFilename = context + "-perms.properties";
+        String propertiesFilename = context + "-grants.properties";
 
         PropertyAuthorizer propertiesAuthorization = new PropertyAuthorizer(propertiesFilename);
         propertiesAuthorization.authorize();

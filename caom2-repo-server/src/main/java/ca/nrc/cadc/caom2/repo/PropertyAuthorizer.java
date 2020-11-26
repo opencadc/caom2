@@ -140,6 +140,7 @@ public class PropertyAuthorizer {
         // Get the properties file.
         PropertiesReader propertiesReader = getPropertiesReader(this.propertiesFilename);
         if (propertiesReader == null) {
+            log.debug(this.propertiesFilename + " not found");
             throw new AccessControlException("no grants configured");
         }
 
@@ -155,6 +156,7 @@ public class PropertyAuthorizer {
 
         // If no user or groups configured.
         if (authorizedUsers.isEmpty() && authorizedGroupURIs.isEmpty()) {
+            log.debug("no user's or group's configured");
             throw new AccessControlException("no grants configured");
         }
 
