@@ -78,17 +78,17 @@ import java.util.List;
  * 
  * @author pdowler
  */
-public interface CutoutGenerator
-{
+public interface CutoutGenerator {
     /**
      * Convert the specified URI to one or more URL(s). 
      * 
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *         the uri is malformed such that a URL cannot be generated, or the uri is null
      * @param uri the URI to convert
      * @param cutouts list of cutout representations
+     * @param label optional label to be prepended to the filename
      * @return a URL to the identified resource
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *         the uri is malformed such that a URL cannot be generated, or the uri is null
      */
-    public URL toURL(URI uri, List<String> cutouts)
+    public URL toURL(URI uri, List<String> cutouts, String label)
         throws IllegalArgumentException;
 }

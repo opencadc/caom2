@@ -67,9 +67,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
-
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.PublisherID;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -78,8 +76,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class ArtifactQueryResult 
-{
+public class ArtifactQueryResult {
     private static final Logger log = Logger.getLogger(ArtifactQueryResult.class);
 
     //private final PublisherID publisherID;
@@ -100,8 +97,7 @@ public class ArtifactQueryResult
     //    return publisherID;
     //}
 
-    public List<Artifact> getArtifacts()
-    {
+    public List<Artifact> getArtifacts() {
         return artifacts;
     }
 }

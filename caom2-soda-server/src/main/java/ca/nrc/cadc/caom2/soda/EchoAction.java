@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.soda;
 
-
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.util.Base64;
@@ -80,8 +79,7 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class EchoAction extends RestAction
-{
+public class EchoAction extends RestAction {
     private static final Logger log = Logger.getLogger(EchoAction.class);
 
     public static final String PARAM_CODE = "CODE";
@@ -92,22 +90,20 @@ public class EchoAction extends RestAction
     public EchoAction() { }
 
     @Override
-    protected InlineContentHandler getInlineContentHandler()
-    {
+    protected InlineContentHandler getInlineContentHandler() {
         return null;
     }
 
     @Override
-    public void doAction() 
-        throws Exception
-    {
+    public void doAction() throws Exception {
         Stuff msg = parseStuff(syncInput.getPath());
         
         syncOutput.setCode(msg.code);
-        if (msg.contentType != null)
+        if (msg.contentType != null) {
             syncOutput.setHeader("Content-Type", msg.contentType);
-        if (msg.body != null)
-        {
+        }
+        
+        if (msg.body != null) {
             PrintWriter pw = new PrintWriter(syncOutput.getOutputStream());
             pw.println(msg.body);
             pw.flush();
@@ -115,50 +111,54 @@ public class EchoAction extends RestAction
         }
     }
     
-    private class Stuff
-    {
+    private class Stuff {
         int code;
         String contentType;
         String body;
     }
-    private Stuff parseStuff(String path)
-    {
+    
+    private Stuff parseStuff(String path) {
         Stuff ret = new Stuff();
-        try
-        {
-            if (path.charAt(0) == '/')
+        try {
+            if (path.charAt(0) == '/') {
                 path = path.substring(1);
+            }
+            
             String msg = Base64.decodeString(path);
             log.debug("parse msg: " + msg);
             String[] parts = msg.split("[|]");
-            for (String s : parts)
+            for (String s : parts) {
                 log.debug("msg part: " + s);
-            if (parts.length > 0)
+            }
+            
+            if (parts.length > 0) {
                 ret.code = Integer.parseInt(parts[0]);
-            if (parts.length > 1)
+            }
+            
+            if (parts.length > 1) {
                 ret.contentType = parts[1];
-            if (parts.length > 2)
+            }
+            
+            if (parts.length > 2) {
                 ret.body = parts[2];
-        }
-        catch(NumberFormatException ex)
-        {
+            }
+        } catch (NumberFormatException ex) {
             ret.code = 400;
             ret.contentType = "text/plain";
             ret.body = "BUG: invalid message in URL";
         }
         return ret;
     }
-    private int getCode()
-    {
+    
+    private int getCode() {
         String code = syncInput.getParameter(PARAM_CODE);
-        if (code == null)
+        if (code == null) {
             throw new IllegalArgumentException("missing CODE parameter");
-        try
-        {
-            return Integer.parseInt(code);
         }
-        catch(NumberFormatException ex)
-        {
+        
+        try {
+            return Integer.parseInt(code);
+        } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("invalid CODE value: " + code, ex);
         }
     }
