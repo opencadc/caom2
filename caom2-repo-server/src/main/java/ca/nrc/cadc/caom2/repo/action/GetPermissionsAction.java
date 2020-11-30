@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.repo.action;
 
-import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.persistence.ReadAccessDAO;
@@ -89,7 +88,9 @@ import java.util.Date;
 import java.util.Iterator;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
+import org.opencadc.permissions.Grant;
 import org.opencadc.permissions.ReadGrant;
+import org.opencadc.permissions.WriteGrant;
 import org.opencadc.permissions.xml.GrantWriter;
 
 public class GetPermissionsAction extends RestAction {
@@ -103,7 +104,8 @@ public class GetPermissionsAction extends RestAction {
     private static final String PARAM_ID = "ID";
 
     public enum Operation {
-        read
+        read,
+        write
     }
 
     @Override
@@ -121,16 +123,19 @@ public class GetPermissionsAction extends RestAction {
         log.debug(PARAM_ID + ": " + id);
 
         if (op == null) {
-            throw new IllegalArgumentException("missing required parameter, " + PARAM_OP + "=" + Operation.read);
-        }
-        try {
-            Operation.valueOf(op);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("invalid " + PARAM_OP + " parameter, must be "
-                                                   + PARAM_OP + "=" + Operation.read);
+            throw new IllegalArgumentException("missing required parameter, " + PARAM_OP + "=["
+                                                   + Operation.read + "|" + Operation.write + "]");
         }
         if (id == null) {
             throw new IllegalArgumentException("missing required parameter, " + PARAM_ID);
+        }
+
+        Operation operation;
+        try {
+            operation = Operation.valueOf(op);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("invalid " + PARAM_OP + " parameter, must be " + PARAM_OP + "=["
+                                                   + Operation.read + "|" + Operation.write + "]");
         }
 
         URI assetID;
@@ -147,10 +152,10 @@ public class GetPermissionsAction extends RestAction {
         PropertyAuthorizer propertiesAuthorization = new PropertyAuthorizer(propertiesFilename);
         propertiesAuthorization.authorize();
 
-        doGetPermissions(assetID);
+        doGetPermissions(assetID, operation);
     }
 
-    protected void doGetPermissions(URI artifactURI) throws Exception {
+    protected void doGetPermissions(URI artifactURI, Operation operation) throws Exception {
         log.debug("START: " + artifactURI);
 
         ReadAccessDAO readAccessDAO = getReadAccessDAO(artifactURI);
@@ -160,13 +165,17 @@ public class GetPermissionsAction extends RestAction {
             throw new ResourceNotFoundException("not found: " + artifactURI);
         }
 
-        ArtifactAccess artifactAccess =
-            AccessUtil.getArtifactAccess(raa.artifact, raa.metaRelease, raa.metaReadAccessGroups,
-                                         raa.dataRelease, raa.dataReadAccessGroups);
-
-        ReadGrant readGrant = new ReadGrant(artifactURI, getExpiryDate(), artifactAccess.isPublic);
-        for (URI uri : artifactAccess.getReadGroups()) {
-            readGrant.getGroups().add(new GroupURI(uri));
+        Grant grant;
+        if (operation == Operation.write) {
+            grant = new WriteGrant(artifactURI, getExpiryDate());
+        } else {
+            ArtifactAccess artifactAccess = AccessUtil.getArtifactAccess(raa.artifact, raa.metaRelease,
+                                                                         raa.metaReadAccessGroups, raa.dataRelease,
+                                                                         raa.dataReadAccessGroups);
+            grant = new ReadGrant(artifactURI, getExpiryDate(), artifactAccess.isPublic);
+            for (URI uri : artifactAccess.getReadGroups()) {
+                grant.getGroups().add(new GroupURI(uri));
+            }
         }
 
         syncOutput.setHeader("Content-Type", "text/xml");
@@ -175,7 +184,7 @@ public class GetPermissionsAction extends RestAction {
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
 
         GrantWriter writer = new GrantWriter();
-        writer.write(readGrant, bc);
+        writer.write(grant, bc);
         logInfo.setBytes(bc.getByteCount());
 
         log.debug("DONE: " + artifactURI);
