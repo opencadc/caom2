@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2020.                            (c) 2020.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -109,6 +109,7 @@ import org.opencadc.soda.server.SodaPlugin;
 public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
     private static final Logger log = Logger.getLogger(SodaJobRunner.class);
 
+    public static final String PARAM_LABEL = "LABEL";
     public static final String PARAM_FARADAY = "FARADAY";
     public static final String PARAM_RM = "RM";
     
@@ -142,15 +143,15 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
                 List<Cutout<Interval>> customCutouts, Map<String, List<String>> customParams)
             throws IOException {
         String runID = job.getRunID();
-        if (runID == null)
+        if (runID == null) {
             runID = job.getID();
+        }
         
         try {
             CaomTapQuery query = new CaomTapQuery(tapURI, runID);
             Artifact a = query.performQuery(uri);
 
-            if (a == null)
-            {
+            if (a == null) {
                 StringBuilder path = new StringBuilder();
                 path.append("400");
                 path.append("|text/plain");
@@ -187,29 +188,41 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             
             List<String> cutout = CutoutUtil.computeCutout(a, 
                 dali2caom2(pos.cut), dali2caom2(band.cut), dali2caom2(time.cut), dali2caom2(pol.cut), null, null);
-            if (cutout != null && !cutout.isEmpty())
-            {
+            if (cutout != null && !cutout.isEmpty()) {
                 StorageResolver resolver = artifactResolver.getStorageResolver(uri);
                 if (resolver instanceof CutoutGenerator) {
-                    URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), cutout);
+                    // get the optional label parameter value
+                    List<String> labels = customParams.get(PARAM_LABEL);
+                    String label = null;
+                    // ignore LABEL parameter for async mode
+                    if (syncOutput != null && labels != null && !labels.isEmpty()) {
+                        label = labels.get(0);
+                    }
+                
+                    URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), cutout, label);
                     log.debug("cutout URL: " + url.toExternalForm());
                     return url;
                 } else {
                     throw new UnsupportedOperationException("No CutoutGenerator for " + uri.toString());
                 }
-            }
-            else
-            {
+            } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append("NoContent: ").append(uri).append(" vs");
-                if (pos.name != null)
+                if (pos.name != null) {
                     sb.append(" ").append(pos.name).append("=").append(pos.value);
-                if (band.name != null)
+                }
+                
+                if (band.name != null) {
                     sb.append(" ").append(band.name).append("=").append(band.value);
-                if (time.name != null)
+                }
+                
+                if (time.name != null) {
                     sb.append(" ").append(time.name).append("=").append(time.value);
-                if (pol.name != null)
+                }
+            
+                if (pol.name != null) {
                     sb.append(" ").append(pol.name).append("=").append(pol.value);
+                }
 
                 StringBuilder path = new StringBuilder();
                 path.append("400");
@@ -235,10 +248,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             throw new RuntimeException("CONFIG: failed to find resource", ex);
         }
     }
-    
-    
-    
-    
+        
     private ca.nrc.cadc.caom2.types.Interval dali2caom2(Interval dali) {
         if (dali == null) {
             return null;

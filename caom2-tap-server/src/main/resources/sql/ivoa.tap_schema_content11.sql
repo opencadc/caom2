@@ -42,7 +42,7 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,t
 
 insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
 ( 'ivoa.ObsCore', 'obs_publisher_did', 	'obscore:Curation.PublisherDID',
-    'publisher dataset identifier', 'meta.ref.url;meta.curation', NULL, 'char', '256*',NULL, 1,1,1,1, 'caomPlaneURI')
+    'publisher dataset identifier', 'meta.ref.ivoid', NULL, 'char', '256*',NULL, 1,1,1,1, 'caomPlaneURI')
 ;
 insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std, column_index) values
 ( 'ivoa.ObsCore', 'obs_collection', 	'obscore:DataID.Collection',
@@ -56,7 +56,7 @@ insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,u
     'internal dataset identifier', 'meta.id', NULL, 'char','128*',NULL, 1,0,1,5 ),
     
 ( 'ivoa.ObsCore', 'dataproduct_type', 	'obscore:ObsDataset.dataProductType',
-    'type of product', 'meta.id', NULL, 'char', '128*',NULL, 1,0,1,6 ),
+    'type of product', 'meta.code.class', NULL, 'char', '128*',NULL, 1,0,1,6 ),
 ( 'ivoa.ObsCore', 'calib_level', 	'obscore:ObsDataset.calibLevel',
     'calibration level (0,1,2,3)', 'meta.code;obs.calib', NULL, 'int',NULL,NULL, 1,0,1,7 ),
 

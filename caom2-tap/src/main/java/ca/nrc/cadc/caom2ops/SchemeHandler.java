@@ -70,27 +70,26 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.auth.AuthMethod;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
-
-import ca.nrc.cadc.auth.AuthMethod;
 
 /**
  * Interface for handlers that convert a URI to a URL that allows retrieval.
  *
  * @author pdowler
  */
-public interface SchemeHandler
-{
+public interface SchemeHandler {
     /**
      * Convert the specified URI to one or more URL(s).
      *
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *         the uri is malformed such that a URL cannot be generated, or the uri is null
      * @param uri the URI to convert
      * @return a URL to the identified resource
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *         the uri is malformed such that a URL cannot be generated, or the uri is null
      */
     public URL getURL(URI uri)
         throws IllegalArgumentException, MalformedURLException;
@@ -98,11 +97,11 @@ public interface SchemeHandler
     /**
      * Convert the specified URI to one or more URL(s).
      *
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *         the uri is malformed such that a URL cannot be generated, or the uri is null
      * @param uri the URI to convert
      * @param cutouts A list of cutout strings that should be supported by the returned URL.
      * @return a URL to the identified resource
+     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
+     *         the uri is malformed such that a URL cannot be generated, or the uri is null
      */
     public URL getURL(URI uri, List<String> cutouts)
         throws IllegalArgumentException, MalformedURLException;

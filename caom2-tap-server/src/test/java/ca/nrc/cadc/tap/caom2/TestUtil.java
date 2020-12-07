@@ -65,7 +65,7 @@
 *  $Revision: 4 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.caom2;
 
@@ -78,6 +78,7 @@ import ca.nrc.cadc.tap.schema.TapDataType;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.tap.schema.TapSchemaDAO;
 import ca.nrc.cadc.uws.Job;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import javax.security.auth.Subject;
@@ -86,70 +87,71 @@ import org.opencadc.gms.GroupClient;
 import org.opencadc.gms.GroupURI;
 
 /**
- * Utility class for testings in CAOM 
+ * Utility class for testings in CAOM
+ *
  * @author Sailor Zhang
  *
  */
-public class TestUtil
-{
+public class TestUtil {
+
     public static final Logger log = Logger.getLogger(TestUtil.class);
-    
-    public static TapSchema loadTapSchema()
-    {
+
+    public static TapSchema loadTapSchema() {
         TapDataType uuidType = new TapDataType("char", "36", "uuid");
-        
+
         TableDesc obscore = new TableDesc("ivoa", "ivoa.ObsCore");
         obscore.getColumnDescs().add(new ColumnDesc(obscore.getTableName(), "s_region", new TapDataType("char", "*", "region")));
-        
+
         TableDesc obs = new TableDesc("caom2", "caom2.Observation");
         obs.getColumnDescs().add(new ColumnDesc(obs.getTableName(), "obsID", uuidType));
-        
+
         TableDesc plane = new TableDesc("caom2", "caom2.Plane");
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "obsID", uuidType));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "planeID", uuidType));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds_samples", new TapDataType("char", "*", "caom2:multipolygon")));
-        
+
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_bounds", new TapDataType("char", "*", "interval")));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_bounds_samples", new TapDataType("char", "*", "caom2:multiinterval")));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds", new TapDataType("char", "*", "interval")));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds_samples", new TapDataType("char", "*", "caom2:multiinterval")));
-        
+
         TableDesc sia = new TableDesc("caom2", "caom2.SIAv1");
         sia.getColumnDescs().add(new ColumnDesc(sia.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
-        
+
         SchemaDesc caom2 = new SchemaDesc("caom2");
         caom2.getTableDescs().add(obs);
         caom2.getTableDescs().add(plane);
-        
+
         TapSchema ret = new TapSchema();
         ret.getSchemaDescs().add(caom2);
-        
+
         ret.getFunctionDescs().addAll(new Sub().getFunctionDescs());
-        
+
         return ret;
     }
-    private static class Sub extends TapSchemaDAO
-    {
+
+    private static class Sub extends TapSchemaDAO {
+
         // make this method accessible
         @Override
-        public List<FunctionDesc> getFunctionDescs()
-        {
+        public List<FunctionDesc> getFunctionDescs() {
             return super.getFunctionDescs();
         }
     }
-    
-    static Job job = new Job()
-    {
+
+    static Job job = new Job() {
         @Override
-        public String getID() { return "internal-test-jobID"; }
+        public String getID() {
+            return "internal-test-jobID";
+        }
     };
-    
-    static class TestGMSClient implements GroupClient
-    {
+
+    static class TestGMSClient implements GroupClient {
+
         private Subject subjectWithGroups;
-        public TestGMSClient(Subject subjectWithGroups)
-        {
+
+        public TestGMSClient(Subject subjectWithGroups) {
             this.subjectWithGroups = subjectWithGroups;
         }
 
@@ -162,14 +164,14 @@ public class TestUtil
         public List<GroupURI> getMemberships() {
             Subject cur = AuthenticationUtil.getCurrentSubject();
             List<GroupURI> memberships = new ArrayList<GroupURI>();
-            if (cur == subjectWithGroups)
-            {
-                memberships.add(new GroupURI("ivo://example.org/gms?666"));
-                memberships.add(new GroupURI("ivo://example.org/gms?777"));
+            URI resourceID = URI.create("ivo://example.org/gms");
+            if (cur == subjectWithGroups) {
+                memberships.add(new GroupURI(resourceID, "666"));
+                memberships.add(new GroupURI(resourceID, "777"));
             }
             log.info("TestGMSClient: " + memberships.size() + " groups");
             return memberships;
         }
-        
+
     }
 }

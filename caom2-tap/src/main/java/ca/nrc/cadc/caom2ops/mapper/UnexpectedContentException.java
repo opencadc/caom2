@@ -74,17 +74,14 @@ package ca.nrc.cadc.caom2ops.mapper;
  * 
  * @author pdowler
  */
-public class UnexpectedContentException extends RuntimeException
-{
+public class UnexpectedContentException extends RuntimeException {
     private static final long serialVersionUID = 201211071100L;
     
-    public UnexpectedContentException(String message, Throwable cause)
-    {
+    public UnexpectedContentException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public UnexpectedContentException(String message)
-    {
+    public UnexpectedContentException(String message) {
         super(message);
     }
 

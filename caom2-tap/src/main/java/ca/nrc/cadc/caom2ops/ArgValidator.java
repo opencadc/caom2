@@ -73,15 +73,13 @@ package ca.nrc.cadc.caom2ops;
  *
  * @author yeunga
  */
-public final class ArgValidator
-{
+public final class ArgValidator {
     private ArgValidator() { }
     
     public static void assertNotNull(Class caller, String name, Object test)
-        throws IllegalArgumentException
-    {
-        if (test == null)
+        throws IllegalArgumentException {
+        if (test == null) {
             throw new IllegalArgumentException(caller.getSimpleName() + ": null " + name);
+        }
     }
-
 }

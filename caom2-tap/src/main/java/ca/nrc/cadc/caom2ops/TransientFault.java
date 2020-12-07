@@ -73,18 +73,15 @@ package ca.nrc.cadc.caom2ops;
  *
  * @author pdowler
  */
-public class TransientFault extends RuntimeException
-{
+public class TransientFault extends RuntimeException {
     private int responseCode;
     
-    public TransientFault(String s, int responseCode)
-    {
+    public TransientFault(String s, int responseCode) {
         super(s);
         this.responseCode = responseCode;
     }
     
-    public TransientFault(String s, int responseCode, Throwable cause)
-    {
+    public TransientFault(String s, int responseCode, Throwable cause) {
         super(s, cause);
         this.responseCode = responseCode;
     }
@@ -94,16 +91,15 @@ public class TransientFault extends RuntimeException
     }
     
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append(": ");
         sb.append(getMessage());
-        if ( getCause() != null)
-        {
+        if (getCause() != null) {
             sb.append(" cause: ").append(responseCode).append(" ");
             sb.append(getCause().getMessage());
         }
+        
         return sb.toString();
     }
 }

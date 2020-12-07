@@ -105,14 +105,15 @@ public class VOSpaceCutoutGeneratorIntTest {
     }
 
     @Test
-    public void testValidCutoutUrl() throws Exception {
+    public void testValidCutoutUrlWithNoLabel() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
+        	String label = null;
             List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
-            URL url = resolver.toURL(new URI(FILE_URI), cutouts);
+            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
             
             urlList.add(url);
             for (URL u : urlList) {
@@ -130,15 +131,51 @@ public class VOSpaceCutoutGeneratorIntTest {
             Assert.fail("Unexpected exception: " + unexpected);
         }
     }
+
+    @Test
+    public void testValidCutoutUrlWithLabel() throws Exception {
+        log.info("starting testValidCutoutUrl");
+        try {
+        	String label = "label1";
+        	String expected_filename = label + "__" + "806045o.fits";
+            List<URL> urlList = new ArrayList<URL>();
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
+            
+            urlList.add(url);
+            for (URL u : urlList) {
+                log.debug("opening connection to: " + u.toString());
+                String urlString = url.toExternalForm();
+                String msg = "url should contain fo parameter without compression extension: " + urlString;
+                Assert.assertTrue(msg, urlString.contains("fo=" + expected_filename));
+                OutputStream out = new ByteArrayOutputStream();
+                HttpDownload download = new HttpDownload(u, out);
+                download.setHeadOnly(false); // head requests don't work with vospace ws
+                download.run();
+                Assert.assertEquals(200, download.getResponseCode());
+                log.info("response code: " + download.getResponseCode());
+                String cdis = download.getResponseHeader("Content-Disposition");
+                String actual_filename = cdis.split("=")[1];
+                Assert.assertEquals("incorrect filename", expected_filename, actual_filename);
+            }
+
+        } catch (Exception unexpected) {
+            log.error("Unexpected exception", unexpected);
+            Assert.fail("Unexpected exception: " + unexpected);
+        }
+    }
     
     @Test
     public void testInvalidCutoutUrl() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
+        	String label = null;
             List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(INVALID_CUTOUT);
-            URL url = resolver.toURL(new URI(FILE_URI), cutouts);
+            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
             
             urlList.add(url);
             for (URL u : urlList) {

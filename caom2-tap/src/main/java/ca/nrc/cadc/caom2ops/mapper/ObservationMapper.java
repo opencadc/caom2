@@ -158,9 +158,9 @@ public class ObservationMapper implements VOTableRowMapper<Observation> {
                 obs.target.moving = Util.getBoolean(data, map.get("caom2:Observation.target.moving"));
                 obs.target.redshift = Util.getDouble(data, map.get("caom2:Observation.target.redshift"));
                 obs.target.standard = Util.getBoolean(data, map.get("caom2:Observation.target.standard"));
-                String tType = Util.getString(data, map.get("caom2:Observation.target.type"));
-                if (tType != null) {
-                    obs.target.type = TargetType.toValue(tType);
+                String targetType = Util.getString(data, map.get("caom2:Observation.target.type"));
+                if (targetType != null) {
+                    obs.target.type = TargetType.toValue(targetType);
                 }
                 Util.decodeKeywordList(Util.getString(data, map.get("caom2:Observation.target.keywords")), obs.target.getKeywords());
             }

@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2ops.mapper;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.ProductType;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -110,18 +109,18 @@ public class PartMapper implements VOTableRowMapper<Part> {
         }
 
         try {
-            String pName = Util.getString(data, map.get("caom2:Part.name"));
-            Part part = new Part(pName);
+            String partName = Util.getString(data, map.get("caom2:Part.name"));
+            Part part = new Part(partName);
 
-            String pType = Util.getString(data, map.get("caom2:Part.productType"));
-            if (pType != null) {
-                part.productType = ProductType.toValue(pType);
+            String partType = Util.getString(data, map.get("caom2:Part.productType"));
+            if (partType != null) {
+                part.productType = ProductType.toValue(partType);
             }
 
-            Date pLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
-            Date pMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
-            Util.assignLastModified(part, pLastModified, "lastModified");
-            Util.assignLastModified(part, pMaxLastModified, "maxLastModified");
+            Date partLastModified = Util.getDate(data, map.get("caom2:Part.lastModified"));
+            Date partMaxLastModified = Util.getDate(data, map.get("caom2:Part.maxLastModified"));
+            Util.assignLastModified(part, partLastModified, "lastModified");
+            Util.assignLastModified(part, partMaxLastModified, "maxLastModified");
 
             URI metaChecksum = Util.getURI(data, map.get("caom2:Part.metaChecksum"));
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Part.accMetaChecksum"));

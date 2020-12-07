@@ -78,10 +78,9 @@ import java.util.List;
  *
  * @author yeunga
  */
-public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGenerator
-{    
+public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGenerator {    
     @Override
-    public URL toURL(URI uri, List<String> cutouts) 
+    public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
         URL base = super.toURL(uri);
         if (cutouts == null || cutouts.isEmpty()) {
@@ -96,7 +95,8 @@ public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGen
             sb.append("?");
         }
         sb.append("view=cutout");
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts);
+        String filename = AdCutoutGenerator.generateFilename(uri, label);
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
         
         try {
             return new URL(sb.toString());

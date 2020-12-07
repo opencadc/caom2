@@ -67,11 +67,6 @@
 
 package ca.nrc.cadc.caom2ops;
 
-
-import ca.nrc.cadc.util.FileUtil;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Properties;
@@ -84,8 +79,7 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class ServiceConfig 
-{
+public class ServiceConfig {
     private static final Logger log = Logger.getLogger(ServiceConfig.class);
 
     public static final String TAP_KEY = ServiceConfig.class.getName() + ".tapServiceID";
@@ -95,54 +89,55 @@ public class ServiceConfig
     
     private Properties props;
     
-    public ServiceConfig()
-    {
+    public ServiceConfig() {
         String fname = ServiceConfig.class.getSimpleName() + ".properties";
-        try
-        {
+        try {
             URL url = ServiceConfig.class.getClassLoader().getResource(fname);
             this.props = new Properties();
             props.load(url.openStream());
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new RuntimeException("CONFIG: failed to read " + fname + " from classpath");
+        } finally {
+            // do nothing
         }
-        finally { }
     }
     
-    public URI getTapServiceID()
-    {
+    public URI getTapServiceID() {
         String val = props.getProperty(TAP_KEY);
-        if (val != null)
+        if (val != null) {
             return URI.create(val);
+        }
+        
         log.debug("not found: " + TAP_KEY);
         return null;
     }
     
-    public URI getMetaID()
-    {
+    public URI getMetaID() {
         String val = props.getProperty(META_KEY);
-        if (val != null)
+        if (val != null) {
             return URI.create(val);
+        }
+        
         log.debug("not found: " + META_KEY);
         return null;
     }
     
-    public URI getPkgID()
-    {
+    public URI getPkgID() {
         String val = props.getProperty(PKG_KEY);
-        if (val != null)
+        if (val != null) {
             return URI.create(val);
+        }
+        
         log.debug("not found: " + PKG_KEY);
         return null;
     }
     
-    public URI getSodaID()
-    {
+    public URI getSodaID() {
         String val = props.getProperty(SODA_KEY);
-        if (val != null)
+        if (val != null) {
             return URI.create(val);
+        }
+        
         log.debug("not found: " + SODA_KEY);
         return null;
     }

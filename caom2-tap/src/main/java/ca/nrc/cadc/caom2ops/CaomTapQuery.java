@@ -120,8 +120,7 @@ import org.opencadc.tap.TapClient;
  * and produces a list of tuples.
  * @author pdowler
  */
-public class CaomTapQuery 
-{
+public class CaomTapQuery {
     private static final Logger log = Logger.getLogger(CaomTapQuery.class);
     
     static final String VOTABLE_FORMAT = VOTableWriter.CONTENT_TYPE; // from cadcDALI
@@ -134,11 +133,10 @@ public class CaomTapQuery
      * @param runID ID of job invoking this constructor
      * @param tapServiceID resourceID of the TAP service to use
      */
-    public CaomTapQuery(URI tapServiceID, String runID)
-    {
-    	ArgValidator.assertNotNull(getClass(), "tapServiceID", tapServiceID);
+    public CaomTapQuery(URI tapServiceID, String runID) {
+        ArgValidator.assertNotNull(getClass(), "tapServiceID", tapServiceID);
         this.tapServiceID = tapServiceID;
-    	this.runID = runID;
+        this.runID = runID;
     }
 
     /**
@@ -155,10 +153,9 @@ public class CaomTapQuery
     // use by caom2-meta-server
     public Observation performQuery(final ObservationURI uri)
         throws IOException, ResourceNotFoundException, UnexpectedContentException, 
-            AccessControlException, CertificateException
-    {
+            AccessControlException, CertificateException {
         
-    	log.debug("performing query on observation URI = " + uri.toString());
+        log.debug("performing query on observation URI = " + uri.toString());
         
         AdqlQueryGenerator gen = new AdqlQueryGenerator();
         String adql = gen.getADQL(uri);
@@ -185,10 +182,9 @@ public class CaomTapQuery
      */
     public ArtifactQueryResult performQuery(final PublisherID uri, boolean artifactOnly)
         throws IOException,  ResourceNotFoundException, UnexpectedContentException, 
-            AccessControlException, CertificateException
-    {
-    	log.debug("performing query on plane URI = " + uri.toString() + " artifactOnly=" + artifactOnly);
-    	
+            AccessControlException, CertificateException {
+        log.debug("performing query on plane URI = " + uri.toString() + " artifactOnly=" + artifactOnly);
+
         // generate query, do not follow redirect
         AdqlQueryGenerator gen = new AdqlQueryGenerator();
         String adql = gen.getADQL(uri, artifactOnly);
@@ -214,17 +210,16 @@ public class CaomTapQuery
     // used by caom2-datalink-server
     public ArtifactQueryResult performQuery(final PlaneURI uri, boolean artifactOnly)
         throws IOException,  ResourceNotFoundException, UnexpectedContentException, 
-            AccessControlException, CertificateException
-    {
-    	log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
-    	
+            AccessControlException, CertificateException {
+        log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
+    
         // generate query, do not follow redirect
         AdqlQueryGenerator gen = new AdqlQueryGenerator();
         String adql = gen.getADQL(uri, artifactOnly);
         log.debug("link query: " + adql);
 
         VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
-    	return buildArtifacts(doc);
+        return buildArtifacts(doc);
     }
     
 
@@ -242,9 +237,8 @@ public class CaomTapQuery
     // used by caom2-soda-server
     public Artifact performQuery(final URI uri)
         throws IOException,  ResourceNotFoundException, UnexpectedContentException, 
-            AccessControlException, CertificateException
-    {
-    	log.debug("query uri: " + uri.toString());
+            AccessControlException, CertificateException {
+        log.debug("query uri: " + uri.toString());
 
         AdqlQueryGenerator gen = new AdqlQueryGenerator();
         String adql = gen.getArtifactADQL(uri);
@@ -252,8 +246,10 @@ public class CaomTapQuery
 
         VOTableDocument doc = execQuery(uri.toASCIIString(), adql);
         ArtifactQueryResult ar = buildArtifacts(doc);
-        if (ar.getArtifacts().isEmpty())
+        if (ar.getArtifacts().isEmpty()) {
             return null;
+        }
+        
         Artifact a = ar.getArtifacts().get(0);
         log.debug("found: " + a.getURI());
         return a;
@@ -261,8 +257,7 @@ public class CaomTapQuery
     
     private VOTableDocument execQuery(String uri, String adql)
         throws IOException, ResourceNotFoundException, UnexpectedContentException, 
-            AccessControlException, CertificateException
-    {
+            AccessControlException, CertificateException {
         // obtain credentials from CDP if the user is authorized
         AuthMethod queryAuthMethod = AuthMethod.ANON;
         if (CredUtil.checkCredentials()) {
@@ -276,58 +271,55 @@ public class CaomTapQuery
         log.debug("post: " + uri + " " + tapSyncURL);
         HttpPost httpPost = new HttpPost(tapSyncURL, getQueryParameters(VOTABLE_FORMAT, adql), false);
         httpPost.run();
-        if (httpPost.getThrowable() != null)
+        if (httpPost.getThrowable() != null) {
             throw new TransientFault("query failed: " + uri, httpPost.getResponseCode(), httpPost.getThrowable());
-
+        }
+        
         log.debug("redirect: " + httpPost.getRedirectURL());
         
         // get
         VOTableStreamReader reader = new VOTableStreamReader(new VOTableReader());
         HttpDownload httpDownload = new HttpDownload(httpPost.getRedirectURL(), (InputStreamWrapper) reader);
         httpDownload.run();
-        if (httpDownload.getThrowable() != null)
-        {
+        if (httpDownload.getThrowable() != null) {
             throw new TransientFault("query failed: " + uri, httpDownload.getResponseCode(), httpDownload.getThrowable());
         }
         return reader.getVOTable();
     }
     
-    private void logHeader(VOTableDocument vot)
-    {
-        if ( !log.isDebugEnabled() )
+    private void logHeader(VOTableDocument vot) {
+        if (!log.isDebugEnabled()) {
             return;
+        }
         
         StringBuilder sb = new StringBuilder();
         VOTableResource vr = vot.getResourceByType("results");
         VOTableTable vt = vr.getTable();
-        for (VOTableField tf : vt.getFields())
-        {
+        for (VOTableField tf : vt.getFields()) {
             sb.append("[").append(tf.utype).append("]");
         }
         log.debug("votable header: " + sb.toString());
     }
     
-    private void logRow(List<Object> row)
-    {
-        if ( !log.isDebugEnabled() )
+    private void logRow(List<Object> row) {
+        if (!log.isDebugEnabled()) {
             return;
+        }
         
         StringBuilder sb = new StringBuilder();
-        for (Object o : row)
-        {
+        for (Object o : row) {
             sb.append("[").append(o).append("]");
         }
         log.debug("votable row: " + sb.toString());
     }
     
-    private Observation buildObservation(final VOTableDocument vot)
-    {
+    private Observation buildObservation(final VOTableDocument vot) {
         log.debug("building observation from VOTable");
         VOTableResource vr = vot.getResourceByType("results");
         // TODO: check QUERY_STATUS to be careful and avoid about NPEs below
         VOTableTable vt = vr.getTable();
-    	TableData data = vt.getTableData();
-    	Iterator<List<Object>> rowIterator = data.iterator();
+        TableData data = vt.getTableData();
+        Iterator<List<Object>> rowIterator = data.iterator();
 
         Map<String,Integer> utypeMap = VOTableUtil.buildUTypeMap(vt.getFields());
         ObservationMapper om = new ObservationMapper(utypeMap);
@@ -344,97 +336,93 @@ public class CaomTapQuery
         Artifact curArtifact = null;
         Part curPart = null;
         
-        while (rowIterator.hasNext())
-    	{
+        while (rowIterator.hasNext()) {
             List<Object> row = rowIterator.next();
             
             Observation o = om.mapRow(row, df);
-            if (o != null)
-            {
-                if (curObservation == null || !curObservation.getID().equals(o.getID())) // new observation
-                {
-                    if (curObservation != null) // found first row of next obs
+            if (o != null) {
+                if (curObservation == null || !curObservation.getID().equals(o.getID())) {
+                    // new observation
+                    if (curObservation != null) {
+                        // found first row of next obs
                         log.debug("END observation: " + curObservation.getID());
+                    }
+                    
                     curObservation = o;
                     obs.add(curObservation);
                     log.debug("START observation: " + curObservation.getID());
                 }
-            }
-            else
-            {
+            } else {
                 log.debug("no observations");
                 curObservation = null;
             }
-            if (curObservation != null)
-            {
+            
+            if (curObservation != null) {
                 Plane p1 = planeM.mapRow(row, df);
-                if (p1 != null)
-                {
-                    if (curPlane == null || !curPlane.getID().equals(p1.getID())) // new plane
-                    {
-                        if (curPlane != null)
+                if (p1 != null) {
+                    if (curPlane == null || !curPlane.getID().equals(p1.getID())) {
+                        // new plane
+                        if (curPlane != null) {
                             log.debug("END plane: " + curPlane.getID());
+                        }
+                        
                         curPlane = p1;
                         curObservation.getPlanes().add(curPlane);
                         log.debug("START plane: " + curPlane.getID());
                     }
-                }
-                else
-                {
+                } else {
                     log.debug("no planes");
                     curPlane = null;
                 }
-                if (curPlane != null)
-                {
+                
+                if (curPlane != null) {
                     Artifact a = am.mapRow(row, df);
-                    if (a != null)
-                    {
-                        if (curArtifact == null || !curArtifact.getID().equals(a.getID())) // new artifact
-                        {
-                            if (curArtifact != null) // found first row of next artifact in same plane
+                    if (a != null) {
+                        if (curArtifact == null || !curArtifact.getID().equals(a.getID())) {
+                            // new artifact
+                            if (curArtifact != null) {
+                                // found first row of next artifact in same plane
                                 log.debug("END artifact: " + curArtifact.getID());
+                            }
+                            
                             curArtifact = a;
                             curPlane.getArtifacts().add(curArtifact);
                             log.debug("START artifact: " + curArtifact.getID());
                         }
                         // else a == curArtifact
-                    }
-                    else
-                    {
+                    } else {
                         log.debug("no artifacts");
                         curArtifact = null;
                     }
-                    if (curArtifact != null)
-                    {
+                    
+                    if (curArtifact != null) {
                         Part p = pm.mapRow(row, df);
                         log.debug("artifact " + curArtifact.getClass() + " part " + p);
-                        if (p != null)
-                        {
-                            if (curPart == null || !curPart.getID().equals(p.getID())) // new part
-                            {
-                                if (curPart != null) // found first row of next artifact in same plane
+                        if (p != null) {
+                            if (curPart == null || !curPart.getID().equals(p.getID())) {
+                                // new part
+                                if (curPart != null) {
+                                    // found first row of next artifact in same plane
                                     log.debug("END part: " + curPart.getID());
+                                }
+                                
                                 curPart = p;
                                 curArtifact.getParts().add(curPart);
                                 log.debug("START part: " + curPart.getID());
                             }
                             // else p == curPart
-                        }
-                        else
-                        {
+                        } else {
                             log.debug("artifact: " + curArtifact.getID() + ": no parts");
                             curPart = null;
                         }
-                        if (curPart != null)
-                        {
+                        
+                        if (curPart != null) {
                             Chunk c = cm.mapRow(row, df);
-                            if (c != null) // always a new chunk since last join
-                            {
+                            if (c != null) {
+                                // always a new chunk since last join
                                 log.debug("START chunk: " + c.getID());
                                 curPart.getChunks().add(c);
-                            }
-                            else
-                            {
+                            } else {
                                 log.debug("part: " + curPart.getID() + ": no chunks");
                             }
                         }                
@@ -442,23 +430,27 @@ public class CaomTapQuery
                 } // end curPlane != null
             }
         }
-        if (obs.size() > 1)
+        
+        if (obs.size() > 1) {
             throw new UnexpectedContentException("BUG: found " + obs.size() + " observations, expected 1");
-        if (obs.isEmpty())
+        }
+        
+        if (obs.isEmpty()) {
             return null;
+        }
+        
         return obs.get(0);
     }
     
-    private ArtifactQueryResult buildArtifacts(final VOTableDocument vot) 
-    {
-    	log.debug("building artifacts from VOTable");
+    private ArtifactQueryResult buildArtifacts(final VOTableDocument vot) {
+        log.debug("building artifacts from VOTable");
         //logHeader(votable);
 
         VOTableResource vr = vot.getResourceByType("results");
         VOTableTable vt = vr.getTable();
-    	TableData data = vt.getTableData();
-    	Iterator<List<Object>> rowIterator = data.iterator();
-    	Artifact curArtifact = null;
+        TableData data = vt.getTableData();
+        Iterator<List<Object>> rowIterator = data.iterator();
+        Artifact curArtifact = null;
         Part curPart = null;
 
         Map<String,Integer> utypeMap = VOTableUtil.buildUTypeMap(vt.getFields());
@@ -466,120 +458,113 @@ public class CaomTapQuery
         PartMapper pm = new PartMapper(utypeMap);
         ChunkMapper cm = new ChunkMapper(utypeMap);
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-    	
+    
         
         
         ArtifactQueryResult ret = new ArtifactQueryResult();
-    	while (rowIterator.hasNext())
-    	{
+        while (rowIterator.hasNext()) {
             List<Object> row = rowIterator.next();
             //logRow(row);
             
             Integer mrCol = utypeMap.get("column-name:metaReadable");
             Integer drCol = utypeMap.get("column-name:dataReadable");
-            if (mrCol != null)
-            {
+            if (mrCol != null) {
                 Object o = row.get(mrCol);
                 ret.metaReadable = (o != null);
             }
-            if (drCol != null)
-            {
+            
+            if (drCol != null) {
                 Object o = row.get(drCol);
                 ret.dataReadable = (o != null);
             }
+            
             log.debug("found metaReadable: " + ret.metaReadable + " dataReadable: " + ret.dataReadable);
             
             Artifact a = am.mapRow(row, df);
-            if (a != null)
-            {
-                if (curArtifact == null || !curArtifact.getID().equals(a.getID())) // new artifact
-                {
-                    if (curArtifact != null) // found first row of next artifact in same plane
+            if (a != null) {
+                if (curArtifact == null || !curArtifact.getID().equals(a.getID())) {
+                    // new artifact
+                    if (curArtifact != null) {
+                        // found first row of next artifact in same plane
                         log.debug("END artifact: " + curArtifact.getID());
+                    }
+                    
                     curArtifact = a;
                     ret.getArtifacts().add(curArtifact);
                     log.debug("START artifact: " + curArtifact.getID());
                 }
                 // else a == curArtifact
-            }
-            else
-            {
+            } else {
                 log.debug("no artifacts");
                 curArtifact = null;
             }
-            if (curArtifact != null)
-            {
+            
+            if (curArtifact != null) {
                 Part p = pm.mapRow(row, df);
                 log.debug("artifact " + curArtifact.getClass() + " part " + p);
-                if (p != null)
-                {
-                    if (curPart == null || !curPart.getID().equals(p.getID())) // new part
-                    {
-                        if (curPart != null) // found first row of next artifact in same plane
+                if (p != null) {
+                    if (curPart == null || !curPart.getID().equals(p.getID())) {
+                        // new part
+                        if (curPart != null) {
+                            // found first row of next artifact in same plane
                             log.debug("END part: " + curPart.getID());
+                        }
+                        
                         curPart = p;
                         curArtifact.getParts().add(curPart);
                         log.debug("START part: " + curPart.getID());
                     }
                     // else p == curPart
-                }
-                else
-                {
+                } else {
                     log.debug("artifact: " + curArtifact.getID() + ": no parts");
                     curPart = null;
                 }
-                if (curPart != null)
-                {
+                
+                if (curPart != null) {
                     Chunk c = cm.mapRow(row, df);
-                    if (c != null) // always a new chunk since last join
-                    {
+                    if (c != null) {
+                        // always a new chunk since last join
                         log.debug("START chunk: " + c.getID());
                         curPart.getChunks().add(c);
-                    }
-                    else
-                    {
+                    } else {
                         log.debug("part: " + curPart.getID() + ": no chunks");
                     }
-                }                
+                }
             }
-    	}
-    	    	
-    	return ret;
+        }
+        
+        return ret;
     }
     
-    private Map<String, Object> getQueryParameters(final String format, final String adql)
-    {
-    	Map<String,Object> map = new HashMap<String,Object>();
-    	map.put("REQUEST", "doQuery");
-    	map.put("LANG", "ADQL");
-    	map.put("FORMAT", format);
-    	map.put("QUERY", adql);
-        if (runID != null)
+    private Map<String, Object> getQueryParameters(final String format, final String adql) {
+        Map<String,Object> map = new HashMap<String,Object>();
+        map.put("REQUEST", "doQuery");
+        map.put("LANG", "ADQL");
+        map.put("FORMAT", format);
+        map.put("QUERY", adql);
+        if (runID != null) {
             map.put("RUNID", runID);
-    	return map;
+        }
+        
+        return map;
     }
     
-    private class VOTableStreamReader implements InputStreamWrapper
-    {
-    	private VOTableDocument votable;
-    	private VOTableReader wrappedReader;
-    	
-    	
-    	public VOTableStreamReader(VOTableReader reader)
-    	{
+    private class VOTableStreamReader implements InputStreamWrapper {
+        private VOTableDocument votable;
+        private VOTableReader wrappedReader;
+    
+    
+        public VOTableStreamReader(VOTableReader reader) {
             this.wrappedReader = reader;
-    	}
-    	
-    	public VOTableDocument getVOTable()
-    	{
+        }
+    
+        public VOTableDocument getVOTable() {
             return this.votable;
-    	}
+        }
 
         @Override
-        public void read(InputStream inputStream) throws IOException 
-        {
+        public void read(InputStream inputStream) throws IOException {
             this.votable = this.wrappedReader.read(inputStream);
         }
     }
-
 }
