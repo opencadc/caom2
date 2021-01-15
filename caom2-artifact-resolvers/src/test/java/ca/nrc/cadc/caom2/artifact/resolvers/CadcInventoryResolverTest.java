@@ -62,16 +62,16 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -79,48 +79,56 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+
+
 /**
- *
- * @author yeunga
+ * @author adriand
  */
-public class CadcGeminiResolverTest {
-    private static final Logger log = Logger.getLogger(CadcGeminiResolverTest.class);
+public class CadcInventoryResolverTest {
+    private static final Logger log = Logger.getLogger(CadcInventoryResolverTest.class);
+    private static final String SI_URL = "https://unittest.com/minoc/files";
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
-
-    private static final String FILE_URI = "gemini:GEM/bar.fits";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
-
-    private static final String DATA_CAPABILITIES =
+    private static final String MINOC_CAPABILITIES =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                     "<vosi:capabilities\n" +
                     "    xmlns:vosi=\"http://www.ivoa.net/xml/VOSICapabilities/v1.0\"\n" +
                     "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                     "    xmlns:vs=\"http://www.ivoa.net/xml/VODataService/v1.1\">\n" +
                     "\n" +
-                    "<capability standardID=\"vos://cadc.nrc.ca~vospace/CADC/std/archive#file-1.0\">\n" +
-                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\" version=\"1.0\">\n" +
-                    "      <accessURL use=\"base\">https://unittest.com/data/pub</accessURL>\n" +
+                    "  <capability standardID=\"http://www.opencadc.org/std/storage#files-1.0\">\n" +
+                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\">\n" +
+                    "      <accessURL use=\"base\">" + SI_URL + "</accessURL>\n" +
+                    "      <securityMethod />\n" +
+                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#cookie\" />\n" +
+                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#tls-with-certificate\" />\n" +
+                    "      <securityMethod standardID=\"vos://cadc.nrc.ca~vospace/CADC/std/Auth#token-1.0\"/>    \n" +
                     "    </interface>\n" +
                     "  </capability>" +
                     "</vosi:capabilities>";
-    private static final String DATA_RESOURCE = "ivo://cadc.nrc.ca/data = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/capabilities";
+     private static final String MINOC_RESOURCE = CadcInventoryResolver.STORAGE_INVENTORY_URI.toASCIIString() +
+             " = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/minoc/capabilities";
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
+    private static final String FILE_URI = "cadc:FOO/bar";
 
-    public CadcGeminiResolverTest() {
+    CadcInventoryResolver cadcResolver = new CadcInventoryResolver();
+
+    public CadcInventoryResolverTest() {
 
     }
 
     @Before
     public void setUp() throws Exception {
-        ResolverCapabilitiesMock.setupCapabilitiesFile(DATA_RESOURCE, DATA_CAPABILITIES, "data");
+        ResolverCapabilitiesMock.setupCapabilitiesFile(MINOC_RESOURCE, MINOC_CAPABILITIES, "minoc");
     }
 
     @After
@@ -129,21 +137,18 @@ public class CadcGeminiResolverTest {
     }
 
     @Test
-    public void testGetScheme() {
-        Assert.assertTrue(CadcGeminiResolver.SCHEME.equals(cadcGeminiResolver.getScheme()));
-    }
-
-    @Test 
     public void testTraceable() {
-        Assert.assertTrue(cadcGeminiResolver instanceof Traceable);
+        Assert.assertTrue(cadcResolver instanceof Traceable);
     }
     
     @Test
-    public void testToURL() {
+    public void testFileAnon() {
         try {
+            cadcResolver.setAuthMethod(AuthMethod.ANON);
             URI uri = new URI(FILE_URI);
-            URL url = cadcGeminiResolver.toURL(uri);
+            URL url = cadcResolver.toURL(uri);
             Assert.assertNotNull(url);
+            Assert.assertEquals(SI_URL + "/" + uri.toASCIIString(), url.toString());
             log.info("testFile: " + uri + " -> " + url);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -152,14 +157,40 @@ public class CadcGeminiResolverTest {
     }
 
     @Test
-    public void testInvalidSchemeURI() {
+    public void testFileAuth() {
         try {
-            URI uri = new URI(INVALID_SCHEME_URI1);
-            URL url = cadcGeminiResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
+            cadcResolver.setAuthMethod(AuthMethod.CERT);
+            URI uri = new URI(FILE_URI);
+            URL url = cadcResolver.toURL(uri);
+            Assert.assertNotNull(url);
+            Assert.assertEquals(SI_URL + "/" + uri.toASCIIString(), url.toString());
+            log.info("testFile: " + uri + " -> " + url);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testGeminiURIs() {
+        try {
+            cadcResolver.setAuthMethod(AuthMethod.CERT);
+            // gemini:GEM/N20201214S0014.fits -> gemini:Gemini/N20201214S0014.fits
+            URI uri = new URI("gemini:GEM/N20201214S0014.fits");
+            URL url = cadcResolver.toURL(uri);
+            Assert.assertEquals(SI_URL + "/gemini:Gemini/N20201214S0014.fits", url.toString());
+
+            // gemini:GEM/N20201214S0014.jpg -> gemini:Gemini/N20201214S0014.jpg
+            uri = new URI("gemini:GEM/N20201214S0014.jpg");
+            url = cadcResolver.toURL(uri);
+            Assert.assertEquals(SI_URL + "/gemini:Gemini/N20201214S0014.jpg", url.toString());
+
+            // ad:GEM/N20201214S0014_th.jpg -> cadc:Gemini/N20201214S0014_th.jpg
+            uri = new URI("ad:GEM/N20201214S0014_th.jpg");
+            url = cadcResolver.toURL(uri);
+            Assert.assertEquals(SI_URL + "/cadc:Gemini/N20201214S0014_th.jpg", url.toString());
+
+            log.info("testFile: " + uri + " -> " + url);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

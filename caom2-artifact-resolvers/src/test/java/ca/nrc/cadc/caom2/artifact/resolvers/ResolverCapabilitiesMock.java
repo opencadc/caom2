@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,107 +62,80 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+
 /**
- *
- * @author yeunga
+ * @author adriand
  */
-public class CadcGeminiResolverTest {
-    private static final Logger log = Logger.getLogger(CadcGeminiResolverTest.class);
+public class ResolverCapabilitiesMock {
+    private static final Logger log = Logger.getLogger(ResolverCapabilitiesMock.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "gemini:GEM/bar.fits";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
-
-    private static final String DATA_CAPABILITIES =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                    "<vosi:capabilities\n" +
-                    "    xmlns:vosi=\"http://www.ivoa.net/xml/VOSICapabilities/v1.0\"\n" +
-                    "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "    xmlns:vs=\"http://www.ivoa.net/xml/VODataService/v1.1\">\n" +
-                    "\n" +
-                    "<capability standardID=\"vos://cadc.nrc.ca~vospace/CADC/std/archive#file-1.0\">\n" +
-                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\" version=\"1.0\">\n" +
-                    "      <accessURL use=\"base\">https://unittest.com/data/pub</accessURL>\n" +
-                    "    </interface>\n" +
-                    "  </capability>" +
-                    "</vosi:capabilities>";
-    private static final String DATA_RESOURCE = "ivo://cadc.nrc.ca/data = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/capabilities";
-
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
-
-    CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
-
-    public CadcGeminiResolverTest() {
-
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        ResolverCapabilitiesMock.setupCapabilitiesFile(DATA_RESOURCE, DATA_CAPABILITIES, "data");
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        ResolverCapabilitiesMock.removeCapabilitiesFile("data");
-    }
-
-    @Test
-    public void testGetScheme() {
-        Assert.assertTrue(CadcGeminiResolver.SCHEME.equals(cadcGeminiResolver.getScheme()));
-    }
-
-    @Test 
-    public void testTraceable() {
-        Assert.assertTrue(cadcGeminiResolver instanceof Traceable);
-    }
-    
-    @Test
-    public void testToURL() {
-        try {
-            URI uri = new URI(FILE_URI);
-            URL url = cadcGeminiResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+    private static String getBaseCacheDirectory() {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        String userName = System.getProperty("user.name");
+        if (tmpDir == null) {
+            throw new RuntimeException("No tmp system dir defined.");
         }
+        String baseCacheDir = null;
+
+        String configCacheDir =  "cadc-registry-1.4"; // wish this was public in RegistryClient
+        if (userName == null) {
+            baseCacheDir = tmpDir + File.separator + configCacheDir + File.separator;
+        } else {
+            baseCacheDir = tmpDir + File.separator + userName + File.separator + configCacheDir + File.separator;
+        }
+        log.debug("Base cache dir: " + baseCacheDir);
+        return baseCacheDir;
     }
 
-    @Test
-    public void testInvalidSchemeURI() {
-        try {
-            URI uri = new URI(INVALID_SCHEME_URI1);
-            URL url = cadcGeminiResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+    public static void setupCapabilitiesFile(String registryContent, String capabilitiesContent, String serviceName) throws IOException {
+        // Setup the reg file in cache first
+        String regFileName = getBaseCacheDirectory() + File.separator + "resource-caps";
+        File reg = new File(regFileName);
+        reg.createNewFile();
+        FileWriter regWriter = new FileWriter(regFileName);
+        regWriter.write(registryContent);
+        regWriter.close();
+        // Setup the capabilities file now
+        String capFileName = getBaseCacheDirectory() + File.separator + CadcInventoryResolver.STORAGE_INVENTORY_URI.getAuthority() +
+                File.separator + serviceName + File.separator + "capabilities.xml";
+        File cap = new File(capFileName);
+        cap.createNewFile();
+        FileWriter capWriter = new FileWriter(capFileName);
+        capWriter.write(capabilitiesContent);
+        capWriter.close();
+    }
+
+    public static void removeCapabilitiesFile(final String serviceName) {
+        String regFileName = getBaseCacheDirectory() + File.separator + "resource-caps";
+        File reg = new File(regFileName);
+        reg.delete();
+        String capFileName = getBaseCacheDirectory() + File.separator + CadcInventoryResolver.STORAGE_INVENTORY_URI.getAuthority() +
+                File.separator + serviceName + File.separator + "capabilities.xml";
+        File cap = new File(capFileName);
+        cap.delete();
     }
 }

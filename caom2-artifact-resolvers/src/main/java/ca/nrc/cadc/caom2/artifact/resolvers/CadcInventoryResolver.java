@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -66,103 +66,102 @@
 ************************************************************************
 */
 
+
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
-import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URL;
-import org.apache.log4j.Level;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
+ * This class can convert an URI into a URL to the CADC storage system.
  *
- * @author yeunga
+ * @author adriand
  */
-public class CadcGeminiResolverTest {
-    private static final Logger log = Logger.getLogger(CadcGeminiResolverTest.class);
+public class CadcInventoryResolver implements StorageResolver, Traceable {
+
+    private static final Logger log = Logger.getLogger(CadcInventoryResolver.class);
+    public static URI STORAGE_INVENTORY_URI;
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
-
-    private static final String FILE_URI = "gemini:GEM/bar.fits";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
-
-    private static final String DATA_CAPABILITIES =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                    "<vosi:capabilities\n" +
-                    "    xmlns:vosi=\"http://www.ivoa.net/xml/VOSICapabilities/v1.0\"\n" +
-                    "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "    xmlns:vs=\"http://www.ivoa.net/xml/VODataService/v1.1\">\n" +
-                    "\n" +
-                    "<capability standardID=\"vos://cadc.nrc.ca~vospace/CADC/std/archive#file-1.0\">\n" +
-                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\" version=\"1.0\">\n" +
-                    "      <accessURL use=\"base\">https://unittest.com/data/pub</accessURL>\n" +
-                    "    </interface>\n" +
-                    "  </capability>" +
-                    "</vosi:capabilities>";
-    private static final String DATA_RESOURCE = "ivo://cadc.nrc.ca/data = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/capabilities";
-
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
-
-    CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
-
-    public CadcGeminiResolverTest() {
-
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        ResolverCapabilitiesMock.setupCapabilitiesFile(DATA_RESOURCE, DATA_CAPABILITIES, "data");
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        ResolverCapabilitiesMock.removeCapabilitiesFile("data");
-    }
-
-    @Test
-    public void testGetScheme() {
-        Assert.assertTrue(CadcGeminiResolver.SCHEME.equals(cadcGeminiResolver.getScheme()));
-    }
-
-    @Test 
-    public void testTraceable() {
-        Assert.assertTrue(cadcGeminiResolver instanceof Traceable);
-    }
-    
-    @Test
-    public void testToURL() {
         try {
-            URI uri = new URI(FILE_URI);
-            URL url = cadcGeminiResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            STORAGE_INVENTORY_URI = new URI("ivo://cadc.nrc.ca/minoc");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
         }
     }
 
-    @Test
-    public void testInvalidSchemeURI() {
+    protected AuthMethod authMethod;
+
+    @Override
+    public URL toURL(URI uri) {
+
         try {
-            URI uri = new URI(INVALID_SCHEME_URI1);
-            URL url = cadcGeminiResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+            // check if authMethod has been set
+            AuthMethod am = this.authMethod;
+            if (am == null) {
+                am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+            }
+            if (am == null) {
+                am = AuthMethod.ANON;
+            }
+            
+            RegistryClient rc = new RegistryClient();
+            URL serviceURL = rc.getServiceURL(new URI(STORAGE_INVENTORY_URI.toASCIIString()), Standards.SI_FILES, am);
+            URL url = this.toURL(serviceURL, uri);
+            log.debug(uri + " --> " + url);
+            return url;
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG", ex);
+        } catch (URISyntaxException bug) {
+            throw new RuntimeException("BUG - failed to create data web service URI", bug);
         }
+    }
+
+    protected URL toURL(URL serviceURL, URI uri) throws MalformedURLException {
+        return new URL(serviceURL.toExternalForm() + "/" + fixURI(uri).toString());
+    }
+
+    public void setAuthMethod(AuthMethod authMethod) {
+        this.authMethod = authMethod;
+    }
+
+    @Override
+    public String getScheme() {
+        //Not used
+        throw new RuntimeException("BUG: Should not be called");
+    }
+
+    /**
+     * Most of the URIs are stored as provided by the caller. However, due to historical reasons, a subset of them
+     * (mostly from CAOM2) are outdated. This method checks for known inconsistencies and returns an URI that is valid
+     * for the CADC storage inventory system. It becomes redundant when all inconsistencies are fixed upstream.
+     * @param uri URI to check
+     * @return uri valid for CADC storage inventory
+     */
+    public URI fixURI(final URI uri) {
+        String scheme = uri.getScheme();
+        String schemeSpecificPart = uri.getSchemeSpecificPart();
+            if ("ad".equals(scheme)) {
+                scheme = "cadc";
+            }
+            if (schemeSpecificPart.startsWith("GEM")) {
+                schemeSpecificPart = schemeSpecificPart.replaceFirst("GEM", "Gemini");
+            }
+        try {
+            return new URI(scheme + ":" + schemeSpecificPart);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
