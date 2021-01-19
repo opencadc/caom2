@@ -151,17 +151,16 @@ public class CadcInventoryResolver implements StorageResolver, Traceable {
     public URI fixURI(final URI uri) {
         String scheme = uri.getScheme();
         String schemeSpecificPart = uri.getSchemeSpecificPart();
-            if ("ad".equals(scheme)) {
-                scheme = "cadc";
-            }
-            if (schemeSpecificPart.startsWith("GEM")) {
-                schemeSpecificPart = schemeSpecificPart.replaceFirst("GEM", "Gemini");
-            }
+        if ("ad".equals(scheme)) {
+            scheme = "cadc";
+        }
+        if (schemeSpecificPart.startsWith("GEM")) {
+            schemeSpecificPart = schemeSpecificPart.replaceFirst("GEM", "Gemini");
+        }
         try {
             return new URI(scheme + ":" + schemeSpecificPart);
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            throw new RuntimeException("BUG: Invalid constructed URI - " + e);
         }
-        return null;
     }
 }
