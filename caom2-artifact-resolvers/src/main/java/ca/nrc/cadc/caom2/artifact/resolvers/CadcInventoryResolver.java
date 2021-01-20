@@ -114,10 +114,7 @@ public class CadcInventoryResolver implements StorageResolver, Traceable {
             if (am == null) {
                 am = AuthMethod.ANON;
             }
-            
-            RegistryClient rc = new RegistryClient();
-            URL serviceURL = rc.getServiceURL(new URI(STORAGE_INVENTORY_URI.toASCIIString()), Standards.SI_FILES, am);
-            URL url = this.toURL(serviceURL, uri);
+            URL url = this.toURL(getServiceURL(am), uri);
             log.debug(uri + " --> " + url);
             return url;
         } catch (MalformedURLException ex) {
@@ -125,6 +122,12 @@ public class CadcInventoryResolver implements StorageResolver, Traceable {
         } catch (URISyntaxException bug) {
             throw new RuntimeException("BUG - failed to create data web service URI", bug);
         }
+    }
+
+    URL getServiceURL(final AuthMethod am) throws URISyntaxException {
+        // Convenient for mocking
+        RegistryClient rc = new RegistryClient();
+        return rc.getServiceURL(new URI(STORAGE_INVENTORY_URI.toASCIIString()), Standards.SI_FILES, am);
     }
 
     protected URL toURL(URL serviceURL, URI uri) throws MalformedURLException {

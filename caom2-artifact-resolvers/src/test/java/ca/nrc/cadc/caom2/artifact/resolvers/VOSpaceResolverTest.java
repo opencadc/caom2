@@ -106,6 +106,10 @@ public class VOSpaceResolverTest {
                     "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\">\n" +
                     "      <accessURL use=\"full\">https://unittest.com/vospace/synctrans</accessURL>\n" +
                     "    </interface>\n" +
+                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\">\n" +
+                    "      <accessURL use=\"full\">https://ws-cadc.canfar.net/vospace/synctrans</accessURL>\n" +
+                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#tls-with-certificate\" />\n" +
+                    "    </interface>" +
                     "  </capability>" +
                     "</vosi:capabilities>";
     private static final String DATA_RESOURCE = "ivo://cadc.nrc.ca/vospace = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/vospace/capabilities";
@@ -118,12 +122,12 @@ public class VOSpaceResolverTest {
 
     @Before
     public void setUp() throws Exception {
-        ResolverCapabilitiesMock.setupCapabilitiesFile(DATA_RESOURCE, DATA_CAPABILITIES, "data");
+        ResolverCapabilitiesMock.setupCapabilitiesFile(DATA_RESOURCE, DATA_CAPABILITIES, "vospace");
     }
 
     @After
     public void tearDown() throws Exception {
-        ResolverCapabilitiesMock.removeCapabilitiesFile("data");
+        ResolverCapabilitiesMock.removeCapabilitiesFile("vospace");
     }
 
     @Test
