@@ -124,7 +124,7 @@ public class CadcInventoryResolver implements StorageResolver, Traceable {
         }
     }
 
-    URL getServiceURL(final AuthMethod am) throws URISyntaxException {
+    public URL getServiceURL(final AuthMethod am) throws URISyntaxException {
         // Convenient for mocking
         RegistryClient rc = new RegistryClient();
         return rc.getServiceURL(new URI(STORAGE_INVENTORY_URI.toASCIIString()), Standards.SI_FILES, am);
