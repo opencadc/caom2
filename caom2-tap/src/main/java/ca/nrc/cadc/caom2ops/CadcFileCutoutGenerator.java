@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -68,18 +68,44 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcInventoryResolver;
+import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.net.NetUtil;
+import org.apache.log4j.Logger;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
  *
- * @author pdowler
+ * @author adriand
  */
-public class CadcGeminiCutoutGenerator extends CadcFileCutoutGenerator {
-    private static final Logger log = Logger.getLogger(CadcGeminiCutoutGenerator.class);
+public class CadcFileCutoutGenerator extends CadcInventoryResolver implements CutoutGenerator{
+    private static final Logger log = Logger.getLogger(CadcFileCutoutGenerator.class);
 
-    public CadcGeminiCutoutGenerator() { }
+    public CadcFileCutoutGenerator() { }
+
+    @Override
+    public URL toURL(URI uri, List<String> cutouts, String label) {
+        if (label != null) {
+            throw new IllegalArgumentException("Cutout label not supported yet");
+        }
+
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, null);
+
+        try {
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+        }
+    }
 }
