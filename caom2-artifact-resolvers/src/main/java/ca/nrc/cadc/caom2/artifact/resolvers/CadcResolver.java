@@ -69,23 +69,81 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
-import java.net.URI;
-import java.net.URL;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 import org.apache.log4j.Logger;
 
-/**
- * StorageResolver implementation for the GEMINI archive.
- * This class can convert a GEMINI URI into a URL. The conversion is delegated to the CadcResolver.
- *
- * @author yeunga
- */
-public class CadcGeminiResolver extends CadcResolver implements StorageResolver, Traceable {
-    private static final Logger log = Logger.getLogger(CadcGeminiResolver.class);
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
-    public CadcGeminiResolver() {
-        scheme = "gemini";
+/**
+ * This class can convert an URI into a URL to the CADC storage system.
+ *
+ * @author adriand
+ */
+public class CadcResolver implements StorageResolver, Traceable {
+
+    private static final Logger log = Logger.getLogger(CadcResolver.class);
+    public String scheme = "cadc";
+    public static URI STORAGE_INVENTORY_URI;
+
+    static {
+        try {
+            STORAGE_INVENTORY_URI = new URI("ivo://cadc.nrc.ca/minoc");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
     }
+
+    protected AuthMethod authMethod;
+
+    @Override
+    public URL toURL(URI uri) {
+
+        try {
+            ResolverUtil.validate(uri, scheme);
+            // check if authMethod has been set
+            AuthMethod am = this.authMethod;
+            if (am == null) {
+                am = AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject());
+            }
+            if (am == null) {
+                am = AuthMethod.ANON;
+            }
+            URL url = this.toURL(getServiceURL(am), uri);
+            log.debug(uri + " --> " + url);
+            return url;
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG", ex);
+        } catch (URISyntaxException bug) {
+            throw new RuntimeException("BUG - failed to create data web service URI", bug);
+        }
+    }
+
+    public URL getServiceURL(final AuthMethod am) throws URISyntaxException {
+        // Convenient for mocking
+        RegistryClient rc = new RegistryClient();
+        return rc.getServiceURL(new URI(STORAGE_INVENTORY_URI.toASCIIString()), Standards.SI_FILES, am);
+    }
+
+    protected URL toURL(URL serviceEndPointURL, URI artifactURI) throws MalformedURLException {
+        return new URL(serviceEndPointURL.toExternalForm() + "/" + artifactURI.toString());
+    }
+
+    public void setAuthMethod(AuthMethod authMethod) {
+        this.authMethod = authMethod;
+    }
+
+    @Override
+    public String getScheme() {
+       return scheme;
+    }
+
 }
