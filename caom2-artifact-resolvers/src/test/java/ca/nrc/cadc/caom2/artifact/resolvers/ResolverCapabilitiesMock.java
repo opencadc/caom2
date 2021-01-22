@@ -114,7 +114,7 @@ public class ResolverCapabilitiesMock {
         regWriter.write(registryContent);
         regWriter.close();
         // Setup the capabilities file now
-        String capFileName = getBaseCacheDirectory() + File.separator + CadcInventoryResolver.STORAGE_INVENTORY_URI.getAuthority() +
+        String capFileName = getBaseCacheDirectory() + File.separator + CadcResolver.STORAGE_INVENTORY_URI.getAuthority() +
                 File.separator + serviceName + File.separator + "capabilities.xml";
         File cap = new File(capFileName);
         cap.createNewFile();
@@ -127,7 +127,7 @@ public class ResolverCapabilitiesMock {
         String regFileName = getBaseCacheDirectory() + File.separator + "resource-caps";
         File reg = new File(regFileName);
         reg.delete();
-        String capFileName = getBaseCacheDirectory() + File.separator + CadcInventoryResolver.STORAGE_INVENTORY_URI.getAuthority() +
+        String capFileName = getBaseCacheDirectory() + File.separator + CadcResolver.STORAGE_INVENTORY_URI.getAuthority() +
                 File.separator + serviceName + File.separator + "capabilities.xml";
         File cap = new File(capFileName);
         cap.delete();

@@ -89,24 +89,30 @@ public class CadcGeminiResolverTest {
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
+    private static final String SI_URL = "https://unittest.com/minoc/files";
 
-    private static final String FILE_URI = "gemini:GEM/bar.fits";
+    private static final String FILE_URI = "gemini:Gemini/bar.fits";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
-    private static final String DATA_CAPABILITIES =
+    private static final String MINOC_CAPABILITIES =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                     "<vosi:capabilities\n" +
                     "    xmlns:vosi=\"http://www.ivoa.net/xml/VOSICapabilities/v1.0\"\n" +
                     "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                     "    xmlns:vs=\"http://www.ivoa.net/xml/VODataService/v1.1\">\n" +
                     "\n" +
-                    "<capability standardID=\"vos://cadc.nrc.ca~vospace/CADC/std/archive#file-1.0\">\n" +
-                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\" version=\"1.0\">\n" +
-                    "      <accessURL use=\"base\">https://unittest.com/data/pub</accessURL>\n" +
+                    "  <capability standardID=\"http://www.opencadc.org/std/storage#files-1.0\">\n" +
+                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\">\n" +
+                    "      <accessURL use=\"base\">" + SI_URL + "</accessURL>\n" +
+                    "      <securityMethod />\n" +
+                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#cookie\" />\n" +
+                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#tls-with-certificate\" />\n" +
+                    "      <securityMethod standardID=\"vos://cadc.nrc.ca~vospace/CADC/std/Auth#token-1.0\"/>    \n" +
                     "    </interface>\n" +
                     "  </capability>" +
                     "</vosi:capabilities>";
-    private static final String DATA_RESOURCE = "ivo://cadc.nrc.ca/data = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/data/capabilities";
+    private static final String MINOC_RESOURCE = CadcResolver.STORAGE_INVENTORY_URI.toASCIIString() +
+            " = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/minoc/capabilities";
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -120,7 +126,7 @@ public class CadcGeminiResolverTest {
 
     @Before
     public void setUp() throws Exception {
-        ResolverCapabilitiesMock.setupCapabilitiesFile(DATA_RESOURCE, DATA_CAPABILITIES, "data");
+        ResolverCapabilitiesMock.setupCapabilitiesFile(MINOC_RESOURCE, MINOC_CAPABILITIES, "data");
     }
 
     @After
@@ -129,11 +135,6 @@ public class CadcGeminiResolverTest {
     }
 
     @Test
-    public void testGetScheme() {
-        Assert.assertTrue(CadcGeminiResolver.SCHEME.equals(cadcGeminiResolver.getScheme()));
-    }
-
-    @Test 
     public void testTraceable() {
         Assert.assertTrue(cadcGeminiResolver instanceof Traceable);
     }

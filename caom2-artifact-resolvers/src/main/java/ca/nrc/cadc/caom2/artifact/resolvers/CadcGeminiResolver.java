@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -78,21 +78,22 @@ import org.apache.log4j.Logger;
 
 /**
  * StorageResolver implementation for the GEMINI archive.
- * This class can convert a GEMINI URI into a URL. The conversion is delegated to the AdResolver.
+ * This class can convert a GEMINI URI into a URL. The conversion is delegated to the CadcResolver.
  *
  * @author yeunga
  */
-public class CadcGeminiResolver implements StorageResolver, Traceable {
-    public static final String SCHEME = "gemini";
+public class CadcGeminiResolver extends CadcResolver implements StorageResolver, Traceable {
     private static final Logger log = Logger.getLogger(CadcGeminiResolver.class);
+
+    public CadcGeminiResolver() {
+        scheme = "gemini";
+    }
 
     @Override
     public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-
+        ResolverUtil.validate(uri, scheme);
         try {
-            AdResolver adResolver = new AdResolver();
-            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
+            return super.toURL(uri);
         } catch (Throwable t) {
             String message = "Failed to convert to data URL";
             throw new RuntimeException(message, t);
@@ -101,6 +102,6 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
 
     @Override
     public String getScheme() {
-        return SCHEME;
+        return scheme;
     }
 }
