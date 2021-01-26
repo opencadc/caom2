@@ -122,7 +122,21 @@ public class CadcResolverTest {
     public void testTraceable() {
         Assert.assertTrue(cadcResolver instanceof Traceable);
     }
-    
+
+    @Test
+    public void testFileNoAuth() {
+        try {
+            URI uri = new URI(FILE_URI);
+            URL url = cadcResolver.toURL(uri);
+            Assert.assertNotNull(url);
+            Assert.assertEquals(SI_URL + "/" + uri.toASCIIString(), url.toString());
+            log.info("testFile: " + uri + " -> " + url);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
     @Test
     public void testFileAnon() {
         try {
