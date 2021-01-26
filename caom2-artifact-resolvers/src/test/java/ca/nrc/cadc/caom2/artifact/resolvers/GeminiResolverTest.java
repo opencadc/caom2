@@ -87,14 +87,14 @@ public class GeminiResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_FILE = "flub.fits";
-    String VALID_FILE2 = "blub.fits";
-    String VALID_PREVIEW = "flub.jpg";
-    String PROTOCOL_STR = "https";
-    String BASE_URL = "archive.gemini.edu";
+    private static final String VALID_FILE = "flub.fits";
+    private static final String VALID_FILE2 = "blub.fits";
+    private static final String VALID_PREVIEW = "flub.jpg";
+    private static final String PROTOCOL_STR = "https";
+    private static final String BASE_URL = "archive.gemini.edu";
 
     // Invalid checks the scheme and the request type (needs to be 'file' or 'preview'
-    String INVALID_URI_BAD_SCHEME = "pokey:little/puppy.fits";
+    private static final String INVALID_URI_BAD_SCHEME = "pokey:little/puppy.fits";
 
     GeminiResolver geminiResolver = new GeminiResolver();
 

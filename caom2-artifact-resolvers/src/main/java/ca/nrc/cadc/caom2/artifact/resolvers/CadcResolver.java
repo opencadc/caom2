@@ -76,12 +76,12 @@ import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import org.apache.log4j.Logger;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import org.apache.log4j.Logger;
 
 /**
  * This class can convert an URI into a URL to the CADC storage system.
@@ -139,7 +139,7 @@ public class CadcResolver implements StorageResolver, Traceable {
 
     @Override
     public String getScheme() {
-       return scheme;
+        return scheme;
     }
 
 }

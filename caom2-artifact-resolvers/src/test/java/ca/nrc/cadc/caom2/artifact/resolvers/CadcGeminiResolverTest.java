@@ -91,8 +91,8 @@ public class CadcGeminiResolverTest {
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
-    private static final String SI_URL = "https://unittest.com/global/files";
 
+    private static final String SI_URL = "https://unittest.com/global/files";
     private static final String FILE_URI = "gemini:Gemini/bar.fits";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
