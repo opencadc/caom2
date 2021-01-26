@@ -91,18 +91,18 @@ import java.net.URL;
 public class CadcResolver implements StorageResolver, Traceable {
 
     private static final Logger log = Logger.getLogger(CadcResolver.class);
-    public String scheme = "cadc";
-    public static URI STORAGE_INVENTORY_URI;
-
-    static {
-        try {
-            STORAGE_INVENTORY_URI = new URI("ivo://cadc.nrc.ca/minoc");
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-    }
+    private final String scheme;
+    public static final URI STORAGE_INVENTORY_URI = URI.create("ivo://cadc.nrc.ca/global/files");
 
     protected AuthMethod authMethod;
+
+    public CadcResolver() {
+        scheme = "cadc";
+    }
+
+    protected CadcResolver(final String scheme) {
+        this.scheme = scheme;
+    }
 
     @Override
     public URL toURL(URI uri) {
@@ -117,7 +117,7 @@ public class CadcResolver implements StorageResolver, Traceable {
             if (am == null) {
                 am = AuthMethod.ANON;
             }
-            URL url = this.toURL(getServiceURL(am), uri);
+            URL url = new URL(getServiceURL(am).toExternalForm() + "/" + uri);
             log.debug(uri + " --> " + url);
             return url;
         } catch (MalformedURLException ex) {
@@ -130,11 +130,7 @@ public class CadcResolver implements StorageResolver, Traceable {
     public URL getServiceURL(final AuthMethod am) throws URISyntaxException {
         // Convenient for mocking
         RegistryClient rc = new RegistryClient();
-        return rc.getServiceURL(new URI(STORAGE_INVENTORY_URI.toASCIIString()), Standards.SI_FILES, am);
-    }
-
-    protected URL toURL(URL serviceEndPointURL, URI artifactURI) throws MalformedURLException {
-        return new URL(serviceEndPointURL.toExternalForm() + "/" + artifactURI.toString());
+        return rc.getServiceURL(STORAGE_INVENTORY_URI, Standards.SI_FILES, am);
     }
 
     public void setAuthMethod(AuthMethod authMethod) {

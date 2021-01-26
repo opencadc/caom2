@@ -74,12 +74,12 @@ import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 
@@ -88,27 +88,8 @@ import java.net.URL;
  */
 public class CadcResolverTest {
     private static final Logger log = Logger.getLogger(CadcResolverTest.class);
-    private static final String SI_URL = "https://unittest.com/minoc/files";
+    private static final String SI_URL = "https://unittest.com/global/files";
 
-    private static final String MINOC_CAPABILITIES =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                    "<vosi:capabilities\n" +
-                    "    xmlns:vosi=\"http://www.ivoa.net/xml/VOSICapabilities/v1.0\"\n" +
-                    "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "    xmlns:vs=\"http://www.ivoa.net/xml/VODataService/v1.1\">\n" +
-                    "\n" +
-                    "  <capability standardID=\"http://www.opencadc.org/std/storage#files-1.0\">\n" +
-                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\">\n" +
-                    "      <accessURL use=\"base\">" + SI_URL + "</accessURL>\n" +
-                    "      <securityMethod />\n" +
-                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#cookie\" />\n" +
-                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#tls-with-certificate\" />\n" +
-                    "      <securityMethod standardID=\"vos://cadc.nrc.ca~vospace/CADC/std/Auth#token-1.0\"/>    \n" +
-                    "    </interface>\n" +
-                    "  </capability>" +
-                    "</vosi:capabilities>";
-     private static final String MINOC_RESOURCE = CadcResolver.STORAGE_INVENTORY_URI.toASCIIString() +
-             " = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/minoc/capabilities";
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -116,20 +97,25 @@ public class CadcResolverTest {
 
     private static final String FILE_URI = "cadc:FOO/bar";
 
-    CadcResolver cadcResolver = new CadcResolver();
+    private final CadcResolver cadcResolver;
 
     public CadcResolverTest() {
+        cadcResolver = getCadcResolver();
 
     }
 
-    @Before
-    public void setUp() throws Exception {
-        ResolverCapabilitiesMock.setupCapabilitiesFile(MINOC_RESOURCE, MINOC_CAPABILITIES, "minoc");
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        ResolverCapabilitiesMock.removeCapabilitiesFile("data");
+    private CadcResolver getCadcResolver() {
+        // override the capabilities method
+        return new CadcResolver() {
+            @Override
+            public URL getServiceURL(AuthMethod am) throws URISyntaxException {
+                try {
+                    return new URL(SI_URL);
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
     }
 
     @Test

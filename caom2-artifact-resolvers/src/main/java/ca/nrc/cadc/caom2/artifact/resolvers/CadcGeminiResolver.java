@@ -69,11 +69,8 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
-import java.net.URI;
-import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
@@ -86,6 +83,6 @@ public class CadcGeminiResolver extends CadcResolver implements StorageResolver,
     private static final Logger log = Logger.getLogger(CadcGeminiResolver.class);
 
     public CadcGeminiResolver() {
-        scheme = "gemini";
+        super("gemini");
     }
 }
