@@ -67,25 +67,30 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcInventoryResolver;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.net.NetUtil;
-import org.apache.log4j.Logger;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author adriand
  */
-public class CadcFileCutoutGenerator extends CadcInventoryResolver implements CutoutGenerator{
-    private static final Logger log = Logger.getLogger(CadcFileCutoutGenerator.class);
+public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator {
+    private static final Logger log = Logger.getLogger(CadcCutoutGenerator.class);
 
-    public CadcFileCutoutGenerator() { }
+    private final String scheme;
+
+    public CadcCutoutGenerator() {
+        scheme = super.getScheme();
+    }
+
+    protected CadcCutoutGenerator(final String scheme) {
+        this.scheme = scheme;
+    }
 
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) {
@@ -107,5 +112,10 @@ public class CadcFileCutoutGenerator extends CadcInventoryResolver implements Cu
         } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG: failed to generate cutout URL", ex);
         }
+    }
+
+    @Override
+    public String getScheme() {
+        return scheme;
     }
 }

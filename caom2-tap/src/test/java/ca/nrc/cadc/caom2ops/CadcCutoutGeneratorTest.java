@@ -70,13 +70,10 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcInventoryResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -86,14 +83,13 @@ import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author yeunga
  */
-public class CadcInventoryCutoutGeneratorTest {
-    private static final Logger log = Logger.getLogger(CadcInventoryCutoutGeneratorTest.class);
+public class CadcCutoutGeneratorTest {
+    private static final Logger log = Logger.getLogger(CadcCutoutGeneratorTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
@@ -106,20 +102,20 @@ public class CadcInventoryCutoutGeneratorTest {
     private static final String CUTOUT3 = "[3][500:600, 500:600]";
     private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
-    private static final String CADC_GEM_FILE_URI = "ad:GEM/bar";
-    private static final String GEM_FILE_URI = "gemini:GEM/bar.fits.gz";
+    private static final String CADC_FILE_URI = "cadc:Archive/bar.fits.gz";
+    private static final String AD_FILE_URI = "ad:Archive/bar.fits.gz"; // invalid uri
 
-    CadcFileCutoutGenerator ciResolver;
-    CadcInventoryResolver iResolver;
+    CadcCutoutGenerator cutoutGenerator;
+    CadcResolver cadcResolver;
 
-    public CadcInventoryCutoutGeneratorTest() {
-        ciResolver = getGenerator();
-        iResolver = getInventoryResolver();
+    public CadcCutoutGeneratorTest() {
+        cutoutGenerator = getGenerator();
+        cadcResolver = getCadcResolver();
     }
 
-    private CadcFileCutoutGenerator getGenerator() {
+    private CadcCutoutGenerator getGenerator() {
         // override the capabilities method
-        return new CadcFileCutoutGenerator() {
+        return new CadcCutoutGenerator() {
             @Override
             public URL getServiceURL(AuthMethod am) throws URISyntaxException {
                 try {
@@ -131,9 +127,9 @@ public class CadcInventoryCutoutGeneratorTest {
         };
     }
 
-    private CadcInventoryResolver getInventoryResolver() {
+    private CadcResolver getCadcResolver() {
         // override the capabilities method
-        return new CadcInventoryResolver() {
+        return new CadcResolver() {
             @Override
             public URL getServiceURL(AuthMethod am) throws URISyntaxException {
                 try {
@@ -148,20 +144,19 @@ public class CadcInventoryCutoutGeneratorTest {
     @Test
     public void testToURLWithNullLabel() {
         try {
-        	String label = null;
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
             cutouts.add(CUTOUT3);
             cutouts.add(CUTOUT4);
-            URI uri = new URI(CADC_GEM_FILE_URI);
-            URI storageURI = iResolver.fixURI(new URI(CADC_GEM_FILE_URI));
-            ciResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = ciResolver.toURL(uri, cutouts, label);
+            URI uri = new URI(CADC_FILE_URI);
+            cutoutGenerator.setAuthMethod(AuthMethod.ANON);
+            URL url = cutoutGenerator.toURL(uri, cutouts, null);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             String urlString = url.toExternalForm();
-            Assert.assertTrue(urlString.contains(storageURI.toASCIIString()));
+            URL storageURI = cadcResolver.toURL(new URI(CADC_FILE_URI));
+            Assert.assertTrue(urlString.contains(storageURI.toString()));
             String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
             Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
             Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
@@ -176,15 +171,15 @@ public class CadcInventoryCutoutGeneratorTest {
     @Test
     public void testToURLWithNotNullLabel() {
         try {
-            String label = "label1%";
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
             cutouts.add(CUTOUT3);
             cutouts.add(CUTOUT4);
-            URI uri = new URI(CADC_GEM_FILE_URI);
-            ciResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = ciResolver.toURL(uri, cutouts, label);
+            URI uri = new URI(CADC_FILE_URI);
+            cutoutGenerator.setAuthMethod(AuthMethod.ANON);
+            String label = "label1%";
+            URL url = cutoutGenerator.toURL(uri, cutouts, label);
             Assert.fail("should have thrown an IllegalArgumentException when label present");
         } catch (IllegalArgumentException ia) {
             // expected, success
@@ -195,53 +190,20 @@ public class CadcInventoryCutoutGeneratorTest {
     }
 
     @Test
-    public void testToURLWithGeminiURI() {
+    public void testInvalidCadcURI() throws Exception {
+        List<String> cutouts = new ArrayList<String>();
+        cutouts.add(CUTOUT1);
+        cutouts.add(CUTOUT2);
+        cutouts.add(CUTOUT3);
+        cutouts.add(CUTOUT4);
+        URI uri = new URI(AD_FILE_URI);
+        cutoutGenerator.setAuthMethod(AuthMethod.ANON);
         try {
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            cutouts.add(CUTOUT3);
-            cutouts.add(CUTOUT4);
-            URI uri = new URI(CADC_GEM_FILE_URI);
-            ciResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = ciResolver.toURL(uri, cutouts, null);
-            URI storageURI = iResolver.fixURI(new URI(CADC_GEM_FILE_URI));
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            String urlString = url.toExternalForm();
-            Assert.assertTrue(urlString.contains(storageURI.toASCIIString()));
-            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
-            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
-            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
-            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
-            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testToURLWithCadcURI() {
-        try {
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            cutouts.add(CUTOUT3);
-            cutouts.add(CUTOUT4);
-            URI uri = new URI(GEM_FILE_URI);
-            ciResolver.setAuthMethod(AuthMethod.ANON);
-            URL url = ciResolver.toURL(uri, cutouts, null);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            String urlString = url.toExternalForm();
-            URI storageURI = iResolver.fixURI(new URI(GEM_FILE_URI));
-            Assert.assertTrue(url.toExternalForm().contains(storageURI.toASCIIString()));
-            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
-            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
-            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
-            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
-            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
+            URL url = cutoutGenerator.toURL(uri, cutouts, null);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
+            log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

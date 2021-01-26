@@ -67,19 +67,16 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcInventoryResolver;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class CadcGeminiCutoutGenerator extends CadcFileCutoutGenerator {
+public class CadcGeminiCutoutGenerator extends CadcCutoutGenerator {
     private static final Logger log = Logger.getLogger(CadcGeminiCutoutGenerator.class);
 
-    public CadcGeminiCutoutGenerator() { }
+    public CadcGeminiCutoutGenerator() {
+        super("gemini");
+    }
 }
