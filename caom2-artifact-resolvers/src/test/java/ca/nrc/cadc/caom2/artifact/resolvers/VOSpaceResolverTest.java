@@ -75,9 +75,7 @@ import java.net.URI;
 import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -95,39 +93,10 @@ public class VOSpaceResolverTest {
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
     private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
-    private static final String DATA_CAPABILITIES =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                    "<vosi:capabilities\n" +
-                    "    xmlns:vosi=\"http://www.ivoa.net/xml/VOSICapabilities/v1.0\"\n" +
-                    "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "    xmlns:vs=\"http://www.ivoa.net/xml/VODataService/v1.1\">\n" +
-                    "\n" +
-                    "<capability standardID=\"ivo://ivoa.net/std/VOSpace#sync-2.1\">\n" +
-                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\">\n" +
-                    "      <accessURL use=\"full\">https://unittest.com/vospace/synctrans</accessURL>\n" +
-                    "    </interface>\n" +
-                    "    <interface xsi:type=\"vs:ParamHTTP\" role=\"std\">\n" +
-                    "      <accessURL use=\"full\">https://ws-cadc.canfar.net/vospace/synctrans</accessURL>\n" +
-                    "      <securityMethod standardID=\"ivo://ivoa.net/sso#tls-with-certificate\" />\n" +
-                    "    </interface>" +
-                    "  </capability>" +
-                    "</vosi:capabilities>";
-    private static final String DATA_RESOURCE = "ivo://cadc.nrc.ca/vospace = https://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/vospace/capabilities";
-
     VOSpaceResolver vosResolver = new VOSpaceResolver();
 
     public VOSpaceResolverTest() {
 
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        ResolverCapabilitiesMock.setupCapabilitiesFile(DATA_RESOURCE, DATA_CAPABILITIES, "vospace");
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        ResolverCapabilitiesMock.removeCapabilitiesFile("vospace");
     }
 
     @Test
@@ -135,7 +104,7 @@ public class VOSpaceResolverTest {
         Assert.assertTrue(VOSpaceResolver.SCHEME.equals(vosResolver.getScheme()));
     }
     
-    @Test
+    @Test 
     public void testTraceable() {
         Assert.assertTrue(vosResolver instanceof Traceable);
     }
