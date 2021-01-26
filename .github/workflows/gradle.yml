@@ -15,10 +15,13 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-
+  
     - name: build and test caom2-dm
       run: cd caom2-dm && gradle --info clean build xslt
 
+    - name: build and test caom2
+      run: cd caom2 && gradle --info clean build javadoc checkstyleMain install
+      
 # caom2-compute depends on wcslib 
     - name: build and test caom2-compute
       run: cd caom2-compute && gradle --info clean assemble javadoc checkstyleMain install

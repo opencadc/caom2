@@ -143,7 +143,12 @@ public class DataProductTypeTest
     {
         try
         {
-           // no supported values
+            DataProductType c = DataProductType.toValue("eventlist");
+            log.debug("roundtrip: " + c);
+            String s = c.getValue();
+            DataProductType c2 = DataProductType.toValue(s);
+            log.info(c + " -> " + s + " -> " + c2);
+            Assert.assertEquals(DataProductType.EVENT, c2);
         }
         catch(Exception unexpected)
         {

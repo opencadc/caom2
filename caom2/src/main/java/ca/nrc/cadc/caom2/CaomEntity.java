@@ -103,6 +103,7 @@ public abstract class CaomEntity {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     static boolean MCS_DEBUG = false; // way to much debug when true
+    static boolean OVERRRIDE_CORRECT_UUID_SORT = false; 
 
     // state
     private UUID id;
@@ -438,6 +439,11 @@ public abstract class CaomEntity {
                     if (fo instanceof Collection) {
                         Set<CaomEntity> children = (Set<CaomEntity>) fo;
                         SortedMap<UUID, byte[]> sorted = new TreeMap<>(new UUIDComparator());
+                        if (OVERRRIDE_CORRECT_UUID_SORT) {
+                            // this reverts to default java ordering of UUID which is wrong but
+                            // uweful for diagnosing accMetaChecksum issues
+                            sorted = new TreeMap<>();
+                        }
                         Iterator<CaomEntity> i = children.iterator();
                         while (i.hasNext()) {
                             CaomEntity ce = i.next();
