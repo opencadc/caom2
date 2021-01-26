@@ -93,6 +93,7 @@ import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.fits2caom2.Util;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
@@ -100,6 +101,9 @@ import java.io.FileReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -121,9 +125,11 @@ public class FitsMapperTest
     {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
     }
+    private final static String CONFIG_FILE_DATE = "2012-02-26 09:15:40.000PST";
     
     static FitsMapping simpleMapping;
     static FitsMapping compositeMapping;
+    static Date configDate;
     
     public FitsMapperTest() { }
 
@@ -155,6 +161,9 @@ public class FitsMapperTest
         compositeMapping.setArgumentProperty("Observation.collection", "theCollection");
         compositeMapping.setArgumentProperty("Observation.observationID", "theObservationID");
         compositeMapping.setArgumentProperty("Plane.productID", "theProductID");
+
+        DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSz");
+        configDate = sdf.parse(CONFIG_FILE_DATE);
     }
     
     @Test
@@ -388,7 +397,7 @@ public class FitsMapperTest
         
         Assert.assertEquals("theCollection", observation.getCollection());
         Assert.assertEquals("theObservationID", observation.getObservationID());
-        Assert.assertEquals("Sun Feb 26 09:15:40 PST 2012", observation.metaRelease.toString());
+        Assert.assertEquals(configDate, observation.metaRelease);
         Assert.assertNull(observation.type);
         Assert.assertNull(observation.intent);
         
@@ -458,7 +467,7 @@ public class FitsMapperTest
         
         Assert.assertEquals("theCollection", observation.getCollection());
         Assert.assertEquals("theObservationID", observation.getObservationID());
-        Assert.assertEquals("Sun Feb 26 09:15:40 PST 2012", observation.metaRelease.toString());
+        Assert.assertEquals(configDate, observation.metaRelease);
         Assert.assertEquals("dark", observation.type);
         Assert.assertEquals(ObservationIntentType.CALIBRATION.getValue(), observation.intent.getValue());
         
@@ -521,8 +530,8 @@ public class FitsMapperTest
             Assert.assertNotNull(plane);
 
             Assert.assertEquals("theProductID", plane.getProductID());
-            Assert.assertEquals("Sun Feb 26 09:15:40 PST 2012", plane.metaRelease.toString());
-            Assert.assertEquals("Sun Feb 26 09:15:40 PST 2012", plane.dataRelease.toString());
+            Assert.assertEquals(configDate, plane.metaRelease);
+            Assert.assertEquals(configDate, plane.dataRelease);
             Assert.assertEquals(DataProductType.IMAGE, plane.dataProductType);
             Assert.assertEquals(CalibrationLevel.PRODUCT, plane.calibrationLevel);
 
@@ -533,7 +542,7 @@ public class FitsMapperTest
             Assert.assertEquals("provenance producer", plane.provenance.producer);
             Assert.assertEquals("provenance runID", plane.provenance.runID);
             Assert.assertEquals("http://localhost/provenance/reference", plane.provenance.reference.toString());
-            Assert.assertEquals("Sun Feb 26 09:15:40 PST 2012", plane.provenance.lastExecuted.toString());
+            Assert.assertEquals(configDate, plane.provenance.lastExecuted);
 
             Assert.assertNotNull(plane.metrics);
             Assert.assertEquals(plane.metrics.sourceNumberDensity, 1.0, 0.0);
