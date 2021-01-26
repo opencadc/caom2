@@ -4,6 +4,7 @@
 # scheme:<class name of SchemeHandler impl>
 
 ad=ca.nrc.cadc.caom2.artifact.resolvers.AdResolver
+cadc=ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver
 chandra=ca.nrc.cadc.caom2.artifact.resolvers.ChandraResolver
 gemini=ca.nrc.cadc.caom2.artifact.resolvers.GeminiResolver
 noao=ca.nrc.cadc.caom2.artifact.resolvers.NoaoResolver
