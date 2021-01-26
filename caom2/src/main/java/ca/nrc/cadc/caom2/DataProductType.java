@@ -114,7 +114,7 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
      * Incorrect value from ObsCore WD that was actually used.
      */
     @Deprecated
-    public static final DataProductType EVENTLIST = new DataProductType("eventlist");
+    private static final DataProductType EVENTLIST = new DataProductType("eventlist");
     
     /**
      * ObsCore-1.0 cube.
@@ -139,7 +139,7 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
 
     public static final DataProductType[] values() {
         return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENT, EVENTLIST };
+                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENT };
     }
 
     private DataProductType(String value) {
@@ -157,6 +157,11 @@ public class DataProductType extends VocabularyTerm implements CaomEnum<String>,
             }
         }
 
+        // backwards compat
+        if (EVENTLIST.getValue().equals(s)) {
+            return EVENT; // correct term
+        }
+        
         // custom term
         try {
             URI u = new URI(s);

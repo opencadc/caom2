@@ -111,6 +111,10 @@ public final class Main {
                 System.exit(1);
             }
             
+            if (am.isSet("override-correct-uuid-sort")) {
+                CaomEntity.OVERRRIDE_CORRECT_UUID_SORT = true;
+            }
+            
             String fname = am.getPositionalArgs().get(0);
             File f = new File(fname);
             ObservationReader r = new ObservationReader();
@@ -190,6 +194,7 @@ public final class Main {
         sb.append(lineSep).append("");
         sb.append(lineSep).append("       --core : data model validation not enforced by XML schema");
         sb.append(lineSep).append("       --checksum [--acc] [--depth=1..5] : recompute and compare metaChecksum values");
+        sb.append(lineSep).append("       --override-correct-uuid-sort : use default java sorting of UUIDs (effects -acc only)");
         sb.append(lineSep).append("       --wcs : enable WCS validation");
         sb.append(lineSep).append("");
         sb.append(lineSep).append("        --compute : compute plane metadata (requires output file)");
