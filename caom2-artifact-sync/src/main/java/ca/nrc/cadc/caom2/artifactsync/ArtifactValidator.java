@@ -190,8 +190,14 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         executor.shutdownNow();
         
         TreeSet<ArtifactMetadata> logicalMetadata = logicalQuery.get();
+        log.info("number of artifacts in CAOM2: " + logicalMetadata.size());
         TreeSet<ArtifactMetadata> physicalMetadata = physicalQuery.get();
-        compareMetadata(logicalMetadata, physicalMetadata, start);
+        log.info("number of artifacts in storage: " + physicalMetadata.size());
+        if (logicalMetadata.isEmpty() || physicalMetadata.isEmpty()) {
+            log.error("Number of artifacts in CAOM2 or in storage cannot be zero.");
+        } else {
+            compareMetadata(logicalMetadata, physicalMetadata, start);
+        }
         return null;
     }
     
@@ -200,8 +206,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         boolean supportSkipURITable = supportSkipURITable();
         long logicalCount = logicalMetadata.size();
         long physicalCount = physicalMetadata.size();
-        log.debug("Found " + logicalCount + " logical artifacts.");
-        log.debug("Found " + physicalCount + " physical artifacts.");
         long correct = 0;
         long diffLength = 0;
         long diffType = 0;
