@@ -133,6 +133,16 @@ public class Discover extends Caom2ArtifactSync {
                         
                         boolean tolerateNullChecksum = am.isSet("tolerateNullChecksum");
     
+                        Integer downloadThreshold = null;
+                        if (am.isSet("downloadThreshold")) {
+                            try {
+                                downloadThreshold = Integer.parseInt(am.getValue("downloadThreshold"));
+                            } catch (NumberFormatException e) {
+                                String msg = "Illegal value for --retryAfter: " + am.getValue("downloadThreshold");
+                                this.printErrorUsage(msg);
+                            }
+                        }
+                        
                         int nthreads = 1;
                         if (am.isSet("threads")) {
                             try {
@@ -152,7 +162,7 @@ public class Discover extends Caom2ArtifactSync {
                             artifactDAO.setConfig(daoConfig);
     
                             this.downloader = new DownloadArtifactFiles(
-                                artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, this.loop, retryAfterHours, tolerateNullChecksum);
+                                artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, this.loop, retryAfterHours, tolerateNullChecksum, downloadThreshold);
                             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
                             listeners.add(downloader);
                             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
@@ -184,6 +194,7 @@ public class Discover extends Caom2ArtifactSync {
             sb.append("\n        --batchsize=<integer> Max skip URIs to download (default: 1000)");
             sb.append("\n        --retryAfter=<integer> Hours after failed downloads should be retried (default: 24)");
             sb.append("\n        --tolerateNullChecksum : Download even when checksum is null");
+            sb.append("\n        --downloadThreshold : Artifact count which triggers download to stop at the current batch");
         } else {
             sb.append("\n        --batchsize=<integer> Max observations to check (default: 1000)");
         }
