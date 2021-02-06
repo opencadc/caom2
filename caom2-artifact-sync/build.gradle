@@ -11,7 +11,7 @@ repositories {
     jcenter()
 }
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
@@ -37,9 +37,3 @@ dependencies {
 }
 
 apply from: '../opencadc.gradle'
-// alinga-- 
-jar {
-    from('src/main/java') {
-        include '**/*.java'
-    }
-}

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -190,11 +190,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         executor.shutdownNow();
         
         TreeSet<ArtifactMetadata> logicalMetadata = logicalQuery.get();
-        log.info("number of artifacts in CAOM2: " + logicalMetadata.size());
+        log.info("number of artifacts in caom2: " + logicalMetadata.size());
         TreeSet<ArtifactMetadata> physicalMetadata = physicalQuery.get();
         log.info("number of artifacts in storage: " + physicalMetadata.size());
         if (logicalMetadata.isEmpty() || physicalMetadata.isEmpty()) {
-            log.error("Number of artifacts in CAOM2 or in storage cannot be zero.");
+            log.error("Number of artifacts in caom2 or in storage cannot be zero.");
         } else {
             compareMetadata(logicalMetadata, physicalMetadata, start);
         }
@@ -542,7 +542,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
             result = query(caomTapURL, adql);
-            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - start) + " ms");
+            log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
         }
         return result;
     }
@@ -610,7 +610,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         long t1 = System.currentTimeMillis();
         metadata.addAll(artifactStore.list(collection));
-        log.info("Finished physical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
+        log.info("Finished storage query in " + (System.currentTimeMillis() - t1) + " ms");
         return metadata;
     }
 }
