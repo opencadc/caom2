@@ -533,7 +533,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }
             }
             
-            if (batchSize != 1) {
+            if (batchSize == null) {
                 // log only when we query all artifacts of a collection
                 log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
             }
@@ -561,7 +561,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     + "join caom2.Observation o on p.obsID = o.obsID "
                     + "where o.collection='" + collection + "'";
             if (batchSize == 1) {
-                adql = "select top " + batchSize + " a.uri, a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+                adql = "select top 1 a.uri, a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
                         + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
                         + "from caom2.Artifact a "
                         + "join caom2.Plane p on a.planeID = p.planeID "
