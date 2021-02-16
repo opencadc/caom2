@@ -114,9 +114,10 @@ public class ArtifactMetadataTest
         ArtifactStore artifactStore = new TestArtifactStore(StoragePolicy.PUBLIC_ONLY);
         boolean tolerateNullChecksum = false;
         boolean tolerateNullContentLength = false;
+        String prefix = null;
 
         // 1. test the operation
-        ArtifactValidator validator = new ArtifactValidator(caomTapResourceID, collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
+        ArtifactValidator validator = new ArtifactValidator(caomTapResourceID, collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
         // a. logicalArtifacts is empty, physicalArtifacts is empty
         TreeSet<ArtifactMetadata> logicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         TreeSet<ArtifactMetadata> physicalArtifacts = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
