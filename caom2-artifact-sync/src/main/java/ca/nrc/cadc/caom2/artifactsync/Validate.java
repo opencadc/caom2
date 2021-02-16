@@ -105,18 +105,13 @@ public class Validate extends Caom2ArtifactSync {
             } else {
                 boolean tolerateNullChecksum = am.isSet("tolerateNullChecksum");
                 boolean tolerateNullContentLength = am.isSet("tolerateNullContentLength");
-                String prefix = null;
-                if (am.isSet("prefix")) {
-                    prefix = parsePrefix(am);
-                }
-
                 if (this.mode.equals("diff")) {
                     // diff mode
                     if (!am.isSet("source")) {
                         String msg = "Missing required parameter 'source'";
                         this.printErrorUsage(msg);
                     } else {
-                        this.validator = getValidator(am.getValue("source"), tolerateNullChecksum, tolerateNullContentLength, prefix);
+                        this.validator = getValidator(am.getValue("source"), tolerateNullChecksum, tolerateNullContentLength);
                     }
                 } else {
                     // validate mode
@@ -128,7 +123,7 @@ public class Validate extends Caom2ArtifactSync {
                         observationDAO.setConfig(this.daoConfig);
     
                         this.validator = new ArtifactValidator(observationDAO.getDataSource(), this.harvestResource, 
-                            observationDAO, false, this.artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
+                            observationDAO, false, this.artifactStore, tolerateNullChecksum, tolerateNullContentLength);
                     }
                 }
             }
@@ -150,7 +145,6 @@ public class Validate extends Caom2ArtifactSync {
         StringBuilder sb = new StringBuilder();
         sb.append("\n\nusage: ").append(this.applicationName).append(" [mode-args]");
         sb.append("\n\n    [mode-args]:");
-        sb.append("\n        --prefix=<prefix> : Optional, used with storage-inventory, prefix, e.g. ad:IRIS or ad:IRIS/, of artifact URI");
         if (this.mode.equals("diff")) {
             sb.append("\n        --tolerateNullChecksum : look for difference even when checksum is null");
             sb.append("\n        --tolerateNullContentLength : look for difference even when content length is null");
@@ -176,33 +170,18 @@ public class Validate extends Caom2ArtifactSync {
         this.setIsDone(true);
     }
     
-    private String parsePrefix(ArgumentMap am) {
-        String prefix = am.getValue("prefix");
-        if (prefix.equalsIgnoreCase("true")) {
-            String msg = "Must specify prefix with prefix=";
-            this.printErrorUsage(msg);
-        }
-        
-        if (!Util.isPrefix(prefix)) {
-            String msg = "Prefix " + prefix + " is invalid";
-            this.printErrorUsage(msg);
-        }
-        
-        return prefix;
-    }
-    
-    private ArtifactValidator getValidator(String source, boolean tolerateNullChecksum, boolean tolerateNullContentLength, String prefix) {
+    private ArtifactValidator getValidator(String source, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
         ArtifactValidator validator = null;
         if (source.contains("ivo:")) {
             // source points to a TAP Resource ID
             URI tapResourceID = URI.create(source);
-            validator = new ArtifactValidator(tapResourceID, collection, true, artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
+            validator = new ArtifactValidator(tapResourceID, collection, true, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         } else if (source.contains("http:")) {
             // source points to a TAP Service URL
             URL tapServiceURL;
             try {
                 tapServiceURL = new URL(source);
-                validator = new ArtifactValidator(tapServiceURL, collection, true, artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
+                validator = new ArtifactValidator(tapServiceURL, collection, true, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
             } catch (MalformedURLException e) {
                 String msg = "Must specify source." ;
                 this.logException(msg, e);
@@ -213,7 +192,7 @@ public class Validate extends Caom2ArtifactSync {
             observationDAO.setConfig(this.daoConfig);
             
             validator = new ArtifactValidator(observationDAO.getDataSource(),
-                this.harvestResource, observationDAO, true, this.artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
+                this.harvestResource, observationDAO, true, this.artifactStore, tolerateNullChecksum, tolerateNullContentLength);
             
         }
         

@@ -139,47 +139,45 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength,
-            String prefix) {
-        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.observationDAO = observationDAO;
         this.source = harvestResource.getIdentifier();
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, harvestResource.getDatabase(), harvestResource.getSchema());
     }
     
     public ArtifactValidator(URI caomTapResourceID, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, 
-            String prefix) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapResourceID = caomTapResourceID;
     }
     
     public ArtifactValidator(URL caomTapURL, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength,
-            String prefix) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, prefix);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapURL = caomTapURL;
     }
     
     private ArtifactValidator(String collection, boolean reportOnly, 
-            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, String prefix) {
+            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
         this.collection = collection;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
         this.tolerateNullChecksum = tolerateNullChecksum;
         this.tolerateNullContentLength = tolerateNullContentLength;
-        this.prefix = prefix;
     }
 
     @Override
     public Object run() throws Exception {
         
         final long start = System.currentTimeMillis();
+        this.prefix = getPrefix();
+        log.info("Prefix for collection " + collection + " is " + prefix);
         log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
         final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
-                return getLogicalMetadata();
+                return getLogicalMetadata(null);
             }
         });
         log.info("Submitted query to caom2");
@@ -404,6 +402,22 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
     }
     
+    private String getPrefix() throws Exception {
+        Integer batchSize = 1;
+        TreeSet<ArtifactMetadata> logicalMetadata = getLogicalMetadata(batchSize);
+        if (logicalMetadata.isEmpty()) {
+            String msg = "";
+            throw new RuntimeException(msg);
+        }
+        
+        ArtifactMetadata metadata = logicalMetadata.first();
+        URI artifactURI = metadata.getArtifactURI();
+        String scheme = artifactURI.getScheme();
+        String ssp = artifactURI.getSchemeSpecificPart();
+        String prefix = scheme + ":" + ssp.split("/")[0];
+        return prefix;
+    }
+    
     private String safeToString(Long n) {
         if (n == null) {
             return "null";
@@ -486,14 +500,14 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return false;
     }
     
-    private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
+    private TreeSet<ArtifactMetadata> getLogicalMetadata(Integer batchSize) throws Exception {
         TreeSet<ArtifactMetadata> result = new TreeSet<>(ArtifactMetadata.getComparator());
         if (StringUtil.hasText(source)) {
             // use database <server.database.schema>
             // HarvestSkipURI table is not supported in 'diff' mode, i.e. reportOnly = true
             this.supportSkipURITable = !reportOnly;
             long t1 = System.currentTimeMillis();
-            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, null);
+            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, batchSize);
             long t2 = System.currentTimeMillis();
             long dt = t2 - t1;
             log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
@@ -519,7 +533,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }
             }
             
-            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
+            if (batchSize != 1) {
+                // log only when we query all artifacts of a collection
+                log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
+            }
         } else {
             this.supportSkipURITable = false;
             if (caomTapResourceID != null) {
@@ -543,11 +560,22 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     + "join caom2.Plane p on a.planeID = p.planeID "
                     + "join caom2.Observation o on p.obsID = o.obsID "
                     + "where o.collection='" + collection + "'";
+            if (batchSize == 1) {
+                adql = "select top " + batchSize + " a.uri, a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+                        + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
+                        + "from caom2.Artifact a "
+                        + "join caom2.Plane p on a.planeID = p.planeID "
+                        + "join caom2.Observation o on p.obsID = o.obsID "
+                        + "where o.collection='" + collection + "'";
+            }
 
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
             result = query(caomTapURL, adql);
-            log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
+            if (batchSize != 1) {
+                // log only when we query all artifacts of a collection
+                log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
+            }
         }
         return result;
     }
