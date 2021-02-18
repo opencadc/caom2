@@ -132,6 +132,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private boolean supportSkipURITable = false;
     private boolean tolerateNullChecksum = false;
     private boolean tolerateNullContentLength = false;
+    private boolean usePrefix = false;
     private String prefix = null;
         
     private ExecutorService executor;
@@ -139,39 +140,43 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
-        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
+        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, usePrefix);
         this.observationDAO = observationDAO;
         this.source = harvestResource.getIdentifier();
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, harvestResource.getDatabase(), harvestResource.getSchema());
     }
     
     public ArtifactValidator(URI caomTapResourceID, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, usePrefix);
         this.caomTapResourceID = caomTapResourceID;
     }
     
     public ArtifactValidator(URL caomTapURL, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, usePrefix);
         this.caomTapURL = caomTapURL;
     }
     
     private ArtifactValidator(String collection, boolean reportOnly, 
-            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
         this.collection = collection;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
         this.tolerateNullChecksum = tolerateNullChecksum;
         this.tolerateNullContentLength = tolerateNullContentLength;
+        this.usePrefix = usePrefix;
     }
 
     @Override
     public Object run() throws Exception {
         
         final long start = System.currentTimeMillis();
-        this.prefix = getPrefix();
+        if (usePrefix) {
+            this.prefix = getPrefix();
+        }
+
         log.info("Prefix for collection " + collection + " is " + prefix);
         log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
@@ -645,8 +650,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
         TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         long t1 = System.currentTimeMillis();
-        if (this.prefix != null) {
-            // use prefix if specified, prefix is used with storage-inventory
+        if (usePrefix) {
+            // use prefix is specified, prefix is used with storage-inventory
             metadata.addAll(artifactStore.list(prefix));
         } else {
             metadata.addAll(artifactStore.list(collection));
