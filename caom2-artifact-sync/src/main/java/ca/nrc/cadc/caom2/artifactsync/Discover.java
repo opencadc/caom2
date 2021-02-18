@@ -162,7 +162,8 @@ public class Discover extends Caom2ArtifactSync {
                             artifactDAO.setConfig(daoConfig);
     
                             this.downloader = new DownloadArtifactFiles(
-                                artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, this.loop, retryAfterHours, tolerateNullChecksum, downloadThreshold);
+                                artifactDAO, harvestResource, artifactStore, nthreads, this.batchSize, this.loop, 
+                                retryAfterHours, tolerateNullChecksum, downloadThreshold);
                             List<ShutdownListener> listeners = new ArrayList<ShutdownListener>(2);
                             listeners.add(downloader);
                             Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(listeners)));
