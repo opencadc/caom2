@@ -196,6 +196,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         log.info("number of artifacts in caom2: " + logicalMetadata.size());
         TreeSet<ArtifactMetadata> physicalMetadata = physicalQuery.get();
         log.info("number of artifacts in storage: " + physicalMetadata.size());
+
         if (logicalMetadata.isEmpty() || physicalMetadata.isEmpty()) {
             log.error("Number of artifacts in caom2 or in storage cannot be zero.");
         } else {
@@ -510,7 +511,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             List<ObservationState> states = observationDAO.getObservationList(collection, null, null, batchSize);
             long t2 = System.currentTimeMillis();
             long dt = t2 - t1;
-            log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
+            if (batchSize == null) {
+                log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
+            }
             
             int depth = 3;
             ListIterator<ObservationState> iter = states.listIterator();
