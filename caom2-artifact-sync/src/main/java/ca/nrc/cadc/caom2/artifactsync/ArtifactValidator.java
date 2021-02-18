@@ -175,9 +175,9 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         final long start = System.currentTimeMillis();
         if (usePrefix) {
             this.prefix = getPrefix();
+            log.info("Prefix for collection " + collection + " is " + prefix);
         }
 
-        log.info("Prefix for collection " + collection + " is " + prefix);
         log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
         final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
@@ -202,11 +202,13 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         TreeSet<ArtifactMetadata> physicalMetadata = physicalQuery.get();
         log.info("number of artifacts in storage: " + physicalMetadata.size());
 
+/*
         if (logicalMetadata.isEmpty() || physicalMetadata.isEmpty()) {
             log.error("Number of artifacts in caom2 or in storage cannot be zero.");
         } else {
             compareMetadata(logicalMetadata, physicalMetadata, start);
         }
+*/
         return null;
     }
     
