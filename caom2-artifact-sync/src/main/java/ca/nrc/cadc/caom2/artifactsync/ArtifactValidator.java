@@ -202,13 +202,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         TreeSet<ArtifactMetadata> physicalMetadata = physicalQuery.get();
         log.info("number of artifacts in storage: " + physicalMetadata.size());
 
-/*
         if (logicalMetadata.isEmpty() || physicalMetadata.isEmpty()) {
             log.error("Number of artifacts in caom2 or in storage cannot be zero.");
         } else {
             compareMetadata(logicalMetadata, physicalMetadata, start);
         }
-*/
         return null;
     }
     
