@@ -375,7 +375,8 @@ public class ObservationValidator implements Runnable {
                     } catch (IllegalArgumentException coreOops) {
                         clean = false;
                         String str = coreOops.toString();
-                        log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + coreOops.getMessage());
+                        log.error(CORE_ERROR + " invalid observation: " + observationURI + " " + format(o.getMaxLastModified()) 
+                                + " - " + coreOops.getMessage());
                         if (coreOops.getCause() != null) {
                             log.error("cause: " + coreOops.getCause());
                         }
@@ -392,7 +393,8 @@ public class ObservationValidator implements Runnable {
                         }
                     } catch (IllegalArgumentException wcsOops) {
                         clean = false;
-                        log.error(CORE_ERROR + "CONTENT PROBLEM - invalid observation: " + observationURI + " - " + wcsOops.getMessage());
+                        log.error(CORE_ERROR + " invalid observation: " + observationURI + " " + format(o.getMaxLastModified()) 
+                                + " - " + wcsOops.getMessage());
                         if (wcsOops.getCause() != null) {
                             log.error("cause: " + wcsOops.getCause());
                         }
@@ -404,7 +406,7 @@ public class ObservationValidator implements Runnable {
                         validateChecksum(o);
                     } catch (MismatchedChecksumException checksumOops) {
                         clean = false;
-                        log.error(CHECKSUM_ERROR + "CONTENT PROBLEM - mismatching checksums: " + observationURI);
+                        log.error(CHECKSUM_ERROR + " mismatching checksums: " + observationURI + " " + format(o.getMaxLastModified()));
                         ret.checksumErr++;
                     }
 
@@ -418,7 +420,8 @@ public class ObservationValidator implements Runnable {
                             }
                         } catch (IllegalArgumentException otherOoops) {
                             clean = false;
-                            log.error("Compute error: " + observationURI);
+                            log.error("COMPUTE - " + observationURI + " " + format(o.getMaxLastModified()) 
+                                + " - " + otherOoops.getMessage());
                             ret.computeErr++;
                         }
                     }
@@ -430,7 +433,7 @@ public class ObservationValidator implements Runnable {
                     while (oops.getCause() != null && oops instanceof RuntimeException) {
                         oops = oops.getCause();
                     }
-                    log.error("PROBLEM - failed to read observation: " + observationURI + " - " + oops.getMessage());
+                    log.error("TRANSIENT - failed to read observation: " + observationURI + " - " + oops.getMessage());
                     ret.srcErr++;
                 }
 
