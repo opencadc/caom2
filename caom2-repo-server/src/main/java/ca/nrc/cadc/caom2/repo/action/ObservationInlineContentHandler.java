@@ -114,7 +114,7 @@ public class ObservationInlineContentHandler implements InlineContentHandler {
             return content;
         } catch (ObservationParsingException ex) {
             InlineContentHandler.Content content = new InlineContentHandler.Content();
-            content.name = CONTENT_KEY;
+            content.name = ERROR_KEY;
             content.value = ex;
             return content;
         }
