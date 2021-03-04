@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -457,13 +457,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
             Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
-            if (skip == null && releaseDate != null) {
-                if (!reportOnly) {
-                    skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
+            if (releaseDate != null && !reportOnly) {
+                if (Util.addToSkipTable(source, STATE_CLASS, metadata.getArtifactURI(), errorMessage, skip, releaseDate)) {
                     harvestSkipURIDAO.put(skip);
-                    
-                    // validate 
-                    String errorMessageString = (errorMessage == null) ? "null" : errorMessage;
+                    String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
                     logJSON(new String[]
                         {"logType", "detail",
                          "action", "addedToSkipTable",
@@ -472,12 +469,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                          "caomChecksum", metadata.getChecksum(),
                          "errorMessage", errorMessageString},
                         true);
+                    return true;
                 }
-                return true;
             }
-            return false;
         }
-        
+
         return false;
     }
     

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2019.                            (c) 2019.
+ *  (c) 2021.                            (c) 2021.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -277,45 +277,23 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                         if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
                                                 && this.errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
-                                            if (skip == null) {
-                                                // not in skip table, add it
-                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, this.errorMessage);
-                                                addToSkip = true;
-                                            } else {
-                                                if (this.errorMessage == ArtifactHarvester.PROPRIETARY) {
-                                                    // artifact is private, update skip table
-                                                    message = this.errorMessage 
-                                                            + " artifact already exists in skip table, update tryAfter date to relese date.";
-                                                    skip.setTryAfter(releaseDate);
-                                                    skip.errorMessage = this.errorMessage;
-                                                    addToSkip = true;
-                                                } else {
-                                                    if (skip.errorMessage == ArtifactHarvester.PROPRIETARY) {
-                                                        // artifact moved from proprietary to non-proprietary
-                                                        skip.setTryAfter(releaseDate);
-                                                        skip.errorMessage = null;
-                                                        addToSkip = true;
-                                                    } else {
-                                                        // update skip entry if release date has changed
-                                                        if (!skip.getTryAfter().equals(releaseDate)) {
-                                                            skip.setTryAfter(releaseDate);
-                                                            addToSkip = true;
-                                                        }
-                                                    }
-
-                                                    String msg = "artifact already exists in skip table.";;
-                                                    if (this.reason.equalsIgnoreCase("None")) {
-                                                        this.reason = "Public " + msg;
-                                                    } else {
-                                                        this.reason = this.reason + " and public " + msg;
-                                                    }
-                                                }
-                                            }
-
-                                            if (addToSkip) {
+                                            if (Util.addToSkipTable(source, STATE_CLASS, artifact.getURI(), this.errorMessage, skip, releaseDate)) {
                                                 this.harvestSkipURIDAO.put(skip);
                                                 this.downloadCount++;
                                                 added = true;
+                                                if (skip != null) {
+                                                    if (this.errorMessage == ArtifactHarvester.PROPRIETARY) {
+                                                        message = this.errorMessage 
+                                                            + " artifact already exists in skip table, update tryAfter date to relese date.";
+                                                    } else {
+                                                        String msg = "artifact already exists in skip table.";;
+                                                        if (this.reason.equalsIgnoreCase("None")) {
+                                                            this.reason = "Public " + msg;
+                                                        } else {
+                                                            this.reason = this.reason + " and public " + msg;
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     } catch (Exception ex) {
