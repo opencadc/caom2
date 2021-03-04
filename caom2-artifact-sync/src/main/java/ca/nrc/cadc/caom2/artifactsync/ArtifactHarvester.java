@@ -290,6 +290,19 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                                     skip.errorMessage = this.errorMessage;
                                                     addToSkip = true;
                                                 } else {
+                                                    if (skip.errorMessage == ArtifactHarvester.PROPRIETARY) {
+                                                        // artifact moved from proprietary to non-proprietary
+                                                        skip.setTryAfter(releaseDate);
+                                                        skip.errorMessage = null;
+                                                        addToSkip = true;
+                                                    } else {
+                                                        // update skip entry if release date has changed
+                                                        if (!skip.getTryAfter().equals(releaseDate)) {
+                                                            skip.setTryAfter(releaseDate);
+                                                            addToSkip = true;
+                                                        }
+                                                    }
+
                                                     String msg = "artifact already exists in skip table.";;
                                                     if (this.reason.equalsIgnoreCase("None")) {
                                                         this.reason = "Public " + msg;
