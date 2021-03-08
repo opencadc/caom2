@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.util.StringUtil;
 
 import java.net.URI;
 import java.util.Date;
@@ -103,7 +104,7 @@ public class Util {
                 skip.errorMessage = errorMessage;
                 addToSkip = true;
             } else {
-                if (skip.errorMessage == ArtifactHarvester.PROPRIETARY) {
+                if (StringUtil.hasText(skip.errorMessage) && skip.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) {
                     // artifact moved from proprietary to non-proprietary
                     skip.setTryAfter(releaseDate);
                     skip.errorMessage = null;
