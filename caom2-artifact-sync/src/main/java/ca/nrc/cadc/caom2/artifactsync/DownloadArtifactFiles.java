@@ -3,7 +3,8 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2021.                            (c) 2021.
+ *  
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -112,6 +113,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
     private static final int DEFAULT_RETRY_AFTER_ERROR_HOURS = 24;
+    private static final int DEFAULT_ARTIFACT_DOWNLOAD_THRESHOLD = 10000;
 
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
@@ -121,6 +123,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
     private boolean loop;
     private int threads;
     private boolean tolerateNullChecksum;
+    private Integer artifactDownloadThreshold;
     private Date startDate = null;
     private Date stopDate;
     private int retryAfterHours;
@@ -132,7 +135,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
     long start;
 
     public DownloadArtifactFiles(ArtifactDAO artifactDAO, HarvestResource harvestResource, ArtifactStore artifactStore,
-            int threads, int batchSize, boolean loop, Integer retryAfterHours, boolean tolerateNullChecksum) {
+            int threads, int batchSize, boolean loop, Integer retryAfterHours, boolean tolerateNullChecksum, Integer downloadThreshold) {
         this.artifactStore = artifactStore;
 
         this.artifactDAO = artifactDAO;
@@ -143,6 +146,11 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
         this.batchSize = batchSize;
         this.loop = loop;
         this.tolerateNullChecksum = tolerateNullChecksum;
+        this.artifactDownloadThreshold = downloadThreshold;
+        if (downloadThreshold == null) {
+            this.artifactDownloadThreshold = DEFAULT_ARTIFACT_DOWNLOAD_THRESHOLD;
+        }
+
         this.stopDate = new Date();
         if (retryAfterHours == null) {
             retryAfterHours = DEFAULT_RETRY_AFTER_ERROR_HOURS;
@@ -161,6 +169,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
         boolean moreArtifacts = true;
         
         // get all artifacts for this run and submit the results asynchronously
+        int artifactCount = 0;
         start = System.currentTimeMillis();
         while (moreArtifacts) {
             log.debug("Querying for skip records between " + startDate + " and " + stopDate);
@@ -170,7 +179,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 results.add(executor.submit(downloader));
             }
             
-            if ((artifacts.size() < batchSize) || (!loop)) {
+            artifactCount = artifactCount + artifacts.size();
+            if ((artifacts.size() < batchSize) || (!loop) || (artifactCount >= artifactDownloadThreshold)) {
                 moreArtifacts = false;
             } else {
                 // set the start date so that the next batch resumes after our last record
