@@ -99,10 +99,13 @@ public class Util {
         } else {
             // in skip table, update entry if necessary
             if (errorMessage == ArtifactHarvester.PROPRIETARY) {
-                // artifact is private, update skip table
-                skip.setTryAfter(releaseDate);
-                skip.errorMessage = errorMessage;
-                addToSkip = true;
+                // artifact is private
+                if (!skip.getTryAfter().equals(releaseDate)) {
+                    // release date has changed, update skip table
+                    skip.setTryAfter(releaseDate);
+                    skip.errorMessage = errorMessage;
+                    addToSkip = true;
+		}
             } else {
                 if (StringUtil.hasText(skip.errorMessage) && skip.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) {
                     // artifact moved from proprietary to non-proprietary
@@ -110,6 +113,7 @@ public class Util {
                     skip.errorMessage = null;
                     addToSkip = true;
                 } else {
+		    // retain skip.errorMessage
                     // update skip entry if release date has changed
                     if (!skip.getTryAfter().equals(releaseDate)) {
                         skip.setTryAfter(releaseDate);
