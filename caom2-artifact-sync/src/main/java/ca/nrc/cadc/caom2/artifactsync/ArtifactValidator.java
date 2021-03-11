@@ -412,7 +412,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         Integer batchSize = 1;
         TreeSet<ArtifactMetadata> logicalMetadata = getLogicalMetadata(batchSize);
         if (logicalMetadata.isEmpty()) {
-            String msg = "";
+            String msg = "Number of artifacts in caom2 is zero.";
             throw new RuntimeException(msg);
         }
         
@@ -558,20 +558,17 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String adql = "select distinct(a.uri), a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+            String uriSelect = "distinct(a.uri)";
+            if (batchSize == 1) {
+                uriSelect = "top 1 a.uri";
+            }
+
+            String adql = "select " + uriSelect + ", a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
                     + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
                     + "join caom2.Observation o on p.obsID = o.obsID "
                     + "where o.collection='" + collection + "'";
-            if (batchSize == 1) {
-                adql = "select top 1 a.uri, a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
-                        + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
-                        + "from caom2.Artifact a "
-                        + "join caom2.Plane p on a.planeID = p.planeID "
-                        + "join caom2.Observation o on p.obsID = o.obsID "
-                        + "where o.collection='" + collection + "'";
-            }
 
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
