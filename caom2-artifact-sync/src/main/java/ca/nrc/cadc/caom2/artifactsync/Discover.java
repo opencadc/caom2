@@ -138,7 +138,7 @@ public class Discover extends Caom2ArtifactSync {
                             try {
                                 downloadThreshold = Integer.parseInt(am.getValue("downloadThreshold"));
                             } catch (NumberFormatException e) {
-                                String msg = "Illegal value for --retryAfter: " + am.getValue("downloadThreshold");
+                                String msg = "Illegal value for --downloadThreshold: " + am.getValue("downloadThreshold");
                                 this.printErrorUsage(msg);
                             }
                         }
