@@ -412,7 +412,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         Integer batchSize = 1;
         TreeSet<ArtifactMetadata> logicalMetadata = getLogicalMetadata(batchSize);
         if (logicalMetadata.isEmpty()) {
-            String msg = "Number of artifacts in caom2 zero.";
+            String msg = "Number of artifacts in caom2 is zero.";
             throw new RuntimeException(msg);
         }
         
