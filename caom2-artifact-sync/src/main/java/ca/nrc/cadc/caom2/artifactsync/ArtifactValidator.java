@@ -132,7 +132,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private boolean supportSkipURITable = false;
     private boolean tolerateNullChecksum = false;
     private boolean tolerateNullContentLength = false;
-    private boolean usePrefix = false;
     private String prefix = null;
         
     private ExecutorService executor;
@@ -140,44 +139,38 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
-        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, usePrefix);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(harvestResource.getCollection(), reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.observationDAO = observationDAO;
         this.source = harvestResource.getIdentifier();
         this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, harvestResource.getDatabase(), harvestResource.getSchema());
     }
     
     public ArtifactValidator(URI caomTapResourceID, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, usePrefix);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapResourceID = caomTapResourceID;
     }
     
     public ArtifactValidator(URL caomTapURL, String collection, 
-            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
-        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength, usePrefix);
+            boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
+        this(collection, reportOnly, artifactStore, tolerateNullChecksum, tolerateNullContentLength);
         this.caomTapURL = caomTapURL;
     }
     
     private ArtifactValidator(String collection, boolean reportOnly, 
-            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength, boolean usePrefix) {
+            ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
         this.collection = collection;
         this.reportOnly = reportOnly;
         this.artifactStore = artifactStore;
         this.tolerateNullChecksum = tolerateNullChecksum;
         this.tolerateNullContentLength = tolerateNullContentLength;
-        this.usePrefix = usePrefix;
     }
 
     @Override
     public Object run() throws Exception {
         
         final long start = System.currentTimeMillis();
-        if (usePrefix) {
-            this.prefix = getPrefix();
-            log.info("Prefix for collection " + collection + " is " + prefix);
-        }
-
         log.info("Starting validation for collection " + collection);
         executor = Executors.newFixedThreadPool(2);
         final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
@@ -408,22 +401,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
     }
     
-    private String getPrefix() throws Exception {
-        Integer batchSize = 1;
-        TreeSet<ArtifactMetadata> logicalMetadata = getLogicalMetadata(batchSize);
-        if (logicalMetadata.isEmpty()) {
-            String msg = "Number of artifacts in caom2 is zero.";
-            throw new RuntimeException(msg);
-        }
-        
-        ArtifactMetadata metadata = logicalMetadata.first();
-        URI artifactURI = metadata.getArtifactURI();
-        String scheme = artifactURI.getScheme();
-        String ssp = artifactURI.getSchemeSpecificPart();
-        String prefix = scheme + ":" + ssp.split("/")[0];
-        return prefix;
-    }
-    
     private String safeToString(Long n) {
         if (n == null) {
             return "null";
@@ -643,12 +620,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private TreeSet<ArtifactMetadata> getPhysicalMetadata() throws Exception {
         TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         long t1 = System.currentTimeMillis();
-        if (usePrefix) {
-            // use prefix is specified, prefix is used with storage-inventory
-            metadata.addAll(artifactStore.list(prefix));
-        } else {
-            metadata.addAll(artifactStore.list(collection));
-        }
+        metadata.addAll(artifactStore.list(collection));
 
         log.info("Finished storage query in " + (System.currentTimeMillis() - t1) + " ms");
         return metadata;
