@@ -94,7 +94,6 @@ public class Util {
         
         if (skip == null) {
             // not in skip table, add it
-            skip = new HarvestSkipURI(source, stateClassName, artifactURI, releaseDate, errorMessage);
             addToSkip = true;
         } else {
             // in skip table, update entry if necessary

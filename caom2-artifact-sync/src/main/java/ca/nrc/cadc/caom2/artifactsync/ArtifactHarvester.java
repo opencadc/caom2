@@ -237,7 +237,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                 } else {
                                     logStart(format(state.curID), artifact);
                                     boolean success = true;
-                                    boolean addToSkip = false;
                                     boolean added = false;
                                     String message = null;
                                     this.caomChecksum = getMD5Sum(artifact.contentChecksum);
@@ -277,7 +276,16 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                         if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
                                                 && this.errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
-                                            if (Util.addToSkipTable(source, STATE_CLASS, artifact.getURI(), this.errorMessage, skip, releaseDate)) {
+                                            boolean addToSkip = false;
+                                            if (skip == null) {
+                                                // not in skip table, add it
+                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, this.errorMessage);
+                                                addToSkip = true;
+                                            } else {
+                                                addToSkip = Util.addToSkipTable(source, STATE_CLASS, artifact.getURI(), this.errorMessage, skip, releaseDate); 
+                                            }
+
+                                            if (addToSkip) {
                                                 this.harvestSkipURIDAO.put(skip);
                                                 this.downloadCount++;
                                                 added = true;

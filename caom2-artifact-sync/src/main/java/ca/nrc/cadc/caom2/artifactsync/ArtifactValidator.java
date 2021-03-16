@@ -460,7 +460,16 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
             if (releaseDate != null && !reportOnly) {
-                if (Util.addToSkipTable(source, STATE_CLASS, metadata.getArtifactURI(), errorMessage, skip, releaseDate)) {
+                boolean addToSkip = false;
+                if (skip == null) {
+                    // not in skip table, add it
+                    skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
+                    addToSkip = true;
+                } else {
+                    addToSkip = Util.addToSkipTable(source, STATE_CLASS, metadata.getArtifactURI(), errorMessage, skip, releaseDate); 
+                }
+
+                if (addToSkip) {
                     harvestSkipURIDAO.put(skip);
                     String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
                     logJSON(new String[]
