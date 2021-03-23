@@ -281,10 +281,15 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                                 // not in skip table, add it
                                                 skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, this.errorMessage);
                                                 addToSkip = true;
-                                            } else {
-                                                addToSkip = Util.addToSkipTable(source, STATE_CLASS, artifact.getURI(), this.errorMessage, skip, releaseDate); 
+                                            } 
+                                            
+                                            if (StoragePolicy.PUBLIC_ONLY == storagePolicy && (ArtifactHarvester.PROPRIETARY == skip.errorMessage || 
+                                                    ArtifactHarvester.PROPRIETARY == this.errorMessage)) {
+                                                skip.setTryAfter(releaseDate);
+                                                skip.errorMessage = errorMessage;
+                                                addToSkip = true;
                                             }
-
+                                            
                                             if (addToSkip) {
                                                 this.harvestSkipURIDAO.put(skip);
                                                 this.downloadCount++;
