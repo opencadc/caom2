@@ -81,6 +81,8 @@ import ca.nrc.cadc.reg.client.RegistryClient;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -95,14 +97,27 @@ public class CadcMastResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "mast";
     private static final Logger log = Logger.getLogger(CadcMastResolver.class);
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
-    private String baseDataURL;
 
+    // package access for test code
+    static final List<String> SYNCED = new ArrayList<>();
+    
+    static {
+        SYNCED.add("HST");
+        SYNCED.add("JWST");
+    }
+    
+    private final StorageResolver mastResolver = new MastResolver();
+    
     @Override
     public URL toURL(URI uri) {
         if (!SCHEME.equals(uri.getScheme())) {
             throw new IllegalArgumentException("invalid scheme in " + uri);
         }
 
+        if (!isSynced(uri)) {
+            return mastResolver.toURL(uri);
+        }
+        
         try {
             Subject subject = AuthenticationUtil.getCurrentSubject();
             AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
@@ -131,5 +146,15 @@ public class CadcMastResolver implements StorageResolver, Traceable {
     @Override
     public String getScheme() {
         return SCHEME;
+    }
+    
+    private boolean isSynced(URI uri) {
+        for (String s : SYNCED) {
+            String start = s + "/";
+            if (uri.getSchemeSpecificPart().startsWith(start)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
