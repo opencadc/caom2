@@ -28,6 +28,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.AdResolver;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.NetUtil;
@@ -45,6 +46,16 @@ import java.util.List;
  */
 public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
 
+    public AdCutoutGenerator() {
+        
+    }
+    
+    @Override
+    public boolean canCutout(Artifact a) {
+        // file types supported by SODA
+        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
+    }
+    
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) {
         URL base = super.toURL(uri);
