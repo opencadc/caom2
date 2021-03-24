@@ -68,6 +68,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -79,6 +80,17 @@ import java.util.List;
  * @author yeunga
  */
 public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGenerator {    
+    
+    public VOSpaceCutoutGenerator() {
+        
+    }
+
+    @Override
+    public boolean canCutout(Artifact a) {
+        // file types supported by SODA
+        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
+    }
+    
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {

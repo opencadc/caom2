@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcGeminiResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -83,6 +84,12 @@ public class CadcGeminiCutoutGenerator extends CadcGeminiResolver implements Cut
 
     public CadcGeminiCutoutGenerator() { }
 
+    @Override
+    public boolean canCutout(Artifact a) {
+        // file types supported by SODA
+        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
+    }
+    
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {

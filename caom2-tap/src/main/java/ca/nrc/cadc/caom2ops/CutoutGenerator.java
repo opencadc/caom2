@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.Artifact;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
@@ -91,4 +92,6 @@ public interface CutoutGenerator {
      */
     public URL toURL(URI uri, List<String> cutouts, String label)
         throws IllegalArgumentException;
+    
+    public boolean canCutout(Artifact a);
 }
