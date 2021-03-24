@@ -91,6 +91,12 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
             return base;
         }
         
+        // HACK: can only do cutouts if base is to a CADC data service
+        // ... hopefully temporary
+        if (!base.getHost().endsWith(".ca")) {
+            throw new UnsupportedOperationException("cutout not supported: " + base.toExternalForm());
+        }
+        
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
         String filename = AdCutoutGenerator.generateFilename(uri, label);
