@@ -93,7 +93,7 @@ import org.apache.log4j.Logger;
  *
  * @author yeunga
  */
-public class CadcMastResolver implements StorageResolver, Traceable {
+public class CadcMastResolver implements StorageResolver {
     public static final String SCHEME = "mast";
     private static final Logger log = Logger.getLogger(CadcMastResolver.class);
     private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");

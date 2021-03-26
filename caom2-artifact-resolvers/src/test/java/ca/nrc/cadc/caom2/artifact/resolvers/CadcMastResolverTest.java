@@ -101,11 +101,6 @@ public class CadcMastResolverTest {
         Assert.assertTrue(CadcMastResolver.SCHEME.equals(cadcMastResolver.getScheme()));
     }
 
-    @Test 
-    public void testTraceable() {
-        Assert.assertTrue(cadcMastResolver instanceof Traceable);
-    }
-    
     @Test
     public void testToURL() {
         try {
