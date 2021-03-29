@@ -65,7 +65,7 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
 
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        String filename = generateFilename(uri, label);
+        String filename = generateFilename(uri, label, cutouts);
         appendCutoutQueryString(sb, cutouts, filename);
 
         try {
@@ -89,7 +89,21 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
         return filename;
     }
 
-    static String generateFilename(URI uri, String label) {
+    /*
+     * Equivalent behaviour to the algorithm used in fslice2-fcat.sh.
+     * Replaces non alphanumerics with an underscore. Removes the leading and trailing underscore.
+     */
+    static String replaceNonAlphanumeric(List<String> cutouts) {
+        String cutoutString = "";
+        for (String cutout : cutouts) {
+            cutoutString = cutoutString + cutout.replaceAll("[^0-9a-zA-Z]","_").substring(1, cutout.length()-1) + "___";
+        }
+        
+        // remove the the last 3 underscores that separate between two sequential cutout strings
+        return cutoutString.substring(0, cutoutString.length() - 3);
+    }
+    
+    static String generateFilename(URI uri, String label, List<String> cutouts) {
         String filename = null;
         if (label != null) {
             try {
@@ -97,8 +111,16 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
                 String ssp = uri.getSchemeSpecificPart();
                 int i = ssp.lastIndexOf('/');
                 if (i != -1 && i < ssp.length() - 1) {
-                    filename = label + "__"
-                        + removeCompressionExtension(ssp.substring(i + 1));
+                    String uncompressedFilename = removeCompressionExtension(ssp.substring(i + 1));
+                    String head = uncompressedFilename;
+                    String tail = "";
+                    int index = uncompressedFilename.lastIndexOf('.');
+                    if (index > -1) {
+                        head = uncompressedFilename.substring(0, index);
+                        tail = uncompressedFilename.substring(index, uncompressedFilename.length());
+                    }
+
+                    filename = head + "__" + label + "__" + replaceNonAlphanumeric(cutouts) + tail;
                 }
             } catch (IllegalArgumentException ex) {
                 throw new UsageFault(ex.getMessage());

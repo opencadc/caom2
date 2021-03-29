@@ -138,7 +138,7 @@ public class AdCutoutGeneratorIntTest {
         log.info("starting testValidCutoutUrl");
         try {
         	String label = "label1";
-        	String expected_filename = label + "__" + "806045o.fits";
+        	String expected_filename = "806045o" + "__" + label + "__" + "9__100_200_100_200___11__100_200_100_200.fits";
             List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
