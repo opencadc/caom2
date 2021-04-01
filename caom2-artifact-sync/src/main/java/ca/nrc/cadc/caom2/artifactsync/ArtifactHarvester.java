@@ -274,7 +274,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                         }
 
                                         if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
-                                                && this.errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
+                                                && this.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) || !correctCopy) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                             if (skip == null) {
                                                 // not in skip table, add it
