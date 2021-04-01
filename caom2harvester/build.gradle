@@ -16,11 +16,11 @@ sourceCompatibility = 1.7
 
 group = 'org.opencadc'
 
-version = '2.5.3'
+version = '2.5.4'
 ext {
     // release number for building packages (rpm, deb, etc)
     // when only library dependencies change
-    release = '2'
+    release = '1'
 }
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
