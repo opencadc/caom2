@@ -281,7 +281,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                                 skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, this.errorMessage);
                                             } 
                                             
-                                            if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) || ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
+                                            if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
+                                                    || ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
                                                 skip.setTryAfter(releaseDate);
                                                 skip.errorMessage = errorMessage;
                                             }
