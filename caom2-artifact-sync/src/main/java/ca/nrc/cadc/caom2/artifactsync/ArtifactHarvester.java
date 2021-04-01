@@ -283,8 +283,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                                 addToSkip = true;
                                             } 
                                             
-                                            if (StoragePolicy.PUBLIC_ONLY == storagePolicy && (ArtifactHarvester.PROPRIETARY == skip.errorMessage || 
-                                                    ArtifactHarvester.PROPRIETARY == this.errorMessage)) {
+                                            if (ArtifactHarvester.PROPRIETARY == skip.errorMessage || ArtifactHarvester.PROPRIETARY == this.errorMessage) {
                                                 skip.setTryAfter(releaseDate);
                                                 skip.errorMessage = errorMessage;
                                                 addToSkip = true;

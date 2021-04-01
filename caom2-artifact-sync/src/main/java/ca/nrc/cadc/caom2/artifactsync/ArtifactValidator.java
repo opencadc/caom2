@@ -467,8 +467,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     addToSkip = true;
                 } 
 
-                if (StoragePolicy.PUBLIC_ONLY == artifactStore.getStoragePolicy(collection) && 
-                        (ArtifactHarvester.PROPRIETARY == skip.errorMessage || ArtifactHarvester.PROPRIETARY == errorMessage)) {
+                if (ArtifactHarvester.PROPRIETARY == skip.errorMessage || ArtifactHarvester.PROPRIETARY == errorMessage) {
                     skip.setTryAfter(releaseDate);
                     skip.errorMessage = errorMessage;
                     addToSkip = true;
