@@ -276,34 +276,29 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                         if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
                                                 && this.errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
-                                            boolean addToSkip = false;
                                             if (skip == null) {
                                                 // not in skip table, add it
                                                 skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, this.errorMessage);
-                                                addToSkip = true;
                                             } 
                                             
-                                            if (ArtifactHarvester.PROPRIETARY == skip.errorMessage || ArtifactHarvester.PROPRIETARY == this.errorMessage) {
+                                            if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) || ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
                                                 skip.setTryAfter(releaseDate);
                                                 skip.errorMessage = errorMessage;
-                                                addToSkip = true;
                                             }
                                             
-                                            if (addToSkip) {
-                                                this.harvestSkipURIDAO.put(skip);
-                                                this.downloadCount++;
-                                                added = true;
-                                                if (skip != null) {
-                                                    if (this.errorMessage == ArtifactHarvester.PROPRIETARY) {
-                                                        message = this.errorMessage 
-                                                            + " artifact already exists in skip table, update tryAfter date to relese date.";
+                                            this.harvestSkipURIDAO.put(skip);
+                                            this.downloadCount++;
+                                            added = true;
+                                            if (skip != null) {
+                                                if (this.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) {
+                                                    message = this.errorMessage 
+                                                        + " artifact already exists in skip table, update tryAfter date to relese date.";
+                                                } else {
+                                                    String msg = "artifact already exists in skip table.";;
+                                                    if (this.reason.equalsIgnoreCase("None")) {
+                                                        this.reason = "Public " + msg;
                                                     } else {
-                                                        String msg = "artifact already exists in skip table.";;
-                                                        if (this.reason.equalsIgnoreCase("None")) {
-                                                            this.reason = "Public " + msg;
-                                                        } else {
-                                                            this.reason = this.reason + " and public " + msg;
-                                                        }
+                                                        this.reason = this.reason + " and public " + msg;
                                                     }
                                                 }
                                             }
