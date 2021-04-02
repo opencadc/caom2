@@ -460,32 +460,28 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
             if (releaseDate != null && !reportOnly) {
-                boolean addToSkip = false;
                 if (skip == null) {
                     // not in skip table, add it
                     skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
-                    addToSkip = true;
                 } 
 
-                if (ArtifactHarvester.PROPRIETARY == skip.errorMessage || ArtifactHarvester.PROPRIETARY == errorMessage) {
+                if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
+                        || ArtifactHarvester.PROPRIETARY.equals(errorMessage)) {
                     skip.setTryAfter(releaseDate);
                     skip.errorMessage = errorMessage;
-                    addToSkip = true;
                 }
                 
-                if (addToSkip) {
-                    harvestSkipURIDAO.put(skip);
-                    String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
-                    logJSON(new String[]
-                        {"logType", "detail",
-                         "action", "addedToSkipTable",
-                         "artifactURI", metadata.getArtifactURI().toASCIIString(),
-                         "caomCollection", collection,
-                         "caomChecksum", metadata.getChecksum(),
-                         "errorMessage", errorMessageString},
-                        true);
-                    return true;
-                }
+                harvestSkipURIDAO.put(skip);
+                String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
+                logJSON(new String[]
+                    {"logType", "detail",
+                     "action", "addedToSkipTable",
+                     "artifactURI", metadata.getArtifactURI().toASCIIString(),
+                     "caomCollection", collection,
+                     "caomChecksum", metadata.getChecksum(),
+                     "errorMessage", errorMessageString},
+                    true);
+                return true;
             }
         }
 
