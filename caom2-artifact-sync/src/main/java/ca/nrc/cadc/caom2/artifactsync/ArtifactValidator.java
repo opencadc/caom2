@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -132,6 +132,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private boolean supportSkipURITable = false;
     private boolean tolerateNullChecksum = false;
     private boolean tolerateNullContentLength = false;
+    private String prefix = null;
         
     private ExecutorService executor;
     
@@ -174,7 +175,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         executor = Executors.newFixedThreadPool(2);
         final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
-                return getLogicalMetadata();
+                return getLogicalMetadata(null);
             }
         });
         log.info("Submitted query to caom2");
@@ -190,11 +191,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         executor.shutdownNow();
         
         TreeSet<ArtifactMetadata> logicalMetadata = logicalQuery.get();
-        log.info("number of artifacts in CAOM2: " + logicalMetadata.size());
+        log.info("number of artifacts in caom2: " + logicalMetadata.size());
         TreeSet<ArtifactMetadata> physicalMetadata = physicalQuery.get();
         log.info("number of artifacts in storage: " + physicalMetadata.size());
+
         if (logicalMetadata.isEmpty() || physicalMetadata.isEmpty()) {
-            log.error("Number of artifacts in CAOM2 or in storage cannot be zero.");
+            log.error("Number of artifacts in caom2 or in storage cannot be zero.");
         } else {
             compareMetadata(logicalMetadata, physicalMetadata, start);
         }
@@ -457,41 +459,48 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
             Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
-            if (skip == null && releaseDate != null) {
-                if (!reportOnly) {
+            if (releaseDate != null && !reportOnly) {
+                if (skip == null) {
+                    // not in skip table, add it
                     skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
-                    harvestSkipURIDAO.put(skip);
-                    
-                    // validate 
-                    String errorMessageString = (errorMessage == null) ? "null" : errorMessage;
-                    logJSON(new String[]
-                        {"logType", "detail",
-                         "action", "addedToSkipTable",
-                         "artifactURI", metadata.getArtifactURI().toASCIIString(),
-                         "caomCollection", collection,
-                         "caomChecksum", metadata.getChecksum(),
-                         "errorMessage", errorMessageString},
-                        true);
+                } 
+
+                if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
+                        || ArtifactHarvester.PROPRIETARY.equals(errorMessage)) {
+                    skip.setTryAfter(releaseDate);
+                    skip.errorMessage = errorMessage;
                 }
+                
+                harvestSkipURIDAO.put(skip);
+                String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
+                logJSON(new String[]
+                    {"logType", "detail",
+                     "action", "addedToSkipTable",
+                     "artifactURI", metadata.getArtifactURI().toASCIIString(),
+                     "caomCollection", collection,
+                     "caomChecksum", metadata.getChecksum(),
+                     "errorMessage", errorMessageString},
+                    true);
                 return true;
             }
-            return false;
         }
-        
+
         return false;
     }
     
-    private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
+    private TreeSet<ArtifactMetadata> getLogicalMetadata(Integer batchSize) throws Exception {
         TreeSet<ArtifactMetadata> result = new TreeSet<>(ArtifactMetadata.getComparator());
         if (StringUtil.hasText(source)) {
             // use database <server.database.schema>
             // HarvestSkipURI table is not supported in 'diff' mode, i.e. reportOnly = true
             this.supportSkipURITable = !reportOnly;
             long t1 = System.currentTimeMillis();
-            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, null);
+            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, batchSize);
             long t2 = System.currentTimeMillis();
             long dt = t2 - t1;
-            log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
+            if (batchSize == null) {
+                log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
+            }
             
             int depth = 3;
             ListIterator<ObservationState> iter = states.listIterator();
@@ -514,7 +523,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }
             }
             
-            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
+            if (batchSize == null) {
+                // log only when we query all artifacts of a collection
+                log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
+            }
         } else {
             this.supportSkipURITable = false;
             if (caomTapResourceID != null) {
@@ -532,7 +544,12 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String adql = "select distinct(a.uri), a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+            String uriSelect = "distinct(a.uri)";
+            if (batchSize == 1) {
+                uriSelect = "top 1 a.uri";
+            }
+
+            String adql = "select " + uriSelect + ", a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
                     + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
@@ -542,7 +559,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
             result = query(caomTapURL, adql);
-            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - start) + " ms");
+            if (batchSize != 1) {
+                // log only when we query all artifacts of a collection
+                log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
+            }
         }
         return result;
     }
@@ -610,7 +630,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         TreeSet<ArtifactMetadata> metadata = new TreeSet<ArtifactMetadata>(ArtifactMetadata.getComparator());
         long t1 = System.currentTimeMillis();
         metadata.addAll(artifactStore.list(collection));
-        log.info("Finished physical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
+
+        log.info("Finished storage query in " + (System.currentTimeMillis() - t1) + " ms");
         return metadata;
     }
 }

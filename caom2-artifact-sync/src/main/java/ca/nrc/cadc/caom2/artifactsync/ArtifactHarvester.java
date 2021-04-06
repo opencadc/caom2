@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2019.                            (c) 2019.
+ *  (c) 2021.                            (c) 2021.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -237,7 +237,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                 } else {
                                     logStart(format(state.curID), artifact);
                                     boolean success = true;
-                                    boolean addToSkip = false;
                                     boolean added = false;
                                     String message = null;
                                     this.caomChecksum = getMD5Sum(artifact.contentChecksum);
@@ -275,20 +274,26 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                         }
 
                                         if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
-                                                && this.errorMessage == ArtifactHarvester.PROPRIETARY) || !correctCopy) {
+                                                && this.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) || !correctCopy) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                             if (skip == null) {
                                                 // not in skip table, add it
                                                 skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, this.errorMessage);
-                                                addToSkip = true;
-                                            } else {
-                                                if (this.errorMessage == ArtifactHarvester.PROPRIETARY) {
-                                                    // artifact is private, update skip table
+                                            } 
+                                            
+                                            if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
+                                                    || ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
+                                                skip.setTryAfter(releaseDate);
+                                                skip.errorMessage = errorMessage;
+                                            }
+                                            
+                                            this.harvestSkipURIDAO.put(skip);
+                                            this.downloadCount++;
+                                            added = true;
+                                            if (skip != null) {
+                                                if (this.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) {
                                                     message = this.errorMessage 
-                                                            + " artifact already exists in skip table, update tryAfter date to relese date.";
-                                                    skip.setTryAfter(releaseDate);
-                                                    skip.errorMessage = this.errorMessage;
-                                                    addToSkip = true;
+                                                        + " artifact already exists in skip table, update tryAfter date to relese date.";
                                                 } else {
                                                     String msg = "artifact already exists in skip table.";;
                                                     if (this.reason.equalsIgnoreCase("None")) {
@@ -297,12 +302,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                                         this.reason = this.reason + " and public " + msg;
                                                     }
                                                 }
-                                            }
-
-                                            if (addToSkip) {
-                                                this.harvestSkipURIDAO.put(skip);
-                                                this.downloadCount++;
-                                                added = true;
                                             }
                                         }
                                     } catch (Exception ex) {

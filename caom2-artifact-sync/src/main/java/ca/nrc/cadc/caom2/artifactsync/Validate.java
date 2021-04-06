@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.artifactsync;
 
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.util.ArgumentMap;
+import ca.nrc.cadc.util.StringUtil;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -192,6 +193,7 @@ public class Validate extends Caom2ArtifactSync {
             
             validator = new ArtifactValidator(observationDAO.getDataSource(),
                 this.harvestResource, observationDAO, true, this.artifactStore, tolerateNullChecksum, tolerateNullContentLength);
+            
         }
         
         return validator;
