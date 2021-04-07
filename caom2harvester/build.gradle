@@ -2,17 +2,16 @@ plugins {
     id 'java'
     id 'maven'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.8.4'
     id 'application'
     id 'checkstyle'
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
     mavenLocal()
 }
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
@@ -22,6 +21,9 @@ ext {
     // when only library dependencies change
     release = '1'
 }
+
+description = 'OpenCADC CAOM metadata harvester application'
+def git_url = 'https://github.com/opencadc/caom2db'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 applicationDefaultJvmArgs = ['-Xms2048m','-Xmx8192m','-XX:OnOutOfMemoryError="kill -3 %p"']
