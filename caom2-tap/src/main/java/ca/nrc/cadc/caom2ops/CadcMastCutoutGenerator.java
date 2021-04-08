@@ -112,7 +112,7 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
         
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        String filename = AdCutoutGenerator.generateFilename(uri, label);
+        String filename = AdCutoutGenerator.generateFilename(uri, label, cutouts);
         AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
         
         try {
