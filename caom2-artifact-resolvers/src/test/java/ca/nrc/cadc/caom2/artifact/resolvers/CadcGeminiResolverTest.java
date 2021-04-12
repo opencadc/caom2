@@ -68,13 +68,9 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
-
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -92,36 +88,21 @@ public class CadcGeminiResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String SI_URL = "https://unittest.com/global/files";
-    private static final String FILE_URI = "gemini:Gemini/bar.fits";
+    private static final String FILE_URI = "gemini:GEM/bar.fits";
     private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
 
-
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
-    }
-
-    private final CadcGeminiResolver cadcGeminiResolver;
+    CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
 
     public CadcGeminiResolverTest() {
-        cadcGeminiResolver = getCadcGeminiResolver();
-    }
 
-    private CadcGeminiResolver getCadcGeminiResolver() {
-        // override the capabilities method
-        return new CadcGeminiResolver() {
-            @Override
-            public URL getServiceURL(AuthMethod am) throws URISyntaxException {
-                try {
-                    return new URL(SI_URL);
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
     }
 
     @Test
+    public void testGetScheme() {
+        Assert.assertTrue(CadcGeminiResolver.SCHEME.equals(cadcGeminiResolver.getScheme()));
+    }
+
+    @Test 
     public void testTraceable() {
         Assert.assertTrue(cadcGeminiResolver instanceof Traceable);
     }

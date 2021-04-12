@@ -42,7 +42,7 @@ import org.apache.log4j.Logger;
  */
 public class GeminiResolver implements StorageResolver {
     public static final String SCHEME = "gemini";
-    public static final String ARCHIVE = "Gemini";
+    public static final String ARCHIVE = "GEM";
     public static final String FILE_URI = "file";
     public static final String PREVIEW_URI = "preview";
     private static final Logger log = Logger.getLogger(GeminiResolver.class);
