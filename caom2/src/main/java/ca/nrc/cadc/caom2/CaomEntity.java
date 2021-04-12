@@ -313,6 +313,7 @@ public abstract class CaomEntity {
 
     private byte[] primitiveValueToBytes(Object o, String name, String digestAlg) {
         byte[] ret = null;
+        int len = 0;
         if (o instanceof Byte) {
             ret = HexUtil.toBytes((Byte) o); // auto-unbox
         } else if (o instanceof Short) {
@@ -343,6 +344,8 @@ public abstract class CaomEntity {
                                                                          double */
         } else if (o instanceof String) {
             try {
+                String s = (String) o;
+                len = s.length();
                 ret = ((String) o).trim().getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 throw new RuntimeException(
@@ -350,7 +353,9 @@ public abstract class CaomEntity {
             }
         } else if (o instanceof URI) {
             try {
-                ret = ((URI) o).toASCIIString().trim().getBytes("UTF-8");
+                String s = ((URI) o).toASCIIString();
+                len = s.length();
+                ret = s.trim().getBytes("UTF-8");
             } catch (UnsupportedEncodingException ex) {
                 throw new RuntimeException(
                         "BUG: failed to encode String in UTF-8", ex);
@@ -369,7 +374,11 @@ public abstract class CaomEntity {
                 try {
                     MessageDigest md  = MessageDigest.getInstance(digestAlg);
                     byte[] dig = md.digest(ret);
-                    log.debug(o.getClass().getSimpleName() + " " + name + " = " + o.toString()
+                    String cn = o.getClass().getSimpleName();
+                    if (len > 0) {
+                        cn += "[" + len + "]";
+                    }
+                    log.debug(cn + " " + name + " = " + o.toString()
                         + " -- " + HexUtil.toHex(dig));
                 } catch (Exception ignore) {
                     log.debug("OOPS", ignore);

@@ -88,8 +88,7 @@ public class CadcMastResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "mast:FOO/bar";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String INVALID_SCHEME_URI = "ad:FOO/bar";
 
     CadcMastResolver cadcMastResolver = new CadcMastResolver();
 
@@ -102,18 +101,32 @@ public class CadcMastResolverTest {
         Assert.assertTrue(CadcMastResolver.SCHEME.equals(cadcMastResolver.getScheme()));
     }
 
-    @Test 
-    public void testTraceable() {
-        Assert.assertTrue(cadcMastResolver instanceof Traceable);
-    }
-    
     @Test
     public void testToURL() {
         try {
-            URI uri = new URI(FILE_URI);
+            for (String s : cadcMastResolver.SYNCED) {
+                URI uri = new URI("mast:" + s + "/product/file");
+                URL url = cadcMastResolver.toURL(uri);
+                Assert.assertNotNull(url);
+                log.info("testFile: " + uri + " -> " + url);
+                // this should work for test vms to prod
+                Assert.assertTrue(url.getHost().endsWith(".ca"));
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testToURL_NonSynced() {
+        try {
+            URI uri = new URI("mast:NONSYNCED/product/file");
             URL url = cadcMastResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
+            // this should work for MAST servers
+            Assert.assertTrue(url.getHost().endsWith(".edu"));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -123,7 +136,7 @@ public class CadcMastResolverTest {
     @Test
     public void testInvalidSchemeURI() {
         try {
-            URI uri = new URI(INVALID_SCHEME_URI1);
+            URI uri = new URI(INVALID_SCHEME_URI);
             URL url = cadcMastResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {

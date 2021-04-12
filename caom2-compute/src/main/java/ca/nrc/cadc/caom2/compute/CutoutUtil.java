@@ -512,6 +512,10 @@ public final class CutoutUtil {
             // if there are multiple chunks, they should only differ in observable 
         
             Chunk c = p.getChunks().iterator().next();
+            //log.debug("initCutout: " + c.naxis + "," + c.positionAxis1 + "," + c.positionAxis2
+            //        + "," + c.energyAxis + "," + c.timeAxis + "," + c.polarizationAxis 
+            //        + "," + c.customAxis + "," + c.observableAxis);
+            
             //for (Chunk c : p.getChunks()) {
             int n = 0;
             if (c.naxis != null) {

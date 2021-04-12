@@ -187,7 +187,6 @@ public class CutoutUtilTest {
             Chunk c1 = new Chunk();
             p.getChunks().add(c1);
             Chunk c2 = new Chunk();
-            p.getChunks().add(c2);
             StringBuilder sb;
             
             // no axes
@@ -211,6 +210,7 @@ public class CutoutUtilTest {
             log.info("one chunk of spectrum in an image array (energy+observable): " + tox);
             Assert.assertEquals("[name][ee,oo]", tox);
             
+            p.getChunks().add(c2);
             c2.naxis = 2;
             c2.energyAxis = 1;
             c2.observableAxis = 2;
