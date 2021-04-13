@@ -217,6 +217,7 @@ public class ArtifactProcessor
             {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.errorMessage = "FatalFault: failed to generate download URL: " + ex.toString();
+                ret.add(dl);
             }
 
             if (!downloadOnly && canCutout(a))
