@@ -92,7 +92,7 @@ public class CadcResolver implements StorageResolver, Traceable {
 
     private static final Logger log = Logger.getLogger(CadcResolver.class);
     private final String scheme;
-    public static final URI STORAGE_INVENTORY_URI = URI.create("ivo://cadc.nrc.ca/global/files");
+    public static final URI STORAGE_INVENTORY_URI = URI.create("ivo://cadc.nrc.ca/global/raven");
 
     protected AuthMethod authMethod;
 
