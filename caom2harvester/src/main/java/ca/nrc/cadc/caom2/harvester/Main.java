@@ -140,15 +140,13 @@ public class Main {
             final boolean validate = am.isSet("validate");
             
             // optional plugins
+            boolean fix = false;
             boolean compute = false;
             String generateAC = null;
             boolean noChecksum = am.isSet("nochecksum");
             if (ENABLE_COMPUTE_FEATURES) {
                 compute = am.isSet("compute");
                 generateAC = am.getValue("generate-ac");
-                // this is longer be required since checksum validation  occurs before these features
-                // are invoked to modify the observation
-                //noChecksum = noChecksum || compute || am.isSet("generate-ac");
             }
             
             log.info("accMetaChecksum validation enabled: " + !noChecksum);
@@ -198,6 +196,11 @@ public class Main {
             HarvestResource src;
             if (ENABLE_COMPUTE_FEATURES) {
                 src = dest;
+                if (am.isSet("source")) {
+                    log.warn("--source cannot be used when extra compute features are enabled");
+                    usage();
+                    System.exit(1);
+                }
             } else {
                 src = getSource(am, collection);
                 if (src.getResourceType() != HarvestResource.SOURCE_DB) {
@@ -445,7 +448,6 @@ public class Main {
         sb.append("\n         --nochecksum : do not compare computed and harvested Observation.accMetaChecksum (default: require match or fail)");
         
         if (ENABLE_COMPUTE_FEATURES) {
-            sb.append("\n                        Note: checksum verification is automatically disabled with either --compute or --generate-ac");
             sb.append("\n\nOptional plugin invocation:");
             sb.append("\n           (probably only useful for CADC; automatically adds --nochecksum since they modify content)");
             sb.append("\n         --compute : invoke the caom2-compute plugin (computes plane metadata from WCS in artifacts)");
