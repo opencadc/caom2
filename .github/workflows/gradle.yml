@@ -17,34 +17,34 @@ jobs:
         java-version: 1.8
 
     - name: build and test caom2-access-control
-      run: cd caom2-access-control && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-access-control && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2-persist
-      run: cd caom2-persist && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-persist && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2-repo
-      run: cd caom2-repo && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2persistence
-      run: cd caom2persistence && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2persistence && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2-artifact-sync
-      run: cd caom2-artifact-sync && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-artifact-sync && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2-repo
-      run: cd caom2-repo && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
       
     - name: build and test caom2-repo-server
-      run: cd caom2-repo-server && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-repo-server && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2-test-repo
-      run: cd caom2-test-repo && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-test-repo && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2harvester
-      run: cd caom2harvester && gradle --info clean build javadoc checkstyleMain
+      run: cd caom2harvester && ../gradlew --info clean build javadoc checkstyleMain
 
     - name: build and test caom2-collection-validator
-      run: cd caom2-collection-validator && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-collection-validator && ../gradlew --info clean build javadoc checkstyleMain install
 
     - name: build and test caom2-remove
-      run: cd caom2-remove && gradle --info clean build javadoc checkstyleMain install
+      run: cd caom2-remove && ../gradlew --info clean build javadoc checkstyleMain install
