@@ -136,8 +136,9 @@ public class VOSpaceCutoutGeneratorIntTest {
     public void testValidCutoutUrlWithLabel() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
-        	String label = "label1";
-        	String expected_filename = label + "__" + "806045o.fits";
+            String label = "label1";
+            String expected_filename = "806045o" + "__" + label + "__" + "9__100_200_100_200___11__100_200_100_200.fits";
+
             List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
@@ -171,7 +172,7 @@ public class VOSpaceCutoutGeneratorIntTest {
     public void testInvalidCutoutUrl() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
-        	String label = null;
+            String label = null;
             List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(INVALID_CUTOUT);

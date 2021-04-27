@@ -80,6 +80,9 @@ import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.IntervalFormat;
+import ca.nrc.cadc.dali.util.ShapeFormat;
+import ca.nrc.cadc.dali.util.StringListFormat;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
@@ -139,8 +142,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
     }
 
     @Override
-    public URL toURL(int serialNum, URI uri, Cutout<Shape> pos, Cutout<Interval> band, Cutout<Interval> time, Cutout<List<String>> pol, 
-                List<Cutout<Interval>> customCutouts, Map<String, List<String>> customParams)
+    public URL toURL(int serialNum, URI uri, Cutout cutout, Map<String, List<String>> extraParams)
             throws IOException {
         String runID = job.getRunID();
         if (runID == null) {
@@ -165,7 +167,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             }
 
             // log and ignore custom parameters
-            for (Map.Entry<String,List<String>> me : customParams.entrySet()) {
+            for (Map.Entry<String,List<String>> me : extraParams.entrySet()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(me.getKey()).append(" = ");
                 for (String v : me.getValue()) {
@@ -176,30 +178,28 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             }
 
             // TODO: CAOM currently supports a single custom 1D axis, but we have to find the right Cutout in the list 
-            // for the data in question... temporary hack is to fail:
-            if (!customCutouts.isEmpty()) {
+            // for the data in question... temporary hack is to fail until we have data to test with
+            if (cutout.customAxis != null) {
                 StringBuilder sb = new StringBuilder();
-                sb.append("cutout with: ");
-                for (Cutout<Interval> c : customCutouts) {
-                    sb.append(c.name).append(", ");
-                }
-                throw new UnsupportedOperationException(sb.substring(0, sb.length() - 3));
+                sb.append("cutout with: ").append(cutout.customAxis);
+                sb.append("=[").append(cutout.custom.getLower()).append(",").append(cutout.custom.getUpper()).append("]");
+                throw new UnsupportedOperationException(sb.toString());
             }
             
-            List<String> cutout = CutoutUtil.computeCutout(a, 
-                dali2caom2(pos.cut), dali2caom2(band.cut), dali2caom2(time.cut), dali2caom2(pol.cut), null, null);
-            if (cutout != null && !cutout.isEmpty()) {
+            List<String> strCutout = CutoutUtil.computeCutout(a, 
+                dali2caom2(cutout.pos), dali2caom2(cutout.band), dali2caom2(cutout.time), dali2caom2(cutout.pol), null, null);
+            if (strCutout != null && !strCutout.isEmpty()) {
                 StorageResolver resolver = artifactResolver.getStorageResolver(uri);
                 if (resolver instanceof CutoutGenerator) {
                     // get the optional label parameter value
-                    List<String> labels = customParams.get(PARAM_LABEL);
+                    List<String> labels = extraParams.get(PARAM_LABEL);
                     String label = null;
                     // ignore LABEL parameter for async mode
                     if (syncOutput != null && labels != null && !labels.isEmpty()) {
                         label = labels.get(0);
                     }
                 
-                    URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), cutout, label);
+                    URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), strCutout, label);
                     log.debug("cutout URL: " + url.toExternalForm());
                     return url;
                 } else {
@@ -208,20 +208,24 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append("NoContent: ").append(uri).append(" vs");
-                if (pos.name != null) {
-                    sb.append(" ").append(pos.name).append("=").append(pos.value);
+                if (cutout.pos != null) {
+                    ShapeFormat f = new ShapeFormat();
+                    sb.append(" ").append("POS").append("=").append(f.format(cutout.pos));
                 }
                 
-                if (band.name != null) {
-                    sb.append(" ").append(band.name).append("=").append(band.value);
+                if (cutout.band != null) {
+                    IntervalFormat f = new IntervalFormat();
+                    sb.append(" ").append("BAND").append("=").append(f.format(cutout.band));
                 }
                 
-                if (time.name != null) {
-                    sb.append(" ").append(time.name).append("=").append(time.value);
+                if (cutout.time != null) {
+                    IntervalFormat f = new IntervalFormat();
+                    sb.append(" ").append("TIME").append("=").append(f.format(cutout.time));
                 }
             
-                if (pol.name != null) {
-                    sb.append(" ").append(pol.name).append("=").append(pol.value);
+                if (cutout.pol != null && !cutout.pol.isEmpty()) {
+                    StringListFormat sf = new StringListFormat();
+                    sb.append(" ").append("POL").append("=").append(sf.format(cutout.pol));
                 }
 
                 StringBuilder path = new StringBuilder();

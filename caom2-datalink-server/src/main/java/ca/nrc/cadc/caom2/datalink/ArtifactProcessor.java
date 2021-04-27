@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -91,9 +91,11 @@ import ca.nrc.cadc.caom2.compute.TimeUtil;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
+import ca.nrc.cadc.caom2ops.CutoutGenerator;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.StringUtil;
@@ -215,6 +217,7 @@ public class ArtifactProcessor
             {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.errorMessage = "FatalFault: failed to generate download URL: " + ex.toString();
+                ret.add(dl);
             }
 
             if (!downloadOnly && canCutout(a))
@@ -289,15 +292,24 @@ public class ArtifactProcessor
     }
     
     private boolean canCutout(Artifact a) {
-        if (!CutoutUtil.canCutout(a)) {
-            return false; // insufficient metadata
+        StorageResolver sr = artifactResolver.getStorageResolver(a.getURI());
+        if (!(sr instanceof CutoutGenerator)) {
+            log.debug("canCutout: no code to generate cutout for " + a.getURI());
+            return false;
         }
         
-        // current SODA implementation at CADC can only handle 
-        if (!"application/fits".equals(a.contentType)
-                && !"image/fits".equals(a.contentType)) {
-            return false; // file type not supported by SODA
+        CutoutGenerator cg = (CutoutGenerator) sr;
+        if (!cg.canCutout(a)) {
+            log.debug("canCutout: artifact not supported by SODA " + a.getURI());
+            return false;
         }
+        
+        if (!CutoutUtil.canCutout(a)) {
+            log.debug("canCutout: insufficient metadata for SODA to compute cutout " + a.getURI());
+            return false;
+        }
+        
+        // file type check moved into CutoutGenerator.canCutout(Artifact)
         
         return true;
     }

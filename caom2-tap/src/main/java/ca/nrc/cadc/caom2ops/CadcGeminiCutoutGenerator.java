@@ -67,16 +67,46 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcGeminiResolver;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class CadcGeminiCutoutGenerator extends CadcCutoutGenerator {
+public class CadcGeminiCutoutGenerator extends CadcGeminiResolver implements CutoutGenerator {
     private static final Logger log = Logger.getLogger(CadcGeminiCutoutGenerator.class);
 
-    public CadcGeminiCutoutGenerator() {
-        super("gemini");
+    public CadcGeminiCutoutGenerator() { }
+
+    @Override
+    public boolean canCutout(Artifact a) {
+        // file types supported by SODA
+        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
+    }
+    
+    @Override
+    public URL toURL(URI uri, List<String> cutouts, String label) 
+            throws IllegalArgumentException {
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        String filename = AdCutoutGenerator.generateFilename(uri, label, cutouts);
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
+        
+        try {
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL.", ex);
+        }
     }
 }
