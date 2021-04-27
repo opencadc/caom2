@@ -151,7 +151,7 @@ public class CadcCutoutGeneratorTest {
             cutouts.add(CUTOUT4);
             URI uri = new URI(CADC_FILE_URI);
             cutoutGenerator.setAuthMethod(AuthMethod.ANON);
-            URL url = cutoutGenerator.toURL(uri, cutouts, null);
+            URL url = cutoutGenerator.toURL(uri, cutouts, "label1%");
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             String urlString = url.toExternalForm();
@@ -162,27 +162,6 @@ public class CadcCutoutGeneratorTest {
             Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
             Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
             Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testToURLWithNotNullLabel() {
-        try {
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            cutouts.add(CUTOUT3);
-            cutouts.add(CUTOUT4);
-            URI uri = new URI(CADC_FILE_URI);
-            cutoutGenerator.setAuthMethod(AuthMethod.ANON);
-            String label = "label1%";
-            URL url = cutoutGenerator.toURL(uri, cutouts, label);
-            Assert.fail("should have thrown an IllegalArgumentException when label present");
-        } catch (IllegalArgumentException ia) {
-            // expected, success
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

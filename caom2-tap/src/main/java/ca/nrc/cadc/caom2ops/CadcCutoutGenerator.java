@@ -96,7 +96,7 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) {
         if (label != null) {
-            throw new IllegalArgumentException("Cutout label not supported yet");
+            log.warn("Cutout label not supported yet");
         }
 
         URL base = super.toURL(uri);
@@ -117,7 +117,8 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
 
     @Override
     public boolean canCutout(Artifact a) {
-        return true;
+        // file types supported by SODA
+        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
     }
 
     @Override
