@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
 
 import java.net.MalformedURLException;
@@ -112,6 +113,11 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
         } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG: failed to generate cutout URL", ex);
         }
+    }
+
+    @Override
+    public boolean canCutout(Artifact a) {
+        return true;
     }
 
     @Override
