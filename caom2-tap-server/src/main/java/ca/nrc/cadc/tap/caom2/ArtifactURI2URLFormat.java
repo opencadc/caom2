@@ -76,6 +76,7 @@ import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -146,24 +147,10 @@ public class ArtifactURI2URLFormat implements Format<Object>
 
         if (object instanceof String)
         {
-            try
-            {
-                URI uri = new URI((String) object);
-                if ("ad".equals(uri.getScheme()))
-                {
-                    sb.append(accessURL.toExternalForm());
-                    sb.append("/");
-                    sb.append(uri.getSchemeSpecificPart()); // ad URI
-                    sb.append("?RUNID=");
-                    sb.append(jobID);
-                } else if ("cadc".equals(uri.getScheme())) {
-                    CadcResolver cadcResolver = new CadcResolver();
-                    sb.append(cadcResolver.toURL(uri).toExternalForm());
-                    sb.append("?RUNID=");
-                    sb.append(jobID);
-                }
-                else
-                    sb.append(uri.toASCIIString()); // pass-through (http, vos, etc)
+           try {
+                URI uri = URI.create((String)object + "?RUNID=" + jobID);
+                CaomArtifactResolver caomArtifactResolver = new CaomArtifactResolver();
+                sb.append(caomArtifactResolver.getURL(uri).toExternalForm());
             }
             catch(Exception ex)
             {
