@@ -146,8 +146,9 @@ public class ArtifactURI2URLFormat implements Format<Object>
         if (object instanceof String)
         {
            try {
-                URI uri = URI.create((String)object + "?RUNID=" + jobID);
+                URI uri = URI.create((String)object);
                 CaomArtifactResolver caomArtifactResolver = new CaomArtifactResolver();
+                caomArtifactResolver.setRunID(jobID);
                 return caomArtifactResolver.getURL(uri).toExternalForm();
             }
             catch(Exception ex)
