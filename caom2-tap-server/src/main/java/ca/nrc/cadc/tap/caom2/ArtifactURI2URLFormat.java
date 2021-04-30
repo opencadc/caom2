@@ -143,14 +143,12 @@ public class ArtifactURI2URLFormat implements Format<Object>
         log.debug("format: " + object + "," + jobID);
         if (object == null)
             return "";
-        StringBuilder sb = new StringBuilder();
-
         if (object instanceof String)
         {
            try {
                 URI uri = URI.create((String)object + "?RUNID=" + jobID);
                 CaomArtifactResolver caomArtifactResolver = new CaomArtifactResolver();
-                sb.append(caomArtifactResolver.getURL(uri).toExternalForm());
+                return caomArtifactResolver.getURL(uri).toExternalForm();
             }
             catch(Exception ex)
             {
@@ -162,7 +160,5 @@ public class ArtifactURI2URLFormat implements Format<Object>
             throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
                     + " expects a (String) storage URI, got: " + object.getClass().getName());
 
-
-        return sb.toString();
     }
 }
