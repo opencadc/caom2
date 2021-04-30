@@ -18,19 +18,19 @@ jobs:
     
     
     - name: build and test caom2-tap
-      run: cd caom2-tap && gradle clean build javadoc install
+      run: cd caom2-tap && ../gradlew clean build javadoc install
 
     - name: build and test caom2-tap-server
-      run: cd caom2-tap-server && gradle clean build javadoc install
+      run: cd caom2-tap-server && ../gradlew clean build javadoc install
     
     - name: build and test caom2-daralink-server
-      run: cd caom2-datalink-server && gradle clean build javadoc install
+      run: cd caom2-datalink-server && ../gradlew clean build javadoc install
     
     - name: build and test caom2-meta-server
-      run: cd caom2-meta-server && gradle clean build javadoc install
+      run: cd caom2-meta-server && ../gradlew clean build javadoc install
     
     - name: build and test caom2-pkg-server
-      run: cd caom2-pkg-server && gradle clean build javadoc install
+      run: cd caom2-pkg-server && ../gradlew clean build javadoc install
     
     - name: build and test caom2-soda-server
-      run: cd caom2-soda-server && gradle clean build javadoc install
+      run: cd caom2-soda-server && ../gradlew clean build javadoc install

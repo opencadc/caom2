@@ -2,13 +2,14 @@ plugins {
     id 'java'
     id 'maven'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.8.4'
     id 'checkstyle'
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
     mavenLocal()
+    // tmp to resolve uk.ac.starlink
+    jcenter()
 }
 
 apply from: '../opencadc.gradle'
@@ -17,11 +18,14 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '1.2.1'
+version = '1.2.3'
+
+description = 'OpenCADC CAOM2 TAP server library'
+def git_url = 'https://github.com/opencadc/caom2service'
 
 dependencies {
-    compile 'log4j:log4j:1.2.+'
-    compile 'org.postgresql:postgresql:9.4.1209.jre7'
+    compile 'log4j:log4j:[1.2,)'
+    compile 'org.postgresql:postgresql:[42.2,)'
 
     compile 'org.opencadc:cadc-util:[1.0,)'
     compile 'org.opencadc:cadc-log:[1.0,)'
@@ -34,6 +38,7 @@ dependencies {
     compile 'org.opencadc:cadc-tap-server-pg:[1.0.3,)'
     compile 'org.opencadc:cadc-tap-schema:[1.1.6,)'
     compile 'org.opencadc:cadc-adql:[1.1.9,)'
+    compile 'org.opencadc:caom2-artifact-resolvers:[1.2.3,)'
     
     compile 'org.opencadc:cadc-vos:[1.0,)'
     compile 'org.opencadc:cadc-gms:[1.0.0,)'

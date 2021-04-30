@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.caom2;
 
@@ -75,101 +75,63 @@ import java.net.URL;
 import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import java.net.URISyntaxException;
 
 /**
  * Formatter to handle converting a caom2.Artifact.uri to an accessURL.
  *
  * @author pdowler
  */
-public class ArtifactURI2URLFormat implements Format<Object>
-{
+public class ArtifactURI2URLFormat implements Format<Object> {
+
     private static final Logger log = Logger.getLogger(ArtifactURI2URLFormat.class);
 
     private String jobID;
-    private URL accessURL;
+    private CaomArtifactResolver caomArtifactResolver;
 
-    private static final URI DATA_RESOURCE_IDENTIFIER_URI;
-
-    static
-    {
-        try
-        {
-        	DATA_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/data");
-        }
-        catch(IllegalArgumentException bug)
-        {
-            throw new RuntimeException("BUG: invalid resourceIdentifier string", bug);
-        }
-        catch(NullPointerException bug)
-        {
-            throw new RuntimeException("BUG: null resourceIdentifier string", bug);
-        }
+    private ArtifactURI2URLFormat() {
     }
 
-    private ArtifactURI2URLFormat() { }
-
-    public ArtifactURI2URLFormat(String jobID)
-    {
-        if (jobID == null)
+    public ArtifactURI2URLFormat(String jobID) {
+        if (jobID == null) {
             throw new IllegalArgumentException("null jobID");
+        }
         this.jobID = jobID;
-
-        try
-        {
-            RegistryClient rc = new RegistryClient();
-            // TODO: how to pick https?
-            this.accessURL = rc.getServiceURL(DATA_RESOURCE_IDENTIFIER_URI, Standards.DATA_10, AuthMethod.ANON);
-        }
-        catch(Exception ex)
-        {
-            log.error("BUG", ex);
-        }
+        this.caomArtifactResolver = new CaomArtifactResolver();
+        caomArtifactResolver.setRunID(jobID);
     }
 
     @Override
-    public Object parse(String s)
-    {
+    public Object parse(String s) {
         throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
     }
 
     @Override
-    public String format(Object object)
-    {
+    public String format(Object object) {
         log.debug("format: " + object + "," + jobID);
-        if (object == null)
+        if (object == null) {
             return "";
-        StringBuilder sb = new StringBuilder();
-
-        if (object instanceof String)
-        {
-            try
-            {
+        }
+        if (object instanceof String) {
+            try {
                 URI uri = new URI((String) object);
-                if ("ad".equals(uri.getScheme()))
-                {
-                    sb.append(accessURL.toExternalForm());
-                    sb.append("/");
-                    sb.append(uri.getSchemeSpecificPart()); // ad URI
-                    sb.append("?RUNID=");
-                    sb.append(jobID);
-                }
-                else
-                    sb.append(uri.toASCIIString()); // pass-through (http, vos, etc)
-            }
-            catch(Exception ex)
-            {
+                return caomArtifactResolver.getURL(uri).toExternalForm();
+            } catch (URISyntaxException ex) {
+                throw new RuntimeException("invalid content: " + ArtifactURI2URLFormat.class.getCanonicalName()
+                        + " expects a storage URI ", ex);
+            } catch (Exception ex) {
                 throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
                         + " expects a storage URI ", ex);
             }
-        }
-        else
+        } else {
             throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
                     + " expects a (String) storage URI, got: " + object.getClass().getName());
+        }
 
-
-        return sb.toString();
     }
 }

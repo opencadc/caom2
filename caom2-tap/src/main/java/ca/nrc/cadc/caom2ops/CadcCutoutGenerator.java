@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -68,7 +68,8 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcGeminiResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -77,36 +78,51 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author pdowler
+ * @author adriand
  */
-public class CadcGeminiCutoutGenerator extends CadcGeminiResolver implements CutoutGenerator {
-    private static final Logger log = Logger.getLogger(CadcGeminiCutoutGenerator.class);
+public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator {
+    private static final Logger log = Logger.getLogger(CadcCutoutGenerator.class);
 
-    public CadcGeminiCutoutGenerator() { }
+    private final String scheme;
+
+    public CadcCutoutGenerator() {
+        scheme = super.getScheme();
+    }
+
+    protected CadcCutoutGenerator(final String scheme) {
+        this.scheme = scheme;
+    }
+
+    @Override
+    public URL toURL(URI uri, List<String> cutouts, String label) {
+        if (label != null) {
+            log.warn("Cutout label not supported yet");
+        }
+
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, null);
+
+        try {
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+        }
+    }
 
     @Override
     public boolean canCutout(Artifact a) {
         // file types supported by SODA
         return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
     }
-    
+
     @Override
-    public URL toURL(URI uri, List<String> cutouts, String label) 
-            throws IllegalArgumentException {
-        URL base = super.toURL(uri);
-        if (cutouts == null || cutouts.isEmpty()) {
-            return base;
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append(base.toExternalForm());
-        String filename = AdCutoutGenerator.generateFilename(uri, label, cutouts);
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
-        
-        try {
-            return new URL(sb.toString());
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: failed to generate cutout URL.", ex);
-        }
+    public String getScheme() {
+        return scheme;
     }
 }

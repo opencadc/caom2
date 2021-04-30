@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.caom2ops;
 
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -84,6 +85,18 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
     public CadcMastCutoutGenerator() { }
 
     @Override
+    public boolean canCutout(Artifact a) {
+        // HACK: can only do cutouts if base is to a CADC data service
+        // ... hopefully temporary
+        URL base = super.toURL(a.getURI());
+        if (!base.getHost().endsWith(".ca")) {
+            return false;
+        }
+        // file types supported by SODA
+        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
+    }
+    
+    @Override
     public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
         URL base = super.toURL(uri);
@@ -99,7 +112,7 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
         
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        String filename = AdCutoutGenerator.generateFilename(uri, label);
+        String filename = AdCutoutGenerator.generateFilename(uri, label, cutouts);
         AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
         
         try {

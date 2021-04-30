@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,11 +69,14 @@
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,115 +86,106 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * @author adriand
+ * @author yeunga
  */
-public class AdCutoutGeneratorIntTest {
-    private static final Logger log = Logger.getLogger(AdCutoutGeneratorIntTest.class);
+public class CadcCutoutGeneratorTest {
+    private static final Logger log = Logger.getLogger(CadcCutoutGeneratorTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    final String FILE_URI = "ad:CFHT/806045o.fits.fz";
-    private static final String CUTOUT1 = "[9][100:200,100:200]";
-    private static final String CUTOUT2 = "[11][100:200,100:200]";
+    private static final String SI_URL = "https://unittest.com/minoc/files";
 
-    	private static final String INVALID_CUTOUT = "[100][100:200]";
-    AdCutoutGenerator resolver = new AdCutoutGenerator();
+    private static final String CUTOUT1 = "[1][100:200, 100:200]";
+    private static final String CUTOUT2 = "[2][300:400, 300:400]";
+    private static final String CUTOUT3 = "[3][500:600, 500:600]";
+    private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
-    public AdCutoutGeneratorIntTest() {
+    private static final String CADC_FILE_URI = "cadc:Archive/bar.fits.gz";
+    private static final String AD_FILE_URI = "ad:Archive/bar.fits.gz"; // invalid uri
+
+    CadcCutoutGenerator cutoutGenerator;
+    CadcResolver cadcResolver;
+
+    public CadcCutoutGeneratorTest() {
+        cutoutGenerator = getGenerator();
+        cadcResolver = getCadcResolver();
+    }
+
+    private CadcCutoutGenerator getGenerator() {
+        // override the capabilities method
+        return new CadcCutoutGenerator() {
+            @Override
+            public URL getServiceURL(AuthMethod am) throws URISyntaxException {
+                try {
+                    return new URL("https://myservice.com/service");
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+    }
+
+    private CadcResolver getCadcResolver() {
+        // override the capabilities method
+        return new CadcResolver() {
+            @Override
+            public URL getServiceURL(AuthMethod am) throws URISyntaxException {
+                try {
+                    return new URL("https://myservice.com/service");
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
     }
 
     @Test
-    public void testValidCutoutUrlWithNoLabel() throws Exception {
-        log.info("starting testValidCutoutUrl");
+    public void testToURLWithNullLabel() {
         try {
-        	String label = null;
-            List<URL> urlList = new ArrayList<URL>();
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
-            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
-            
-            urlList.add(url);
-            for (URL u : urlList) {
-                log.debug("opening connection to: " + u.toString());
-                String urlString = url.toExternalForm();
-                String msg = "url should not contain fo parameter: " + urlString;
-                Assert.assertFalse(msg, urlString.contains("fo="));
-                OutputStream out = new ByteArrayOutputStream();
-                HttpDownload head = new HttpDownload(u, out);
-                head.setHeadOnly(true); // head requests work with data ws
-                head.run();
-                Assert.assertEquals(200, head.getResponseCode());
-                log.info("response code: " + head.getResponseCode());
-            }
-
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(CADC_FILE_URI);
+            cutoutGenerator.setAuthMethod(AuthMethod.ANON);
+            URL url = cutoutGenerator.toURL(uri, cutouts, "label1%");
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            String urlString = url.toExternalForm();
+            URL storageURI = cadcResolver.toURL(new URI(CADC_FILE_URI));
+            Assert.assertTrue(urlString.contains(storageURI.toString()));
+            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
+            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
+            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
+            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
+            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
         } catch (Exception unexpected) {
-            log.error("Unexpected exception", unexpected);
-            Assert.fail("Unexpected exception: " + unexpected);
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testValidCutoutUrlWithLabel() throws Exception {
-        log.info("starting testValidCutoutUrl");
+    public void testInvalidCadcURI() throws Exception {
+        List<String> cutouts = new ArrayList<String>();
+        cutouts.add(CUTOUT1);
+        cutouts.add(CUTOUT2);
+        cutouts.add(CUTOUT3);
+        cutouts.add(CUTOUT4);
+        URI uri = new URI(AD_FILE_URI);
+        cutoutGenerator.setAuthMethod(AuthMethod.ANON);
         try {
-        	String label = "label1";
-        	String expected_filename = "806045o" + "__" + label + "__" + "9__100_200_100_200___11__100_200_100_200.fits";
-            List<URL> urlList = new ArrayList<URL>();
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
-            
-            urlList.add(url);
-            for (URL u : urlList) {
-                log.debug("opening connection to: " + u.toString());
-                String urlString = url.toExternalForm();
-                String msg = "url should contain fo parameter without compression extension: " + urlString;
-                Assert.assertTrue(msg, urlString.contains("fo=" + expected_filename));
-                OutputStream out = new ByteArrayOutputStream();
-                HttpDownload head = new HttpDownload(u, out);
-                head.setHeadOnly(true); // head requests work with data ws
-                head.run();
-                Assert.assertEquals(200, head.getResponseCode());
-                log.info("response code: " + head.getResponseCode());
-                String cdis = head.getResponseHeader("Content-Disposition");
-                String actual_filename = cdis.split("=")[1];
-                Assert.assertEquals("incorrect filename", expected_filename, actual_filename);
-            }
-
+            URL url = cutoutGenerator.toURL(uri, cutouts, null);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
+            log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
-            log.error("Unexpected exception", unexpected);
-            Assert.fail("Unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testInvalidCutoutUrl() throws Exception {
-        log.info("starting testValidCutoutUrl");
-        try {
-        	String label = null;
-            List<URL> urlList = new ArrayList<URL>();
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(INVALID_CUTOUT);
-            URL url = resolver.toURL(new URI(FILE_URI), cutouts, label);
-            
-            urlList.add(url);
-            for (URL u : urlList) {
-                log.debug("opening connection to: " + u.toString());
-                OutputStream out = new ByteArrayOutputStream();
-                HttpDownload download = new HttpDownload(u, out);
-                download.setHeadOnly(false); // need download request to check cutout
-                download.run();
-                Assert.assertEquals(400, download.getResponseCode());
-                log.info("response code: " + download.getResponseCode());
-            }
-
-        } catch (Exception unexpected) {
-            log.error("Unexpected exception", unexpected);
-            Assert.fail("Unexpected exception: " + unexpected);
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 }
