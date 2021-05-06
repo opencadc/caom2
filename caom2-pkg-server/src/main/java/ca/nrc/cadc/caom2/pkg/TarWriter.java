@@ -196,7 +196,7 @@ public class TarWriter
             Date lastModified = get.getLastModified();
             URI digest = get.getDigest();
             if ((digest != null) && (digest.getScheme().equals("md5"))) {
-                item.contentMD5 = DigestUtil.base64Decode(digest.getRawSchemeSpecificPart());
+                item.contentMD5 = digest.getRawSchemeSpecificPart();
             } else {
                 item.contentMD5 = get.getContentMD5();
             }
