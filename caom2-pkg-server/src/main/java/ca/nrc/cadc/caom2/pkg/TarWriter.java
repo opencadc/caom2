@@ -194,12 +194,11 @@ public class TarWriter
             String filename =  path + "/" + item.filename;
             long contentLength = get.getContentLength();
             Date lastModified = get.getLastModified();
-            item.contentMD5 = get.getContentMD5();
-            if (item.contentMD5 == null) {
-                URI digest = get.getDigest();
-                if ((digest != null) && (digest.getScheme().equals("md5"))) {
-                    item.contentMD5 = DigestUtil.base64Decode(digest.getRawSchemeSpecificPart());
-                }
+            URI digest = get.getDigest();
+            if ((digest != null) && (digest.getScheme().equals("md5"))) {
+                item.contentMD5 = DigestUtil.base64Decode(digest.getRawSchemeSpecificPart());
+            } else {
+                item.contentMD5 = get.getContentMD5();
             }
 
             // create entry
