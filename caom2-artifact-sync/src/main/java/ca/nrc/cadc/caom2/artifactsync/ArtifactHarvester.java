@@ -129,7 +129,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
     
     // reset each run
     long downloadCount = 0;
-    int processedCount = 0;
+    long updateCount = 0;
+    long processedCount = 0;
     Date start = new Date();
 
     public ArtifactHarvester(ObservationDAO observationDAO, HarvestResource harvestResource,
@@ -291,10 +292,13 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                             this.downloadCount++;
                                             added = true;
                                             if (skip != null) {
+                                                this.downloadCount--;
                                                 if (this.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) {
+                                                    this.updateCount++;
                                                     message = this.errorMessage 
-                                                        + " artifact already exists in skip table, update tryAfter date to relese date.";
+                                                        + " artifact already exists in skip table, update tryAfter date to release date.";
                                                 } else {
+                                                    added = false;
                                                     String msg = "artifact already exists in skip table.";;
                                                     if (this.reason.equalsIgnoreCase("None")) {
                                                         this.reason = "Public " + msg;
@@ -472,6 +476,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
         batchMessage.append("\"total\":\"").append(this.processedCount).append("\"");
         batchMessage.append(",");
         batchMessage.append("\"added\":\"").append(this.downloadCount).append("\"");
+        batchMessage.append(",");
+        batchMessage.append("\"updated\":\"").append(this.updateCount).append("\"");
         batchMessage.append(",");
         batchMessage.append("\"time\":\"").append(System.currentTimeMillis() - this.start.getTime()).append("\"");
         batchMessage.append(",");

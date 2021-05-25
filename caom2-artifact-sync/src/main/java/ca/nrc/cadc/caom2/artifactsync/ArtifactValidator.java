@@ -133,6 +133,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private boolean tolerateNullChecksum = false;
     private boolean tolerateNullContentLength = false;
     private String prefix = null;
+    private long newSkipURICount = 0;
+    private long updateSkipURICount = 0;
         
     private ExecutorService executor;
     
@@ -213,7 +215,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long diffType = 0;
         long diffChecksum = 0;
         long notInLogical = 0;
-        long skipURICount = 0;
         long inSkipURICount = 0;
         
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
@@ -244,9 +245,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         // content length mismatch
                         diffLength++;
                         if (supportSkipURITable) {
-                            if (checkAddToSkipTable(nextLogical, "ContentLengths are different")) {
-                                skipURICount++;
-                            } else {
+                            if (!checkAddToSkipTable(nextLogical, "ContentLengths are different")) {
                                 inSkipURICount++;
                             }
                         }
@@ -264,9 +263,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     // checksum mismatch
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        if (checkAddToSkipTable(nextLogical, "Checksums are different")) {
-                            skipURICount++;
-                        } else {
+                        if (!checkAddToSkipTable(nextLogical, "Checksums are different")) {
                             inSkipURICount++;
                         }
                     }
@@ -331,9 +328,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 
                 // add to HavestSkipURI table if there is not already a row in the table
                 if (supportSkipURITable) {
-                    if (checkAddToSkipTable(metadata, errorMessage)) {
-                        skipURICount++;
-                    } else {
+                    if (!checkAddToSkipTable(metadata, errorMessage)) {
                         inSkipURICount++;
                     }
                 }
@@ -383,7 +378,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalMissingFromStorage", Long.toString(missingFromStorage),
                 "totalNotPublic", Long.toString(notPublic),
                 "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
-                "totalNewSkipURI", Long.toString(skipURICount),
+                "totalNewSkipURI", Long.toString(newSkipURICount),
+                "totalUpdateSkipURI", Long.toString(updateSkipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
                 }, true);
         }
@@ -460,8 +456,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
             if (releaseDate != null && !reportOnly) {
+                boolean isAdd = false;
                 if (skip == null) {
                     // not in skip table, add it
+                    isAdd = true;
                     skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
                 } 
 
@@ -472,6 +470,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }
                 
                 harvestSkipURIDAO.put(skip);
+                if (isAdd) {
+                    newSkipURICount++;
+                } else {
+                    updateSkipURICount++;
+                }
                 String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
                 logJSON(new String[]
                     {"logType", "detail",
