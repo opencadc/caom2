@@ -481,6 +481,7 @@ public class ObservationValidator implements Runnable {
 
             log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
+                log.info("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
                 throw new MismatchedChecksumException("Observation.accMetaChecksum mismatch");
             }
         } catch (NoSuchAlgorithmException e) {
