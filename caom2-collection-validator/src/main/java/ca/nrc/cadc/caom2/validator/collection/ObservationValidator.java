@@ -406,7 +406,7 @@ public class ObservationValidator implements Runnable {
                         validateChecksum(o);
                     } catch (MismatchedChecksumException checksumOops) {
                         clean = false;
-                        log.error(CHECKSUM_ERROR + " mismatching checksums: " + observationURI + " " + format(o.getMaxLastModified()));
+                        log.error(CHECKSUM_ERROR + " mismatching checksums: " + checksumOops.getMessage() + " " + format(o.getMaxLastModified()));
                         ret.checksumErr++;
                     }
 
@@ -480,9 +480,8 @@ public class ObservationValidator implements Runnable {
             URI calculatedChecksum = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
 
             log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
-            if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
-                log.info("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
-                throw new MismatchedChecksumException("Observation.accMetaChecksum mismatch");
+            if (calculatedChecksum.equals(o.getAccMetaChecksum())) {
+                throw new MismatchedChecksumException(o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 digest algorithm not available");
