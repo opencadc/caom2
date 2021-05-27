@@ -480,7 +480,7 @@ public class ObservationValidator implements Runnable {
             URI calculatedChecksum = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
 
             log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
-            if (calculatedChecksum.equals(o.getAccMetaChecksum())) {
+            if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
                 throw new MismatchedChecksumException(o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             }
         } catch (NoSuchAlgorithmException e) {
