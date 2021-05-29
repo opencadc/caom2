@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2020.                            (c) 2020.
+ *  (c) 2021.                            (c) 2021.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -332,7 +332,7 @@ public class ObservationValidator implements Runnable {
             }
 
             // avoid re-processing the last successful one stored in progressRecord (normal case because query: >= startDate)
-            if (obsList.isEmpty()) {
+            if (!obsList.isEmpty()) {
                 ListIterator<ObservationResponse> iter = obsList.listIterator();
                 Observation curBatchLeader = iter.next().observation;
                 if (curBatchLeader != null) {
@@ -366,6 +366,7 @@ public class ObservationValidator implements Runnable {
 
                 if (o != null) {
                     progressRecord.curLastModified = o.getMaxLastModified();
+                    progressRecord.curID = o.getID();
                     log.debug("max last modified: " + o.getMaxLastModified());
 
                     // core validator
@@ -511,6 +512,10 @@ public class ObservationValidator implements Runnable {
         if (hs.curLastModified != null) {
             sb.append("curLastModified = ").append(format(hs.curLastModified)).append("\n");
         }
+
+        if (hs.curID != null) {
+            sb.append("curID = ").append(hs.curID).append("\n");
+        }
         String progressString = sb.toString();
         
         log.debug("writing progress file: " + progressRecord + ": " + progressString);
@@ -527,6 +532,7 @@ public class ObservationValidator implements Runnable {
         String src = null;
         String ecn = null;
         String cur = null;
+        String curID = null;
         
         String line = r.readLine();
         while (line != null) {
@@ -540,6 +546,8 @@ public class ObservationValidator implements Runnable {
                     ecn = tokens[1];
                 } else if ("curLastModified".equals(tokens[0])) {
                     cur = tokens[1];
+                } else if ("curID".equals(tokens[0])) {
+                    curID = tokens[1];
                 } else {
                     log.debug("[readProgressFile] skip: " + line);
                 }
@@ -552,6 +560,10 @@ public class ObservationValidator implements Runnable {
             HarvestState ret = new HarvestState(src, ecn);
             if (cur != null) {
                 ret.curLastModified = DateUtil.flexToDate(cur, df);
+            }
+
+            if (curID != null) {
+                ret.curID = UUID.fromString(curID);
             }
             log.debug("PROGRESS FILE OBJECT: " + ret);
             return ret;
