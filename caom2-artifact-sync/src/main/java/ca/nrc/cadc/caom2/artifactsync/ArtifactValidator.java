@@ -215,7 +215,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long diffType = 0;
         long diffChecksum = 0;
         long notInLogical = 0;
-        long inSkipURICount = 0;
         
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         ArtifactMetadata nextLogical = null;
@@ -245,9 +244,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         // content length mismatch
                         diffLength++;
                         if (supportSkipURITable) {
-                            if (!checkAddToSkipTable(nextLogical, "ContentLengths are different")) {
-                                inSkipURICount++;
-                            }
+                            checkAddToSkipTable(nextLogical, "ContentLengths are different");
                         }
                         logJSON(new String[]
                             {"logType", "detail",
@@ -263,9 +260,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     // checksum mismatch
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        if (!checkAddToSkipTable(nextLogical, "Checksums are different")) {
-                            inSkipURICount++;
-                        }
+                        checkAddToSkipTable(nextLogical, "Checksums are different");
                     }
                     logJSON(new String[]
                         {"logType", "detail",
@@ -328,9 +323,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 
                 // add to HavestSkipURI table if there is not already a row in the table
                 if (supportSkipURITable) {
-                    if (!checkAddToSkipTable(metadata, errorMessage)) {
-                        inSkipURICount++;
-                    }
+                    checkAddToSkipTable(metadata, errorMessage);
                 }
             }
             
@@ -365,6 +358,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }, true);
         } else {
             // validate
+            long totalInSkipURICount = updateSkipURICount + newSkipURICount;
             logJSON(new String[] {
                 "logType", "summary",
                 "collection", collection,
@@ -377,7 +371,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalMissingFromStorage", Long.toString(missingFromStorage),
                 "totalNotPublic", Long.toString(notPublic),
-                "totalAlreadyInSkipURI", Long.toString(inSkipURICount),
+                "totalInSkipURI", Long.toString(totalInSkipURICount),
                 "totalNewSkipURI", Long.toString(newSkipURICount),
                 "totalUpdateSkipURI", Long.toString(updateSkipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
@@ -449,7 +443,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return supportSkipURITable;
     }
     
-    private boolean checkAddToSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+    private void checkAddToSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
         if (supportSkipURITable) {
             // add to HavestSkipURI table if there is not already a row in the table
             Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
@@ -484,11 +478,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                      "caomChecksum", metadata.getChecksum(),
                      "errorMessage", errorMessageString},
                     true);
-                return true;
             }
         }
-
-        return false;
     }
     
     private TreeSet<ArtifactMetadata> getLogicalMetadata(Integer batchSize) throws Exception {
