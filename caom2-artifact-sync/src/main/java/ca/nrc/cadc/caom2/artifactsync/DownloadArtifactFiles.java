@@ -360,7 +360,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 threadLog.debug("Starting download of " + artifactURI + " from " + url);
                 long start = System.currentTimeMillis();
                 download.run();
-                threadLog.debug("Completed download of " + artifactURI + " from " + url);
                 result.elapsedTimeMillis = System.currentTimeMillis() - start;
 
                 respCode = download.getResponseCode();
@@ -375,6 +374,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                     result.message = sb.toString();
                 } else {
                     if (uploadSuccess) {
+                        threadLog.debug("Completed download of " + artifactURI + " from " + url);
                         result.success = true;
                     } else {
                         if (md5sumMessage == null) {
@@ -436,6 +436,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
             } catch (Throwable t) {
                 uploadSuccess = false;
                 uploadErrorMessage = "Upload error: " + t.getMessage();
+                throw new IOException(t);
             } finally {
                 bytesTransferred = byteCounter.getByteCount();
             }
