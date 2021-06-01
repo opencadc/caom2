@@ -482,7 +482,7 @@ public class ObservationValidator implements Runnable {
 
             log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
-                throw new MismatchedChecksumException(o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
+                throw new MismatchedChecksumException(o.getURI() + " -- caom2 " + o.getAccMetaChecksum() + " vs calculated " + calculatedChecksum);
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 digest algorithm not available");
