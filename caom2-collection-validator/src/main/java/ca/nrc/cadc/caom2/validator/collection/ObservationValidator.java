@@ -353,7 +353,7 @@ public class ObservationValidator implements Runnable {
             t = System.currentTimeMillis();
 
             ListIterator<ObservationResponse> iter1 = obsList.listIterator();
-            log.info("...found: " + obsList.size() + " time: " + t + "\n");
+            log.info("...found: " + obsList.size() + " time: " + t);
             while (iter1.hasNext()) {
                 boolean clean = true;
                 log.debug("next iteration...");
@@ -464,8 +464,8 @@ public class ObservationValidator implements Runnable {
         } finally {
             timeValidation = System.currentTimeMillis() - t;
             log.info("batch stats: " + ret.toString() + " time: " + timeValidation);
-            log.info("\nTime to run ObservationListQuery: " + timeQuery + "ms");
-            log.info("\nTime to run validations for batch: " + timeValidation + "ms\n");
+            log.info("time to run ObservationListQuery: " + timeQuery + "ms");
+            log.info("time to run validations for batch: " + timeValidation + "ms\n");
             ret.processTime = timeQuery + timeValidation;
         }
         return ret;
