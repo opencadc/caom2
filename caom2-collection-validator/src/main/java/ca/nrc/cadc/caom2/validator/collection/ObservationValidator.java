@@ -288,7 +288,6 @@ public class ObservationValidator implements Runnable {
     }
 
     private Aggregate doit() {
-        log.info("Starting batch. batchsize: " + batchSize);
         Aggregate ret = new Aggregate();
 
         if (!ready) {
@@ -323,7 +322,7 @@ public class ObservationValidator implements Runnable {
             firstIteration = false;
 
             log.info("...getting collection list");
-            log.info("Validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
+            log.info("validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
             List<ObservationResponse> obsList;
             if (srcObservationDAO != null) {
                 obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize + 1);
@@ -354,7 +353,7 @@ public class ObservationValidator implements Runnable {
             t = System.currentTimeMillis();
 
             ListIterator<ObservationResponse> iter1 = obsList.listIterator();
-            log.info("...validating observations\n");
+            log.info("...found: " + obsList.size() + " time: " + t + "\n");
             while (iter1.hasNext()) {
                 boolean clean = true;
                 log.debug("next iteration...");
@@ -464,8 +463,7 @@ public class ObservationValidator implements Runnable {
             ret.runtime++;
         } finally {
             timeValidation = System.currentTimeMillis() - t;
-            log.info("...done batch.");
-            log.info("batch stats: " + ret.toString());
+            log.info("batch stats: " + ret.toString() + " time: " + timeValidation);
             log.info("\nTime to run ObservationListQuery: " + timeQuery + "ms");
             log.info("\nTime to run validations for batch: " + timeValidation + "ms\n");
             ret.processTime = timeQuery + timeValidation;
