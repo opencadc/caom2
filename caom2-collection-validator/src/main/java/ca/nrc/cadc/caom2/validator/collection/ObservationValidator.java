@@ -321,7 +321,6 @@ public class ObservationValidator implements Runnable {
             }
             firstIteration = false;
 
-            log.info("...getting collection list");
             log.info("validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
             List<ObservationResponse> obsList;
             if (srcObservationDAO != null) {
@@ -353,7 +352,7 @@ public class ObservationValidator implements Runnable {
             t = System.currentTimeMillis();
 
             ListIterator<ObservationResponse> iter1 = obsList.listIterator();
-            log.info("...found: " + obsList.size() + " time: " + t);
+            log.info("...found: " + obsList.size() + " time: " + timeQuery);
             while (iter1.hasNext()) {
                 boolean clean = true;
                 log.debug("next iteration...");
