@@ -352,7 +352,6 @@ public class ObservationValidator implements Runnable {
             t = System.currentTimeMillis();
 
             ListIterator<ObservationResponse> iter1 = obsList.listIterator();
-            log.info("...found: " + obsList.size() + " time: " + timeQuery);
             while (iter1.hasNext()) {
                 boolean clean = true;
                 log.debug("next iteration...");
@@ -462,10 +461,8 @@ public class ObservationValidator implements Runnable {
             ret.runtime++;
         } finally {
             timeValidation = System.currentTimeMillis() - t;
-            log.info("batch stats: " + ret.toString() + " time: " + timeValidation);
-            log.info("time to run ObservationListQuery: " + timeQuery + "ms");
-            log.info("time to run validations for batch: " + timeValidation + "ms\n");
             ret.processTime = timeQuery + timeValidation;
+            log.info("batch stats: " + ret.toString() + " query time: " + timeQuery + "ms validation time: " + timeValidation + "ms\n");
         }
         return ret;
     }
@@ -627,7 +624,7 @@ public class ObservationValidator implements Runnable {
 
         @Override
         public String toString() {
-            return "found: " + found + " passed:  " + passed + " failed: " + failed + " time: " + this.processTime;
+            return "found: " + found + " passed: " + passed + " failed: " + failed;
         }
 
         public void addAggregate(Aggregate ag) {
