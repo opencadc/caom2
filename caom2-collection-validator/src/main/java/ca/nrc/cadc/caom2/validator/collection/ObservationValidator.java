@@ -324,9 +324,9 @@ public class ObservationValidator implements Runnable {
             log.info("validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
             List<ObservationResponse> obsList;
             if (srcObservationDAO != null) {
-                obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize + 1);
+                obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize);
             } else {
-                obsList = srcObservationService.getList(src.getCollection(), startDate, endDate, batchSize + 1);
+                obsList = srcObservationService.getList(src.getCollection(), startDate, endDate, batchSize);
             }
 
             // avoid re-processing the last successful one stored in progressRecord (normal case because query: >= startDate)
