@@ -177,7 +177,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         executor = Executors.newFixedThreadPool(2);
         final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
-                return getLogicalMetadata(null);
+                return getLogicalMetadata();
             }
         });
         log.info("Submitted query to caom2");
@@ -482,19 +482,17 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
     }
     
-    private TreeSet<ArtifactMetadata> getLogicalMetadata(Integer batchSize) throws Exception {
+    private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
         TreeSet<ArtifactMetadata> result = new TreeSet<>(ArtifactMetadata.getComparator());
         if (StringUtil.hasText(source)) {
             // use database <server.database.schema>
             // HarvestSkipURI table is not supported in 'diff' mode, i.e. reportOnly = true
             this.supportSkipURITable = !reportOnly;
             long t1 = System.currentTimeMillis();
-            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, batchSize);
+            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, null);
             long t2 = System.currentTimeMillis();
             long dt = t2 - t1;
-            if (batchSize == null) {
-                log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
-            }
+            log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
             
             int depth = 3;
             ListIterator<ObservationState> iter = states.listIterator();
@@ -517,10 +515,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }
             }
             
-            if (batchSize == null) {
-                // log only when we query all artifacts of a collection
-                log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
-            }
+            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
         } else {
             this.supportSkipURITable = false;
             if (caomTapResourceID != null) {
@@ -538,12 +533,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String uriSelect = "distinct(a.uri)";
-            if (batchSize == 1) {
-                uriSelect = "top 1 a.uri";
-            }
-
-            String adql = "select " + uriSelect + ", a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+            String adql = "select distinct(a.uri), a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
                     + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
@@ -553,10 +543,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
             result = query(caomTapURL, adql);
-            if (batchSize != 1) {
-                // log only when we query all artifacts of a collection
-                log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
-            }
+            log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
         }
         return result;
     }
