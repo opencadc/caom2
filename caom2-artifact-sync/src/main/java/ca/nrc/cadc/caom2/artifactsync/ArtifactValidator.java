@@ -120,6 +120,9 @@ import org.opencadc.tap.TapClient;
 public class ArtifactValidator implements PrivilegedExceptionAction<Object>, ShutdownListener  {
     
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
+    private static final String LENGTH_DIFF = "ContentLengths are different";
+    private static final String CHECKSUM_DIFF = "Checksums are different";
+    private static final String CORRECT = "no checksum, contentLength or contentType differences";
     
     private ObservationDAO observationDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
@@ -132,7 +135,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private boolean supportSkipURITable = false;
     private boolean tolerateNullChecksum = false;
     private boolean tolerateNullContentLength = false;
-    private String prefix = null;
     private long newSkipURICount = 0;
     private long updateSkipURICount = 0;
         
@@ -226,7 +228,19 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 if (matches(nextLogical.getChecksum(), nextPhysical.getChecksum())) {
                     if (matches(nextLogical.contentLength, nextPhysical.contentLength)) {
                         if (matches(nextLogical.contentType, nextPhysical.contentType)) {
-                            correct++;
+                            Artifact artifact = new Artifact(nextLogical.getArtifactURI(), nextLogical.productType, nextLogical.releaseType);
+                            Date releaseDate = AccessUtil.getReleaseDate(artifact, nextLogical.metaRelease, nextLogical.dataRelease);
+                            if (releaseDate != null) {
+                                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, nextLogical.getArtifactURI());
+                                if (skip != null && needsUpdate(skip, releaseDate, CORRECT)) {
+                                    // release date or error message has changed
+                                    updateSkipTable(skip, releaseDate, nextLogical, CORRECT);
+                                } else {
+                                    correct++;
+                                }
+                            } else {
+                                correct++;
+                            }
                         } else {
                             // content type mismatch
                             diffType++;
@@ -244,7 +258,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         // content length mismatch
                         diffLength++;
                         if (supportSkipURITable) {
-                            checkAddToSkipTable(nextLogical, "ContentLengths are different");
+                            addToOrUpdateSkipTable(nextLogical, LENGTH_DIFF);
                         }
                         logJSON(new String[]
                             {"logType", "detail",
@@ -260,7 +274,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     // checksum mismatch
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        checkAddToSkipTable(nextLogical, "Checksums are different");
+                        addToOrUpdateSkipTable(nextLogical, CHECKSUM_DIFF);
                     }
                     logJSON(new String[]
                         {"logType", "detail",
@@ -323,7 +337,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 
                 // add to HavestSkipURI table if there is not already a row in the table
                 if (supportSkipURITable) {
-                    checkAddToSkipTable(metadata, errorMessage);
+                    addToSkipTable(artifact, releaseDate, metadata, errorMessage);
                 }
             }
             
@@ -443,41 +457,72 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return supportSkipURITable;
     }
     
-    private void checkAddToSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
-        if (supportSkipURITable) {
-            // add to HavestSkipURI table if there is not already a row in the table
-            Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
-            Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
-            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
-            if (releaseDate != null && !reportOnly) {
-                boolean isAdd = false;
-                if (skip == null) {
-                    // not in skip table, add it
-                    isAdd = true;
-                    skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
-                } 
+    private void addToSkipTable(Artifact artifact, Date releaseDate, ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+        // add to HavestSkipURI table if there is not already a row in the table
+        HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
+        harvestSkipURIDAO.put(skip);
+        newSkipURICount++;
+        String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
+        logJSON(new String[]
+            {"logType", "detail",
+             "action", "addedToSkipTable",
+             "artifactURI", metadata.getArtifactURI().toASCIIString(),
+             "caomCollection", collection,
+             "caomChecksum", metadata.getChecksum(),
+             "errorMessage", errorMessageString},
+            true);
+    }
+    
+    private void updateSkipTable(HarvestSkipURI skip, Date releaseDate, ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+        // update HarvestSkipURI table if the releaseDate or the errorMessage has changed
+        boolean update = false;
+        if (!releaseDate.equals(skip.getTryAfter())) {
+            skip.setTryAfter(releaseDate);
+            update = true;
+        }
 
-                if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
-                        || ArtifactHarvester.PROPRIETARY.equals(errorMessage)) {
-                    skip.setTryAfter(releaseDate);
-                    skip.errorMessage = errorMessage;
-                }
-                
-                harvestSkipURIDAO.put(skip);
-                if (isAdd) {
-                    newSkipURICount++;
-                } else {
-                    updateSkipURICount++;
-                }
-                String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
-                logJSON(new String[]
-                    {"logType", "detail",
-                     "action", "addedToSkipTable",
-                     "artifactURI", metadata.getArtifactURI().toASCIIString(),
-                     "caomCollection", collection,
-                     "caomChecksum", metadata.getChecksum(),
-                     "errorMessage", errorMessageString},
-                    true);
+        if (errorMessage != null && !errorMessage.equals(skip.errorMessage)) {
+            skip.errorMessage = errorMessage;
+            update = true;
+        }
+        
+        if (update) {
+            harvestSkipURIDAO.put(skip);
+            updateSkipURICount++;
+            String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
+            logJSON(new String[]
+                {"logType", "detail",
+                 "action", "updatedSkipTable",
+                 "artifactURI", metadata.getArtifactURI().toASCIIString(),
+                 "caomCollection", collection,
+                 "caomChecksum", metadata.getChecksum(),
+                 "errorMessage", errorMessageString},
+                true);
+        }
+    }
+    
+    private boolean needsUpdate(HarvestSkipURI skip, Date releaseDate, String errorMessage) throws URISyntaxException {
+        // add to HavestSkipURI table if there is not already a row in the table
+        boolean needsUpdate = false;
+        if (!releaseDate.equals(skip.getTryAfter()) 
+            || (errorMessage != null && !errorMessage.equals(skip.errorMessage))) {
+            needsUpdate = true;
+        }
+        
+        return needsUpdate;
+    }
+    
+    private void addToOrUpdateSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+        // add to HavestSkipURI table if there is not already a row in the table
+        Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
+        Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
+        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
+        if (releaseDate != null) {
+            if (skip == null) {
+                // not in skip table, add it
+                addToSkipTable(artifact, releaseDate, metadata, errorMessage);
+            } else {
+                updateSkipTable(skip, releaseDate, metadata, errorMessage);
             }
         }
     }
