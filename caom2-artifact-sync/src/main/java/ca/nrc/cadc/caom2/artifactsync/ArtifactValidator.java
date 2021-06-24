@@ -221,26 +221,15 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         ArtifactMetadata nextLogical = null;
         for (ArtifactMetadata nextPhysical : physicalMetadata) {
-            
             if (logicalMetadata.contains(nextPhysical)) {
                 nextLogical = logicalMetadata.ceiling(nextPhysical);
+                Artifact artifact = new Artifact(nextLogical.getArtifactURI(), nextLogical.productType, nextLogical.releaseType);
+                Date releaseDate = AccessUtil.getReleaseDate(artifact, nextLogical.metaRelease, nextLogical.dataRelease);
                 logicalMetadata.remove(nextLogical);
                 if (matches(nextLogical.getChecksum(), nextPhysical.getChecksum())) {
                     if (matches(nextLogical.contentLength, nextPhysical.contentLength)) {
                         if (matches(nextLogical.contentType, nextPhysical.contentType)) {
-                            Artifact artifact = new Artifact(nextLogical.getArtifactURI(), nextLogical.productType, nextLogical.releaseType);
-                            Date releaseDate = AccessUtil.getReleaseDate(artifact, nextLogical.metaRelease, nextLogical.dataRelease);
-                            if (releaseDate != null) {
-                                HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, nextLogical.getArtifactURI());
-                                if (skip != null && needsUpdate(skip, releaseDate, CORRECT)) {
-                                    // release date or error message has changed
-                                    updateSkipTable(skip, releaseDate, nextLogical, CORRECT);
-                                } else {
-                                    correct++;
-                                }
-                            } else {
-                                correct++;
-                            }
+                            correct++;
                         } else {
                             // content type mismatch
                             diffType++;
@@ -258,7 +247,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         // content length mismatch
                         diffLength++;
                         if (supportSkipURITable) {
-                            addToOrUpdateSkipTable(nextLogical, LENGTH_DIFF);
+                            addToOrUpdateSkipTable(artifact, releaseDate, nextLogical, LENGTH_DIFF);
                         }
                         logJSON(new String[]
                             {"logType", "detail",
@@ -274,7 +263,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     // checksum mismatch
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        addToOrUpdateSkipTable(nextLogical, CHECKSUM_DIFF);
+                        addToOrUpdateSkipTable(artifact, releaseDate, nextLogical, CHECKSUM_DIFF);
                     }
                     logJSON(new String[]
                         {"logType", "detail",
@@ -337,7 +326,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 
                 // add to HavestSkipURI table if there is not already a row in the table
                 if (supportSkipURITable) {
-                    addToSkipTable(artifact, releaseDate, metadata, errorMessage);
+                    addToOrUpdateSkipTable(artifact, releaseDate, metadata, errorMessage);
                 }
             }
             
@@ -501,23 +490,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
     }
     
-    private boolean needsUpdate(HarvestSkipURI skip, Date releaseDate, String errorMessage) throws URISyntaxException {
+    private void addToOrUpdateSkipTable(Artifact artifact, Date releaseDate, ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
         // add to HavestSkipURI table if there is not already a row in the table
-        boolean needsUpdate = false;
-        if (!releaseDate.equals(skip.getTryAfter()) 
-            || (errorMessage != null && !errorMessage.equals(skip.errorMessage))) {
-            needsUpdate = true;
-        }
-        
-        return needsUpdate;
-    }
-    
-    private void addToOrUpdateSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
-        // add to HavestSkipURI table if there is not already a row in the table
-        Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
-        Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
-        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
         if (releaseDate != null) {
+            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
             if (skip == null) {
                 // not in skip table, add it
                 addToSkipTable(artifact, releaseDate, metadata, errorMessage);
