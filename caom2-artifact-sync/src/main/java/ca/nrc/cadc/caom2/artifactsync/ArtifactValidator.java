@@ -122,7 +122,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
     private static final String LENGTH_DIFF = "ContentLengths are different";
     private static final String CHECKSUM_DIFF = "Checksums are different";
-    private static final String CORRECT = "no checksum, contentLength or contentType differences";
     
     private ObservationDAO observationDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
@@ -361,7 +360,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }, true);
         } else {
             // validate
-            long totalInSkipURICount = updateSkipURICount + newSkipURICount;
             logJSON(new String[] {
                 "logType", "summary",
                 "collection", collection,
@@ -374,7 +372,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalMissingFromStorage", Long.toString(missingFromStorage),
                 "totalNotPublic", Long.toString(notPublic),
-                "totalInSkipURI", Long.toString(totalInSkipURICount),
                 "totalNewSkipURI", Long.toString(newSkipURICount),
                 "totalUpdateSkipURI", Long.toString(updateSkipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
