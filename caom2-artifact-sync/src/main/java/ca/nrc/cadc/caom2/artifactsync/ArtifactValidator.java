@@ -222,8 +222,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         for (ArtifactMetadata nextPhysical : physicalMetadata) {
             if (logicalMetadata.contains(nextPhysical)) {
                 nextLogical = logicalMetadata.ceiling(nextPhysical);
-                Artifact artifact = new Artifact(nextLogical.getArtifactURI(), nextLogical.productType, nextLogical.releaseType);
-                Date releaseDate = AccessUtil.getReleaseDate(artifact, nextLogical.metaRelease, nextLogical.dataRelease);
                 logicalMetadata.remove(nextLogical);
                 if (matches(nextLogical.getChecksum(), nextPhysical.getChecksum())) {
                     if (matches(nextLogical.contentLength, nextPhysical.contentLength)) {
@@ -246,7 +244,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         // content length mismatch
                         diffLength++;
                         if (supportSkipURITable) {
-                            addToOrUpdateSkipTable(artifact, releaseDate, nextLogical, LENGTH_DIFF);
+                            addToOrUpdateSkipTable(nextLogical, LENGTH_DIFF);
                         }
                         logJSON(new String[]
                             {"logType", "detail",
@@ -262,7 +260,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     // checksum mismatch
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        addToOrUpdateSkipTable(artifact, releaseDate, nextLogical, CHECKSUM_DIFF);
+                        addToOrUpdateSkipTable(nextLogical, CHECKSUM_DIFF);
                     }
                     logJSON(new String[]
                         {"logType", "detail",
@@ -325,7 +323,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 
                 // add to HavestSkipURI table if there is not already a row in the table
                 if (supportSkipURITable) {
-                    addToOrUpdateSkipTable(artifact, releaseDate, metadata, errorMessage);
+                    addToOrUpdateSkipTable(metadata, errorMessage);
                 }
             }
             
@@ -487,8 +485,10 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
     }
     
-    private void addToOrUpdateSkipTable(Artifact artifact, Date releaseDate, ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+    private void addToOrUpdateSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
         // add to HavestSkipURI table if there is not already a row in the table
+        Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
+        Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
         if (releaseDate != null) {
             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
             if (skip == null) {
