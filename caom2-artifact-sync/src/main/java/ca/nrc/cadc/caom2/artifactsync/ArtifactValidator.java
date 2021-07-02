@@ -140,6 +140,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
+    private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
             boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
@@ -217,7 +218,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long diffChecksum = 0;
         long notInLogical = 0;
         
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         ArtifactMetadata nextLogical = null;
         for (ArtifactMetadata nextPhysical : physicalMetadata) {
             if (logicalMetadata.contains(nextPhysical)) {
@@ -446,6 +446,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
         harvestSkipURIDAO.put(skip);
         newSkipURICount++;
+        String releaseDateString = df.format(releaseDate);
         String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
         logJSON(new String[]
             {"logType", "detail",
@@ -453,6 +454,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
              "artifactURI", metadata.getArtifactURI().toASCIIString(),
              "caomCollection", collection,
              "caomChecksum", metadata.getChecksum(),
+             "releaseDate", releaseDateString,
              "errorMessage", errorMessageString},
             true);
     }
@@ -460,12 +462,17 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private void updateSkipTable(HarvestSkipURI skip, Date releaseDate, ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
         // update HarvestSkipURI table if the releaseDate or the errorMessage has changed
         boolean update = false;
+        String updateDetails = "";
         if (!releaseDate.equals(skip.getTryAfter())) {
+            String tryAfterDateString = df.format(skip.getTryAfter());
             skip.setTryAfter(releaseDate);
+            String newTryAfterDateString = df.format(skip.getTryAfter());
+            updateDetails = "releaseDate updated from " + tryAfterDateString + " to " + newTryAfterDateString + "; ";
             update = true;
         }
 
         if (errorMessage != null && !errorMessage.equals(skip.errorMessage)) {
+            updateDetails = updateDetails + "errorMessage updated from " + skip.errorMessage + " to " + errorMessage;
             skip.errorMessage = errorMessage;
             update = true;
         }
@@ -479,6 +486,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                  "action", "updatedSkipTable",
                  "artifactURI", metadata.getArtifactURI().toASCIIString(),
                  "caomCollection", collection,
+                 "updateDetails", updateDetails,
                  "caomChecksum", metadata.getChecksum(),
                  "errorMessage", errorMessageString},
                 true);
