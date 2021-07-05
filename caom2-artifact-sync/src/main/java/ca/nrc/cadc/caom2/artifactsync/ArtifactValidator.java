@@ -463,33 +463,36 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         // update HarvestSkipURI table if the releaseDate or the errorMessage has changed
         boolean update = false;
         String updateDetails = "";
-        if (!releaseDate.equals(skip.getTryAfter())) {
+        if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage)
+            || ArtifactHarvester.PROPRIETARY.equals(errorMessage)) {
+            String releaseDateString = df.format(releaseDate);
             String tryAfterDateString = df.format(skip.getTryAfter());
-            skip.setTryAfter(releaseDate);
-            String newTryAfterDateString = df.format(skip.getTryAfter());
-            updateDetails = "releaseDate updated from " + tryAfterDateString + " to " + newTryAfterDateString + "; ";
-            update = true;
-        }
+            if (!matches(tryAfterDateString, releaseDateString)) {
+                updateDetails = "releaseDate updated from " + df.format(skip.getTryAfter()) + " to " + df.format(releaseDate) + "; ";
+                skip.setTryAfter(releaseDate);
+                update = true;
+            }
+            
+            if (!matches(skip.errorMessage, errorMessage)) {
+                updateDetails = updateDetails + "errorMessage updated from " + skip.errorMessage + " to " + errorMessage;
+                skip.errorMessage = errorMessage;
+                update = true;
+            }
 
-        if (errorMessage != null && !errorMessage.equals(skip.errorMessage)) {
-            updateDetails = updateDetails + "errorMessage updated from " + skip.errorMessage + " to " + errorMessage;
-            skip.errorMessage = errorMessage;
-            update = true;
-        }
-        
-        if (update) {
-            harvestSkipURIDAO.put(skip);
-            updateSkipURICount++;
-            String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
-            logJSON(new String[]
-                {"logType", "detail",
-                 "action", "updatedSkipTable",
-                 "artifactURI", metadata.getArtifactURI().toASCIIString(),
-                 "caomCollection", collection,
-                 "updateDetails", updateDetails,
-                 "caomChecksum", metadata.getChecksum(),
-                 "errorMessage", errorMessageString},
-                true);
+            if (update) {
+                harvestSkipURIDAO.put(skip);
+                updateSkipURICount++;
+                String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
+                logJSON(new String[]
+                    {"logType", "detail",
+                     "action", "updatedSkipTable",
+                     "artifactURI", metadata.getArtifactURI().toASCIIString(),
+                     "caomCollection", collection,
+                     "updateDetails", updateDetails,
+                     "caomChecksum", metadata.getChecksum(),
+                     "errorMessage", errorMessageString},
+                    true);
+            }
         }
     }
     
