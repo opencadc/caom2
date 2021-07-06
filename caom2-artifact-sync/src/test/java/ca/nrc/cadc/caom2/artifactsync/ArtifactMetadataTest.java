@@ -155,6 +155,7 @@ public class ArtifactMetadataTest
         logicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), null);
         physicalMetadata = new ArtifactMetadata(new URI("mast:HST/product/id5n04lfq_drc.fits"), "1043fe4c1a259a610fa9fb7ebff5833f");
         logicalMetadata.productType = ProductType.SCIENCE;
+        logicalMetadata.releaseType = ReleaseType.DATA;
         physicalMetadata.contentLength = 10L;
         physicalMetadata.contentType = "logicalType";
         logicalArtifacts.add(logicalMetadata);
