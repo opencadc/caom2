@@ -78,11 +78,12 @@ import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.PolarizationState;
 import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.dali.util.IntervalFormat;
+import ca.nrc.cadc.dali.util.PolarizationStateListFormat;
 import ca.nrc.cadc.dali.util.ShapeFormat;
-import ca.nrc.cadc.dali.util.StringListFormat;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
@@ -224,7 +225,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
                 }
             
                 if (cutout.pol != null && !cutout.pol.isEmpty()) {
-                    StringListFormat sf = new StringListFormat();
+                    PolarizationStateListFormat sf = new PolarizationStateListFormat();
                     sb.append(" ").append("POL").append("=").append(sf.format(cutout.pol));
                 }
 
@@ -310,13 +311,13 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
         return ret;
     }
     
-    private List<ca.nrc.cadc.caom2.PolarizationState> dali2caom2(List<String> dali) {
+    private List<ca.nrc.cadc.caom2.PolarizationState> dali2caom2(List<PolarizationState> dali) {
         if (dali == null) {
             return null;
         }
-        List<ca.nrc.cadc.caom2.PolarizationState> ret = new ArrayList<ca.nrc.cadc.caom2.PolarizationState>();
-        for (String s : dali) {
-            ret.add(ca.nrc.cadc.caom2.PolarizationState.toValue(s));
+        List<ca.nrc.cadc.caom2.PolarizationState> ret = new ArrayList<>();
+        for (PolarizationState s : dali) {
+            ret.add(ca.nrc.cadc.caom2.PolarizationState.toValue(s.name()));
         }
         return ret;
     }
