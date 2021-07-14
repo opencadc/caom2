@@ -139,11 +139,14 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.db.IntRowMapper;
 import ca.nrc.cadc.db.TransactionManager;
 import ca.nrc.cadc.net.PreconditionFailedException;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.security.MessageDigest;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -161,6 +164,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -1048,7 +1052,7 @@ public abstract class AbstractObservationDAOTest
             JdbcTemplate jdbc = new JdbcTemplate(dao.dataSource);
             
             if (dao.gen.persistOptimisations) {
-                int compMembers = jdbc.queryForInt(sql);
+                int compMembers = jdbc.queryForObject(sql, new IntRowMapper());
                 log.info("composite members: " + compMembers);
                 Assert.assertEquals("one compMember", 1, compMembers);
             }
@@ -1084,7 +1088,7 @@ public abstract class AbstractObservationDAOTest
             Assert.assertEquals("single UUID -- put was an update", comp.getID(), simp.getID());
             
             if (dao.gen.persistOptimisations) {
-                int simpMembers = jdbc.queryForInt(sql);
+                int simpMembers = jdbc.queryForObject(sql, new IntRowMapper());
                 log.info("simple members: " + simpMembers);
                 Assert.assertEquals("no simpMembers", 0, simpMembers);
             }
