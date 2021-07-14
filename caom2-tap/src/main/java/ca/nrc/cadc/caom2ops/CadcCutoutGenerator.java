@@ -77,42 +77,21 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * CutoutGenerator for the CADC Storage Inventory system.
+ * 
  * @author adriand
  */
 public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator {
     private static final Logger log = Logger.getLogger(CadcCutoutGenerator.class);
 
-    private final String scheme;
-
+    static final String CUTOUT_PARAM = "SUB";
+    
     public CadcCutoutGenerator() {
-        scheme = super.getScheme();
+        super();
     }
 
     protected CadcCutoutGenerator(final String scheme) {
-        this.scheme = scheme;
-    }
-
-    @Override
-    public URL toURL(URI uri, List<String> cutouts, String label) {
-        if (label != null) {
-            log.warn("Cutout label not supported yet");
-        }
-
-        URL base = super.toURL(uri);
-        if (cutouts == null || cutouts.isEmpty()) {
-            return base;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(base.toExternalForm());
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, null);
-
-        try {
-            return new URL(sb.toString());
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
-        }
+        super(scheme);
     }
 
     @Override
@@ -122,7 +101,20 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
     }
 
     @Override
-    public String getScheme() {
-        return scheme;
+    public URL toURL(URI uri, List<String> cutouts, String label) {
+        URL base = super.toURL(uri);
+        if (cutouts == null || cutouts.isEmpty()) {
+            return base;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(base.toExternalForm());
+        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, null, CUTOUT_PARAM);
+
+        try {
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+        }
     }
 }

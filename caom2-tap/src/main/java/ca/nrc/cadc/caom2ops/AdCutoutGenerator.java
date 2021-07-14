@@ -130,8 +130,12 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
         return filename;
     }
 
-    // package access so other CutoutGenrator implementations can use it
     static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename) {
+        appendCutoutQueryString(sb, cutouts, filename, "cutout");
+    }
+    
+    // package access so other CutoutGenerator implementations can use it
+    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename, String cutoutParamName) {
         if (cutouts != null && !cutouts.isEmpty()) {
             boolean add = (sb.indexOf("?") > 0); // already has query params
             if (!add) {
@@ -143,8 +147,7 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
                     sb.append("&");
                 }
                 add = true;
-                sb.append("fo=");
-                sb.append(filename);
+                sb.append("fo=").append(filename);
             }
             
             for (String cutout : cutouts) {
@@ -152,8 +155,7 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
                     sb.append("&");
                 }
                 add = true;
-                sb.append("cutout=");
-                sb.append(NetUtil.encode(cutout));
+                sb.append(cutoutParamName).append("=").append(NetUtil.encode(cutout));
             }
         }
     }
