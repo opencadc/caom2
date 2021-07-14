@@ -288,7 +288,6 @@ public class ObservationValidator implements Runnable {
     }
 
     private Aggregate doit() {
-        log.info("Starting batch. batchsize: " + batchSize);
         Aggregate ret = new Aggregate();
 
         if (!ready) {
@@ -322,13 +321,12 @@ public class ObservationValidator implements Runnable {
             }
             firstIteration = false;
 
-            log.info("...getting collection list");
-            log.info("Validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
+            log.info("validation window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
             List<ObservationResponse> obsList;
             if (srcObservationDAO != null) {
-                obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize + 1);
+                obsList = srcObservationDAO.getList(src.getCollection(), startDate, endDate, batchSize);
             } else {
-                obsList = srcObservationService.getList(src.getCollection(), startDate, endDate, batchSize + 1);
+                obsList = srcObservationService.getList(src.getCollection(), startDate, endDate, batchSize);
             }
 
             // avoid re-processing the last successful one stored in progressRecord (normal case because query: >= startDate)
@@ -354,7 +352,6 @@ public class ObservationValidator implements Runnable {
             t = System.currentTimeMillis();
 
             ListIterator<ObservationResponse> iter1 = obsList.listIterator();
-            log.info("...validating observations\n");
             while (iter1.hasNext()) {
                 boolean clean = true;
                 log.debug("next iteration...");
@@ -464,11 +461,8 @@ public class ObservationValidator implements Runnable {
             ret.runtime++;
         } finally {
             timeValidation = System.currentTimeMillis() - t;
-            log.info("...done batch.");
-            log.info("batch stats: " + ret.toString());
-            log.info("\nTime to run ObservationListQuery: " + timeQuery + "ms");
-            log.info("\nTime to run validations for batch: " + timeValidation + "ms\n");
             ret.processTime = timeQuery + timeValidation;
+            log.info("batch stats: " + ret.toString() + " query time: " + timeQuery + "ms validation time: " + timeValidation + "ms\n");
         }
         return ret;
     }
@@ -482,7 +476,7 @@ public class ObservationValidator implements Runnable {
 
             log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
-                throw new MismatchedChecksumException(o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
+                throw new MismatchedChecksumException(o.getURI() + " -- caom2 " + o.getAccMetaChecksum() + " vs calculated " + calculatedChecksum);
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 digest algorithm not available");
@@ -630,7 +624,7 @@ public class ObservationValidator implements Runnable {
 
         @Override
         public String toString() {
-            return "found: " + found + " passed:  " + passed + " failed: " + failed + " time: " + this.processTime;
+            return "found: " + found + " passed: " + passed + " failed: " + failed;
         }
 
         public void addAggregate(Aggregate ag) {

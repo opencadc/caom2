@@ -120,6 +120,8 @@ import org.opencadc.tap.TapClient;
 public class ArtifactValidator implements PrivilegedExceptionAction<Object>, ShutdownListener  {
     
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
+    private static final String LENGTH_DIFF = "ContentLengths are different";
+    private static final String CHECKSUM_DIFF = "Checksums are different";
     
     private ObservationDAO observationDAO;
     private HarvestSkipURIDAO harvestSkipURIDAO;
@@ -132,13 +134,13 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
     private boolean supportSkipURITable = false;
     private boolean tolerateNullChecksum = false;
     private boolean tolerateNullContentLength = false;
-    private String prefix = null;
     private long newSkipURICount = 0;
     private long updateSkipURICount = 0;
         
     private ExecutorService executor;
     
     private static final Logger log = Logger.getLogger(ArtifactValidator.class);
+    private DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
     public ArtifactValidator(DataSource dataSource, HarvestResource harvestResource, ObservationDAO observationDAO, 
             boolean reportOnly, ArtifactStore artifactStore, boolean tolerateNullChecksum, boolean tolerateNullContentLength) {
@@ -177,7 +179,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         executor = Executors.newFixedThreadPool(2);
         final Future<TreeSet<ArtifactMetadata>> logicalQuery = executor.submit(new Callable<TreeSet<ArtifactMetadata>>() {
             public TreeSet<ArtifactMetadata> call() throws Exception {
-                return getLogicalMetadata(null);
+                return getLogicalMetadata();
             }
         });
         log.info("Submitted query to caom2");
@@ -216,10 +218,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         long diffChecksum = 0;
         long notInLogical = 0;
         
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         ArtifactMetadata nextLogical = null;
         for (ArtifactMetadata nextPhysical : physicalMetadata) {
-            
             if (logicalMetadata.contains(nextPhysical)) {
                 nextLogical = logicalMetadata.ceiling(nextPhysical);
                 logicalMetadata.remove(nextLogical);
@@ -244,7 +244,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                         // content length mismatch
                         diffLength++;
                         if (supportSkipURITable) {
-                            checkAddToSkipTable(nextLogical, "ContentLengths are different");
+                            addToOrUpdateSkipTable(nextLogical, LENGTH_DIFF);
                         }
                         logJSON(new String[]
                             {"logType", "detail",
@@ -260,7 +260,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                     // checksum mismatch
                     diffChecksum++;
                     if (supportSkipURITable) {
-                        checkAddToSkipTable(nextLogical, "Checksums are different");
+                        addToOrUpdateSkipTable(nextLogical, CHECKSUM_DIFF);
                     }
                     logJSON(new String[]
                         {"logType", "detail",
@@ -323,7 +323,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 
                 // add to HavestSkipURI table if there is not already a row in the table
                 if (supportSkipURITable) {
-                    checkAddToSkipTable(metadata, errorMessage);
+                    addToOrUpdateSkipTable(metadata, errorMessage);
                 }
             }
             
@@ -358,7 +358,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }, true);
         } else {
             // validate
-            long totalInSkipURICount = updateSkipURICount + newSkipURICount;
             logJSON(new String[] {
                 "logType", "summary",
                 "collection", collection,
@@ -371,7 +370,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 "totalNotInCAOM", Long.toString(notInLogical),
                 "totalMissingFromStorage", Long.toString(missingFromStorage),
                 "totalNotPublic", Long.toString(notPublic),
-                "totalInSkipURI", Long.toString(totalInSkipURICount),
                 "totalNewSkipURI", Long.toString(newSkipURICount),
                 "totalUpdateSkipURI", Long.toString(updateSkipURICount),
                 "time", Long.toString(System.currentTimeMillis() - start)
@@ -443,38 +441,54 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         return supportSkipURITable;
     }
     
-    private void checkAddToSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
-        if (supportSkipURITable) {
-            // add to HavestSkipURI table if there is not already a row in the table
-            Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
-            Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
-            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
-            if (releaseDate != null && !reportOnly) {
-                boolean isAdd = false;
-                if (skip == null) {
-                    // not in skip table, add it
-                    isAdd = true;
-                    skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
-                } 
+    private void addToSkipTable(Artifact artifact, Date releaseDate, ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+        // add to HavestSkipURI table if there is not already a row in the table
+        HarvestSkipURI skip = new HarvestSkipURI(source, STATE_CLASS, metadata.getArtifactURI(), releaseDate, errorMessage);
+        harvestSkipURIDAO.put(skip);
+        newSkipURICount++;
+        String releaseDateString = df.format(releaseDate);
+        String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
+        logJSON(new String[]
+            {"logType", "detail",
+             "action", "addedToSkipTable",
+             "artifactURI", metadata.getArtifactURI().toASCIIString(),
+             "caomCollection", collection,
+             "caomChecksum", metadata.getChecksum(),
+             "releaseDate", releaseDateString,
+             "errorMessage", errorMessageString},
+            true);
+    }
+    
+    private void updateSkipTable(HarvestSkipURI skip, Date releaseDate, ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+        // update HarvestSkipURI table if the releaseDate or the errorMessage has changed
+        boolean update = false;
+        String updateDetails = "";
+        if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage)
+            || ArtifactHarvester.PROPRIETARY.equals(errorMessage)) {
+            String releaseDateString = df.format(releaseDate);
+            String tryAfterDateString = df.format(skip.getTryAfter());
+            if (!matches(tryAfterDateString, releaseDateString)) {
+                updateDetails = "releaseDate updated from " + df.format(skip.getTryAfter()) + " to " + df.format(releaseDate) + "; ";
+                skip.setTryAfter(releaseDate);
+                update = true;
+            }
+            
+            if (!matches(skip.errorMessage, errorMessage)) {
+                updateDetails = updateDetails + "errorMessage updated from " + skip.errorMessage + " to " + errorMessage;
+                skip.errorMessage = errorMessage;
+                update = true;
+            }
 
-                if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
-                        || ArtifactHarvester.PROPRIETARY.equals(errorMessage)) {
-                    skip.setTryAfter(releaseDate);
-                    skip.errorMessage = errorMessage;
-                }
-                
+            if (update) {
                 harvestSkipURIDAO.put(skip);
-                if (isAdd) {
-                    newSkipURICount++;
-                } else {
-                    updateSkipURICount++;
-                }
+                updateSkipURICount++;
                 String errorMessageString = (errorMessage == null) ? "null" : skip.errorMessage;
                 logJSON(new String[]
                     {"logType", "detail",
-                     "action", "addedToSkipTable",
+                     "action", "updatedSkipTable",
                      "artifactURI", metadata.getArtifactURI().toASCIIString(),
                      "caomCollection", collection,
+                     "updateDetails", updateDetails,
                      "caomChecksum", metadata.getChecksum(),
                      "errorMessage", errorMessageString},
                     true);
@@ -482,19 +496,32 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         }
     }
     
-    private TreeSet<ArtifactMetadata> getLogicalMetadata(Integer batchSize) throws Exception {
+    private void addToOrUpdateSkipTable(ArtifactMetadata metadata, String errorMessage) throws URISyntaxException {
+        // add to HavestSkipURI table if there is not already a row in the table
+        Artifact artifact = new Artifact(metadata.getArtifactURI(), metadata.productType, metadata.releaseType);
+        Date releaseDate = AccessUtil.getReleaseDate(artifact, metadata.metaRelease, metadata.dataRelease);
+        if (releaseDate != null) {
+            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, metadata.getArtifactURI());
+            if (skip == null) {
+                // not in skip table, add it
+                addToSkipTable(artifact, releaseDate, metadata, errorMessage);
+            } else {
+                updateSkipTable(skip, releaseDate, metadata, errorMessage);
+            }
+        }
+    }
+    
+    private TreeSet<ArtifactMetadata> getLogicalMetadata() throws Exception {
         TreeSet<ArtifactMetadata> result = new TreeSet<>(ArtifactMetadata.getComparator());
         if (StringUtil.hasText(source)) {
             // use database <server.database.schema>
             // HarvestSkipURI table is not supported in 'diff' mode, i.e. reportOnly = true
             this.supportSkipURITable = !reportOnly;
             long t1 = System.currentTimeMillis();
-            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, batchSize);
+            List<ObservationState> states = observationDAO.getObservationList(collection, null, null, null);
             long t2 = System.currentTimeMillis();
             long dt = t2 - t1;
-            if (batchSize == null) {
-                log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
-            }
+            log.info("get-state-list: size=" + states.size() + " in " + dt + " ms");
             
             int depth = 3;
             ListIterator<ObservationState> iter = states.listIterator();
@@ -517,10 +544,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
                 }
             }
             
-            if (batchSize == null) {
-                // log only when we query all artifacts of a collection
-                log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
-            }
+            log.info("Finished logical metadata query in " + (System.currentTimeMillis() - t1) + " ms");
         } else {
             this.supportSkipURITable = false;
             if (caomTapResourceID != null) {
@@ -538,12 +562,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             }
             
             // source is a TAP service URL or a TAP resource ID
-            String uriSelect = "distinct(a.uri)";
-            if (batchSize == 1) {
-                uriSelect = "top 1 a.uri";
-            }
-
-            String adql = "select " + uriSelect + ", a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
+            String adql = "select distinct(a.uri), a.contentChecksum, a.contentLength, a.contentType, o.observationID, "
                     + "a.productType, a.releaseType, p.dataRelease, p.metaRelease "
                     + "from caom2.Artifact a "
                     + "join caom2.Plane p on a.planeID = p.planeID "
@@ -553,10 +572,7 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
             log.debug("logical query: " + adql);
             long start = System.currentTimeMillis();
             result = query(caomTapURL, adql);
-            if (batchSize != 1) {
-                // log only when we query all artifacts of a collection
-                log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
-            }
+            log.info("Finished caom2 query in " + (System.currentTimeMillis() - start) + " ms");
         }
         return result;
     }
