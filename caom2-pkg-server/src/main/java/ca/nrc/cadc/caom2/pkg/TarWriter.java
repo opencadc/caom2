@@ -70,12 +70,14 @@
 package ca.nrc.cadc.caom2.pkg;
 
 
+import ca.nrc.cadc.net.DigestUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -192,7 +194,12 @@ public class TarWriter
             String filename =  path + "/" + item.filename;
             long contentLength = get.getContentLength();
             Date lastModified = get.getLastModified();
-            item.contentMD5 = get.getContentMD5();
+            URI digest = get.getDigest();
+            if ((digest != null) && (digest.getScheme().equals("md5"))) {
+                item.contentMD5 = digest.getRawSchemeSpecificPart();
+            } else {
+                item.contentMD5 = get.getContentMD5();
+            }
 
             // create entry
             log.debug("tar entry: " + filename + "," + contentLength + "," + lastModified);

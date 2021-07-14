@@ -151,17 +151,19 @@ public class CadcCutoutGeneratorTest {
             cutouts.add(CUTOUT4);
             URI uri = new URI(CADC_FILE_URI);
             cutoutGenerator.setAuthMethod(AuthMethod.ANON);
-            URL url = cutoutGenerator.toURL(uri, cutouts, "label1%");
+            URL url = cutoutGenerator.toURL(uri, cutouts, null);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             String urlString = url.toExternalForm();
             URL storageURI = cadcResolver.toURL(new URI(CADC_FILE_URI));
             Assert.assertTrue(urlString.contains(storageURI.toString()));
             String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
-            Assert.assertEquals(CUTOUT1, cutoutArray[0].split("=")[1]);
-            Assert.assertEquals(CUTOUT2, cutoutArray[1].split("=")[1]);
-            Assert.assertEquals(CUTOUT3, cutoutArray[2].split("=")[1]);
-            Assert.assertEquals(CUTOUT4, cutoutArray[3].split("=")[1]);
+            for (int i = 0; i < cutoutArray.length; i++) {
+                String c = cutoutArray[i];
+                String[] kv = c.split("=");
+                Assert.assertEquals("SUB param", "SUB", kv[0]);
+                Assert.assertEquals("pixel cutout value", cutouts.get(i), kv[1]);
+            }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
