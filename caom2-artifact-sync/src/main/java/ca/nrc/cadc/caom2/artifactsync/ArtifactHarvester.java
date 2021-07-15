@@ -275,7 +275,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                         }
 
                                         if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
-                                                && this.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) || !correctCopy) {
+                                                && ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) || !correctCopy) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                             if (skip == null) {
                                                 // not in skip table, add it
@@ -283,6 +283,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                             } 
                                             
                                             if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
+                                                    
                                                     || ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
                                                 skip.setTryAfter(releaseDate);
                                                 skip.errorMessage = errorMessage;
@@ -293,7 +294,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                             added = true;
                                             if (skip != null) {
                                                 this.downloadCount--;
-                                                if (this.errorMessage.equals(ArtifactHarvester.PROPRIETARY)) {
+                                                if (ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
                                                     this.updateCount++;
                                                     message = this.errorMessage 
                                                         + " artifact already exists in skip table, update tryAfter date to release date.";
