@@ -435,6 +435,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 threadLog.debug("[" + threadName + "] Completed upload of " + artifactURI);
             } catch (Throwable t) {
                 uploadSuccess = false;
+                // uncomment to obtain stack traces in log file   
+                // threadLog.error("[" + threadName + "] Failed to upload " + artifactURI, t);    
                 uploadErrorMessage = "Upload error: " + t.getMessage();
                 throw new IOException(t);
             } finally {
