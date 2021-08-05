@@ -69,6 +69,9 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
+import ca.nrc.cadc.net.StorageResolver;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -81,6 +84,7 @@ import org.apache.log4j.Logger;
  */
 public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutGenerator {
     private static final Logger log = Logger.getLogger(CadcMastCutoutGenerator.class);
+    private final CutoutGenerator cadcCutoutGenerator = new CadcCutoutGenerator();
 
     public CadcMastCutoutGenerator() { }
 
@@ -99,26 +103,15 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
-        URL base = super.toURL(uri);
-        if (cutouts == null || cutouts.isEmpty()) {
-            return base;
-        }
+        if (this.isSynced(uri)) {
+            return cadcCutoutGenerator.toURL(uri, cutouts, label);
+        } else {
+            URL base = super.toURL(uri);
+            if (cutouts == null || cutouts.isEmpty()) {
+                return base;
+            }
         
-        // HACK: can only do cutouts if base is to a CADC data service
-        // ... hopefully temporary
-        if (!base.getHost().endsWith(".ca")) {
             throw new UnsupportedOperationException("cutout not supported: " + base.toExternalForm());
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append(base.toExternalForm());
-        String filename = AdCutoutGenerator.generateFilename(uri, label, cutouts);
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
-        
-        try {
-            return new URL(sb.toString());
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
         }
     }
 }
