@@ -90,14 +90,12 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
 
     @Override
     public boolean canCutout(Artifact a) {
-        // HACK: can only do cutouts if base is to a CADC data service
-        // ... hopefully temporary
-        URL base = super.toURL(a.getURI());
-        if (!base.getHost().endsWith(".ca")) {
+        if (this.isSynced(a.getURI())) {
+            // file types supported by SODA
+            return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
+        } else {
             return false;
         }
-        // file types supported by SODA
-        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
     }
     
     @Override
