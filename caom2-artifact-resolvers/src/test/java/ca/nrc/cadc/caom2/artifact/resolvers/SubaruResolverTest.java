@@ -95,11 +95,10 @@ public class SubaruResolverTest {
     String VALID_HSC_FRAMEID = "HSCA069890XX";
     String EXPECTED_HSC_FILENAME = "HSCA069890.png";
 
-    String SCHEME = "subaru";
     String RAW_DATA_URI = "raw";
     String PREVIEW_URI = "preview";
 
-    String PROTOCOL_STR = "http://";
+    String PROTOCOL_STR = "https://";
 
     String BASE_PREVIEW_URL = "smoka.nao.ac.jp";
     String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
@@ -126,15 +125,17 @@ public class SubaruResolverTest {
     @Test
     public void testValidRawURI() throws Exception {
         try {
-            String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/" + VALID_SUP_FRAMEID;
+            String uriStr = subaruResolver.getScheme() + ":" + RAW_DATA_URI + "/" + VALID_DATE1 + "/"
+                            + VALID_SUP_FRAMEID;
             URI uri = new URI(uriStr);
             URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
-            String encodedValue = NetUtil.encode(VALID_DATE1 + "/" + VALID_SUP_FRAMEID);
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?" + DATA_URL_QUERY +  encodedValue);
+            String frameQueryValue = VALID_DATE1 + "/" + VALID_SUP_FRAMEID;
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_DATA_URL + DATA_URL_PATH + "?"
+                                                + DATA_URL_QUERY +  frameQueryValue);
             Assert.assertEquals(DATA_URL_PATH, url.getPath());
-            Assert.assertEquals(DATA_URL_QUERY + encodedValue, url.getQuery());
+            Assert.assertEquals(DATA_URL_QUERY + frameQueryValue, url.getQuery());
             Assert.assertEquals(BASE_DATA_URL, url.getHost());
 
         } catch (Exception unexpected) {
@@ -148,14 +149,16 @@ public class SubaruResolverTest {
     public void testValidHSCPreviewURI() throws Exception {
         log.debug("START - testValidHSCPreviewURI");
         try {
-            String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE2 + "/" + VALID_HSC_FRAMEID;
+            String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE2 + "/"
+                            + VALID_HSC_FRAMEID;
             URI uri = new URI(uriStr);
             log.debug("HSC URI: " + uriStr);
             URL url = subaruResolver.toURL(uri);
             log.debug("toURL returned: " + url.toString());
 
             String fileSpecificPart = VALID_DATE2 + "/" + EXPECTED_HSC_FILENAME;
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + HSC_PREVIEW_URL_PATH + "/" +  fileSpecificPart);
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + HSC_PREVIEW_URL_PATH + "/"
+                                                + fileSpecificPart);
             Assert.assertEquals(HSC_PREVIEW_URL_PATH + "/" + fileSpecificPart, url.getPath());
             Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());
 
@@ -184,7 +187,8 @@ public class SubaruResolverTest {
     @Test
     public void testValidSUPPreviewURI() {
         try {
-            final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE1 + "/" + VALID_SUP_FRAMEID2;
+            final String uriStr = subaruResolver.getScheme() + ":" + PREVIEW_URI + "/" + VALID_DATE1 + "/"
+                                  + VALID_SUP_FRAMEID2;
             final URI uri = URI.create(uriStr);
             final URL url = subaruResolver.toURL(uri);
 
@@ -215,7 +219,8 @@ public class SubaruResolverTest {
 
             log.debug("toURL returned: " + url.toString());
 
-            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?" + PREVIEW_URL_QUERY + VALID_SUP_FRAMEID2);
+            Assert.assertEquals(url.toString(), PROTOCOL_STR + BASE_PREVIEW_URL + PREVIEW_URL_PATH + "?"
+                                                + PREVIEW_URL_QUERY + VALID_SUP_FRAMEID2);
             Assert.assertEquals(PREVIEW_URL_PATH, url.getPath());
             Assert.assertEquals(PREVIEW_URL_QUERY + VALID_SUP_FRAMEID2, url.getQuery());
             Assert.assertEquals(BASE_PREVIEW_URL, url.getHost());

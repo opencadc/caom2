@@ -89,10 +89,10 @@ public class SubaruResolver implements StorageResolver {
     private static final String RAW_DATA_URI = "raw";
     private static final String PREVIEW_URI = "preview";
 
-    private static final String BASE_DATA_URL = "http://www.canfar.net/maq/subaru?frameinfo=";
+    private static final String BASE_DATA_URL = "https://www.canfar.net/maq/subaru?frameinfo=";
 
     // Suprime-Cam
-    private static final String PREVIEW_BASE_URL = "http://smoka.nao.ac.jp";
+    private static final String PREVIEW_BASE_URL = "https://smoka.nao.ac.jp";
     private static final String PREVIEW_URL_PATH = "/qlis/ImagePNG";
     private static final String PREVIEW_URL_QUERY = "grayscale=linear&mosaic=true&frameid=";
 
@@ -170,7 +170,7 @@ public class SubaruResolver implements StorageResolver {
             // expected URI input is subaru:raw/YYYY-MM-dd/<FRAMEID>
             // expected URL output is http://www.canfar.net
             // /maq/subaru?frameinfo=YYYY-MM-dd/FRAMEID
-            sb = BASE_DATA_URL + NetUtil.encode(path[1] + "/" + path[2]);
+            sb = BASE_DATA_URL + path[1] + "/" + path[2];
         } else {
             throw new IllegalArgumentException("Invalid URI: " + requestType);
         }
