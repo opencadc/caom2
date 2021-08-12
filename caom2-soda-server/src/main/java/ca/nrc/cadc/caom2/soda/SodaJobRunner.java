@@ -155,16 +155,14 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             Artifact a = query.performQuery(uri);
 
             if (a == null) {
-                StringBuilder path = new StringBuilder();
-                path.append("400");
-                path.append("|text/plain");
-                path.append("|").append("NotFound: " + uri);
-                String msg = Base64.encodeString(path.toString());
+                return errorURL("NotFound: " + uri);
+            }
 
-                URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
-                URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
-                URL loc = new URL(url.toExternalForm().replace("/sync", "/soda-echo"));
-                return loc;
+            StorageResolver resolver = artifactResolver.getStorageResolver(uri);
+            if (resolver instanceof CutoutGenerator) {
+                if (!((CutoutGenerator) resolver).canCutout(a)) {
+                    return errorURL("cutout not supported: " + uri);
+                }
             }
 
             // log and ignore custom parameters
@@ -190,7 +188,6 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             List<String> strCutout = CutoutUtil.computeCutout(a, 
                 dali2caom2(cutout.pos), dali2caom2(cutout.band), dali2caom2(cutout.time), dali2caom2(cutout.pol), null, null);
             if (strCutout != null && !strCutout.isEmpty()) {
-                StorageResolver resolver = artifactResolver.getStorageResolver(uri);
                 if (resolver instanceof CutoutGenerator) {
                     // get the optional label parameter value
                     List<String> labels = extraParams.get(PARAM_LABEL);
@@ -229,19 +226,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
                     sb.append(" ").append("POL").append("=").append(sf.format(cutout.pol));
                 }
 
-                StringBuilder path = new StringBuilder();
-                path.append("400");
-                path.append("|text/plain");
-                path.append("|").append(sb.toString());
-                String msg = Base64.encodeString(path.toString());
-
-                // hack to get base url for soda service
-                URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
-                String surl = serviceURL.toExternalForm().replace("/sync", "/soda-echo");
-                surl = surl + "/" + msg;
-                URL loc = new URL(surl);
-                log.debug("echo URL: " + loc);
-                return loc;
+                return errorURL(sb.toString());
             }
         } catch (CertificateException ex) {
             throw new IllegalArgumentException("delegated X509 certificate is invalid", ex);
@@ -320,5 +305,22 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             ret.add(ca.nrc.cadc.caom2.PolarizationState.toValue(s.name()));
         }
         return ret;
+    }
+    
+    private URL errorURL(String errorMessage) throws MalformedURLException {
+        StringBuilder path = new StringBuilder();
+        path.append("400");
+        path.append("|text/plain");
+        path.append("|").append(errorMessage);
+        String msg = Base64.encodeString(path.toString());
+
+        // hack to get base url for soda service
+        URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
+        URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
+                String surl = serviceURL.toExternalForm().replace("/sync", "/soda-echo");
+                surl = surl + "/" + msg;
+        URL loc = new URL(url.toExternalForm().replace("/sync", "/soda-echo"));
+        log.debug("echo URL: " + loc);
+        return loc;
     }
 }
