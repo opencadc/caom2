@@ -317,8 +317,8 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
         // hack to get base url for soda service
         URL serviceURL = reg.getServiceURL(sodaURI, Standards.SODA_SYNC_10, AuthMethod.ANON);
         URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
-                String surl = serviceURL.toExternalForm().replace("/sync", "/soda-echo");
-                surl = surl + "/" + msg;
+        String surl = serviceURL.toExternalForm().replace("/sync", "/soda-echo");
+        surl = surl + "/" + msg;
         URL loc = new URL(url.toExternalForm().replace("/sync", "/soda-echo"));
         log.debug("echo URL: " + loc);
         return loc;
