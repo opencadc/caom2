@@ -96,7 +96,7 @@ public class AdCutoutGenerator extends AdResolver implements CutoutGenerator {
     static String replaceNonAlphanumeric(List<String> cutouts) {
         String cutoutString = "";
         for (String cutout : cutouts) {
-            cutoutString = cutoutString + cutout.replaceAll("[^0-9a-zA-Z]","_").substring(1, cutout.length()-1) + "___";
+            cutoutString = cutoutString + cutout.replaceAll("[^0-9a-zA-Z]","_").substring(1, cutout.length() - 1) + "___";
         }
         
         // remove the the last 3 underscores that separate between two sequential cutout strings
