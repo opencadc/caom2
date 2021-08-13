@@ -163,6 +163,8 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
                 if (!((CutoutGenerator) resolver).canCutout(a)) {
                     return errorURL("cutout not supported: " + uri);
                 }
+            } else {
+                return errorURL("no CutoutGenerator for " + uri);
             }
 
             // log and ignore custom parameters
@@ -188,21 +190,17 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
             List<String> strCutout = CutoutUtil.computeCutout(a, 
                 dali2caom2(cutout.pos), dali2caom2(cutout.band), dali2caom2(cutout.time), dali2caom2(cutout.pol), null, null);
             if (strCutout != null && !strCutout.isEmpty()) {
-                if (resolver instanceof CutoutGenerator) {
-                    // get the optional label parameter value
-                    List<String> labels = extraParams.get(PARAM_LABEL);
-                    String label = null;
-                    // ignore LABEL parameter for async mode
-                    if (syncOutput != null && labels != null && !labels.isEmpty()) {
-                        label = labels.get(0);
-                    }
-                
-                    URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), strCutout, label);
-                    log.debug("cutout URL: " + url.toExternalForm());
-                    return url;
-                } else {
-                    throw new UnsupportedOperationException("No CutoutGenerator for " + uri.toString());
+                // get the optional label parameter value
+                List<String> labels = extraParams.get(PARAM_LABEL);
+                String label = null;
+                // ignore LABEL parameter for async mode
+                if (syncOutput != null && labels != null && !labels.isEmpty()) {
+                    label = labels.get(0);
                 }
+            
+                URL url = ((CutoutGenerator) resolver).toURL(a.getURI(), strCutout, label);
+                log.debug("cutout URL: " + url.toExternalForm());
+                return url;
             } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append("NoContent: ").append(uri).append(" vs");
