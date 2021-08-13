@@ -84,7 +84,7 @@ import org.apache.log4j.Logger;
  */
 public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutGenerator {
     private static final Logger log = Logger.getLogger(CadcMastCutoutGenerator.class);
-    private final CutoutGenerator cadcCutoutGenerator = new CadcCutoutGenerator();
+    private final CutoutGenerator cadcCutoutGenerator = new CadcCutoutGenerator(SCHEME);
 
     public CadcMastCutoutGenerator() { }
 
