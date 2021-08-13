@@ -319,7 +319,7 @@ public class SodaJobRunner extends AbstractSodaJobRunner implements SodaPlugin {
         URL url = new URL(serviceURL.toExternalForm() + "/" + msg);
         String surl = serviceURL.toExternalForm().replace("/sync", "/soda-echo");
         surl = surl + "/" + msg;
-        URL loc = new URL(url.toExternalForm().replace("/sync", "/soda-echo"));
+        URL loc = new URL(surl);
         log.debug("echo URL: " + loc);
         return loc;
     }
