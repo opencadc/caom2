@@ -205,7 +205,8 @@ public class GetPermissionsAction extends RestAction {
             Iterator<CaomRepoConfig.Item> iterator = caomRepoConfig.iterator();
             while (iterator.hasNext()) {
                 CaomRepoConfig.Item item = iterator.next();
-                if (archiveMatch(artifactURI, item.getArtifactPattern())) {
+                if (archiveMatch(artifactURI, item.getArtifactPattern())
+                    || archiveMatch(artifactURI, item.getAltPattern())) {
                     ReadAccessDAO readAccessDAO = new ReadAccessDAO();
                     readAccessDAO.setConfig(caomRepoConfig.getDAOConfig(item.getCollection()));
                     return readAccessDAO;

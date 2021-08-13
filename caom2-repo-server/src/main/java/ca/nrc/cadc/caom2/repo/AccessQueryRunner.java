@@ -249,7 +249,8 @@ public class AccessQueryRunner implements JobRunner {
             Iterator<CaomRepoConfig.Item> i = cf.iterator();
             while (i.hasNext()) {
                 CaomRepoConfig.Item item = i.next();
-                if (archiveMatch(uri, item.getArtifactPattern())) {
+                if (archiveMatch(uri, item.getArtifactPattern())
+                    || archiveMatch(uri, item.getAltPattern())) {
                     ReadAccessDAO ret = new ReadAccessDAO();
                     ret.setConfig(cf.getDAOConfig(item.getCollection()));
                     return ret;

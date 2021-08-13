@@ -242,6 +242,7 @@ public class CaomRepoConfig {
         
         // CADC-specific temporary hack
         private String artifactPattern;
+        private String altPattern;
 
         Item(Class sqlGenerator, String collection, String dataSourceName, String database,
                 String schema, String obsTableName, GroupURI readOnlyGroup,
@@ -332,6 +333,10 @@ public class CaomRepoConfig {
         public String getArtifactPattern() {
             return artifactPattern;
         }
+
+        public String getAltPattern() {
+            return altPattern;
+        }
         
         private Item() {
         }
@@ -399,7 +404,8 @@ public class CaomRepoConfig {
             String staffGroup = null;
             boolean publicRead = false;
             URI basePublisherID = null;
-            String pattern = null;
+            String artifactPattern = null;
+            String altPattern = null;
             for (int i = 7; i < parts.length; i++) {
                 String option = parts[i]; // key=value pair
                 log.debug(collection + " options: " + option);
@@ -420,7 +426,9 @@ public class CaomRepoConfig {
                 } else if ("basePublisherID".equals(kv[0])) {
                     basePublisherID = new URI(kv[1]);
                 } else if ("artifactPattern".equals(kv[0])) {
-                    pattern = kv[1];
+                    artifactPattern = kv[1];
+                } else if ("altPattern".equals(kv[0])) {
+                    altPattern = kv[1];
                 }
                 // else: ignore
             }
@@ -453,7 +461,8 @@ public class CaomRepoConfig {
             rci.operatorGroup = operatorGroup == null ? null : new GroupURI(operatorGroup);
             rci.staffGroup = staffGroup == null ? null : new GroupURI(staffGroup);
             rci.proposalGroup = proposalGroup;
-            rci.artifactPattern = pattern;
+            rci.artifactPattern = artifactPattern;
+            rci.altPattern = altPattern;
             
             
             log.debug(collection + ": loaded " + rci);
