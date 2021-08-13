@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2020.                            (c) 2020.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,21 +69,11 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.StorageResolver;
-import ca.nrc.cadc.net.Traceable;
-import ca.nrc.cadc.reg.Capabilities;
-import ca.nrc.cadc.reg.Capability;
-import ca.nrc.cadc.reg.Interface;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
@@ -96,7 +86,6 @@ import org.apache.log4j.Logger;
 public class CadcMastResolver implements StorageResolver {
     public static final String SCHEME = "mast";
     private static final Logger log = Logger.getLogger(CadcMastResolver.class);
-    private static final URI DATA_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/data");
 
     // package access for test code
     static final List<String> SYNCED = new ArrayList<>();
@@ -107,39 +96,14 @@ public class CadcMastResolver implements StorageResolver {
     }
     
     private final StorageResolver mastResolver = new MastResolver();
+    private final StorageResolver cadcResolver = new CadcResolver(SCHEME);
     
     @Override
     public URL toURL(URI uri) {
-        if (!SCHEME.equals(uri.getScheme())) {
-            throw new IllegalArgumentException("invalid scheme in " + uri);
-        }
-
-        if (!isSynced(uri)) {
+        if (isSynced(uri)) {
+            return cadcResolver.toURL(uri);
+        } else {
             return mastResolver.toURL(uri);
-        }
-        
-        try {
-            Subject subject = AuthenticationUtil.getCurrentSubject();
-            AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            if (authMethod == null) {
-                authMethod = AuthMethod.ANON;
-            }
-            RegistryClient rc = new RegistryClient();
-            Capabilities caps = rc.getCapabilities(DATA_RESOURCE_ID);
-            Capability dataCap = caps.findCapability(Standards.DATA_10);
-            Interface ifc = dataCap.findInterface(authMethod);
-            if (ifc == null) {
-                throw new IllegalArgumentException("No interface for auth method " + authMethod);
-            }
-            String baseDataURL = ifc.getAccessURL().getURL().toString();
-            URL url = new URL(baseDataURL + "/" + uri.getSchemeSpecificPart());
-            log.debug(uri + " --> " + url);
-            return url;
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG", ex);
-        } catch (Throwable t) {
-            String message = "Failed to convert to data URL";
-            throw new RuntimeException(message, t);
         }
     }
 
@@ -148,7 +112,7 @@ public class CadcMastResolver implements StorageResolver {
         return SCHEME;
     }
     
-    private boolean isSynced(URI uri) {
+    protected boolean isSynced(URI uri) {
         for (String s : SYNCED) {
             String start = s + "/";
             if (uri.getSchemeSpecificPart().startsWith(start)) {
