@@ -285,6 +285,29 @@ public class CaomRepoConfigTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
+    @Test 
+    public void testPatterns() {
+        try {
+            String artifactExpected = "cadc://FOO";
+            String altExpected = "ad://BAR";
+            Properties props = new Properties();
+            props.setProperty("space1",
+                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
+                    + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org " 
+                    + "artifactPattern=" + artifactExpected + " altPattern=" + altExpected);
+            
+            CaomRepoConfig.Item it = CaomRepoConfig.getItem("space1", props);
+            Assert.assertNotNull(it);
+            log.debug("found: " + it);
+            Assert.assertEquals("space1", it.getCollection());
+            Assert.assertEquals(artifactExpected, it.getArtifactPattern());
+            Assert.assertEquals(altExpected, it.getAltPattern());
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
     
     @Test
     public void testInvalidBasePublisherID() {
