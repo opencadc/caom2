@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,6 +69,9 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
+import ca.nrc.cadc.net.StorageResolver;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -81,44 +84,32 @@ import org.apache.log4j.Logger;
  */
 public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutGenerator {
     private static final Logger log = Logger.getLogger(CadcMastCutoutGenerator.class);
+    private final CutoutGenerator cadcCutoutGenerator = new CadcCutoutGenerator(SCHEME);
 
     public CadcMastCutoutGenerator() { }
 
     @Override
     public boolean canCutout(Artifact a) {
-        // HACK: can only do cutouts if base is to a CADC data service
-        // ... hopefully temporary
-        URL base = super.toURL(a.getURI());
-        if (!base.getHost().endsWith(".ca")) {
+        if (this.isSynced(a.getURI())) {
+            // file types supported by SODA
+            return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
+        } else {
             return false;
         }
-        // file types supported by SODA
-        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
     }
     
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
-        URL base = super.toURL(uri);
-        if (cutouts == null || cutouts.isEmpty()) {
-            return base;
-        }
+        if (this.isSynced(uri)) {
+            return cadcCutoutGenerator.toURL(uri, cutouts, label);
+        } else {
+            URL base = super.toURL(uri);
+            if (cutouts == null || cutouts.isEmpty()) {
+                return base;
+            }
         
-        // HACK: can only do cutouts if base is to a CADC data service
-        // ... hopefully temporary
-        if (!base.getHost().endsWith(".ca")) {
             throw new UnsupportedOperationException("cutout not supported: " + base.toExternalForm());
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append(base.toExternalForm());
-        String filename = AdCutoutGenerator.generateFilename(uri, label, cutouts);
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
-        
-        try {
-            return new URL(sb.toString());
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
         }
     }
 }

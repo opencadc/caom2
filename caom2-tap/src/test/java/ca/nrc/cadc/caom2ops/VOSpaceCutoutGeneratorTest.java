@@ -99,9 +99,9 @@ public class VOSpaceCutoutGeneratorTest {
     private static final String CUTOUT4 = "[4][700:800, 700:800]";
     private static final String CUTOUT_ALPHA = "[AMP_4_0,3][5:20, 20:30]";
 
-    private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
-    private static final String FILE_URI_COMPRESSED = "vos://cadc.nrc.ca!vospace/FOO/bar.CF";
-    private static final String FILE_URI_COMPRESSED_FITS = "vos://cadc.nrc.ca!vospace/FOO/bar.fits.CF";
+    private static final String FILE_URI = "vos://cadc.nrc.ca!vault/FOO/bar";
+    private static final String FILE_URI_COMPRESSED = "vos://cadc.nrc.ca!vault/FOO/bar.CF";
+    private static final String FILE_URI_COMPRESSED_FITS = "vos://cadc.nrc.ca!vault/FOO/bar.fits.CF";
     private static final String PROTOCOL = "ivo://ivoa.net/vospace/core#httpsget"; // assumption
 
     VOSpaceCutoutGenerator vosResolver = new VOSpaceCutoutGenerator();
