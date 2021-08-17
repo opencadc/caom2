@@ -69,6 +69,8 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
+import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.net.NetUtil;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -109,12 +111,95 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
 
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, null, CUTOUT_PARAM);
+        appendCutoutQueryString(sb, cutouts, null, CUTOUT_PARAM);
 
         try {
             return new URL(sb.toString());
         } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+        }
+    }
+
+    static String removeCompressionExtension(String uriFilename) {
+        String filename = uriFilename;
+        int i = uriFilename.lastIndexOf('.');
+        if (i != -1 && i < uriFilename.length() - 1) {
+            String ext = uriFilename.substring(i + 1, uriFilename.length());
+            if (ext.equalsIgnoreCase("cf") || ext.equalsIgnoreCase("z")
+                || ext.equalsIgnoreCase("gz") || ext.equalsIgnoreCase("fz")) {
+                filename = uriFilename.substring(0, i);
+            }
+        }
+        return filename;
+    }
+
+    /*
+     * Equivalent behaviour to the algorithm used in fslice2-fcat.sh.
+     * Replaces non alphanumerics with an underscore. Removes the leading and trailing underscore.
+     */
+    static String replaceNonAlphanumeric(List<String> cutouts) {
+        String cutoutString = "";
+        for (String cutout : cutouts) {
+            cutoutString = cutoutString + cutout.replaceAll("[^0-9a-zA-Z]","_").substring(1, cutout.length() - 1) + "___";
+        }
+        
+        // remove the the last 3 underscores that separate between two sequential cutout strings
+        return cutoutString.substring(0, cutoutString.length() - 3);
+    }
+    
+    static String generateFilename(URI uri, String label, List<String> cutouts) {
+        String filename = null;
+        if (label != null) {
+            try {
+                CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
+                String ssp = uri.getSchemeSpecificPart();
+                int i = ssp.lastIndexOf('/');
+                if (i != -1 && i < ssp.length() - 1) {
+                    String uncompressedFilename = removeCompressionExtension(ssp.substring(i + 1));
+                    String head = uncompressedFilename;
+                    String tail = "";
+                    int index = uncompressedFilename.lastIndexOf('.');
+                    if (index > -1) {
+                        head = uncompressedFilename.substring(0, index);
+                        tail = uncompressedFilename.substring(index, uncompressedFilename.length());
+                    }
+
+                    filename = head + "__" + label + "__" + replaceNonAlphanumeric(cutouts) + tail;
+                }
+            } catch (IllegalArgumentException ex) {
+                throw new UsageFault(ex.getMessage());
+            }
+        }
+        return filename;
+    }
+
+    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename) {
+        appendCutoutQueryString(sb, cutouts, filename, "cutout");
+    }
+     
+    // package access so other CutoutGenerator implementations can use it
+    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename, String cutoutParamName) {
+        if (cutouts != null && !cutouts.isEmpty()) {
+            boolean add = (sb.indexOf("?") > 0); // already has query params
+            if (!add) {
+                sb.append("?");
+            }
+             
+            if (filename != null) {
+                if (add) {
+                    sb.append("&");
+                }
+                add = true;
+                sb.append("fo=").append(filename);
+            }
+            
+            for (String cutout : cutouts) {
+                if (add) {
+                    sb.append("&");
+                }
+                add = true;
+                sb.append(cutoutParamName).append("=").append(NetUtil.encode(cutout));
+            }
         }
     }
 }
