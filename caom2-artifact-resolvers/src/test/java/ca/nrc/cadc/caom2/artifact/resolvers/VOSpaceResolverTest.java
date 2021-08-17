@@ -89,8 +89,8 @@ public class VOSpaceResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/FOO/bar";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String FILE_URI = "vos://cadc.nrc.ca!vault/FOO/bar";
+    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vault/FOO/bar";
     private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
     VOSpaceResolver vosResolver = new VOSpaceResolver();
