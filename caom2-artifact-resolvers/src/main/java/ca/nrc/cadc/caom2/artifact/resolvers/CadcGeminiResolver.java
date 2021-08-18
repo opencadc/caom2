@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -84,17 +84,24 @@ import org.apache.log4j.Logger;
  */
 public class CadcGeminiResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "gemini";
+    protected static final String GEMINI_ARCHIVE = "GEMINI";
     private static final Logger log = Logger.getLogger(CadcGeminiResolver.class);
 
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
+        String message = "Failed to convert to inventory URL";
 
         try {
-            AdResolver adResolver = new AdResolver();
-            return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
+            if (isGEMINI(uri)) {
+                StorageResolver cadcResolver = new CadcResolver(SCHEME);
+                return cadcResolver.toURL(uri);
+            } else {
+                message = "Failed to convert to data URL";
+                AdResolver adResolver = new AdResolver();
+                return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
+            }
         } catch (Throwable t) {
-            String message = "Failed to convert to data URL";
             throw new RuntimeException(message, t);
         }
     }
@@ -102,5 +109,15 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
     @Override
     public String getScheme() {
         return SCHEME;
+    }
+    
+    protected boolean isGEMINI(URI uri) {
+        if (uri.getSchemeSpecificPart().startsWith(GEMINI_ARCHIVE)) {
+            // gemini:GEMINI
+            return true;
+        } else {
+            // gemini:GEM
+            return false;
+        }
     }
 }
