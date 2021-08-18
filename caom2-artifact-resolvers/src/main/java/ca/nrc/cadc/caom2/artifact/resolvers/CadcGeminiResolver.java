@@ -93,13 +93,13 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
         String message = "Failed to convert to inventory URL";
 
         try {
-            if (isGEMINI(uri)) {
-                StorageResolver cadcResolver = new CadcResolver(SCHEME);
-                return cadcResolver.toURL(uri);
-            } else {
+            if (useAd(uri)) {
                 message = "Failed to convert to data URL";
                 AdResolver adResolver = new AdResolver();
                 return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
+            } else {
+                StorageResolver cadcResolver = new CadcResolver(SCHEME);
+                return cadcResolver.toURL(uri);
             }
         } catch (Throwable t) {
             throw new RuntimeException(message, t);
@@ -111,13 +111,13 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
         return SCHEME;
     }
     
-    protected boolean isGEMINI(URI uri) {
+    protected boolean useAd(URI uri) {
         if (uri.getSchemeSpecificPart().startsWith(GEMINI_ARCHIVE)) {
             // gemini:GEMINI
-            return true;
+            return false;
         } else {
             // gemini:GEM
-            return false;
+            return true;
         }
     }
 }
