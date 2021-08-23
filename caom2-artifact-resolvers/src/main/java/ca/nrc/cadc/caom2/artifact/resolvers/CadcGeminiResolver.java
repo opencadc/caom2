@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import java.net.URI;
@@ -84,23 +83,27 @@ import org.apache.log4j.Logger;
  */
 public class CadcGeminiResolver implements StorageResolver, Traceable {
     public static final String SCHEME = "gemini";
+    protected static final String GEM_ARCHIVE = "GEM";
     protected static final String GEMINI_ARCHIVE = "GEMINI";
     private static final Logger log = Logger.getLogger(CadcGeminiResolver.class);
 
     @Override
     public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
         String message = "Failed to convert to inventory URL";
-
         try {
             if (useAd(uri)) {
                 message = "Failed to convert to data URL";
                 AdResolver adResolver = new AdResolver();
                 return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
             } else {
-                StorageResolver cadcResolver = new CadcResolver(SCHEME);
+                StorageResolver cadcResolver = new CadcResolver();
+                if (SCHEME.equals(uri.getScheme())) {
+                    cadcResolver = new CadcResolver(SCHEME);
+                }
                 return cadcResolver.toURL(uri);
             }
+        } catch (IllegalArgumentException ex) {
+            throw ex;
         } catch (Throwable t) {
             throw new RuntimeException(message, t);
         }
@@ -112,12 +115,21 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
     }
     
     protected boolean useAd(URI uri) {
-        if (uri.getSchemeSpecificPart().startsWith(GEMINI_ARCHIVE)) {
-            // gemini:GEMINI
-            return false;
+        String uriScheme = uri.getScheme();
+        String archive = uri.getSchemeSpecificPart().split("/")[0];
+        if (GEMINI_ARCHIVE.equals(archive)) {
+            String cadcScheme = (new CadcResolver()).getScheme();
+            if (cadcScheme.equals(uriScheme) || SCHEME.equals(uriScheme)) {
+                // cadc:GEMINI or gemini:GEMINI
+                return false;
+            } else {
+                throw new IllegalArgumentException("incorrect URI: " + uri);
+            }
+        } else if (GEM_ARCHIVE.equals(archive) && AdResolver.SCHEME.equals(uriScheme)) {
+                // ad:GEM 
+                return true;
         } else {
-            // gemini:GEM
-            return true;
+            throw new IllegalArgumentException("incorrect URI: " + uri);
         }
     }
 }
