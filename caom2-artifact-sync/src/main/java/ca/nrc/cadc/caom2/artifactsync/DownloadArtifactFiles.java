@@ -124,6 +124,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
     private int threads;
     private boolean tolerateNullChecksum;
     private Integer artifactDownloadThreshold;
+    private URI startArtifactURI = null;
     private Date startDate = null;
     private Date stopDate;
     private int retryAfterHours;
@@ -174,6 +175,12 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
         while (moreArtifacts) {
             log.debug("Querying for skip records between " + startDate + " and " + stopDate);
             List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
+            if (startArtifactURI != null && !artifacts.isEmpty()) {
+                if (startArtifactURI.equals(artifacts.get(0).getSkipID())) {
+                    artifacts.remove(0);
+                }
+            }
+
             for (HarvestSkipURI skip : artifacts) {
                 ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
                 results.add(executor.submit(downloader));
@@ -185,6 +192,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
             } else {
                 // set the start date so that the next batch resumes after our last record
                 startDate = artifacts.get(batchSize - 1).getTryAfter();
+                startArtifactURI = artifacts.get(batchSize - 1).getSkipID();
             }
         }
 
