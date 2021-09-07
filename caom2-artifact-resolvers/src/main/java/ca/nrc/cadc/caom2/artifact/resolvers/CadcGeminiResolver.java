@@ -126,8 +126,8 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
                 throw new IllegalArgumentException("incorrect URI: " + uri);
             }
         } else if (GEM_ARCHIVE.equals(archive) && AdResolver.SCHEME.equals(uriScheme)) {
-                // ad:GEM 
-                return true;
+            // ad:GEM 
+            return true;
         } else {
             throw new IllegalArgumentException("incorrect URI: " + uri);
         }
