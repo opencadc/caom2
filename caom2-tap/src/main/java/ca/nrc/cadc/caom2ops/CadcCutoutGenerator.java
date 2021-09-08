@@ -109,9 +109,17 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
             return base;
         }
 
+        if (label != null) {
+            try {
+                CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
+            } catch (IllegalArgumentException ex) {
+                throw new UsageFault(ex.getMessage());
+            }
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        appendCutoutQueryString(sb, cutouts, null, CUTOUT_PARAM);
+        appendCutoutQueryString(sb, cutouts, label, CUTOUT_PARAM);
 
         try {
             return new URL(sb.toString());
@@ -120,78 +128,29 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
         }
     }
 
-    static String removeCompressionExtension(String uriFilename) {
-        String filename = uriFilename;
-        int i = uriFilename.lastIndexOf('.');
-        if (i != -1 && i < uriFilename.length() - 1) {
-            String ext = uriFilename.substring(i + 1, uriFilename.length());
-            if (ext.equalsIgnoreCase("cf") || ext.equalsIgnoreCase("z")
-                || ext.equalsIgnoreCase("gz") || ext.equalsIgnoreCase("fz")) {
-                filename = uriFilename.substring(0, i);
-            }
-        }
-        return filename;
-    }
-
-    /*
-     * Equivalent behaviour to the algorithm used in fslice2-fcat.sh.
-     * Replaces non alphanumerics with an underscore. Removes the leading and trailing underscore.
-     */
-    static String replaceNonAlphanumeric(List<String> cutouts) {
-        String cutoutString = "";
-        for (String cutout : cutouts) {
-            cutoutString = cutoutString + cutout.replaceAll("[^0-9a-zA-Z]","_").substring(1, cutout.length() - 1) + "___";
-        }
-        
-        // remove the the last 3 underscores that separate between two sequential cutout strings
-        return cutoutString.substring(0, cutoutString.length() - 3);
+    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String label) {
+        appendCutoutQueryString(sb, cutouts, label, CUTOUT_PARAM);
     }
     
-    static String generateFilename(URI uri, String label, List<String> cutouts) {
-        String filename = null;
-        if (label != null) {
-            try {
-                CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
-                String ssp = uri.getSchemeSpecificPart();
-                int i = ssp.lastIndexOf('/');
-                if (i != -1 && i < ssp.length() - 1) {
-                    String uncompressedFilename = removeCompressionExtension(ssp.substring(i + 1));
-                    String head = uncompressedFilename;
-                    String tail = "";
-                    int index = uncompressedFilename.lastIndexOf('.');
-                    if (index > -1) {
-                        head = uncompressedFilename.substring(0, index);
-                        tail = uncompressedFilename.substring(index, uncompressedFilename.length());
-                    }
-
-                    filename = head + "__" + label + "__" + replaceNonAlphanumeric(cutouts) + tail;
-                }
-            } catch (IllegalArgumentException ex) {
-                throw new UsageFault(ex.getMessage());
-            }
-        }
-        return filename;
-    }
-
-    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename) {
-        appendCutoutQueryString(sb, cutouts, filename, "cutout");
-    }
-     
     // package access so other CutoutGenerator implementations can use it
-    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String filename, String cutoutParamName) {
+    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String label, String cutoutParamName) {
         if (cutouts != null && !cutouts.isEmpty()) {
             boolean add = (sb.indexOf("?") > 0); // already has query params
             if (!add) {
                 sb.append("?");
             }
              
-            if (filename != null) {
+            // TODO: come up with a solution to handle input label
+            // for now, ignore label
+            /*
+            if (label != null) {
                 if (add) {
                     sb.append("&");
                 }
                 add = true;
-                sb.append("fo=").append(filename);
+                sb.append("LABEL=").append(label);
             }
+            */
             
             for (String cutout : cutouts) {
                 if (add) {
