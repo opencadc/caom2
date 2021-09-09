@@ -101,8 +101,7 @@ public class CadcNraoCutoutGenerator extends CadcNraoResolver implements CutoutG
         
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        String filename = CadcCutoutGenerator.generateFilename(uri, label, cutouts);
-        CadcCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
+        CadcCutoutGenerator.appendCutoutQueryString(sb, cutouts, label);
         
         try {
             return new URL(sb.toString());
