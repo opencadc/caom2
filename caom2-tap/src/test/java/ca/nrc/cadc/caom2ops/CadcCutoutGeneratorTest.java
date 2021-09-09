@@ -95,14 +95,12 @@ public class CadcCutoutGeneratorTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String SI_URL = "https://unittest.com/minoc/files";
-
     private static final String CUTOUT1 = "[1][100:200, 100:200]";
     private static final String CUTOUT2 = "[2][300:400, 300:400]";
     private static final String CUTOUT3 = "[3][500:600, 500:600]";
     private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
-    private static final String CADC_FILE_URI = "cadc:Archive/bar.fits.gz";
+    private static final String CADC_FILE_URI = "cadc:Archive/bar.fits";
     private static final String AD_FILE_URI = "ad:Archive/bar.fits.gz"; // invalid uri
 
     CadcCutoutGenerator cutoutGenerator;
@@ -164,6 +162,27 @@ public class CadcCutoutGeneratorTest {
                 Assert.assertEquals("SUB param", "SUB", kv[0]);
                 Assert.assertEquals("pixel cutout value", cutouts.get(i), kv[1]);
             }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testToURLWithInvalidLabel() {
+        try {
+            String label = "label1%";
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(CADC_FILE_URI);
+            cutoutGenerator.setAuthMethod(AuthMethod.ANON);
+            cutoutGenerator.toURL(uri, cutouts, label);
+            Assert.fail("should have thrown a UsageFault due to an invalid label");
+        } catch (UsageFault uf) {
+            // expected, success
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
