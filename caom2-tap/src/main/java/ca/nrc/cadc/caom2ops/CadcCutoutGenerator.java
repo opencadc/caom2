@@ -109,14 +109,6 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
             return base;
         }
 
-        if (label != null) {
-            try {
-                CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
-            } catch (IllegalArgumentException ex) {
-                throw new UsageFault(ex.getMessage());
-            }
-        }
-
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
         appendCutoutQueryString(sb, cutouts, label, CUTOUT_PARAM);
@@ -135,6 +127,14 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
     // package access so other CutoutGenerator implementations can use it
     static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String label, String cutoutParamName) {
         if (cutouts != null && !cutouts.isEmpty()) {
+            if (label != null) {
+                try {
+                    CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
+                } catch (IllegalArgumentException ex) {
+                    throw new UsageFault(ex.getMessage());
+                }
+            }
+
             boolean add = (sb.indexOf("?") > 0); // already has query params
             if (!add) {
                 sb.append("?");
