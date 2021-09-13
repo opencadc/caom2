@@ -111,7 +111,7 @@ public class IngestTest
     @Test
     public void testIngest() throws Exception
     {
-        URI[] uris = new URI[] { new URI("ad", "BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03", null) };
+        URI[] uris = new URI[] { new URI("ad", "BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03.fits", null) };
         String userConfig = null;
         Map<String,String> config = Util.loadConfig(userConfig);
 
@@ -138,7 +138,7 @@ public class IngestTest
     @Test
     public void testIngestArtifactTypes22() throws Exception
     {
-        URI uri = URI.create("ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03");
+        URI uri = URI.create("ad:BLAST/BLASTvulpecula2005-06-12_250_reduced_2006-10-03.fits");
         URI[] uris = new URI[] { uri };
         String userConfig = null;
         Map<String,String> config = Util.loadConfig(userConfig);
