@@ -88,25 +88,13 @@ public class CadcNraoResolver implements StorageResolver, Traceable {
 
     @Override
     public URL toURL(URI uri) {
-        String message = "Failed to convert to inventory URL";
+        validateScheme(uri);
 
-        try {
-            if (useAd(uri)) {
-                message = "Failed to convert to data URL";
-                AdResolver adResolver = new AdResolver();
-                return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
-            } else {
-                StorageResolver cadcResolver = new CadcResolver();
-                if (SCHEME.equals(uri.getScheme())) {
-                    cadcResolver = new CadcResolver(SCHEME);
-                }
-                return cadcResolver.toURL(uri);
-            }
-        } catch (IllegalArgumentException ex) {
-            throw ex;
-        } catch (Throwable t) {
-            throw new RuntimeException(message, t);
+        StorageResolver cadcResolver = new CadcResolver();
+        if (SCHEME.equals(uri.getScheme())) {
+            cadcResolver = new CadcResolver(SCHEME);
         }
+        return cadcResolver.toURL(uri);
     }
 
     @Override
@@ -114,23 +102,17 @@ public class CadcNraoResolver implements StorageResolver, Traceable {
         return SCHEME;
     }
     
-    protected boolean useAd(URI uri) {
+    protected void validateScheme(URI uri) {
         String uriScheme = uri.getScheme();
         if (uri.getSchemeSpecificPart().startsWith(VLASS_ARCHIVE)) {
-            if (AdResolver.SCHEME.equals(uriScheme)) {
-                // ad:VLASS
-                return true;
-            } else {
-                String scheme = (new CadcResolver()).getScheme();
-                if (scheme.equals(uriScheme) || SCHEME.equals(uriScheme)) {
-                    // cadc:VLASS or nrao: VLASS
-                    return false;
-                } else {
-                    throw new IllegalArgumentException("incorrect URI: " + uri);
-                }
+            String scheme = (new CadcResolver()).getScheme();
+            if (!scheme.equals(uriScheme) && !SCHEME.equals(uriScheme)) {
+                // neither cadc:VLASS nor nrao: VLASS
+                throw new IllegalArgumentException("Invalid URI: " + uri);
             }
         } else {
-            throw new IllegalArgumentException("incorrect URI: " + uri);
+            // not [cadc|nrao]:VLASS
+            throw new IllegalArgumentException("Invalid URI: " + uri);
         }
     }
 }

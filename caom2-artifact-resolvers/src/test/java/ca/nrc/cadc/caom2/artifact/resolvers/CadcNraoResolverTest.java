@@ -89,7 +89,6 @@ public class CadcNraoResolverTest {
     }
 
     // TODO: create a URI that uses AdResolver
-    private static final String AD_FILE_URI = "ad:VLASS/bar.fits";
     private static final String CADC_FILE_URI = "cadc:VLASS/bar.fits";
     private static final String NRAO_FILE_URI = "nrao:VLASS/bar.fits";
     private static final String INVALID_URI1 = "wrongscheme://cadc.nrc.ca!vault/FOO/bar";
@@ -114,23 +113,17 @@ public class CadcNraoResolverTest {
     @Test
     public void testToURL() {
         try {
-            URI uri = new URI(AD_FILE_URI);
+            URI uri = new URI(CADC_FILE_URI);
             URL url = cadcNraoResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
-            Assert.assertTrue("incorrect URL: " + url, url.toString().contains("/data/pub/"));
-
-            uri = new URI(CADC_FILE_URI);
-            url = cadcNraoResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            Assert.assertTrue("incorrect URL: " + url, url.toString().contains("/raven/files/"));
+            Assert.assertTrue("Invalid URL: " + url, url.toString().contains("/raven/files/"));
 
             uri = new URI(NRAO_FILE_URI);
             url = cadcNraoResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
-            Assert.assertTrue("incorrect URL: " + url, url.toString().contains("/raven/files/"));
+            Assert.assertTrue("Invalid URL: " + url, url.toString().contains("/raven/files/"));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -144,7 +137,7 @@ public class CadcNraoResolverTest {
             URL url = cadcNraoResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("incorrect URI"));
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -159,7 +152,7 @@ public class CadcNraoResolverTest {
             URL url = cadcNraoResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("incorrect URI"));
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
