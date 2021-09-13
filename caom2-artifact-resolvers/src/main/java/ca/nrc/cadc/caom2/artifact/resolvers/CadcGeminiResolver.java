@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import java.net.URI;
@@ -89,47 +90,19 @@ public class CadcGeminiResolver implements StorageResolver, Traceable {
 
     @Override
     public URL toURL(URI uri) {
-        String message = "Failed to convert to inventory URL";
-        try {
-            if (useAd(uri)) {
-                message = "Failed to convert to data URL";
-                AdResolver adResolver = new AdResolver();
-                return adResolver.toURL(URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart()));
-            } else {
-                StorageResolver cadcResolver = new CadcResolver();
-                if (SCHEME.equals(uri.getScheme())) {
-                    cadcResolver = new CadcResolver(SCHEME);
-                }
-                return cadcResolver.toURL(uri);
-            }
-        } catch (IllegalArgumentException ex) {
-            throw ex;
-        } catch (Throwable t) {
-            throw new RuntimeException(message, t);
+        ResolverUtil.validate(uri, SCHEME);
+        
+        StorageResolver resolver = new CadcResolver(SCHEME);
+        if (uri.getSchemeSpecificPart().startsWith(GEM_ARCHIVE + "/")) {
+            resolver = new AdResolver();
+            uri = URI.create(AdResolver.SCHEME + ":" + uri.getSchemeSpecificPart());
         }
+        
+        return resolver.toURL(uri);
     }
 
     @Override
     public String getScheme() {
         return SCHEME;
-    }
-    
-    protected boolean useAd(URI uri) {
-        String uriScheme = uri.getScheme();
-        String archive = uri.getSchemeSpecificPart().split("/")[0];
-        if (GEMINI_ARCHIVE.equals(archive)) {
-            String cadcScheme = (new CadcResolver()).getScheme();
-            if (cadcScheme.equals(uriScheme) || SCHEME.equals(uriScheme)) {
-                // cadc:GEMINI or gemini:GEMINI
-                return false;
-            } else {
-                throw new IllegalArgumentException("incorrect URI: " + uri);
-            }
-        } else if (GEM_ARCHIVE.equals(archive) && AdResolver.SCHEME.equals(uriScheme)) {
-            // ad:GEM 
-            return true;
-        } else {
-            throw new IllegalArgumentException("incorrect URI: " + uri);
-        }
     }
 }

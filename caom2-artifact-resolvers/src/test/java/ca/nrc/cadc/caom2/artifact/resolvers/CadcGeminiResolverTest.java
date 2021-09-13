@@ -88,11 +88,9 @@ public class CadcGeminiResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String AD_FILE_URI = "ad:GEM/bar.fits";
-    private static final String CADC_FILE_URI = "cadc:GEMINI/bar.fits";
-    private static final String GEMINI_FILE_URI = "gemini:GEMINI/bar.fits";
+    private static final String AD_FILE_URI = "gemini:GEM/bar.fits";
+    private static final String CADC_FILE_URI = "gemini:GEMINI/bar.fits";
     private static final String INVALID_SCHEME_URI = "ad://cadc.nrc.ca!vault/FOO/bar";
-    private static final String INVALID_ARCHIVE_URI = "ad:GEMINI/FOO/bar";
 
     CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
 
@@ -117,12 +115,8 @@ public class CadcGeminiResolverTest {
             URI uri = new URI(AD_FILE_URI);
             verifyURL(uri, "/data/pub");
 
-            // cadc:GEMINI
-            uri = new URI(CADC_FILE_URI);
-            verifyURL(uri, "/raven/files");
-
             // gemini:GEMINI
-            uri = new URI(GEMINI_FILE_URI);
+            uri = new URI(CADC_FILE_URI);
             verifyURL(uri, "/raven/files");
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -137,22 +131,7 @@ public class CadcGeminiResolverTest {
             URL url = cadcGeminiResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("incorrect URI"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testInvalidArchiveURI() {
-        try {
-            URI uri = new URI(INVALID_ARCHIVE_URI);
-            URL url = cadcGeminiResolver.toURL(uri);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("incorrect URI"));
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
