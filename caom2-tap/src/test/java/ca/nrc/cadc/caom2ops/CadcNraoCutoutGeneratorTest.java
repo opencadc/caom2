@@ -96,7 +96,7 @@ public class CadcNraoCutoutGeneratorTest {
     private static final String CUTOUT3 = "[3][500:600, 500:600]";
     private static final String CUTOUT4 = "[4][700:800, 700:800]";
 
-    private static final String CADC_FILE_URI = "cadc:VLASS/bar.fits";
+    private static final String CADC_FILE_URI = "nrao:VLASS/bar.fits";
     private static final String AD_FILE_URI = "ad:Archive/bar.fits.gz"; // invalid uri
 
     CadcNraoCutoutGenerator cutoutGenerator = new CadcNraoCutoutGenerator();
@@ -165,7 +165,7 @@ public class CadcNraoCutoutGeneratorTest {
             URL url = cutoutGenerator.toURL(uri, cutouts, null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("incorrect URI"));
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
             log.debug("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
