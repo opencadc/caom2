@@ -89,7 +89,6 @@ public class CadcNraoResolverTest {
     }
 
     // TODO: create a URI that uses AdResolver
-    private static final String CADC_FILE_URI = "cadc:VLASS/bar.fits";
     private static final String NRAO_FILE_URI = "nrao:VLASS/bar.fits";
     private static final String INVALID_URI1 = "wrongscheme://cadc.nrc.ca!vault/FOO/bar";
     private static final String INVALID_URI2 = "ad:WRONGARCHIVE/FOO/bar";
@@ -113,14 +112,8 @@ public class CadcNraoResolverTest {
     @Test
     public void testToURL() {
         try {
-            URI uri = new URI(CADC_FILE_URI);
+            URI uri = new URI(NRAO_FILE_URI);
             URL url = cadcNraoResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            Assert.assertTrue("Invalid URL: " + url, url.toString().contains("/raven/files/"));
-
-            uri = new URI(NRAO_FILE_URI);
-            url = cadcNraoResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
             Assert.assertTrue("Invalid URL: " + url, url.toString().contains("/raven/files/"));

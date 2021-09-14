@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import java.net.URI;
@@ -88,31 +89,14 @@ public class CadcNraoResolver implements StorageResolver, Traceable {
 
     @Override
     public URL toURL(URI uri) {
-        validateScheme(uri);
+        ResolverUtil.validate(uri, SCHEME);
 
-        StorageResolver cadcResolver = new CadcResolver();
-        if (SCHEME.equals(uri.getScheme())) {
-            cadcResolver = new CadcResolver(SCHEME);
-        }
+        StorageResolver cadcResolver = new CadcResolver(SCHEME);
         return cadcResolver.toURL(uri);
     }
 
     @Override
     public String getScheme() {
         return SCHEME;
-    }
-    
-    protected void validateScheme(URI uri) {
-        String uriScheme = uri.getScheme();
-        if (uri.getSchemeSpecificPart().startsWith(VLASS_ARCHIVE)) {
-            String scheme = (new CadcResolver()).getScheme();
-            if (!scheme.equals(uriScheme) && !SCHEME.equals(uriScheme)) {
-                // neither cadc:VLASS nor nrao: VLASS
-                throw new IllegalArgumentException("Invalid URI: " + uri);
-            }
-        } else {
-            // not [cadc|nrao]:VLASS
-            throw new IllegalArgumentException("Invalid URI: " + uri);
-        }
     }
 }
