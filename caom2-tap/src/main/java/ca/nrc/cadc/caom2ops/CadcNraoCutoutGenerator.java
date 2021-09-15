@@ -68,9 +68,7 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.caom2.artifact.resolvers.CadcNraoResolver;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -79,86 +77,36 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * CutoutGenerator for the CADC Storage Inventory system.
- * 
- * @author adriand
+ *
+ * @author yeunga
  */
-public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator {
-    private static final Logger log = Logger.getLogger(CadcCutoutGenerator.class);
+public class CadcNraoCutoutGenerator extends CadcNraoResolver implements CutoutGenerator {
+    private static final Logger log = Logger.getLogger(CadcNraoCutoutGenerator.class);
 
-    static final String CUTOUT_PARAM = "SUB";
-    
-    public CadcCutoutGenerator() {
-        super();
-    }
-
-    protected CadcCutoutGenerator(final String scheme) {
-        super(scheme);
-    }
+    public CadcNraoCutoutGenerator() { }
 
     @Override
     public boolean canCutout(Artifact a) {
         // file types supported by SODA
         return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
     }
-
+    
     @Override
-    public URL toURL(URI uri, List<String> cutouts, String label) {
+    public URL toURL(URI uri, List<String> cutouts, String label) 
+            throws IllegalArgumentException {
         URL base = super.toURL(uri);
         if (cutouts == null || cutouts.isEmpty()) {
             return base;
         }
-
+        
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        appendCutoutQueryString(sb, cutouts, label, CUTOUT_PARAM);
-
+        CadcCutoutGenerator.appendCutoutQueryString(sb, cutouts, label);
+        
         try {
             return new URL(sb.toString());
         } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
-        }
-    }
-
-    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String label) {
-        appendCutoutQueryString(sb, cutouts, label, CUTOUT_PARAM);
-    }
-    
-    // package access so other CutoutGenerator implementations can use it
-    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String label, String cutoutParamName) {
-        if (cutouts != null && !cutouts.isEmpty()) {
-            if (label != null) {
-                try {
-                    CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
-                } catch (IllegalArgumentException ex) {
-                    throw new UsageFault(ex.getMessage());
-                }
-            }
-
-            boolean add = (sb.indexOf("?") > 0); // already has query params
-            if (!add) {
-                sb.append("?");
-            }
-             
-            // TODO: come up with a solution to handle input label
-            // for now, ignore label
-            /*
-            if (label != null) {
-                if (add) {
-                    sb.append("&");
-                }
-                add = true;
-                sb.append("LABEL=").append(label);
-            }
-            */
-            
-            for (String cutout : cutouts) {
-                if (add) {
-                    sb.append("&");
-                }
-                add = true;
-                sb.append(cutoutParamName).append("=").append(NetUtil.encode(cutout));
-            }
+            throw new RuntimeException("BUG: failed to generate cutout URL.", ex);
         }
     }
 }

@@ -69,10 +69,7 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver;
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
-import ca.nrc.cadc.net.StorageResolver;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
