@@ -81,43 +81,42 @@ import org.junit.Test;
  *
  * @author yeunga
  */
-public class CadcGeminiResolverTest {
-    private static final Logger log = Logger.getLogger(CadcGeminiResolverTest.class);
+public class CadcNraoResolverTest {
+    private static final Logger log = Logger.getLogger(CadcNraoResolverTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String AD_FILE_URI = "gemini:GEM/bar.fits";
-    private static final String CADC_FILE_URI = "gemini:GEMINI/bar.fits";
-    private static final String INVALID_SCHEME_URI = "ad://cadc.nrc.ca!vault/FOO/bar";
+    // TODO: create a URI that uses AdResolver
+    private static final String NRAO_FILE_URI = "nrao:VLASS/bar.fits";
+    private static final String INVALID_URI1 = "wrongscheme://cadc.nrc.ca!vault/FOO/bar";
+    private static final String INVALID_URI2 = "ad:WRONGARCHIVE/FOO/bar";
 
-    CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
+    CadcNraoResolver cadcNraoResolver = new CadcNraoResolver();
 
-    public CadcGeminiResolverTest() {
+    public CadcNraoResolverTest() {
 
     }
 
     @Test
     public void testGetScheme() {
-        Assert.assertTrue(CadcGeminiResolver.SCHEME.equals(cadcGeminiResolver.getScheme()));
+        Assert.assertTrue(CadcNraoResolver.SCHEME.equals(cadcNraoResolver.getScheme()));
     }
 
     @Test 
     public void testTraceable() {
-        Assert.assertTrue(cadcGeminiResolver instanceof Traceable);
+        Assert.assertTrue(cadcNraoResolver instanceof Traceable);
     }
     
     @Test
     public void testToURL() {
         try {
-            // gemini:GEM
-            URI uri = new URI(AD_FILE_URI);
-            verifyURL(uri, "/data/pub");
-
-            // gemini:GEMINI
-            uri = new URI(CADC_FILE_URI);
-            verifyURL(uri, "/raven/files");
+            URI uri = new URI(NRAO_FILE_URI);
+            URL url = cadcNraoResolver.toURL(uri);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            Assert.assertTrue("Invalid URL: " + url, url.toString().contains("/raven/files/"));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -127,8 +126,8 @@ public class CadcGeminiResolverTest {
     @Test
     public void testInvalidSchemeURI() {
         try {
-            URI uri = new URI(INVALID_SCHEME_URI);
-            URL url = cadcGeminiResolver.toURL(uri);
+            URI uri = new URI(INVALID_URI1);
+            URL url = cadcNraoResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
             Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
@@ -138,11 +137,19 @@ public class CadcGeminiResolverTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
-    private void verifyURL(URI uri, String path) {
-        URL url = cadcGeminiResolver.toURL(uri);
-        Assert.assertNotNull(url);
-        log.info("testFile: " + uri + " -> " + url);
-        Assert.assertTrue("incorrect URL: " + url, url.toString().contains(path));
+
+    @Test
+    public void testInvalidArchiveURI() {
+        try {
+            URI uri = new URI(INVALID_URI2);
+            URL url = cadcNraoResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
+            log.debug("expected exception: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }
