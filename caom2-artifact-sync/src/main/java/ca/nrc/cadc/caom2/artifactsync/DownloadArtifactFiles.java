@@ -96,7 +96,9 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -113,7 +115,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
     private static final int DEFAULT_RETRY_AFTER_ERROR_HOURS = 24;
-    private static final int DEFAULT_ARTIFACT_DOWNLOAD_THRESHOLD = 10000;
+    private static final int DEFAULT_ARTIFACT_DOWNLOAD_THRESHOLD = 9990;
 
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
@@ -175,13 +177,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
         while (moreArtifacts) {
             log.debug("Querying for skip records between " + startDate + " and " + stopDate);
             List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
-            if (startArtifactURI != null && !artifacts.isEmpty()) {
-                if (startArtifactURI.equals(artifacts.get(0).getSkipID())) {
-                    artifacts.remove(0);
-                }
-            }
-
+            boolean found = false;
             for (HarvestSkipURI skip : artifacts) {
+                if (!found && startArtifactURI != null && startArtifactURI.equals(skip.getSkipID())) {
+                    // duplicate artifact, skip
+                    found = true;
+                    continue;
+                }
                 ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
                 results.add(executor.submit(downloader));
             }
