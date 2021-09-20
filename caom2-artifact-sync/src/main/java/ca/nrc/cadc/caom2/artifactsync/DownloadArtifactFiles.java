@@ -113,7 +113,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
     private static final Logger log = Logger.getLogger(DownloadArtifactFiles.class);
 
     private static final int DEFAULT_RETRY_AFTER_ERROR_HOURS = 24;
-    private static final int DEFAULT_ARTIFACT_DOWNLOAD_THRESHOLD = 10000;
+    private static final int DEFAULT_ARTIFACT_DOWNLOAD_THRESHOLD = 9990;
 
     private ArtifactStore artifactStore;
     private HarvestSkipURIDAO harvestSkipURIDAO;
@@ -124,6 +124,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
     private int threads;
     private boolean tolerateNullChecksum;
     private Integer artifactDownloadThreshold;
+    private URI startArtifactURI = null;
     private Date startDate = null;
     private Date stopDate;
     private int retryAfterHours;
@@ -174,7 +175,13 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
         while (moreArtifacts) {
             log.debug("Querying for skip records between " + startDate + " and " + stopDate);
             List<HarvestSkipURI> artifacts = harvestSkipURIDAO.get(source, ArtifactHarvester.STATE_CLASS, startDate, stopDate, batchSize);
+            boolean found = false;
             for (HarvestSkipURI skip : artifacts) {
+                if (!found && startArtifactURI != null && startArtifactURI.equals(skip.getSkipID())) {
+                    // duplicate artifact, skip
+                    found = true;
+                    continue;
+                }
                 ArtifactDownloader downloader = new ArtifactDownloader(skip, artifactStore, harvestSkipURIDAO);
                 results.add(executor.submit(downloader));
             }
@@ -185,6 +192,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
             } else {
                 // set the start date so that the next batch resumes after our last record
                 startDate = artifacts.get(batchSize - 1).getTryAfter();
+                startArtifactURI = artifacts.get(batchSize - 1).getSkipID();
             }
         }
 
