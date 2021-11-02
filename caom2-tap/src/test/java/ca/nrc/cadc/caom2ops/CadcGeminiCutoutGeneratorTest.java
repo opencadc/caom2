@@ -62,103 +62,114 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
-import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.util.Log4jInit;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * CutoutGenerator for the CADC Storage Inventory system.
- * 
- * @author adriand
+ * @author yeunga
  */
-public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator {
-    private static final Logger log = Logger.getLogger(CadcCutoutGenerator.class);
+public class CadcGeminiCutoutGeneratorTest {
+    private static final Logger log = Logger.getLogger(CadcGeminiCutoutGeneratorTest.class);
 
-    static final String CUTOUT_PARAM = "SUB";
-    
-    public CadcCutoutGenerator() {
-        super();
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    protected CadcCutoutGenerator(final String scheme) {
-        super(scheme);
+    private static final String CUTOUT1 = "[1][100:200, 100:200]";
+    private static final String CUTOUT2 = "[2][300:400, 300:400]";
+    private static final String CUTOUT3 = "[3][500:600, 500:600]";
+    private static final String CUTOUT4 = "[4][700:800, 700:800]";
+
+    private static final String CADC_FILE_URI = "gemini:GEMINI/bar.fits";
+    private static final String AD_FILE_URI = "ad:Archive/bar.fits.gz"; // invalid uri
+
+    CadcGeminiCutoutGenerator cutoutGenerator = new CadcGeminiCutoutGenerator();
+
+    public CadcGeminiCutoutGeneratorTest() {
+
     }
 
-    @Override
-    public boolean canCutout(Artifact a) {
-        // file types supported by SODA
-        return "application/fits".equals(a.contentType) || "image/fits".equals(a.contentType);
-    }
-
-    @Override
-    public URL toURL(URI uri, List<String> cutouts, String label) {
-        URL base = super.toURL(uri);
-        if (cutouts == null || cutouts.isEmpty()) {
-            return base;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(base.toExternalForm());
-        appendCutoutQueryString(sb, cutouts, label, CUTOUT_PARAM);
-
+    @Test
+    public void testToURLWithNullLabel() {
         try {
-            return new URL(sb.toString());
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("BUG: failed to generate cutout URL", ex);
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(CADC_FILE_URI);
+            URL url = cutoutGenerator.toURL(uri, cutouts, null);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            String urlString = url.toExternalForm();
+            URL storageURI = cutoutGenerator.toURL(new URI(CADC_FILE_URI));
+            Assert.assertTrue(urlString.contains(storageURI.toString()));
+            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
+            for (int i = 0; i < cutoutArray.length; i++) {
+                String c = cutoutArray[i];
+                String[] kv = c.split("=");
+                Assert.assertEquals("SUB param", "SUB", kv[0]);
+                Assert.assertEquals("pixel cutout value", cutouts.get(i), kv[1]);
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String label) {
-        appendCutoutQueryString(sb, cutouts, label, CUTOUT_PARAM);
+    @Test
+    public void testToURLWithInvalidLabel() {
+        try {
+            String label = "label1%";
+            List<String> cutouts = new ArrayList<String>();
+            cutouts.add(CUTOUT1);
+            cutouts.add(CUTOUT2);
+            cutouts.add(CUTOUT3);
+            cutouts.add(CUTOUT4);
+            URI uri = new URI(CADC_FILE_URI);
+            cutoutGenerator.toURL(uri, cutouts, label);
+            Assert.fail("should have thrown a UsageFault due to an invalid label");
+        } catch (UsageFault uf) {
+            // expected, success
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
-    
-    // package access so other CutoutGenerator implementations can use it
-    static void appendCutoutQueryString(StringBuilder sb, List<String> cutouts, String label, String cutoutParamName) {
-        if (cutouts != null && !cutouts.isEmpty()) {
-            if (label != null) {
-                try {
-                    CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
-                } catch (IllegalArgumentException ex) {
-                    throw new UsageFault(ex.getMessage());
-                }
-            }
 
-            boolean add = (sb.indexOf("?") > 0); // already has query params
-            if (!add) {
-                sb.append("?");
-            }
-             
-            // TODO: come up with a solution to handle input label
-            // for now, ignore label
-            /*
-            if (label != null) {
-                if (add) {
-                    sb.append("&");
-                }
-                add = true;
-                sb.append("LABEL=").append(label);
-            }
-            */
-            
-            for (String cutout : cutouts) {
-                if (add) {
-                    sb.append("&");
-                }
-                add = true;
-                sb.append(cutoutParamName).append("=").append(NetUtil.encode(cutout));
-            }
+    @Test
+    public void testInvalidCadcURI() throws Exception {
+        List<String> cutouts = new ArrayList<String>();
+        cutouts.add(CUTOUT1);
+        cutouts.add(CUTOUT2);
+        cutouts.add(CUTOUT3);
+        cutouts.add(CUTOUT4);
+        URI uri = new URI(AD_FILE_URI);
+        try {
+            URL url = cutoutGenerator.toURL(uri, cutouts, null);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
+            log.debug("expected exception: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 }
