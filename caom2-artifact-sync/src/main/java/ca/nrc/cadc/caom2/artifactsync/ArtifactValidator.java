@@ -85,7 +85,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.StringUtil;
 
@@ -613,8 +613,11 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         queryString.append(URLEncoder.encode(adql, "UTF-8"));
         URL url = new URL(baseURL.toString() + "?" + queryString.toString());
         ResultReader resultReader = new ResultReader(artifactStore);
-        HttpDownload get = new HttpDownload(url, resultReader);
+        HttpGet get = new HttpGet(url, resultReader);
+        get.setConnectionTimeout(60000);
+        get.setReadTimeout(60000);
         try {
+            get.prepare();
             get.run();
         } catch (Throwable t) {
             t.printStackTrace();
