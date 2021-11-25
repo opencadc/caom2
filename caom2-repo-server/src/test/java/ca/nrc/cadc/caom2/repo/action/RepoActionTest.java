@@ -74,9 +74,12 @@ import ca.nrc.cadc.caom2.repo.TestSyncOutput;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.rest.RestServlet;
 import ca.nrc.cadc.util.Log4jInit;
 
 import java.security.AccessControlException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -193,6 +196,9 @@ public class RepoActionTest {
             super();
             this.ex = ex;
             setLogInfo(new TestLogInfo());
+            Map<String, String> initParams = new HashMap<String, String>();
+            initParams.put("authHeaders", "false");
+            setInitParams(initParams);
         }
 
         @Override
