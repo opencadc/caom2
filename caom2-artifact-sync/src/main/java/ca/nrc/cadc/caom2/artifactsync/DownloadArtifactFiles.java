@@ -306,7 +306,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 head.setConnectionTimeout(60000);
                 head.setReadTimeout(60000);
                 head.setHeadOnly(true);
-                head.prepare();
                 head.run();
                 int respCode = head.getResponseCode();
                 profiler.checkpoint("remote.httpHead");
@@ -369,7 +368,6 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 HttpGet download = new HttpGet(url, this);
                 download.setConnectionTimeout(60000);
                 download.setReadTimeout(60000);
-                download.prepare();
 
                 threadLog.debug("Starting download of " + artifactURI + " from " + url);
                 long start = System.currentTimeMillis();

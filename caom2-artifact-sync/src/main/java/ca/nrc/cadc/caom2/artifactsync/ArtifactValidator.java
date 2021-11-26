@@ -617,7 +617,6 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         get.setConnectionTimeout(60000);
         get.setReadTimeout(60000);
         try {
-            get.prepare();
             get.run();
         } catch (Throwable t) {
             t.printStackTrace();
