@@ -80,7 +80,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountInputStream;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.profiler.Profiler;
 import ca.nrc.cadc.util.FileMetadata;
@@ -302,7 +302,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 URL url = caomArtifactResolver.getURL(artifactURI);
 
                 OutputStream out = new ByteArrayOutputStream();
-                HttpDownload head = new HttpDownload(url, out);
+                HttpGet head = new HttpGet(url, out);
+                head.setConnectionTimeout(60000);
+                head.setReadTimeout(60000);
                 head.setHeadOnly(true);
                 head.run();
                 int respCode = head.getResponseCode();
@@ -363,7 +365,9 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 }
                 profiler.checkpoint("local.httpHead");
 
-                HttpDownload download = new HttpDownload(url, this);
+                HttpGet download = new HttpGet(url, this);
+                download.setConnectionTimeout(60000);
+                download.setReadTimeout(60000);
 
                 threadLog.debug("Starting download of " + artifactURI + " from " + url);
                 long start = System.currentTimeMillis();
