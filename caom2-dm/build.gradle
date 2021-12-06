@@ -1,12 +1,15 @@
 plugins {
     id 'java'
+    id 'checkstyle'
     id "com.github.eerohele.saxon-gradle" version "0.2.1"
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
     mavenLocal()
 }
+
+apply from: '../opencadc.gradle'
 
 sourceCompatibility = 1.8
 
@@ -48,7 +51,7 @@ xslt {
 }
 
 dependencies {
-    testCompile 'org.opencadc:cadc-vodml:[1.0.4,1.1)'
+    testCompile 'org.opencadc:cadc-vodml:[1.0.8,1.1)'
 
     testCompile 'junit:junit:4.13' 
 }
