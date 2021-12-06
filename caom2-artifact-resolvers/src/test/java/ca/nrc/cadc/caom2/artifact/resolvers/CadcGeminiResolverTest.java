@@ -88,8 +88,9 @@ public class CadcGeminiResolverTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    private static final String FILE_URI = "gemini:GEM/bar.fits";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vospace/FOO/bar";
+    private static final String AD_FILE_URI = "gemini:GEM/bar.fits";
+    private static final String CADC_FILE_URI = "gemini:GEMINI/bar.fits";
+    private static final String INVALID_SCHEME_URI = "ad://cadc.nrc.ca!vault/FOO/bar";
 
     CadcGeminiResolver cadcGeminiResolver = new CadcGeminiResolver();
 
@@ -110,10 +111,13 @@ public class CadcGeminiResolverTest {
     @Test
     public void testToURL() {
         try {
-            URI uri = new URI(FILE_URI);
-            URL url = cadcGeminiResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
+            // gemini:GEM
+            URI uri = new URI(AD_FILE_URI);
+            verifyURL(uri, "/data/pub");
+
+            // gemini:GEMINI
+            uri = new URI(CADC_FILE_URI);
+            verifyURL(uri, "/raven/files");
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -123,7 +127,7 @@ public class CadcGeminiResolverTest {
     @Test
     public void testInvalidSchemeURI() {
         try {
-            URI uri = new URI(INVALID_SCHEME_URI1);
+            URI uri = new URI(INVALID_SCHEME_URI);
             URL url = cadcGeminiResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
@@ -133,5 +137,12 @@ public class CadcGeminiResolverTest {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+    }
+    
+    private void verifyURL(URI uri, String path) {
+        URL url = cadcGeminiResolver.toURL(uri);
+        Assert.assertNotNull(url);
+        log.info("testFile: " + uri + " -> " + url);
+        Assert.assertTrue("incorrect URL: " + url, url.toString().contains(path));
     }
 }

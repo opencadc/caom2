@@ -62,55 +62,94 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
-import ca.nrc.cadc.net.StorageResolver;
-
+import ca.nrc.cadc.net.Traceable;
+import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URL;
-
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * This class can convert a MAST URI into a URL.
  *
- * @author jeevesh
+ * @author yeunga
  */
-public class MastResolver implements StorageResolver {
+public class CadcNraoResolverTest {
+    private static final Logger log = Logger.getLogger(CadcNraoResolverTest.class);
 
-    public static final String SCHEME = "mast";
-    private static final String MAST_BASE_ARTIFACT_URL = "https://mastpartners.stsci.edu/portal/Download/file/";
-
-    public MastResolver() {
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    /**
-     * Returns the scheme for the storage resolver.
-     *
-     * @return a String representing the schema.
-     */
-    @Override
-    public String getScheme() {
-        return SCHEME;
+    // TODO: create a URI that uses AdResolver
+    private static final String NRAO_FILE_URI = "nrao:VLASS/bar.fits";
+    private static final String INVALID_URI1 = "wrongscheme://cadc.nrc.ca!vault/FOO/bar";
+    private static final String INVALID_URI2 = "ad:WRONGARCHIVE/FOO/bar";
+
+    CadcNraoResolver cadcNraoResolver = new CadcNraoResolver();
+
+    public CadcNraoResolverTest() {
+
     }
 
-    /**
-     * Convert the specified URI to one or more URL(s).
-     *
-     * @param uri the URI to convert
-     * @return a URL to the identified resource
-     * @throws IllegalArgumentException if the scheme is not equal to the value from getScheme()
-     *                                  the uri is malformed such that a URL cannot be generated, or the uri is null
-     */
-    @Override
-    public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, SCHEME);
-        String sourceURL = MAST_BASE_ARTIFACT_URL;
-        return ResolverUtil.createURLFromPath(uri, sourceURL);
+    @Test
+    public void testGetScheme() {
+        Assert.assertTrue(CadcNraoResolver.SCHEME.equals(cadcNraoResolver.getScheme()));
+    }
+
+    @Test 
+    public void testTraceable() {
+        Assert.assertTrue(cadcNraoResolver instanceof Traceable);
+    }
+    
+    @Test
+    public void testToURL() {
+        try {
+            URI uri = new URI(NRAO_FILE_URI);
+            URL url = cadcNraoResolver.toURL(uri);
+            Assert.assertNotNull(url);
+            log.info("testFile: " + uri + " -> " + url);
+            Assert.assertTrue("Invalid URL: " + url, url.toString().contains("/raven/files/"));
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidSchemeURI() {
+        try {
+            URI uri = new URI(INVALID_URI1);
+            URL url = cadcNraoResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
+            log.debug("expected exception: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testInvalidArchiveURI() {
+        try {
+            URI uri = new URI(INVALID_URI2);
+            URL url = cadcNraoResolver.toURL(uri);
+            Assert.fail("expected IllegalArgumentException, got " + url);
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
+            log.debug("expected exception: " + expected);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 }
-
