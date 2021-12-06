@@ -57,13 +57,13 @@
     <uri/>
     <title>Common Archive Observation Model</title>
     <author>Patrick Dowler, Canadian Astronomy Data Centre</author>
-    <version>2.4-beta</version>
+    <version>2.4</version>
     <lastModified>2019-07-12T12:00:00</lastModified>
     
     <import>
         <name>ivoa</name>
         <url>https://www.ivoa.net/xml/VODML/IVOA-v1.vo-dml.xml</url>
-        <documentationURL>https://volute.g-vo.org/svn/trunk/projects/dm/vo-dml/models/ivoa/vo-dml/IVOA-v1.0.html</documentationURL>
+        <documentationURL>https://www.ivoa.net/documents/VODML/</documentationURL>
     </import>
     
     <!-- externally specified primtiveType -->
