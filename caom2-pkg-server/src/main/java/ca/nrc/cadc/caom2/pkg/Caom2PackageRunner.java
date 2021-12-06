@@ -72,7 +72,6 @@ package ca.nrc.cadc.caom2.pkg;
 import org.opencadc.pkg.server.PackageItem;
 import org.opencadc.pkg.server.PackageRunner;
 import org.opencadc.pkg.server.PackageRunnerException;
-//import org.opencadc.pkg.server.TarWriter;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
@@ -85,12 +84,8 @@ import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
-//import ca.nrc.cadc.caom2ops.TransientFault;
-//import ca.nrc.cadc.dali.tables.votable.VOTableWriter;
-//import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.log.WebServiceLogInfo;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-//import ca.nrc.cadc.rest.SyncOutput;
 import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.uws.ErrorSummary;
 import ca.nrc.cadc.uws.ErrorType;
@@ -200,9 +195,12 @@ public class Caom2PackageRunner extends PackageRunner {
                 } else {
                     for (Artifact a : artifacts) {
                         URL url = artifactResolver.getURL(a.getURI());
-                        log.debug("new PackageItem: " + a.getURI() + " from " + url);
 
-                        PackageItem newItem = new PackageItem(url, planeName);
+                        String artifactName = planeName + "/" + a.getURI().getSchemeSpecificPart();
+                        log.debug("new PackageItem: " + a.getURI() + " from " + url);
+                        log.debug("package entry filename " + artifactName);
+
+                        PackageItem newItem = new PackageItem(url, artifactName);
                         packageItems.add(newItem);
                     }
                 }
