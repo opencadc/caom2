@@ -171,15 +171,13 @@ public class Caom2PackageRunner extends PackageRunner {
                 List<Artifact> artifacts = result.getArtifacts();
                 stripPreviews(artifacts);
 
-                // always generate subdir name for tar file from the current plane
-                String planeName = getFilenamefromURI(puri);
-
                 // set package name is done here because the plane URI is
                 // used to create it if there is only one
                 if (!StringUtil.hasText(packageName)) {
                     if (idList.size() == 1) {
-                        // For a single id, package name is same as file name
-                        this.packageName = planeName;
+                        // For a single id, package name is derived from
+                        // Publisher URI
+                        this.packageName = getFilenamefromURI(puri);
                     } else {
                         // Otherwise, make a unique name using job ID
                         StringBuilder sb = new StringBuilder();
@@ -191,12 +189,12 @@ public class Caom2PackageRunner extends PackageRunner {
 
                 if (artifacts.isEmpty()) {
                     // either the input ID was: not found, access-controlled, or has no artifacts
-                    log.info(planeName + "no files available for ID=" + suri);
+                    log.info(this.packageName + "no files available for ID=" + suri);
                 } else {
                     for (Artifact a : artifacts) {
                         URL url = artifactResolver.getURL(a.getURI());
 
-                        String artifactName = planeName + "/" + a.getURI().getSchemeSpecificPart();
+                        String artifactName = a.getURI().getSchemeSpecificPart();
                         log.debug("new PackageItem: " + a.getURI() + " from " + url);
                         log.debug("package entry filename " + artifactName);
 
