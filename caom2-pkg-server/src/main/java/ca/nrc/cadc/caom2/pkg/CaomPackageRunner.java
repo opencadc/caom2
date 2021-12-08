@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2.pkg;
 
+import java.security.AccessControlException;
 import org.opencadc.pkg.server.PackageItem;
 import org.opencadc.pkg.server.PackageRunner;
 
@@ -222,20 +223,27 @@ public class CaomPackageRunner extends PackageRunner {
         }
         catch (CertificateException certEx) {
             // Stop - can be thrown by CredUtil check or TAP query inside for loop
-            log.info("invalid certificate");
-            throw new RuntimeException("invalid certificate", certEx);
+            log.info("invalid delegated client certificate");
+            new AccessControlException("invalid delegated client certificate");
         }
 
         return packageItems.iterator();
     }
 
-    // used in an int-test
-    public static String getFilenamefromURI(PublisherID pid)
+    /**
+     * Build a filename from the given Publisher ID.
+     * Publisher ID is expected to be in this format:
+     * ivo://{authority}/{path}/{collection}?{observationID}/{productID}
+     * @param pid - Publisher ID instance to parse to make the filename.
+     * @return - filename built of uri components.
+     */
+    protected static String getFilenamefromURI(PublisherID pid)
     {
         String collection = pid.getResourceID().getPath();
         int i = collection.lastIndexOf("/");
-        if (i >= 0)
-            collection = collection.substring(i+1);
+        if (i >= 0) {
+            collection = collection.substring(i + 1);
+        }
 
         String pidQuery = pid.getURI().getQuery();
         log.debug("query string being parsed for obsID and productID: " + pidQuery);
