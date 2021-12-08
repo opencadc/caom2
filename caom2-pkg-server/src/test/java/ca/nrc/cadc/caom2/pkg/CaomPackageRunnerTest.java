@@ -68,7 +68,6 @@
 package ca.nrc.cadc.caom2.pkg;
 
 
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
@@ -77,41 +76,37 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- *
- * @author pdowler
- */
-public class Caom2PackageRunnerTest {
-    private static final Logger log = Logger.getLogger(Caom2PackageRunnerTest.class);
+public class CaomPackageRunnerTest {
+    private static final Logger log = Logger.getLogger(CaomPackageRunnerTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
         Log4jInit.setLevel("org.opencadc.pkg.server", Level.INFO);
     }
     
-    public Caom2PackageRunnerTest() {
+    public CaomPackageRunnerTest() {
     }
     
     @Test
     public void testStandardPublisherID() {
         try {
             PublisherID pid = new PublisherID(URI.create("ivo://cadc.nrc.ca/COLLECTION?observationID/productID"));
-            PlaneURI puri = Caom2PackageRunner.toPlaneURI(pid);
-            log.info(pid.getURI() + " -> " + puri);
-            Assert.assertNotNull(puri);
+            String expectedFilename = "COLLECTION-observationID-productID";
+            String filename = CaomPackageRunner.getFilenamefromURI(pid);
+            Assert.assertEquals(expectedFilename, filename);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testPrefixedPublisherID() {
         try {
             PublisherID pid = new PublisherID(URI.create("ivo://cadc.nrc.ca/prefix/COLLECTION?observationID/productID"));
-            PlaneURI puri = Caom2PackageRunner.toPlaneURI(pid);
-            log.info(pid.getURI() + " -> " + puri);
-            Assert.assertNotNull(puri);
+            String expectedFilename = "COLLECTION-observationID-productID";
+            String filename = CaomPackageRunner.getFilenamefromURI(pid);
+            Assert.assertEquals(expectedFilename, filename);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

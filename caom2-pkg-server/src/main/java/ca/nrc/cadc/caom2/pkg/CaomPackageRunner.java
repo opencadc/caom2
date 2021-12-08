@@ -71,24 +71,18 @@ package ca.nrc.cadc.caom2.pkg;
 
 import org.opencadc.pkg.server.PackageItem;
 import org.opencadc.pkg.server.PackageRunner;
-import org.opencadc.pkg.server.PackageRunnerException;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
-import ca.nrc.cadc.log.WebServiceLogInfo;
+import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.uws.ErrorSummary;
-import ca.nrc.cadc.uws.ErrorType;
 import ca.nrc.cadc.uws.ParameterUtil;
 import java.io.IOException;
 import java.net.URI;
@@ -107,17 +101,62 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 
-public class Caom2PackageRunner extends PackageRunner {
-    private static final Logger log = Logger.getLogger(Caom2PackageRunner.class);
+public class CaomPackageRunner extends PackageRunner {
+    private static final Logger log = Logger.getLogger(CaomPackageRunner.class);
 
     private final URI tapID;
-    private List<String> idList;
-    private String packageName;
+    private List<PublisherID> publisherIDList;
+    private String runID;
 
-    public Caom2PackageRunner()
+    public CaomPackageRunner()
     { 
         ServiceConfig sc = new ServiceConfig();
         this.tapID = sc.getTapServiceID();
+    }
+
+    @Override
+    protected void initPackage() throws IllegalArgumentException {
+
+        // Validate the IDs passed in through the Job
+        // Set up a list of URIs to process
+        List<String> idList = ParameterUtil.findParameterValues("ID", this.job.getParameterList());
+        publisherIDList = new ArrayList<PublisherID>();
+
+        runID = this.job.getID();
+        if (this.job.getRunID() != null) {
+            runID = this.job.getRunID();
+        }
+
+        if (idList.size() == 0) {
+            log.info("No IDs found in Job " + runID + " nothing to process.");
+        }
+
+        // Validate the quality of the URIs in idList
+        for (String strURI : idList) {
+            try {
+                URI nextURI = new URI(strURI);
+                // Validation within PublisherID ctor throws IllegalArgumentExceptions
+                // which will be thrown by initPackage()
+                PublisherID nextID = new PublisherID(nextURI);
+                publisherIDList.add(nextID);
+            } catch (URISyntaxException uriErr) {
+                throw new IllegalArgumentException("invalid URI found: " + strURI, uriErr);
+            }
+        }
+
+        // set the packageName based on size of the idList
+        if (publisherIDList.size() == 1) {
+            PublisherID publisherID = publisherIDList.get(0);
+            this.packageName = getFilenamefromURI(publisherID);
+
+        } else {
+            // Otherwise, make a unique name using job ID
+            StringBuilder sb = new StringBuilder();
+            sb.append("cadc-download-");
+            sb.append(runID);
+            this.packageName = sb.toString();
+
+        }
     }
 
     @Override
@@ -127,125 +166,92 @@ public class Caom2PackageRunner extends PackageRunner {
 
 
     @Override
-     public Iterator<PackageItem> getItems() throws IOException, PackageRunnerException {
+     public Iterator<PackageItem> getItems() throws IOException {
 
-        // obtain credentials from CDP if the user is authorized
-        AccessControlContext accessControlContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(accessControlContext);
-        AuthMethod authMethod = AuthenticationUtil.getAuthMethod(subject);
-
-        String runID = this.job.getID();
-        if (this.job.getRunID() != null) {
-            runID = this.job.getRunID();
-        }
-
-        List<String> idList = ParameterUtil.findParameterValues("ID", this.job.getParameterList());
-
-        CaomTapQuery query = new CaomTapQuery(tapID, runID);
-
-        CaomArtifactResolver artifactResolver = new CaomArtifactResolver();
-        artifactResolver.setAuthMethod(authMethod); // override auth method for proxied calls
-        artifactResolver.setRunID(runID);
 
         List<PackageItem> packageItems = new ArrayList<PackageItem>();
+        try {
 
-        for (String suri : idList) {
+            // obtain credentials from CDP if the user is authorized
+            AccessControlContext accessControlContext = AccessController.getContext();
+            Subject subject = Subject.getSubject(accessControlContext);
+            AuthMethod authMethod = AuthenticationUtil.getAuthMethod(subject);
+            AuthMethod proxyAuthMethod = authMethod;
 
-            try {
-                // If this fails, the id will be skipped
-                URI uri = new URI(suri);
-
-                PlaneURI puri;
-                ArtifactQueryResult result;
-
-                // If either query fails, the id will be skipped
-                if (PublisherID.SCHEME.equals(uri.getScheme())) {
-                    PublisherID p = new PublisherID(uri);
-                    result = query.performQuery(p, true);
-                    puri = toPlaneURI(p);
-                } else {
-                    puri = new PlaneURI(uri);
-                    result = query.performQuery(puri, true);
-                }
-
-                List<Artifact> artifacts = result.getArtifacts();
-                stripPreviews(artifacts);
-
-                // set package name is done here because the plane URI is
-                // used to create it if there is only one
-                if (!StringUtil.hasText(packageName)) {
-                    if (idList.size() == 1) {
-                        // For a single id, package name is derived from
-                        // Publisher URI
-                        this.packageName = getFilenamefromURI(puri);
-                    } else {
-                        // Otherwise, make a unique name using job ID
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("cadc-download-");
-                        sb.append(this.job.getID());
-                        this.packageName = sb.toString();
-                    }
-                }
-
-                if (artifacts.isEmpty()) {
-                    // either the input ID was: not found, access-controlled, or has no artifacts
-                    log.info(this.packageName + "no files available for ID=" + suri);
-                } else {
-                    for (Artifact a : artifacts) {
-                        URL url = artifactResolver.getURL(a.getURI());
-
-                        String artifactName = a.getURI().getSchemeSpecificPart();
-                        log.debug("new PackageItem: " + a.getURI() + " from " + url);
-                        log.debug("package entry filename " + artifactName);
-
-                        PackageItem newItem = new PackageItem(url, artifactName);
-                        packageItems.add(newItem);
-                    }
-                }
-            } catch (URISyntaxException uriEx) {
-                // Skip this entry and continue to process
-                log.info("invalid plane URI: " + suri + "skipping...");
-
-            } catch (ResourceNotFoundException resourceEx) {
-                // Skip this entry and continue to process
-                log.info("plane not found: " + suri + "skipping...");
-            } catch (CertificateException certEx) {
-                // Stop -
-                log.info("invalid certificate");
-                throw new RuntimeException("invalid certificate", certEx);
+            if ( CredUtil.checkCredentials() )
+            {
+                proxyAuthMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
             }
+
+            // runID is checked in initPackage()
+            CaomTapQuery query = new CaomTapQuery(tapID, runID);
+
+            CaomArtifactResolver artifactResolver = new CaomArtifactResolver();
+            artifactResolver.setAuthMethod(proxyAuthMethod);
+            artifactResolver.setRunID(runID);
+
+            for (PublisherID publisherID : publisherIDList) {
+                try {
+
+                    // If query fails, the id will be skipped
+                    ArtifactQueryResult result = query.performQuery(publisherID, true);
+
+                    List<Artifact> artifacts = result.getArtifacts();
+                    stripPreviews(artifacts);
+
+                    if (artifacts.isEmpty()) {
+                        // either the input ID was: not found, access-controlled, or has no artifacts
+                        log.info(this.packageName + ": no files available for ID =" + publisherID.getURI().toASCIIString());
+                    } else {
+                        for (Artifact a : artifacts) {
+                            URL url = artifactResolver.getURL(a.getURI());
+
+                            String artifactName = a.getURI().getSchemeSpecificPart();
+                            log.debug("new PackageItem: " + a.getURI() + " from " + url);
+                            log.debug("package entry filename " + artifactName);
+
+                            PackageItem newItem = new PackageItem(url, artifactName);
+                            packageItems.add(newItem);
+                        }
+                    }
+                } catch (ResourceNotFoundException resourceEx) {
+                    // Skip this entry and continue to process
+                    log.info("plane not found: " + publisherID.getURI().toASCIIString() + "skipping...");
+                }
+            }
+        }
+        catch (CertificateException certEx) {
+            // Stop - can be thrown by CredUtil check or TAP query inside for loop
+            log.info("invalid certificate");
+            throw new RuntimeException("invalid certificate", certEx);
         }
 
         return packageItems.iterator();
     }
 
-
-    // temporary hack to support both caom and ivo uris in getFilenamefromURI
-    // used by a unit test
-    static PlaneURI toPlaneURI(PublisherID pid)
+    // used in an int-test
+    public static String getFilenamefromURI(PublisherID pid)
     {
-        StringBuilder sb = new StringBuilder();
-        sb.append("caom:");
         String collection = pid.getResourceID().getPath();
         int i = collection.lastIndexOf("/");
         if (i >= 0)
             collection = collection.substring(i+1);
-        sb.append(collection).append("/");
-        sb.append(pid.getURI().getQuery());
-        return new PlaneURI(URI.create(sb.toString()));
-    }
-    
-    // used in an int-test
-    public static String getFilenamefromURI(PlaneURI uri)
-    {
+
+        String pidQuery = pid.getURI().getQuery();
+        log.debug("query string being parsed for obsID and productID: " + pidQuery);
+        String[] queryparts = pidQuery.split("/");
+
+        String observationID = queryparts[0];
+        String productID = queryparts[1];
+
         StringBuilder sb = new StringBuilder();
-        sb.append(uri.getParent().getCollection()).append("-");
-        sb.append(uri.getParent().getObservationID()).append("-");
-        sb.append(uri.getProductID());
+        sb.append(collection).append("-");
+        sb.append(observationID).append("-");
+        sb.append(productID);
         return sb.toString();
     }
     
-    public void stripPreviews(List<Artifact> artifacts)
+    private void stripPreviews(List<Artifact> artifacts)
     {
         ListIterator<Artifact> iter = artifacts.listIterator();
         while (iter.hasNext())
@@ -257,15 +263,6 @@ public class Caom2PackageRunner extends PackageRunner {
                 iter.remove();
                 log.debug("stripPreviews: removed " + a.getProductType() + " " + a.getURI());
             }
-        }
-    }
-
-
-    private class ObservationNotFoundException extends Exception
-    {
-        public ObservationNotFoundException(ObservationURI uri)
-        {
-            super("not found: " + uri.getURI().toASCIIString());
         }
     }
 
