@@ -142,7 +142,7 @@ public class ArtifactProcessorTest
         }
     }
 
-    @Test
+    //@Test
     public void testWithRUNID()
     {
         log.debug("testWithRUNID START");
@@ -182,9 +182,8 @@ public class ArtifactProcessorTest
     }
 
     @Test
-    public void testNoRUNID()
+    public void testSimple()
     {
-        log.debug("testNoRUNID START");
         try
         {
             URI uri = new URI(PLANE_URI);
@@ -201,7 +200,7 @@ public class ArtifactProcessorTest
 
             for (DataLink dl : links)
             {
-                log.info("testNoRUNID: " + dl);
+                log.info("testSimple: " + dl);
                 Assert.assertNotNull(dl);
                 Assert.assertEquals(uri.toASCIIString(), dl.getID());
                 Assert.assertNotNull(dl.accessURL);
