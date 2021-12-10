@@ -98,7 +98,6 @@ import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import ca.nrc.cadc.util.StringUtil;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -147,7 +146,7 @@ public class ArtifactProcessor
         this.runID = runID;
         this.registryClient = new RegistryClient();
         this.artifactResolver = new CaomArtifactResolver();
-        artifactResolver.setRunID(runID);
+        //artifactResolver.setRunID(runID);
     }
 
     /**
@@ -402,12 +401,12 @@ public class ArtifactProcessor
         sp.setValueRef(val, null);
         sd.getInputParams().add(sp);
         
-        if (StringUtil.hasText(runID)) {
-            arraysize = Integer.toString(runID.length());
-            sp = new ServiceParameter("RUNID", "char", arraysize, "");
-            sp.setValueRef(runID, null);
-            sd.getInputParams().add(sp);
-        }
+        //if (StringUtil.hasText(runID)) {
+        //    arraysize = Integer.toString(runID.length());
+        //    sp = new ServiceParameter("RUNID", "char", arraysize, "");
+        //    sp.setValueRef(runID, null);
+        //    sd.getInputParams().add(sp);
+        //}
         
         if (ab.poly != null)
         {
@@ -516,9 +515,9 @@ public class ArtifactProcessor
         StringBuilder sb = new StringBuilder();
         sb.append(pkg.toExternalForm());
         sb.append("?ID=").append(NetUtil.encode(uri.toASCIIString()));
-        if (StringUtil.hasLength(runID)) {
-            sb.append("&RUNID=").append(NetUtil.encode(runID));
-        }
+        //if (StringUtil.hasLength(runID)) {
+        //    sb.append("&RUNID=").append(NetUtil.encode(runID));
+        //}
         return new URL(sb.toString());
     }
 }
