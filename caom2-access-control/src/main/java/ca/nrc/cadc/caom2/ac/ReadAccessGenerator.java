@@ -196,9 +196,12 @@ public class ReadAccessGenerator {
         boolean pub = isPublic(observation, now);
         log.debug("processing " + observation + " public: " + pub + " " + formatDate(observation.getMaxLastModified()));
         if (!pub) {
-            // Create a Group for this proposalID if it doesn't exist
-            GroupURI proposalGroupID = getProposalGroupID(collection, observation.proposal);
-            checkProposalGroup(proposalGroupID);
+            GroupURI proposalGroupID = null;
+            if (this.createProposalGroup) {
+                // Create a Group for this proposalID if it doesn't exist
+                proposalGroupID = getProposalGroupID(collection, observation.proposal);
+                checkProposalGroup(proposalGroupID);
+            }
             generateTuples(observation, now, proposalGroupID);
         }
     }
@@ -256,7 +259,7 @@ public class ReadAccessGenerator {
                 o.getMetaReadGroups().add(operatorGroupURI.getURI());
             }
 
-            if (this.createProposalGroup && proposalGroupID != null) {
+            if (proposalGroupID != null) {
                 o.getMetaReadGroups().add(proposalGroupID.getURI());
             }
 
@@ -274,7 +277,7 @@ public class ReadAccessGenerator {
                 p.getMetaReadGroups().add(operatorGroupURI.getURI());
             }
 
-            if (this.createProposalGroup && proposalGroupID != null) {
+            if (proposalGroupID != null) {
                 p.getMetaReadGroups().add(proposalGroupID.getURI());
             }
 
@@ -292,7 +295,7 @@ public class ReadAccessGenerator {
                 p.getDataReadGroups().add(operatorGroupURI.getURI());
             }
 
-            if (this.createProposalGroup && proposalGroupID != null) {
+            if (proposalGroupID != null) {
                 p.getDataReadGroups().add(proposalGroupID.getURI());
             }
 
@@ -313,7 +316,7 @@ public class ReadAccessGenerator {
                 a.getContentReadGroups().add(operatorGroupURI.getURI());
             }
 
-            if (this.createProposalGroup && proposalGroupID != null) {
+            if (proposalGroupID != null) {
                 a.getContentReadGroups().add(proposalGroupID.getURI());
             }
 
