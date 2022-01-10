@@ -100,6 +100,7 @@ public abstract class Caom2ArtifactSync {
 
     private static Logger log = Logger.getLogger(Caom2ArtifactSync.class);
     public static String DEFAULT_APPLICATION_NAME = "caom2-artifact-sync";
+    public static final int DEFAULT_TIMEOUT = 600000;  // 10 minutes
 
     private String asClassName;
     private Exception asException;

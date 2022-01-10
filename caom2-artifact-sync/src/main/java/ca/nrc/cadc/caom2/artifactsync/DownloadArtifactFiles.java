@@ -303,8 +303,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
 
                 OutputStream out = new ByteArrayOutputStream();
                 HttpGet head = new HttpGet(url, out);
-                head.setConnectionTimeout(60000);
-                head.setReadTimeout(60000);
+                head.setConnectionTimeout(Caom2ArtifactSync.DEFAULT_TIMEOUT);
+                head.setReadTimeout(Caom2ArtifactSync.DEFAULT_TIMEOUT);
                 head.setHeadOnly(true);
                 head.run();
                 int respCode = head.getResponseCode();
@@ -366,8 +366,8 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 profiler.checkpoint("local.httpHead");
 
                 HttpGet download = new HttpGet(url, this);
-                download.setConnectionTimeout(60000);
-                download.setReadTimeout(60000);
+                download.setConnectionTimeout(Caom2ArtifactSync.DEFAULT_TIMEOUT);
+                download.setReadTimeout(Caom2ArtifactSync.DEFAULT_TIMEOUT);
 
                 threadLog.debug("Starting download of " + artifactURI + " from " + url);
                 long start = System.currentTimeMillis();

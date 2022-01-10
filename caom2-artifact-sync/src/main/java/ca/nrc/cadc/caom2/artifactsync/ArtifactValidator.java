@@ -614,8 +614,8 @@ public class ArtifactValidator implements PrivilegedExceptionAction<Object>, Shu
         URL url = new URL(baseURL.toString() + "?" + queryString.toString());
         ResultReader resultReader = new ResultReader(artifactStore);
         HttpGet get = new HttpGet(url, resultReader);
-        get.setConnectionTimeout(60000);
-        get.setReadTimeout(60000);
+        get.setConnectionTimeout(Caom2ArtifactSync.DEFAULT_TIMEOUT);
+        get.setReadTimeout(Caom2ArtifactSync.DEFAULT_TIMEOUT);
         try {
             get.run();
         } catch (Throwable t) {
