@@ -499,6 +499,7 @@ public class ObservationHarvester extends Harvester {
                     ok = true;
                     ret.ingested++;
                 } catch (Throwable oops) {
+                    log.debug("exception during harvest", oops);
                     skipMsg = null;
                     String str = oops.toString();
                     if (oops instanceof HarvestReadException) {
