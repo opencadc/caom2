@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
@@ -180,13 +181,8 @@ public class CaomWCSValidator {
                     Transform.Result tr = transform.sky2pix(coords);
                     log.debug("center pixels: " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 }
-            } catch (NoSuchKeywordException ex) {
-                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
-            } catch (WCSLibRuntimeException ex) {
-                throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context , ex);
-            } catch (UnsupportedOperationException ex) {
-                // error thrown from toPolygon if WCS is too near a pole, or if the bounds
-                // value is not recognized
+            } catch (NoSuchKeywordException | WCSLibRuntimeException 
+                    | UnsupportedOperationException | IllegalPolygonException ex) {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
             }
         }

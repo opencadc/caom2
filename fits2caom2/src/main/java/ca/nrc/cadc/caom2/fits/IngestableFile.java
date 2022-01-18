@@ -346,29 +346,20 @@ public class IngestableFile
     protected URL getFromVOSpace() 
     	throws URISyntaxException, IOException, RuntimeException, InterruptedException
     {
-        List<Protocol> protocols = new ArrayList<Protocol>();
         VOSURI src = new VOSURI(uri);
         URI serverUri = src.getServiceURI();
         log.debug("server uri: " + serverUri);
 
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-        /*
-        // this is correct fo4r VOSpace-2.1 transfer negotiation
-        AuthMethod am = AuthenticationUtil.getAuthMethodFromCredentials(AuthenticationUtil.getCurrentSubject());
-        if (AuthMethod.CERT.equals(am)) {
-            Protocol p = new Protocol(VOS.PROTOCOL_HTTPS_GET);
-            p.setSecurityMethod(Standards.SECURITY_METHOD_CERT);
-            protocols.add(p);
-        }
-        */
-        protocols.add(new Protocol(VOS.PROTOCOL_HTTP_GET));
+        
 
         // schema validation is always enabled
         VOSpaceClient client = new VOSpaceClient(serverUri);
-        View view = new View(new URI(VOS.VIEW_DEFAULT));        
-        Transfer transfer = new Transfer(src.getURI(), Direction.pullFromVoSpace, view, protocols);
+        Transfer transfer = new Transfer(src.getURI(), Direction.pullFromVoSpace);
+        transfer.getProtocols().add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
+        transfer.getProtocols().add(new Protocol(VOS.PROTOCOL_HTTP_GET));
+        
         ClientTransfer clientTransfer = client.createTransfer(transfer);
-        protocols = clientTransfer.getTransfer().getProtocols();
+        List<Protocol> protocols = clientTransfer.getTransfer().getProtocols();
         URL url = null;
         for (Protocol protocol: protocols)
         {
