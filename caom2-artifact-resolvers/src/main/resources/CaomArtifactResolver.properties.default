@@ -8,13 +8,24 @@
 #
 # a default resolver should never be configured here
 
+# ad: old (199x) CADC storage system
 ad=ca.nrc.cadc.caom2.artifact.resolvers.AdResolver
+
+# cadc: new (202x) CADC storage system
 cadc=ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver
+
+# mast: MAST archive for HST and JWST files
+mast=ca.nrc.cadc.caom2.artifact.resolvers.MastResolver
+
+# vos: VOSpace resolver
+vos=ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver
+
+# prototype resolvers for scraped archives: CADC scraped and
+# created metadata but files are only at the source archive
 chandra=ca.nrc.cadc.caom2.artifact.resolvers.ChandraResolver
 gemini=ca.nrc.cadc.caom2.artifact.resolvers.GeminiResolver
 noao=ca.nrc.cadc.caom2.artifact.resolvers.NoaoResolver
 sdss=ca.nrc.cadc.caom2.artifact.resolvers.SdssResolver
 subaru=ca.nrc.cadc.caom2.artifact.resolvers.SubaruResolver
 xmm=ca.nrc.cadc.caom2.artifact.resolvers.XmmResolver
-mast=ca.nrc.cadc.caom2.artifact.resolvers.MastResolver
-vos=ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver
+

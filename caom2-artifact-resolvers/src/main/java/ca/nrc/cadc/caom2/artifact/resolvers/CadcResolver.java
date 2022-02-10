@@ -106,6 +106,10 @@ public class CadcResolver implements StorageResolver, Traceable {
     public URL toURL(URI uri) {
 
         try {
+            if ("ad".equals(uri.getScheme()) || ResolverUtil.URL_SCHEMES.contains(uri.getScheme())) {
+                throw new IllegalArgumentException("invalid scheme: " + uri.getScheme());
+            }
+            
             // check if authMethod has been set
             AuthMethod am = this.authMethod;
             if (am == null) {

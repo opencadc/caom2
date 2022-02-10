@@ -99,11 +99,6 @@ public class CadcNraoResolverTest {
 
     }
 
-    @Test
-    public void testGetScheme() {
-        Assert.assertTrue(CadcNraoResolver.SCHEME.equals(cadcNraoResolver.getScheme()));
-    }
-
     @Test 
     public void testTraceable() {
         Assert.assertTrue(cadcNraoResolver instanceof Traceable);
