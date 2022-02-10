@@ -104,6 +104,7 @@ public class CaomArtifactResolver {
     private static final String CONFIG_FILENAME_DEFAULT = CaomArtifactResolver.class.getSimpleName() + ".properties.default";
 
     private final Map<String, StorageResolver> handlers = new HashMap<>();
+    private final StorageResolver defaultResolver;
 
     private AuthMethod authMethod;
     private String runID;
@@ -137,6 +138,7 @@ public class CaomArtifactResolver {
             Properties props = new Properties();
             props.load(url.openStream());
             Iterator<String> i = props.stringPropertyNames().iterator();
+            StorageResolver defResolver = null;
             while (i.hasNext()) {
                 String scheme = i.next();
                 String cname = props.getProperty(scheme);
@@ -146,12 +148,17 @@ public class CaomArtifactResolver {
                     log.debug("instantiating: " + c);
                     StorageResolver handler = (StorageResolver) c.newInstance();
                     log.debug("adding: " + scheme + "," + handler);
-                    handlers.put(scheme, handler);
+                    if ("*".equals(scheme)) {
+                        defResolver = handler;
+                    } else {
+                        handlers.put(scheme, handler);
+                    }
                     log.debug("success: " + scheme + " is supported");
                 } catch (Exception fail) {
                     throw new RuntimeException("CONFIG: failed to load " + cname, fail);
                 }
             }
+            this.defaultResolver = defResolver;
         } catch (IOException ex) {
             throw new RuntimeException("CONFIG: failed to read config from " + url, ex);
         }
@@ -236,6 +243,10 @@ public class CaomArtifactResolver {
             return ret;
         }
 
+        if (defaultResolver != null) {
+            return defaultResolver.toURL(uri);
+        }
+        
         // fallback: hope for the best
         return uri.toURL();
     }

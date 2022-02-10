@@ -70,6 +70,7 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.util.Log4jInit;
 
+import java.net.URI;
 import java.net.URL;
 
 import org.apache.log4j.Level;
@@ -89,6 +90,7 @@ public class CaomArtifactResolverTest {
     }
 
     private static final String WRONG_CONFIG = CaomArtifactResolver.class.getSimpleName() + "Wrong.properties";
+    private static final String DEF_RESOLVER_CONFIG = CaomArtifactResolver.class.getSimpleName() + "-default-resolver.properties";
 
     public CaomArtifactResolverTest() {
 
@@ -112,6 +114,27 @@ public class CaomArtifactResolverTest {
             Assert.fail("should have failed to load config file: " + WRONG_CONFIG);
         } catch (Exception expected) {
             Assert.assertTrue("Wrong exception", expected.getMessage().contains("failed to load"));
+        }
+    }
+    
+    @Test
+    public void testDefaultResolver() {
+        try {
+            URL url = CaomArtifactResolver.class.getClassLoader().getResource(DEF_RESOLVER_CONFIG);
+            CaomArtifactResolver car = new CaomArtifactResolver(url);
+            
+            URI cadc = URI.create("cadc:FOO/bar");
+            URL cadcURL = car.getURL(cadc);
+            log.info("cadcURL: " + cadcURL);
+            Assert.assertNotNull(cadcURL);
+            
+            URI def = URI.create("def:BAR/baz");
+            URL defURL = car.getURL(def);
+            log.info("defURL: " + defURL);
+            Assert.assertNotNull(defURL);
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
         }
     }
 }

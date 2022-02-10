@@ -91,24 +91,21 @@ import org.apache.log4j.Logger;
 public class CadcResolver implements StorageResolver, Traceable {
 
     private static final Logger log = Logger.getLogger(CadcResolver.class);
-    private final String scheme;
     public static final URI STORAGE_INVENTORY_URI = URI.create("ivo://cadc.nrc.ca/global/raven");
 
     protected AuthMethod authMethod;
 
     public CadcResolver() {
-        scheme = "cadc";
     }
-
+    
+    @Deprecated
     protected CadcResolver(final String scheme) {
-        this.scheme = scheme;
     }
 
     @Override
     public URL toURL(URI uri) {
 
         try {
-            ResolverUtil.validate(uri, getScheme());
             // check if authMethod has been set
             AuthMethod am = this.authMethod;
             if (am == null) {
@@ -139,7 +136,7 @@ public class CadcResolver implements StorageResolver, Traceable {
 
     @Override
     public String getScheme() {
-        return scheme;
+        return null;
     }
 
 }

@@ -1,7 +1,12 @@
 #
 # artifact resolver configuration
 #
-# scheme:<class name of SchemeHandler impl>
+# scheme:<class name of StorageResolver impl>
+#
+## default resolver:
+# *:<class name of StorageResolver impl>
+#
+# a default resolver should never be configured here
 
 ad=ca.nrc.cadc.caom2.artifact.resolvers.AdResolver
 cadc=ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver
