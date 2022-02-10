@@ -86,7 +86,7 @@ public class CaomArtifactResolverTest {
     private static final Logger log = Logger.getLogger(CaomArtifactResolverTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     private static final String WRONG_CONFIG = CaomArtifactResolver.class.getSimpleName() + "Wrong.properties";
@@ -132,6 +132,12 @@ public class CaomArtifactResolverTest {
             URL defURL = car.getURL(def);
             log.info("defURL: " + defURL);
             Assert.assertNotNull(defURL);
+            
+            URI ext = URI.create("https://example.net/foo/bar");
+            URL extURL = car.getURL(ext);
+            log.info("extURL: " + extURL);
+            Assert.assertNotNull(extURL);
+            Assert.assertEquals(ext.toASCIIString(), extURL.toExternalForm());
             
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

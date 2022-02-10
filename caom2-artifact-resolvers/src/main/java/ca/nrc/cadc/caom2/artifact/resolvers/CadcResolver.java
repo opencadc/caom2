@@ -94,7 +94,7 @@ public class CadcResolver implements StorageResolver, Traceable {
     public static final URI STORAGE_INVENTORY_URI = URI.create("ivo://cadc.nrc.ca/global/raven");
 
     protected AuthMethod authMethod;
-
+    
     public CadcResolver() {
     }
     

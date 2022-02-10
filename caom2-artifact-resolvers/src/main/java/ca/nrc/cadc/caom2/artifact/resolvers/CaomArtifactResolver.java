@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
@@ -243,7 +244,7 @@ public class CaomArtifactResolver {
             return ret;
         }
 
-        if (defaultResolver != null) {
+        if (defaultResolver != null && !ResolverUtil.URL_SCHEMES.contains(uri.getScheme())) {
             return defaultResolver.toURL(uri);
         }
         
