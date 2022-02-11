@@ -44,7 +44,7 @@ public class ResolverUtil {
     private static final String BASEURL_EMPTY = "Base URL can't be null . ";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
-    public static final List<String> URL_SCHEMES = Arrays.asList( new String[] {
+    public static final List<String> URL_SCHEMES = Arrays.asList(new String[] {
         "http", "https"
     });
     
