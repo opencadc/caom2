@@ -85,6 +85,7 @@ import ca.nrc.cadc.caom2ops.mapper.ObservationMapper;
 import ca.nrc.cadc.caom2ops.mapper.PartMapper;
 import ca.nrc.cadc.caom2ops.mapper.PlaneMapper;
 import ca.nrc.cadc.caom2ops.mapper.UnexpectedContentException;
+import ca.nrc.cadc.caom2ops.mapper.Util;
 import ca.nrc.cadc.caom2ops.mapper.VOTableUtil;
 import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.tables.TableData;
@@ -460,11 +461,15 @@ public class CaomTapQuery {
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     
         
-        
-        ArtifactQueryResult ret = new ArtifactQueryResult();
+        ArtifactQueryResult ret = null;
         while (rowIterator.hasNext()) {
             List<Object> row = rowIterator.next();
             //logRow(row);
+            
+            if (ret == null) {
+                URI pubID = Util.getURI(row, utypeMap.get("caom2:Plane.publisherID"));
+                ret = new ArtifactQueryResult(new PublisherID(pubID));
+            }
             
             Integer mrCol = utypeMap.get("column-name:metaReadable");
             Integer drCol = utypeMap.get("column-name:dataReadable");

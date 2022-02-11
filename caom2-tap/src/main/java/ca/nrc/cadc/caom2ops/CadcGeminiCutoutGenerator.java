@@ -69,6 +69,8 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcGeminiResolver;
+import static ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver.SCHEME;
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -93,6 +95,7 @@ public class CadcGeminiCutoutGenerator extends CadcGeminiResolver implements Cut
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
+        ResolverUtil.validate(uri, SCHEME);
         URL base = super.toURL(uri);
         if (cutouts == null || cutouts.isEmpty()) {
             return base;

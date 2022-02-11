@@ -202,8 +202,7 @@ public class CadcCutoutGeneratorTest {
             URL url = cutoutGenerator.toURL(uri, cutouts, null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
+            log.info("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

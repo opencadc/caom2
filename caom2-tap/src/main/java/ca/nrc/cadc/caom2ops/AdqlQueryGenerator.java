@@ -84,7 +84,7 @@ public class AdqlQueryGenerator {
 
     // use the obsID FK column and an alias because FK columns don't have a utype 
     // and thus we won't accidentally effect result parsing
-    private static final String SELECT_READABLE = "Plane.obsID AS metaReadable, isDownloadable(Plane.obsID) AS dataReadable";
+    private static final String SELECT_READABLE = "Plane.publisherID, Plane.obsID AS metaReadable, isDownloadable(Plane.obsID) AS dataReadable";
     
     private static final String SELECT_ARTIFACT = "Artifact.*";
     private static final String SELECT_ARTIFACT2CHUNK = SELECT_ARTIFACT + ", Part.*, Chunk.*";

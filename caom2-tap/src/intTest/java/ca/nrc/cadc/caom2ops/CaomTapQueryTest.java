@@ -100,7 +100,7 @@ public class CaomTapQueryTest
     private static final URI PLANE_URI = URI.create("caom:IRIS/f212h000/IRAS-60um");
     private static final URI PUB_ID = URI.create("ivo://cadc.nrc.ca/IRIS?f212h000/IRAS-60um");
     
-    private static final String TAP_URI = "ivo://cadc.nrc.ca/tap";
+    private static final String TAP_URI = "ivo://cadc.nrc.ca/argus";
     private final DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
     
     static
@@ -194,6 +194,7 @@ public class CaomTapQueryTest
             CaomTapQuery query = new CaomTapQuery(URI.create(TAP_URI), "CaomTapQueryTest");
             ArtifactQueryResult ar = query.performQuery(uri, true);
             Assert.assertNotNull(ar);
+            log.info("found: " + ar.getPublisherID().getURI());
             Assert.assertNotNull(ar.getArtifacts());
             Assert.assertFalse(ar.getArtifacts().isEmpty());
             for (Artifact a : ar.getArtifacts())
@@ -219,6 +220,7 @@ public class CaomTapQueryTest
             CaomTapQuery query = new CaomTapQuery(URI.create(TAP_URI), "CaomTapQueryTest");
             ArtifactQueryResult ar = query.performQuery(uri, true);
             Assert.assertNotNull(ar);
+            log.info("found: " + ar.getPublisherID().getURI());
             Assert.assertNotNull(ar.getArtifacts());
             Assert.assertFalse(ar.getArtifacts().isEmpty());
             for (Artifact a : ar.getArtifacts())
@@ -244,6 +246,7 @@ public class CaomTapQueryTest
             CaomTapQuery query = new CaomTapQuery(URI.create(TAP_URI), "CaomTapQueryTest");
             ArtifactQueryResult ar = query.performQuery(uri, false);
             Assert.assertNotNull(ar);
+            log.info("found: " + ar.getPublisherID().getURI());
             Assert.assertNotNull(ar.getArtifacts());
             Assert.assertFalse(ar.getArtifacts().isEmpty());
             for (Artifact a : ar.getArtifacts())
@@ -273,6 +276,7 @@ public class CaomTapQueryTest
             CaomTapQuery query = new CaomTapQuery(URI.create(TAP_URI), "CaomTapQueryTest");
             ArtifactQueryResult ar = query.performQuery(uri, false);
             Assert.assertNotNull(ar);
+            log.info("found: " + ar.getPublisherID().getURI());
             Assert.assertNotNull(ar.getArtifacts());
             Assert.assertFalse(ar.getArtifacts().isEmpty());
             for (Artifact a : ar.getArtifacts())
