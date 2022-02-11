@@ -256,14 +256,15 @@ public class ArtifactProcessor
                 }
             }
         }
-        log.debug("numFiles: " + numFiles);
+        log.debug("num files for package: " + numFiles);
         if (numFiles > 1) {
             
-            URL pkg = getBasePackageURL(uri);
+            URL pkg = getBasePackageURL(ar.getPublisherID());
+            log.debug("base pkg url: " + pkg);
             if (pkg != null) {
                 DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PKG);
                 try {
-                    link.accessURL = getPackageURL(pkg, uri);
+                    link.accessURL = getPackageURL(pkg, ar.getPublisherID());
                     link.contentType = CONTENT_TYPE_TAR;
                     link.description = "single download containing all files (previews and thumbnails excluded)";
                     link.readable = pkgReadable;
@@ -492,32 +493,25 @@ public class ArtifactProcessor
      * @param id
      * @return base package service url for current auth method or null if no such service
      */
-    protected URL getBasePackageURL(URI id) {
+    protected URL getBasePackageURL(PublisherID id) {
         Subject caller = AuthenticationUtil.getCurrentSubject();
         AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
         if (authMethod == null) {
             authMethod = AuthMethod.ANON;
         }
         
-        if ("caom".equals(id.getScheme())) {
-            // not resolvable: use config
-            return registryClient.getServiceURL(defaultPackageID, Standards.PKG_10, authMethod);
-        }
-        
-        // resolvable
-        PublisherID pubID = new PublisherID(id);
-        URI resourceID = pubID.getResourceID();
+        URI resourceID = id.getResourceID();
         URL ret = registryClient.getServiceURL(resourceID, Standards.PKG_10, authMethod);
+        log.debug("resolve: " + id 
+            + " > " + resourceID + " " + Standards.PKG_10 + " " + authMethod
+            + " >> " + ret);
         return ret;
     }
     
-    private URL getPackageURL(URL pkg, URI uri) throws MalformedURLException {
+    private URL getPackageURL(URL pkg, PublisherID id) throws MalformedURLException {
         StringBuilder sb = new StringBuilder();
         sb.append(pkg.toExternalForm());
-        sb.append("?ID=").append(NetUtil.encode(uri.toASCIIString()));
-        //if (StringUtil.hasLength(runID)) {
-        //    sb.append("&RUNID=").append(NetUtil.encode(runID));
-        //}
+        sb.append("?ID=").append(NetUtil.encode(id.getURI().toASCIIString()));
         return new URL(sb.toString());
     }
 }

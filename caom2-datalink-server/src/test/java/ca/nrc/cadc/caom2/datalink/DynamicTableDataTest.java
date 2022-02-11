@@ -300,7 +300,7 @@ public class DynamicTableDataTest
         @Override
         public ArtifactQueryResult performQuery(PublisherID id, boolean artifactOnly)
         {
-            ArtifactQueryResult ret = new ArtifactQueryResult();
+            ArtifactQueryResult ret = new ArtifactQueryResult(id);
             try
             {
                 for (int i=0; i<num; i++)
@@ -324,7 +324,12 @@ public class DynamicTableDataTest
         @Override
         public ArtifactQueryResult performQuery(PlaneURI id, boolean artifactOnly)
         {
-            ArtifactQueryResult ret = new ArtifactQueryResult();
+            PublisherID pid = new PublisherID(URI.create("ivo://cadc.nrc.ca/" 
+                    + id.getParent().getCollection() + "?" 
+                    + id.getParent().getObservationID() + "/"
+                    + id.getProductID()));
+                    
+            ArtifactQueryResult ret = new ArtifactQueryResult(pid);
             try
             {
                 for (int i=0; i<num; i++)
