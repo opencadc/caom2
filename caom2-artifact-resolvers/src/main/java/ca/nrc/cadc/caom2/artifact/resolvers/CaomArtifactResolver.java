@@ -148,18 +148,21 @@ public class CaomArtifactResolver {
                     Class c = Class.forName(cname);
                     log.debug("instantiating: " + c);
                     StorageResolver handler = (StorageResolver) c.newInstance();
-                    log.debug("adding: " + scheme + "," + handler);
+                    
                     if ("*".equals(scheme)) {
                         defResolver = handler;
                     } else {
+                        log.debug("adding: " + scheme + "," + handler);
                         handlers.put(scheme, handler);
+                        log.debug("success: " + scheme + " is supported");
                     }
-                    log.debug("success: " + scheme + " is supported");
+                    
                 } catch (Exception fail) {
                     throw new RuntimeException("CONFIG: failed to load " + cname, fail);
                 }
             }
             this.defaultResolver = defResolver;
+            log.debug("default resolver: " + defaultResolver);
         } catch (IOException ex) {
             throw new RuntimeException("CONFIG: failed to read config from " + url, ex);
         }
