@@ -82,8 +82,10 @@ import org.apache.log4j.Logger;
  *
  * @author yeunga
  */
-public class CadcNraoResolver extends CadcResolver implements StorageResolver, Traceable {
+public class CadcNraoResolver implements StorageResolver, Traceable {
     private static final Logger log = Logger.getLogger(CadcNraoResolver.class);
+    
+    public static final String SCHEME = "nrao";
 
     public CadcNraoResolver() {
         super();
@@ -91,7 +93,13 @@ public class CadcNraoResolver extends CadcResolver implements StorageResolver, T
     
     @Override
     public URL toURL(URI uri) {
-        ResolverUtil.validate(uri, "nrao");
-        return super.toURL(uri);
+        ResolverUtil.validate(uri, SCHEME);
+        CadcResolver r = new CadcResolver();
+        return r.toURL(uri);
+    }
+    
+    @Override
+    public String getScheme() {
+        return SCHEME;
     }
 }
