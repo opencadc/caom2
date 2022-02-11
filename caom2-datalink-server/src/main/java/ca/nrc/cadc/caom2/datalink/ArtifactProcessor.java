@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2021.                            (c) 2021.
+*  (c) 2022.                            (c) 2022.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -92,7 +92,6 @@ import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CutoutGenerator;
-import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
@@ -122,31 +121,15 @@ public class ArtifactProcessor
 {
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
     
-    private static final String CONTENT_TYPE_TAR = "application/x-tar";
+    private static final String PKG_CONTENT_TYPE_TAR = "application/x-tar";
     
-    private URI sodaID;
-    private URI defaultPackageID;
-    
-    private boolean initConfigDone = false;
-    
-    // deprecated stuff for CADC service that is being replaced by SODA
-    private static String CUTOUT = "cutout";
-    private static URI CUTOUT_SERVICE = URI.create("ivo://cadc.nrc.ca/caom2ops");
-
     private final RegistryClient registryClient;
-    
-    private final String runID;
     private final CaomArtifactResolver artifactResolver;
     private boolean downloadOnly;
 
-    public ArtifactProcessor(ServiceConfig dlc, String runID)
-    {
-        this.sodaID = dlc.getSodaID();
-        this.defaultPackageID = dlc.getPkgID();
-        this.runID = runID;
+    public ArtifactProcessor() {
         this.registryClient = new RegistryClient();
         this.artifactResolver = new CaomArtifactResolver();
-        //artifactResolver.setRunID(runID);
     }
 
     /**
@@ -232,7 +215,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.readable = readable;
                     link.description = "SODA-sync cutout of " + a.getURI().toASCIIString();
-                    ServiceDescriptor sds = generateServiceDescriptor(sodaID, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
+                    ServiceDescriptor sds = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
                     if (sds != null) {
                         link.descriptor = sds;
                         ret.add(link);
@@ -244,7 +227,7 @@ public class ArtifactProcessor
                     link.contentLength = null; // unknown
                     link.readable = readable;
                     link.description = "SODA-async cutout of " + a.getURI().toASCIIString();
-                    ServiceDescriptor sda = generateServiceDescriptor(sodaID, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
+                    ServiceDescriptor sda = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
                     if (sda != null) {
                         link.descriptor = sda;
                         ret.add(link);
@@ -265,7 +248,7 @@ public class ArtifactProcessor
                 DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PKG);
                 try {
                     link.accessURL = getPackageURL(pkg, ar.getPublisherID());
-                    link.contentType = CONTENT_TYPE_TAR;
+                    link.contentType = PKG_CONTENT_TYPE_TAR;
                     link.description = "single download containing all files (previews and thumbnails excluded)";
                     link.readable = pkgReadable;
                 } catch (MalformedURLException ex) {
@@ -374,11 +357,8 @@ public class ArtifactProcessor
         return ret;
     }
     
-    private ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, URI artifactURI, ArtifactBounds ab)
+    private ServiceDescriptor generateServiceDescriptor(PublisherID pubID, URI standardID, String id, URI artifactURI, ArtifactBounds ab)
     {
-        if (serviceID == null)
-            return null; // no SODA support configured
-        
         if (ab.poly == null && ab.bandMin == null && ab.bandMax == null
                 && ab.timeMin == null && ab.timeMax == null && ab.pol == null)
             return null;
@@ -389,11 +369,15 @@ public class ArtifactProcessor
             authMethod = AuthMethod.ANON;
         
         // generate artifact-specific SODA service descriptor
-        URL accessURL = registryClient.getServiceURL(serviceID, standardID, authMethod);
+        URL accessURL = registryClient.getServiceURL(pubID.getResourceID(), standardID, authMethod);
+        if (accessURL == null) {
+            // no SODA support for this publisherID
+            return null;
+        }
         ServiceDescriptor sd = new ServiceDescriptor(accessURL);
         sd.id = id;
         sd.standardID = standardID;
-        sd.resourceIdentifier = serviceID;
+        sd.resourceIdentifier = pubID.getResourceID();
 
         ServiceParameter sp;
         String val = artifactURI.toASCIIString();
@@ -401,13 +385,6 @@ public class ArtifactProcessor
         sp = new ServiceParameter("ID", "char", arraysize, "meta.id;meta.dataset");
         sp.setValueRef(val, null);
         sd.getInputParams().add(sp);
-        
-        //if (StringUtil.hasText(runID)) {
-        //    arraysize = Integer.toString(runID.length());
-        //    sp = new ServiceParameter("RUNID", "char", arraysize, "");
-        //    sp.setValueRef(runID, null);
-        //    sd.getInputParams().add(sp);
-        //}
         
         if (ab.poly != null)
         {

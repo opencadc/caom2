@@ -129,51 +129,12 @@ public class ArtifactProcessorTest
         try
         {
             URI uri = PUB_ID.getURI();
-            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
+            ArtifactProcessor ap = new ArtifactProcessor();
 
             ArtifactQueryResult artifacts = new ArtifactQueryResult(PUB_ID);
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
             Assert.assertTrue(links.isEmpty());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    //@Test
-    public void testWithRUNID()
-    {
-        log.debug("testWithRUNID START");
-        try
-        {
-            URI uri = PUB_ID.getURI();
-            
-            ArtifactQueryResult artifacts = new ArtifactQueryResult(PUB_ID);
-            artifacts.getArtifacts().addAll(getTestArtifacts(1, 0));
-            Assert.assertEquals("test setup", 1, artifacts.getArtifacts().size());
-
-            ArtifactProcessor ap = new ArtifactProcessor(conf, RUNID);
-            
-            List<DataLink> links = ap.process(uri, artifacts);
-            Assert.assertNotNull(links);
-            Assert.assertEquals("num links", 1, links.size());
-
-            for (DataLink dl : links)
-            {
-                log.info("testWithRUNID: " + dl);
-                Assert.assertNotNull(dl);
-                Assert.assertEquals(uri.toASCIIString(), dl.getID());
-                Assert.assertNotNull(dl.accessURL);
-                
-                String query = dl.accessURL.getQuery();
-                Assert.assertNotNull("query string", query);
-                String expected = "runid="+RUNID;
-                String actual = query.toLowerCase();
-                Assert.assertTrue("runid", actual.contains(expected));
-            }
         }
         catch(Exception unexpected)
         {
@@ -193,7 +154,7 @@ public class ArtifactProcessorTest
             artifacts.getArtifacts().addAll(getTestArtifacts(1, 0));
             Assert.assertEquals("test setup", 1, artifacts.getArtifacts().size());
             
-            ArtifactProcessor ap = new ArtifactProcessor(conf, null);
+            ArtifactProcessor ap = new ArtifactProcessor();
 
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
@@ -228,7 +189,7 @@ public class ArtifactProcessorTest
             artifacts.getArtifacts().addAll(getTestArtifacts(3, 2));
             Assert.assertEquals("test setup", 5, artifacts.getArtifacts().size());
             
-            ArtifactProcessor ap = new ArtifactProcessor(conf, null);
+            ArtifactProcessor ap = new ArtifactProcessor();
 
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);

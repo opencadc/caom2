@@ -92,10 +92,13 @@ public class CaomLinkQueryRunner extends LinkQueryRunner {
         if (job.getRunID() != null) {
             runID = job.getRunID();
         }
+        // TODO: only need a configurde the caom2 TAP service to support input PlaneURI
+        // everything else can be derived from the input PublisherID (if we add TAP aux capability to
+        // data collection capabilities
         ServiceConfig sc = new ServiceConfig();
         URI tapServiceID = sc.getTapServiceID();
         CaomTapQuery query = new CaomTapQuery(tapServiceID, runID);
-        ArtifactProcessor ap = new ArtifactProcessor(sc, runID);
+        ArtifactProcessor ap = new ArtifactProcessor();
         return new DynamicTableData(job, query, ap);
     }
 }
