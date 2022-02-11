@@ -31,6 +31,8 @@ package ca.nrc.cadc.caom2.artifact.resolvers.util;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 public class ResolverUtil {
@@ -42,6 +44,10 @@ public class ResolverUtil {
     private static final String BASEURL_EMPTY = "Base URL can't be null . ";
     private static final String CANNOT_GET_URL = "Can't generate URL from URI.";
 
+    public static final List<String> URL_SCHEMES = Arrays.asList(new String[] {
+        "http", "https"
+    });
+    
     public static void validate(URI uri, String scheme) {
         if (uri == null) {
             throw new IllegalArgumentException(INVALID_URI + CANT_BE_NULL);

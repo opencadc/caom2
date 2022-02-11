@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
@@ -104,6 +105,7 @@ public class CaomArtifactResolver {
     private static final String CONFIG_FILENAME_DEFAULT = CaomArtifactResolver.class.getSimpleName() + ".properties.default";
 
     private final Map<String, StorageResolver> handlers = new HashMap<>();
+    private final StorageResolver defaultResolver;
 
     private AuthMethod authMethod;
     private String runID;
@@ -137,6 +139,7 @@ public class CaomArtifactResolver {
             Properties props = new Properties();
             props.load(url.openStream());
             Iterator<String> i = props.stringPropertyNames().iterator();
+            StorageResolver defResolver = null;
             while (i.hasNext()) {
                 String scheme = i.next();
                 String cname = props.getProperty(scheme);
@@ -145,13 +148,21 @@ public class CaomArtifactResolver {
                     Class c = Class.forName(cname);
                     log.debug("instantiating: " + c);
                     StorageResolver handler = (StorageResolver) c.newInstance();
-                    log.debug("adding: " + scheme + "," + handler);
-                    handlers.put(scheme, handler);
-                    log.debug("success: " + scheme + " is supported");
+                    
+                    if ("*".equals(scheme)) {
+                        defResolver = handler;
+                    } else {
+                        log.debug("adding: " + scheme + "," + handler);
+                        handlers.put(scheme, handler);
+                        log.debug("success: " + scheme + " is supported");
+                    }
+                    
                 } catch (Exception fail) {
                     throw new RuntimeException("CONFIG: failed to load " + cname, fail);
                 }
             }
+            this.defaultResolver = defResolver;
+            log.debug("default resolver: " + defaultResolver);
         } catch (IOException ex) {
             throw new RuntimeException("CONFIG: failed to read config from " + url, ex);
         }
@@ -236,6 +247,10 @@ public class CaomArtifactResolver {
             return ret;
         }
 
+        if (defaultResolver != null && !ResolverUtil.URL_SCHEMES.contains(uri.getScheme())) {
+            return defaultResolver.toURL(uri);
+        }
+        
         // fallback: hope for the best
         return uri.toURL();
     }

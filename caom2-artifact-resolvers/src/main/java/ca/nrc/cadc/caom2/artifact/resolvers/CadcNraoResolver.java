@@ -78,23 +78,26 @@ import org.apache.log4j.Logger;
 
 /**
  * StorageResolver implementation for the VLASS archive.
- * This class can convert a VLASS URI into a URL. The conversion is delegated to the AdResolver.
+ * This class can convert a VLASS URI into a URL.
  *
  * @author yeunga
  */
 public class CadcNraoResolver implements StorageResolver, Traceable {
-    public static final String SCHEME = "nrao";
-    protected static final String VLASS_ARCHIVE = "VLASS";
     private static final Logger log = Logger.getLogger(CadcNraoResolver.class);
+    
+    public static final String SCHEME = "nrao";
 
+    public CadcNraoResolver() {
+        super();
+    }
+    
     @Override
     public URL toURL(URI uri) {
         ResolverUtil.validate(uri, SCHEME);
-
-        StorageResolver cadcResolver = new CadcResolver(SCHEME);
-        return cadcResolver.toURL(uri);
+        CadcResolver r = new CadcResolver();
+        return r.toURL(uri);
     }
-
+    
     @Override
     public String getScheme() {
         return SCHEME;

@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
 
@@ -169,28 +170,29 @@ public class CadcResolverTest {
 
     @Test
     public void testInvalidURIs() {
+        // only "ad" and ResolverUtil.URL_SCHEMES are invalid
         try {
             URI uri = new URI("ad:GEM/N20201214S0014_th.jpg");
             URL url = cadcResolver.toURL(uri);
             Assert.fail("Exception expected");
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
+            log.info("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
-
-        try {
-            URI uri = new URI("gemini:GEM/N20201214S0014_th.jpg");
-            URL url = cadcResolver.toURL(uri);
-            Assert.fail("Exception expected");
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+        
+        for (String s : ResolverUtil.URL_SCHEMES) {
+            try {
+                URI uri = new URI(s + ":://example.net/foo");
+                URL url = cadcResolver.toURL(uri);
+                Assert.fail("Exception expected");
+            } catch (IllegalArgumentException expected) {
+                log.info("expected exception: " + expected);
+            } catch (Exception unexpected) {
+                log.error("unexpected exception", unexpected);
+                Assert.fail("unexpected exception: " + unexpected);
+            }
         }
     }
 }
