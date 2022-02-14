@@ -89,7 +89,7 @@ public class AdCutoutGeneratorIntTest {
     private static final Logger log = Logger.getLogger(AdCutoutGeneratorIntTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
 
     final String FILE_URI = "ad:CFHT/806045o.fits.fz";
