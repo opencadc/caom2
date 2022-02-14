@@ -203,7 +203,7 @@ public class DynamicTableData implements DataLinkSource {
                                 log.debug("getBatchIterator: " + planeURI);
                                 ar = query.performQuery(planeURI, downloadOnly);
                             }
-                            if (ar.getArtifacts().isEmpty()) {
+                            if (ar == null || ar.getArtifacts().isEmpty()) {
                                 links = new ArrayList<>(1);
                                 DataLink notFound = new DataLink(s, DataLink.Term.THIS);
                                 notFound.errorMessage = "NotFoundFault: " + s;
