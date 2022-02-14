@@ -112,7 +112,8 @@ public class AdqlQueryGeneratorTest {
             adql = adql.toLowerCase();
 
             // TODO: assert something
-            Assert.assertTrue(adql.contains("from caom2.artifact"));
+            Assert.assertTrue(adql.contains("from caom2.plane"));
+            Assert.assertTrue(adql.contains("left outer join caom2.artifact"));
             Assert.assertTrue(adql.contains("left outer join caom2.part"));
             Assert.assertTrue(adql.contains("left outer join caom2.chunk"));
 
