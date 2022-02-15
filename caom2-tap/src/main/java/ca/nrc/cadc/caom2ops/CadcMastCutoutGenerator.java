@@ -70,6 +70,7 @@ package ca.nrc.cadc.caom2ops;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.resolvers.CadcMastResolver;
 
+import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
@@ -81,7 +82,7 @@ import org.apache.log4j.Logger;
  */
 public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutGenerator {
     private static final Logger log = Logger.getLogger(CadcMastCutoutGenerator.class);
-    private final CutoutGenerator cadcCutoutGenerator = new CadcCutoutGenerator(SCHEME);
+    private final CutoutGenerator cadcCutoutGenerator = new CadcCutoutGenerator();
 
     public CadcMastCutoutGenerator() { }
 
@@ -98,6 +99,7 @@ public class CadcMastCutoutGenerator extends CadcMastResolver implements CutoutG
     @Override
     public URL toURL(URI uri, List<String> cutouts, String label) 
             throws IllegalArgumentException {
+        ResolverUtil.validate(uri, SCHEME);
         if (this.isSynced(uri)) {
             return cadcCutoutGenerator.toURL(uri, cutouts, label);
         } else {

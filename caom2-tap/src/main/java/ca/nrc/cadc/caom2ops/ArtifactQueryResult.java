@@ -63,11 +63,12 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.PublisherID;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -77,25 +78,21 @@ import org.apache.log4j.Logger;
  * @author pdowler
  */
 public class ArtifactQueryResult {
+
     private static final Logger log = Logger.getLogger(ArtifactQueryResult.class);
 
-    //private final PublisherID publisherID;
-    
+    private final PublisherID publisherID;
     private final List<Artifact> artifacts = new ArrayList<>();
     public Boolean metaReadable;
     public Boolean dataReadable;
-      
-    public ArtifactQueryResult() { }
-    
-    //public TapQueryResult(PublisherID pubID) 
-    //{
-    //    this.publisherID = pubID;
-    //}
 
-    //public PublisherID getPublisherID()
-    //{
-    //    return publisherID;
-    //}
+    public ArtifactQueryResult(PublisherID publisherID) {
+        this.publisherID = publisherID;
+    }
+
+    public PublisherID getPublisherID() {
+        return publisherID;
+    }
 
     public List<Artifact> getArtifacts() {
         return artifacts;

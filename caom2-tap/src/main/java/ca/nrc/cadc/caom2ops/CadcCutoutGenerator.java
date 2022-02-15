@@ -92,10 +92,6 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
         super();
     }
 
-    protected CadcCutoutGenerator(final String scheme) {
-        super(scheme);
-    }
-
     @Override
     public boolean canCutout(Artifact a) {
         // file types supported by SODA

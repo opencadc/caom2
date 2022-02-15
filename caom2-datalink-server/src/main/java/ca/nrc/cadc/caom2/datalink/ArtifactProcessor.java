@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2021.                            (c) 2021.
+*  (c) 2022.                            (c) 2022.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.datalink;
 
@@ -92,7 +92,6 @@ import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CutoutGenerator;
-import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
@@ -118,35 +117,19 @@ import org.opencadc.datalink.ServiceParameter;
  *
  * @author pdowler
  */
-public class ArtifactProcessor
-{
+public class ArtifactProcessor {
+
     private static final Logger log = Logger.getLogger(ArtifactProcessor.class);
-    
-    private static final String CONTENT_TYPE_TAR = "application/x-tar";
-    
-    private URI sodaID;
-    private URI defaultPackageID;
-    
-    private boolean initConfigDone = false;
-    
-    // deprecated stuff for CADC service that is being replaced by SODA
-    private static String CUTOUT = "cutout";
-    private static URI CUTOUT_SERVICE = URI.create("ivo://cadc.nrc.ca/caom2ops");
+
+    private static final String PKG_CONTENT_TYPE_TAR = "application/x-tar";
 
     private final RegistryClient registryClient;
-    
-    private final String runID;
     private final CaomArtifactResolver artifactResolver;
     private boolean downloadOnly;
 
-    public ArtifactProcessor(ServiceConfig dlc, String runID)
-    {
-        this.sodaID = dlc.getSodaID();
-        this.defaultPackageID = dlc.getPkgID();
-        this.runID = runID;
+    public ArtifactProcessor() {
         this.registryClient = new RegistryClient();
         this.artifactResolver = new CaomArtifactResolver();
-        //artifactResolver.setRunID(runID);
     }
 
     /**
@@ -156,54 +139,44 @@ public class ArtifactProcessor
      *
      * @param downloadOnly
      */
-    public void setDownloadOnly(boolean downloadOnly)
-    {
+    public void setDownloadOnly(boolean downloadOnly) {
         this.downloadOnly = downloadOnly;
     }
-    
-    public List<DataLink> process(URI uri, ArtifactQueryResult ar)
-    {
+
+    public List<DataLink> process(URI uri, ArtifactQueryResult ar) {
         List<DataLink> ret = new ArrayList<>(ar.getArtifacts().size());
         int numFiles = ar.getArtifacts().size();
         boolean pkgReadable = true;
-        for (Artifact a : ar.getArtifacts())
-        {
+        for (Artifact a : ar.getArtifacts()) {
             DataLink.Term sem = DataLink.Term.THIS;
-            if (ProductType.PREVIEW.equals(a.getProductType()))
-            {
+            if (ProductType.PREVIEW.equals(a.getProductType())) {
                 sem = DataLink.Term.PREVIEW;
                 numFiles--; // exclude from #pkg
-            }
-            else if (ProductType.THUMBNAIL.equals(a.getProductType()))
-            {
+            } else if (ProductType.THUMBNAIL.equals(a.getProductType())) {
                 sem = DataLink.Term.THUMBNAIL;
                 numFiles--; // exclude from #pkg
-            }
-            else if (ProductType.CATALOG.equals(a.getProductType()))
-            {
+            } else if (ProductType.CATALOG.equals(a.getProductType())) {
                 sem = DataLink.Term.DERIVATION;
-            }
-            else if (ProductType.AUXILIARY.equals(a.getProductType())
+            } else if (ProductType.AUXILIARY.equals(a.getProductType())
                     || ProductType.WEIGHT.equals(a.getProductType())
                     || ProductType.NOISE.equals(a.getProductType())
-                    || ProductType.INFO.equals(a.getProductType()))
-            {
+                    || ProductType.INFO.equals(a.getProductType())) {
                 sem = DataLink.Term.AUXILIARY;
             }
-            
-            Boolean readable  = null;
-            if (ReleaseType.DATA.equals(a.getReleaseType()))
+
+            Boolean readable = null;
+            if (ReleaseType.DATA.equals(a.getReleaseType())) {
                 readable = ar.dataReadable;
-            else if (ReleaseType.META.equals(a.getReleaseType()))
+            } else if (ReleaseType.META.equals(a.getReleaseType())) {
                 readable = ar.metaReadable;
+            }
             // else: new releaseType is not likely without major caom design change
-            
+
             if (readable != null) {
                 pkgReadable = pkgReadable && readable;
             }
             // direct download links
-            try
-            {
+            try {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.accessURL = getDownloadURL(a);
                 dl.contentType = a.contentType;
@@ -211,60 +184,56 @@ public class ArtifactProcessor
                 dl.readable = readable;
                 dl.description = "download " + a.getURI().toASCIIString();
                 ret.add(dl);
-            }
-            catch(MalformedURLException ex)
-            {
+            } catch (MalformedURLException ex) {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.errorMessage = "FatalFault: failed to generate download URL: " + ex.toString();
                 ret.add(dl);
             }
 
-            if (!downloadOnly && canCutout(a))
-            {
-                try
-                {
-                    ArtifactBounds ab = generateBounds(a);
-                    DataLink link;
+            if (!downloadOnly && canCutout(a)) {
+                try {
+                    final ArtifactBounds ab = generateBounds(a);
                     
-                    link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
-                    link.serviceDef = "soda-" + UUID.randomUUID();
-                    link.contentType = a.contentType; // unchanged
-                    link.contentLength = null; // unknown
-                    link.readable = readable;
-                    link.description = "SODA-sync cutout of " + a.getURI().toASCIIString();
-                    ServiceDescriptor sds = generateServiceDescriptor(sodaID, Standards.SODA_SYNC_10, link.serviceDef, a.getURI(), ab);
+                    DataLink syncLink = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
+                    syncLink.serviceDef = "soda-" + UUID.randomUUID();
+                    syncLink.contentType = a.contentType; // unchanged
+                    syncLink.contentLength = null; // unknown
+                    syncLink.readable = readable;
+                    syncLink.description = "SODA-sync cutout of " + a.getURI().toASCIIString();
+                    ServiceDescriptor sds = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_SYNC_10, syncLink.serviceDef, a.getURI(), ab);
+                    log.debug("SODA-sync: " + sds);
                     if (sds != null) {
-                        link.descriptor = sds;
-                        ret.add(link);
+                        syncLink.descriptor = sds;
+                        ret.add(syncLink);
                     }
-                    
-                    link = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
-                    link.serviceDef = "soda-" + UUID.randomUUID();
-                    link.contentType = a.contentType; // unchanged
-                    link.contentLength = null; // unknown
-                    link.readable = readable;
-                    link.description = "SODA-async cutout of " + a.getURI().toASCIIString();
-                    ServiceDescriptor sda = generateServiceDescriptor(sodaID, Standards.SODA_ASYNC_10, link.serviceDef, a.getURI(), ab);
+
+                    DataLink asyncLink = new DataLink(uri.toASCIIString(), DataLink.Term.CUTOUT);
+                    asyncLink.serviceDef = "soda-" + UUID.randomUUID();
+                    asyncLink.contentType = a.contentType; // unchanged
+                    asyncLink.contentLength = null; // unknown
+                    asyncLink.readable = readable;
+                    asyncLink.description = "SODA-async cutout of " + a.getURI().toASCIIString();
+                    ServiceDescriptor sda = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_ASYNC_10, asyncLink.serviceDef, a.getURI(), ab);
+                    log.debug("SODA-async: " + sda);
                     if (sda != null) {
-                        link.descriptor = sda;
-                        ret.add(link);
+                        asyncLink.descriptor = sda;
+                        ret.add(asyncLink);
                     }
-                }
-                catch(NoSuchKeywordException ex)
-                {
+                } catch (NoSuchKeywordException ex) {
                     throw new RuntimeException("FAIL: invalid WCS", ex);
                 }
             }
         }
-        log.debug("numFiles: " + numFiles);
+        log.debug("num files for package: " + numFiles);
         if (numFiles > 1) {
-            
-            URL pkg = getBasePackageURL(uri);
+
+            URL pkg = getBasePackageURL(ar.getPublisherID());
+            log.debug("base pkg url: " + pkg);
             if (pkg != null) {
                 DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PKG);
                 try {
-                    link.accessURL = getPackageURL(pkg, uri);
-                    link.contentType = CONTENT_TYPE_TAR;
+                    link.accessURL = getPackageURL(pkg, ar.getPublisherID());
+                    link.contentType = PKG_CONTENT_TYPE_TAR;
                     link.description = "single download containing all files (previews and thumbnails excluded)";
                     link.readable = pkgReadable;
                 } catch (MalformedURLException ex) {
@@ -275,9 +244,9 @@ public class ArtifactProcessor
         }
         return ret;
     }
-    
-    private class ArtifactBounds
-    {
+
+    private class ArtifactBounds {
+
         public String circle;
         public String poly;
         public String bandMin;
@@ -289,33 +258,31 @@ public class ArtifactProcessor
         public String customMin;
         public String customMax;
     }
-    
+
     private boolean canCutout(Artifact a) {
         StorageResolver sr = artifactResolver.getStorageResolver(a.getURI());
         if (!(sr instanceof CutoutGenerator)) {
             log.debug("canCutout: no code to generate cutout for " + a.getURI());
             return false;
         }
-        
+
         CutoutGenerator cg = (CutoutGenerator) sr;
         if (!cg.canCutout(a)) {
-            log.debug("canCutout: artifact not supported by SODA " + a.getURI());
+            log.debug("canCutout: artifact not supported by  " + cg.getClass().getName() + ": " + a.getURI());
             return false;
         }
-        
+
         if (!CutoutUtil.canCutout(a)) {
-            log.debug("canCutout: insufficient metadata for SODA to compute cutout " + a.getURI());
+            log.debug("canCutout: insufficient metadata to compute cutout " + a.getURI());
             return false;
         }
-        
+
         // file type check moved into CutoutGenerator.canCutout(Artifact)
-        
         return true;
     }
-    
+
     private ArtifactBounds generateBounds(Artifact a)
-        throws NoSuchKeywordException
-    {
+            throws NoSuchKeywordException {
         ArtifactBounds ret = new ArtifactBounds();
         Set<Artifact> aset = new TreeSet<>();
         aset.add(a);
@@ -324,75 +291,77 @@ public class ArtifactProcessor
         DoubleArrayFormat daf = new DoubleArrayFormat();
 
         Position pos = PositionUtil.compute(aset);
-        if (pos != null) 
+        if (pos != null) {
             log.debug("pos: " + pos.bounds + " " + pos.dimension);
-        if (pos != null && pos.bounds != null && pos.bounds != null 
-                && pos.dimension != null && (pos.dimension.naxis1 > 1 || pos.dimension.naxis2 > 1))
-        {
+        }
+        if (pos != null && pos.bounds != null && pos.bounds != null
+                && pos.dimension != null && (pos.dimension.naxis1 > 1 || pos.dimension.naxis2 > 1)) {
             Polygon outer = (Polygon) pos.bounds;
             ret.poly = daf.format(new CoordIterator(outer.getPoints().iterator()));
 
             Circle msc = outer.getMinimumSpanningCircle();
-            ret.circle = daf.format(new double[] { msc.getCenter().cval1, msc.getCenter().cval2, msc.getRadius() });
+            ret.circle = daf.format(new double[]{msc.getCenter().cval1, msc.getCenter().cval2, msc.getRadius()});
         }
 
         Energy nrg = EnergyUtil.compute(aset);
-        if (nrg != null) log.debug("nrg: " + nrg.bounds + " " + nrg.dimension);
-        if (nrg != null && nrg.bounds != null && nrg.dimension != null && nrg.dimension > 1)
-        {
-            //double[] val = new double[] { nrg.bounds.getLower(), nrg.bounds.getUpper() };
-            //ret.band = daf.format(val);
+        if (nrg != null) {
+            log.debug("nrg: " + nrg.bounds + " " + nrg.dimension);
+        }
+        if (nrg != null && nrg.bounds != null && nrg.dimension != null && nrg.dimension > 1) {
             ret.bandMin = Double.toString(nrg.bounds.getLower());
             ret.bandMax = Double.toString(nrg.bounds.getUpper());
         }
 
         Time tim = TimeUtil.compute(aset);
-        if (tim != null) log.debug("tim: " + tim.bounds + " " + tim.dimension);
-        if (tim != null && tim.bounds != null && tim.dimension != null && tim.dimension > 1)
-        {
-            //double[] val = new double[] { tim.bounds.getLower(), tim.bounds.getUpper() };
-            //ret.time = daf.format(val);
+        if (tim != null) {
+            log.debug("tim: " + tim.bounds + " " + tim.dimension);
+        }
+        if (tim != null && tim.bounds != null && tim.dimension != null && tim.dimension > 1) {
             ret.timeMin = Double.toString(tim.bounds.getLower());
             ret.timeMax = Double.toString(tim.bounds.getUpper());
         }
 
         Polarization pol = PolarizationUtil.compute(aset);
-        if (pol != null && pol.dimension != null && pol.dimension > 1)
-        {
+        if (pol != null && pol.dimension != null && pol.dimension > 1) {
             ret.pol = pol.states;
         }
-        
+
         CustomAxis ca = CustomAxisUtil.compute(aset);
-        if (ca != null) log.debug("custom: " + ca.getCtype() + " " + ca.bounds + " " + ca.dimension);
+        if (ca != null) {
+            log.debug("custom: " + ca.getCtype() + " " + ca.bounds + " " + ca.dimension);
+        }
         if (ca != null && ca.bounds != null && ca.dimension != null && ca.dimension > 1) {
             ret.customParam = ca.getCtype();
             ret.customMin = Double.toString(ca.bounds.getLower());
             ret.customMax = Double.toString(ca.bounds.getUpper());
         }
-            
+
         return ret;
     }
-    
-    private ServiceDescriptor generateServiceDescriptor(URI serviceID, URI standardID, String id, URI artifactURI, ArtifactBounds ab)
-    {
-        if (serviceID == null)
-            return null; // no SODA support configured
-        
+
+    private ServiceDescriptor generateServiceDescriptor(PublisherID pubID, URI standardID, String id, URI artifactURI, ArtifactBounds ab) {
         if (ab.poly == null && ab.bandMin == null && ab.bandMax == null
-                && ab.timeMin == null && ab.timeMax == null && ab.pol == null)
+                && ab.timeMin == null && ab.timeMax == null && ab.pol == null) {
             return null;
+        }
 
         Subject caller = AuthenticationUtil.getCurrentSubject();
         AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
-        if (authMethod == null)
+        if (authMethod == null) {
             authMethod = AuthMethod.ANON;
-        
+        }
+
         // generate artifact-specific SODA service descriptor
-        URL accessURL = registryClient.getServiceURL(serviceID, standardID, authMethod);
+        URL accessURL = registryClient.getServiceURL(pubID.getResourceID(), standardID, authMethod);
+        log.debug("resolve cuotut: " + pubID.getResourceID() + " + " + standardID + " +" + authMethod + " -> " + accessURL);
+        if (accessURL == null) {
+            // no SODA support for this publisherID
+            return null;
+        }
         ServiceDescriptor sd = new ServiceDescriptor(accessURL);
         sd.id = id;
         sd.standardID = standardID;
-        sd.resourceIdentifier = serviceID;
+        sd.resourceIdentifier = pubID.getResourceID();
 
         ServiceParameter sp;
         String val = artifactURI.toASCIIString();
@@ -400,22 +369,13 @@ public class ArtifactProcessor
         sp = new ServiceParameter("ID", "char", arraysize, "meta.id;meta.dataset");
         sp.setValueRef(val, null);
         sd.getInputParams().add(sp);
-        
-        //if (StringUtil.hasText(runID)) {
-        //    arraysize = Integer.toString(runID.length());
-        //    sp = new ServiceParameter("RUNID", "char", arraysize, "");
-        //    sp.setValueRef(runID, null);
-        //    sd.getInputParams().add(sp);
-        //}
-        
-        if (ab.poly != null)
-        {
+
+        if (ab.poly != null) {
             sp = new ServiceParameter("POS", "char", "*", "obs.field");
             sd.getInputParams().add(sp);
         }
 
-        if (ab.circle != null)
-        {
+        if (ab.circle != null) {
             sp = new ServiceParameter("CIRCLE", "double", "3", "obs.field");
             sp.xtype = "circle";
             sp.unit = "deg";
@@ -423,8 +383,7 @@ public class ArtifactProcessor
             sd.getInputParams().add(sp);
         }
 
-        if (ab.poly != null)
-        {
+        if (ab.poly != null) {
             sp = new ServiceParameter("POLYGON", "double", "*", "obs.field");
             sp.xtype = "polygon";
             sp.unit = "deg";
@@ -432,8 +391,7 @@ public class ArtifactProcessor
             sd.getInputParams().add(sp);
         }
 
-        if (ab.bandMin != null || ab.bandMax != null)
-        {
+        if (ab.bandMin != null || ab.bandMax != null) {
             sp = new ServiceParameter("BAND", "double", "2", "em.wl;stat.interval");
             sp.xtype = "interval";
             sp.unit = "m";
@@ -441,8 +399,7 @@ public class ArtifactProcessor
             sd.getInputParams().add(sp);
         }
 
-        if (ab.timeMin != null || ab.timeMax != null)
-        {
+        if (ab.timeMin != null || ab.timeMax != null) {
             sp = new ServiceParameter("TIME", "double", "2", "time;stat.interval");
             sp.xtype = "interval";
             sp.unit = "d";
@@ -450,11 +407,9 @@ public class ArtifactProcessor
             sd.getInputParams().add(sp);
         }
 
-        if (ab.pol != null)
-        {
+        if (ab.pol != null) {
             sp = new ServiceParameter("POL", "char", "*", "phys.polarization.state");
-            for (PolarizationState s : ab.pol)
-            {
+            for (PolarizationState s : ab.pol) {
                 sp.getOptions().add(s.getValue());
             }
             sd.getInputParams().add(sp);
@@ -468,56 +423,48 @@ public class ArtifactProcessor
         }
 
         return sd;
-        
+
     }
-    
+
     /**
      * Convert a URI to a URL.
      *
-     * @param a 
+     * @param a
      * @return u
      * @throws MalformedURLException
      */
     protected URL getDownloadURL(Artifact a)
-        throws MalformedURLException
-    {
+            throws MalformedURLException {
         URL url = artifactResolver.getURL(a.getURI());
 
         return url;
     }
-    
+
     /**
      * Find the package service associated with a publisherID.
-     * 
+     *
      * @param id
      * @return base package service url for current auth method or null if no such service
      */
-    protected URL getBasePackageURL(URI id) {
+    protected URL getBasePackageURL(PublisherID id) {
         Subject caller = AuthenticationUtil.getCurrentSubject();
         AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
         if (authMethod == null) {
             authMethod = AuthMethod.ANON;
         }
-        
-        if ("caom".equals(id.getScheme())) {
-            // not resolvable: use config
-            return registryClient.getServiceURL(defaultPackageID, Standards.PKG_10, authMethod);
-        }
-        
-        // resolvable
-        PublisherID pubID = new PublisherID(id);
-        URI resourceID = pubID.getResourceID();
+
+        URI resourceID = id.getResourceID();
         URL ret = registryClient.getServiceURL(resourceID, Standards.PKG_10, authMethod);
+        log.debug("resolve package: " + id
+                + " > " + resourceID + " " + Standards.PKG_10 + " " + authMethod
+                + " >> " + ret);
         return ret;
     }
-    
-    private URL getPackageURL(URL pkg, URI uri) throws MalformedURLException {
+
+    private URL getPackageURL(URL pkg, PublisherID id) throws MalformedURLException {
         StringBuilder sb = new StringBuilder();
         sb.append(pkg.toExternalForm());
-        sb.append("?ID=").append(NetUtil.encode(uri.toASCIIString()));
-        //if (StringUtil.hasLength(runID)) {
-        //    sb.append("&RUNID=").append(NetUtil.encode(runID));
-        //}
+        sb.append("?ID=").append(NetUtil.encode(id.getURI().toASCIIString()));
         return new URL(sb.toString());
     }
 }

@@ -89,7 +89,7 @@ public class VOSpaceCutoutGeneratorIntTest {
     private static final Logger log = Logger.getLogger(VOSpaceCutoutGeneratorIntTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
     
     private static final String CUTOUT1 = "[9][100:200,100:200]";
@@ -97,7 +97,7 @@ public class VOSpaceCutoutGeneratorIntTest {
     
     private static final String INVALID_CUTOUT = "[100][100:200]";
 
-    private static final String FILE_URI = "vos://cadc.nrc.ca!vospace/CADCAuthtest1/cadcIntTest/806045o.fits.fz";
+    private static final String FILE_URI = "vos://cadc.nrc.ca~vault/CADCAuthtest1/cadcIntTest/806045o.fits.fz";
 
     VOSpaceCutoutGenerator resolver = new VOSpaceCutoutGenerator();
 
@@ -158,7 +158,9 @@ public class VOSpaceCutoutGeneratorIntTest {
                 Assert.assertEquals(200, download.getResponseCode());
                 log.info("response code: " + download.getResponseCode());
                 String cdis = download.getResponseHeader("Content-Disposition");
-                String actual_filename = cdis.split("=")[1];
+                String raw = cdis.split("=")[1];
+                String actual_filename = raw.replace("\"","");
+                
                 Assert.assertEquals("incorrect filename", expected_filename, actual_filename);
             }
 

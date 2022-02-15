@@ -92,7 +92,7 @@ public class CadcCutoutGeneratorTest {
     private static final Logger log = Logger.getLogger(CadcCutoutGeneratorTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
 
     private static final String CUTOUT1 = "[1][100:200, 100:200]";
@@ -202,8 +202,7 @@ public class CadcCutoutGeneratorTest {
             URL url = cutoutGenerator.toURL(uri, cutouts, null);
             Assert.fail("expected IllegalArgumentException, got " + url);
         } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
+            log.info("expected exception: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
