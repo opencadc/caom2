@@ -105,7 +105,7 @@ public class CaomTapQueryTest
     
     static
     {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.DEBUG);
     }
 
     //@Test
@@ -289,6 +289,27 @@ public class CaomTapQueryTest
                 URI accMetaChecksum = a.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
                 Assert.assertEquals("Artifact.accMetaChecksum", a.getAccMetaChecksum(), accMetaChecksum);
             }
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testArtifactQuery()
+    {
+        try
+        {
+            URI uri = URI.create("cadc:IRIS/I212B2H0.fits");
+            CaomTapQuery query = new CaomTapQuery(URI.create(TAP_URI), "CaomTapQueryTest");
+            Artifact a = query.performQuery(uri);
+            Assert.assertNotNull(a);
+            log.info("found: " + a.getURI());
+
+            URI accMetaChecksum = a.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
+            Assert.assertEquals("Artifact.accMetaChecksum", a.getAccMetaChecksum(), accMetaChecksum);
         }
         catch(Exception unexpected)
         {

@@ -84,9 +84,9 @@ public class AdqlQueryGenerator {
 
     // use the obsID FK column and an alias because FK columns don't have a utype 
     // and thus we won't accidentally effect result parsing
-    private static final String SELECT_READABLE = "Plane.publisherID, Plane.obsID AS metaReadable, isDownloadable(Plane.obsID) AS dataReadable";
+    private static final String SELECT_READABLE = "Plane.obsID AS metaReadable, isDownloadable(Plane.obsID) AS dataReadable";
     
-    private static final String SELECT_ARTIFACT = "Artifact.*";
+    private static final String SELECT_ARTIFACT = "Plane.publisherID, Artifact.*";
     private static final String SELECT_ARTIFACT2CHUNK = SELECT_ARTIFACT + ", Part.*, Chunk.*";
     private static final String SELECT_OBS2CHUNK = "Observation.*, Plane.*, Artifact.*, Part.*, Chunk.*";
     
@@ -182,7 +182,7 @@ public class AdqlQueryGenerator {
         sb.append("SELECT ");
         sb.append(SELECT_ARTIFACT2CHUNK);
         sb.append(" FROM ");
-        sb.append(ARTIFACT2CHUNK);
+        sb.append(PLANE2CHUNK); // need Plane.publisherID
         sb.append(" WHERE Artifact.uri = '");
         sb.append(uri.toString());
         sb.append("'");

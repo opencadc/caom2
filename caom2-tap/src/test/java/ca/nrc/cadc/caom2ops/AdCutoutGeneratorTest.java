@@ -88,7 +88,7 @@ public class AdCutoutGeneratorTest {
     private static final Logger log = Logger.getLogger(AdCutoutGeneratorTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
 
     private static final String CUTOUT1 = "[1][100:200, 100:200]";

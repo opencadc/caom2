@@ -243,7 +243,7 @@ public class CaomTapQuery {
 
         AdqlQueryGenerator gen = new AdqlQueryGenerator();
         String adql = gen.getArtifactADQL(uri);
-        log.debug("cutout query: " + adql);
+        log.debug("artifact query: " + adql);
 
         VOTableDocument doc = execQuery(uri.toASCIIString(), adql);
         ArtifactQueryResult ar = buildArtifacts(doc);
