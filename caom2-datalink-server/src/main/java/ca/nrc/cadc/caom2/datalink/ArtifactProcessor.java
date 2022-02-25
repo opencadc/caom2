@@ -230,7 +230,7 @@ public class ArtifactProcessor {
             URL pkg = getBasePackageURL(ar.getPublisherID());
             log.debug("base pkg url: " + pkg);
             if (pkg != null) {
-                DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PKG);
+                DataLink link = new DataLink(uri.toASCIIString(), DataLink.Term.PACKAGE);
                 try {
                     link.accessURL = getPackageURL(pkg, ar.getPublisherID());
                     link.contentType = PKG_CONTENT_TYPE_TAR;
