@@ -83,11 +83,11 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class InitTapSchemaContent extends InitDatabase {
-    private static final Logger log = Logger.getLogger(InitTapSchemaContent.class);
+public class InitCaomTapSchemaContent extends InitDatabase {
+    private static final Logger log = Logger.getLogger(InitCaomTapSchemaContent.class);
 
-    public static final String MODEL_NAME = "caom:tap-schema-content";
-    public static final String MODEL_VERSION = "1.1.14";
+    public static final String MODEL_NAME = "caom-schema";
+    public static final String MODEL_VERSION = "1.2.4";
     public static final String PREV_MODEL_VERSION = "n/a";
 
     // the SQL is tightly coupled to cadc-tap-schema table names (for TAP-1.1)
@@ -110,7 +110,7 @@ public class InitTapSchemaContent extends InitDatabase {
      * @param database database name (should be null if not needed in SQL)
      * @param schema schema name (usually tap_schema)
      */
-    public InitTapSchemaContent(DataSource dataSource, String database, String schema) {
+    public InitCaomTapSchemaContent(DataSource dataSource, String database, String schema) {
         super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION, PREV_MODEL_VERSION);
         for (String s : CREATE_SQL) {
             createSQL.add(s);
@@ -122,6 +122,6 @@ public class InitTapSchemaContent extends InitDatabase {
     
     @Override
     protected URL findSQL(String fname) {
-        return InitTapSchemaContent.class.getClassLoader().getResource("sql/" + fname);
+        return InitCaomTapSchemaContent.class.getClassLoader().getResource("sql/" + fname);
     }
 }
