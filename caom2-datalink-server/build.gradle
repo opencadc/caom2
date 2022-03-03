@@ -13,7 +13,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '1.9.4'
+version = '1.9.5'
 
 description = 'OpenCADC CAOM2 DataLink server library'
 def git_url = 'https://github.com/opencadc/caom2service'
@@ -22,7 +22,7 @@ dependencies {
     compile 'log4j:log4j:[1.2.0,)'
 
     compile 'org.opencadc:cadc-util:[1.0.10,)'
-    compile 'org.opencadc:cadc-datalink-server:[1.0.1,)'
+    compile 'org.opencadc:cadc-datalink-server:[1.1.0,)'
     compile 'org.opencadc:cadc-cdp:[1.0.2,2.0)'
     compile 'org.opencadc:cadc-registry:[1.5.15,)'
     compile('org.opencadc:cadc-dali:[1.1,)')
