@@ -9,11 +9,11 @@ works with the CADC Storage Inventory backend (luskan and minoc).
 All config file names are subject to change - most likey all config will be in a 
 single file named `caom2-artifact-store-si.properties`. For now, one needs:
 
-# InventoryArtifactStore.properties
+### InventoryArtifactStore.properties
 
 undocumented legacy
 
-# collection-prefix.properties
+### collection-prefix.properties
 
 undocumented legacy
  
