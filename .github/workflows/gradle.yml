@@ -31,6 +31,9 @@ jobs:
     - name: build and test caom2-artifact-sync
       run: cd caom2-artifact-sync && ../gradlew --info clean build javadoc checkstyleMain install
 
+    - name: build and test caom2-artifact-store-si
+      run: cd caom2-artifact-store-si && ../gradlew --info clean build javadoc checkstyleMain install
+      
     - name: build and test caom2-repo
       run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
       
