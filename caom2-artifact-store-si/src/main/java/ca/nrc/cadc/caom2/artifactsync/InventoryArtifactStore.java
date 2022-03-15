@@ -114,7 +114,7 @@ public class InventoryArtifactStore implements ArtifactStore {
     private static final Logger log = Logger.getLogger(InventoryArtifactStore.class);
 
     private static final String COLLECTION_CONFIG = "collection-prefix.properties";
-    private static final String CONFIG_FILE_NAME = "InventoryArtifactStore.properties";
+    private static final String CONFIG_FILE_NAME = "caom2-artifact-store-si.properties";
 
     private static final String CONFIG_PREFIX = InventoryArtifactStore.class.getPackage().getName();
     private static final String QUERY_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".queryService";
