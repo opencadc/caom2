@@ -74,7 +74,6 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.access.AccessUtil;
-import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.StoragePolicy;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
@@ -85,7 +84,6 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.net.TransientException;
 
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
@@ -262,20 +260,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                     }
                                     
                                     try {
-                                        // by default, do not add to the skip table
-                                        boolean correctCopy = true;
-
-                                        // artifact is not in storage if storage policy is 'PUBLIC ONLY' and the artifact is proprietary
-                                        if ((StoragePolicy.ALL == storagePolicy) || this.errorMessage == null) {
-                                            // correctCopy is false if: checksum mismatch, content length mismatch or not in storage
-                                            // "not in storage" includes failing to resolve the artifact URI
-                                            correctCopy = checkArtifactInStorage(artifact.getURI());
-                                            log.debug("Artifact " + artifact.getURI() + " with MD5 " + artifact
-                                                .contentChecksum + " correct copy: " + correctCopy);
-                                        }
-
                                         if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
-                                                && ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) || !correctCopy) {
+                                                && ArtifactHarvester.PROPRIETARY.equals(this.errorMessage))) {
                                             HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
                                             if (skip == null) {
                                                 // not in skip table, add it
@@ -349,57 +335,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
             return checksum.getSchemeSpecificPart();
         } else {
             throw new UnsupportedOperationException("Checksum algorithm " + checksum.getScheme() + " not suported.");
-        }
-    }
-
-    private boolean checkContentLength(Long artifactContentLength) {
-        // no contentLength in a CAOM artifact is considered a match
-        if (this.caomContentLength == null || this.caomContentLength == 0) {
-            return true;
-        } else {
-            this.storageContentLength = artifactContentLength;
-            if (this.storageContentLength == this.caomContentLength) {
-                return true;
-            } else {
-                this.reason = "ContentLengths are different";
-                this.errorMessage = this.reason;
-                return false;
-            }
-        }
-    }
-
-    private boolean checkChecksum(String contentMD5) {
-        log.debug("Expected MD5: " + this.caomChecksum);
-        if (this.caomChecksum.equalsIgnoreCase("null")) {
-            // no checksum in a CAOM artifact is considered a match
-            this.reason = "Null checksum";
-            return true;
-        }
-
-        log.debug("Matching artifact with md5 " + contentMD5);
-        this.storageChecksum = contentMD5;
-        if (this.caomChecksum.equalsIgnoreCase(contentMD5)) {
-            return true;
-        } else {
-            this.reason = "Checksums are different";
-            this.errorMessage = this.reason;
-            return false;
-        }
-    }
-
-    private boolean checkArtifactInStorage(URI artifactURI) throws TransientException {
-        ArtifactMetadata artifactMetadata = this.artifactStore.get(artifactURI);
-        if (artifactMetadata == null) {
-            this.reason = "Artifact not in storage";
-            this.errorMessage = reason;
-            log.debug("Artifact not in storage URI: " + artifactURI);
-            return false;
-        }
-
-        if (checkChecksum(artifactMetadata.getChecksum())) {
-            return checkContentLength(artifactMetadata.contentLength);
-        } else {
-            return false;
         }
     }
 
