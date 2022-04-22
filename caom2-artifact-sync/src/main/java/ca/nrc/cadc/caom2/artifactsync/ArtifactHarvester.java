@@ -102,6 +102,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
     public static final Integer DEFAULT_BATCH_SIZE = Integer.valueOf(1000);
     public static final String STATE_CLASS = Artifact.class.getSimpleName();
     public static final String PROPRIETARY = "Proprietary";
+    public static final String PUBLIC = "Public";
 
     private static final Logger log = Logger.getLogger(ArtifactHarvester.class);
 
@@ -118,18 +119,14 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
     private DateFormat df;
     
     private String caomChecksum;
-    private String storageChecksum;
     private Long caomContentLength;
-    private long storageContentLength;
     private String reason = "None";
-    private String errorMessage;
-    
-    
+
     // reset each run
-    long downloadCount = 0;
-    long updateCount = 0;
-    long processedCount = 0;
-    Date start = new Date();
+    private long addCount;
+    public long updateCount;
+    private long totalCount;
+    private Date start;
 
     public ArtifactHarvester(ObservationDAO observationDAO, HarvestResource harvestResource,
                              ArtifactStore artifactStore, int batchSize, boolean loop) {
@@ -156,43 +153,46 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
         int loopNum = 1;
         boolean stop = false;
         do {
-            if (loop) {
+            if (this.loop) {
                 log.info("-- STARTING LOOP #" + loopNum + " --");
             }
 
             stop = runIt();
 
-            if (loop) {
+            if (this.loop) {
                 log.info("-- ENDING LOOP #" + loopNum + " --");
             }
 
             loopNum++;
-        } while (loop && !stop); // continue if work was done
+        } while (this.loop && !stop); // continue if work was done
         
         return null;
     }
     
     private Boolean runIt() throws Exception {
 
-        this.downloadCount = 0;
-        this.processedCount = 0;
+        this.addCount = 0;
+        this.updateCount = 0;
+        this.totalCount = 0;
         this.start = new Date();
         
         try {
             // Determine the state of the last run
-            HarvestState state = harvestStateDAO.get(source, STATE_CLASS);
+            HarvestState state = harvestStateDAO.get(this.source, STATE_CLASS);
             this.startDate = state.curLastModified;
             // harvest up to a little in the past because the head of
             // the sequence may be volatile
             long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
             Date stopDate = new Date(fiveMinAgo);
-            if (startDate == null) {
+            if (this.startDate == null) {
                 log.info("harvest window: null " + this.df.format(stopDate) + " [" + this.batchSize + "]");
             } else {
-                log.info("harvest window: " + this.df.format(startDate) + " " + this.df.format(stopDate) + " [" + this.batchSize + "]");
+                log.info("harvest window: " + this.df.format(this.startDate) + " " + this.df.format(stopDate)
+                             + " [" + this.batchSize + "]");
             }
-            List<ObservationState> observationStates = this.observationDAO.getObservationList(this.collection, this.startDate,
-                stopDate, this.batchSize + 1);
+            List<ObservationState> observationStates =
+                this.observationDAO.getObservationList(this.collection, this.startDate, stopDate,
+                                                       this.batchSize + 1);
             
             // avoid re-processing the last successful one stored in
             // HarvestState (normal case because query: >= startDate)
@@ -201,11 +201,13 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                 ObservationState curBatchLeader = iter.next();
                 if (curBatchLeader != null) {
                     if (state.curLastModified != null) {
-                        log.debug("harvesState: " + format(state.curID) + ", " + this.df.format(state.curLastModified));
+                        log.debug("harvestState: " + format(state.curID) + ", "
+                                      + this.df.format(state.curLastModified));
                     }
                     if (curBatchLeader.getMaxLastModified().equals(state.curLastModified)) {
                         Observation observation = this.observationDAO.get(curBatchLeader.getID());
-                        log.debug("current batch: " + format(observation.getID()) + ", " + this.df.format(curBatchLeader.getMaxLastModified()));
+                        log.debug("current batch: " + format(observation.getID()) + ", "
+                                      + this.df.format(curBatchLeader.getMaxLastModified()));
                         if (state.curID != null && state.curID.equals(observation.getID())) {
                             iter.remove();
                         }
@@ -229,7 +231,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                         
                         for (Plane plane : observation.getPlanes()) {
                             for (Artifact artifact : plane.getArtifacts()) {
-                                Date releaseDate = AccessUtil.getReleaseDate(artifact, plane.metaRelease, plane.dataRelease);
+                                Date releaseDate = AccessUtil.getReleaseDate(artifact, plane.metaRelease,
+                                                                             plane.dataRelease);
                                 if (releaseDate == null) {
                                     // null date means private
                                     log.debug("null release date, skipping");
@@ -248,59 +251,39 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                     } else {
                                         this.caomContentLength = artifact.contentLength;
                                     }
-                                    
-                                    this.storageContentLength = 0;
+
+                                    // release date is not null, download in the future
+                                    boolean isProprietary = releaseDate.after(start);
+                                    String dataType = isProprietary ? ArtifactHarvester.PROPRIETARY : ArtifactHarvester.PUBLIC;
                                     this.reason = "None";
-                                    this.errorMessage = null;
-                                    this.processedCount++;
-                                    
-                                    if (releaseDate.after(start)) {
-                                        // private and release date is not null, download in the future
-                                        this.errorMessage = ArtifactHarvester.PROPRIETARY;
-                                    }
-                                    
+                                    this.totalCount++;
+
                                     try {
-                                        if ((StoragePolicy.PUBLIC_ONLY == storagePolicy 
-                                                && ArtifactHarvester.PROPRIETARY.equals(this.errorMessage))) {
-                                            HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS, artifact.getURI());
-                                            if (skip == null) {
-                                                // not in skip table, add it
-                                                skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(), releaseDate, this.errorMessage);
-                                            } 
-                                            
-                                            if (ArtifactHarvester.PROPRIETARY.equals(skip.errorMessage) 
-                                                    
-                                                    || ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
-                                                skip.setTryAfter(releaseDate);
-                                                skip.errorMessage = errorMessage;
-                                            }
-                                            
-                                            this.harvestSkipURIDAO.put(skip);
-                                            this.downloadCount++;
+                                        HarvestSkipURI skip = harvestSkipURIDAO.get(source, STATE_CLASS,
+                                                                                    artifact.getURI());
+                                        message = dataType;
+                                        if (skip == null) {
+                                            // not in skip table, add it
+                                            skip = new HarvestSkipURI(source, STATE_CLASS, artifact.getURI(),
+                                                                      releaseDate, dataType);
                                             added = true;
-                                            if (skip != null) {
-                                                this.downloadCount--;
-                                                if (ArtifactHarvester.PROPRIETARY.equals(this.errorMessage)) {
-                                                    this.updateCount++;
-                                                    message = this.errorMessage 
-                                                        + " artifact already exists in skip table, update tryAfter date to release date.";
-                                                } else {
-                                                    added = false;
-                                                    String msg = "artifact already exists in skip table.";;
-                                                    if (this.reason.equalsIgnoreCase("None")) {
-                                                        this.reason = "Public " + msg;
-                                                    } else {
-                                                        this.reason = this.reason + " and public " + msg;
-                                                    }
-                                                }
-                                            }
+                                            this.addCount++;
+                                            message += " artifact added to skip table";
+                                        } else {
+                                            this.updateCount++;
+                                            message += " artifact already exists in skip table";
+                                            this.reason = "artifact already exists in skip table";
                                         }
+                                        skip.setTryAfter(releaseDate);
+                                        message += ", update tryAfter date to release date.";
+                                        this.harvestSkipURIDAO.put(skip);
                                     } catch (Exception ex) {
                                         success = false;
-                                        message = "Failed to determine if artifact " + artifact.getURI() + " exists: " + ex.getMessage();
+                                        message = "Failed to determine if artifact " + artifact.getURI() + " exists: "
+                                            + ex.getMessage();
+                                        this.reason = "Failed to determine if artifact exists";
                                         log.error(message, ex);
                                     }
-                                    
                                     logEnd(format(state.curID), artifact, success, added, message);
                                 }
                             }
@@ -319,7 +302,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                 }
             }
 
-            return (observationStates.size() < batchSize + 1);
+            return (observationStates.size() < this.batchSize + 1);
         } finally {
             logBatchEnd();
         }
@@ -334,7 +317,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
         if (checksum.getScheme().equalsIgnoreCase("MD5")) {
             return checksum.getSchemeSpecificPart();
         } else {
-            throw new UnsupportedOperationException("Checksum algorithm " + checksum.getScheme() + " not suported.");
+            throw new UnsupportedOperationException("Checksum algorithm " + checksum.getScheme() + " not supported.");
         }
     }
 
@@ -366,7 +349,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
 
     private void logEnd(String observationID, Artifact artifact, boolean success, boolean added, String message) {
         final String caomContentLengthStr = safeToString(this.caomContentLength);
-        final String storageContentLengthStr = safeToString(this.storageContentLength);
         StringBuilder endMessage = new StringBuilder();
         endMessage.append("END: {");
         endMessage.append("\"observationID\":\"").append(observationID).append("\"");
@@ -387,10 +369,6 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
         endMessage.append(",");
         endMessage.append("\"caomContentLength\":\"").append(caomContentLengthStr).append("\"");
         endMessage.append(",");
-        endMessage.append("\"storageChecksum\":\"").append(this.storageChecksum).append("\"");
-        endMessage.append(",");
-        endMessage.append("\"storageContentLength\":\"").append(storageContentLengthStr).append("\"");
-        endMessage.append(",");
         endMessage.append("\"collection\":\"").append(this.collection).append("\"");
         if (message != null) {
             endMessage.append(",");
@@ -409,9 +387,9 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
     private void logBatchEnd(String endString) {
         StringBuilder batchMessage = new StringBuilder();
         batchMessage.append(endString + ": {");
-        batchMessage.append("\"total\":\"").append(this.processedCount).append("\"");
+        batchMessage.append("\"total\":\"").append(this.totalCount).append("\"");
         batchMessage.append(",");
-        batchMessage.append("\"added\":\"").append(this.downloadCount).append("\"");
+        batchMessage.append("\"added\":\"").append(this.addCount).append("\"");
         batchMessage.append(",");
         batchMessage.append("\"updated\":\"").append(this.updateCount).append("\"");
         batchMessage.append(",");
