@@ -1,9 +1,10 @@
-# Artifact Sync Discover process
+# CAOM2 Artifact Discover process
 
 Process to discover Artifacts to be downloaded to an ArtifactStore. 
 It finds new and modified Artifacts from a CAOM2 database, adding them to 
 a harvest table used by `caom2-artifact-download` to download Artifacts 
 to an ArtifactStore.
+
 
 ## configuration
 
@@ -14,6 +15,7 @@ caom2-artifact-discover uses an implementation of the ArtifactStore interface
 [caom2-persist](https://github.com/opencadc/caom2db/tree/master/caom2-persist).
 
 Runtime configuration must be made available via the `/config` directory.
+
 
 ### caom2-artifact-discover.properties
 ```
@@ -56,6 +58,7 @@ from a caom2 database query.
 If `ca.nrc.cadc.caom2.artifactsync.continue` is true, Artifacts will be 
 processed in `batchSize` increments until the Artifact query returns empty. 
 If false, only the first `batchSize` Artifacts will be processed.
+
 
 ### cadcproxy.pem
 Certificate in /config used to authenticate when querying the ArtifactStore.

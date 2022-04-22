@@ -91,7 +91,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
- * Entry point for running the caom2-artifact-discover tool.
+ * Entry point for running the caom2-artifact-discover process.
  *
  * @author jburke
  */
@@ -113,7 +113,7 @@ public class Main {
     private static final String CONTINUE_CONFIG_KEY = CONFIG_PREFIX + ".continue";
     private static final String BATCH_SIZE_CONFIG_KEY = CONFIG_PREFIX + ".batchSize";
 
-    private static final String JNDI_DATA_SOURCE_NAME = "jdbc/caom2";
+    private static final String JNDI_DATA_SOURCE_NAME = "jdbc/artifact-discover";
 
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
