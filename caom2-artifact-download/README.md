@@ -19,93 +19,73 @@ Runtime configuration must be made available via the `/config` directory.
 ### caom2-artifact-download.properties
 ```
 # log level
-ca.nrc.cadc.caom2.artifactsync.logging={info|debug}
+org.opencadc.caom2.download.logging={info|debug}
 
 # Profile task execution
-ca.nrc.cadc.caom2.artifactsync.profile={true|false}
+org.opencadc.caom2.download.profile={true|false}
 
 # caom2 database settings
-ca.nrc.cadc.caom2.artifactsync.host={hostname}
-ca.nrc.cadc.caom2.artifactsync.database={database}
-ca.nrc.cadc.caom2.artifactsync.schema={schema}
-ca.nrc.cadc.caom2.artifactsync.username={dbuser}
-ca.nrc.cadc.caom2.artifactsync.password={dbpassword}
+org.opencadc.caom2.download.schema={schema}
+org.opencadc.caom2.download.username={dbuser}
+org.opencadc.caom2.download.password={dbpassword}
+org.opencadc.caom2.download.url=jdbc:postgresql://{server}/{database}
 
 # ArtifactStore implementation
-ca.nrc.cadc.caom2.artifactsync.artifactStore={fully qualified class name for ArtifactStore implementation}
+org.opencadc.caom2.download.artifactStore={fully qualified class name for ArtifactStore implementation}
 
 # The collection to use
-ca.nrc.cadc.caom2.artifactsync.collection={collection name}
-
-# Max skip URIs to download (default: 1000)
-ca.nrc.cadc.caom2.artifactsync.batchSize={integer}
-
-# Repeat batches until no work left
-ca.nrc.cadc.caom2.artifactsync.continue={true|false}
+org.opencadc.caom2.download.collection={collection name}
 
 # Number of download threads (default: 1)
-ca.nrc.cadc.caom2.artifactsync.threads={integer}
+org.opencadc.caom2.download.threads={integer}
 
 # Hours after failed downloads should be retried (default: 24)
-ca.nrc.cadc.caom2.artifactsync.retryAfter={integer}
+org.opencadc.caom2.download.retryAfter={integer}
 
 # Download even when checksum is null
-ca.nrc.cadc.caom2.artifactsync.tolerateNullChecksum={true|false}
-
-# Artifact count which triggers download to stop at the current batch
-ca.nrc.cadc.caom2.artifactsync.downloadThreshold={integer}
+org.opencadc.caom2.download.tolerateNullChecksum={true|false}
 ```
 
-`ca.nrc.cadc.caom2.artifactsync.artifactStore` is the fully qualified 
+`org.opencadc.caom2.download.artifactStore` is the fully qualified 
 class name to an ArtifactStore implementation, which may require 
 properties file(s) in /config.
 
-`ca.nrc.cadc.caom2.artifactsync.collection` The collection name used to query 
+`org.opencadc.caom2.download.collection` The collection name used to query 
 for Artifacts in the caom2 database.
 
-`ca.nrc.cadc.caom2.artifactsync.batchSize` is the number of Artifact processed 
-as a single batch. It's a limit on the maximum number of Artifacts returned 
-from a caom2 database query.
-
-If `ca.nrc.cadc.caom2.artifactsync.continue` is true, Artifacts will be 
-processed in `batchSize` increments until the Artifact query returns empty. 
-If false, only the first `batchSize` Artifacts will be processed.
-
-`ca.nrc.cadc.caom2.artifactsync.retryAfter` is the number of hours after 
+`org.opencadc.caom2.download.retryAfter` is the number of hours after 
 failed downloads should be retried.
 
-if `ca.nrc.cadc.caom2.artifactsync.tolerateNullChecksum` is true, download
+if `org.opencadc.caom2.download.tolerateNullChecksum` is true, download
 Artifacts with a null checksum.
-
-`ca.nrc.cadc.caom2.artifactsync.downloadThreshold` is the Artifact count
-which triggers download to stop at the current batch.
 
 
 ### cadcproxy.pem
-Certificate in /config used to authenticate when querying the ArtifactStore.
+Certificate in /config is used to authenticate https calls to other services 
+if challenged for a client certificate.
 
 
 ## building it
 ```
 gradle clean build
-docker build -t caom2-artifact-discover -f Dockerfile .
+docker build -t caom2-artifact-download -f Dockerfile .
 ```
 
 ## checking it
 ```
-docker run -it caom2-artifact-discover:latest /bin/bash
+docker run -it caom2-artifact-download:latest /bin/bash
 ```
 
 ## running it
 ```
-docker run --user opencadc:opencadc -v /path/to/external/config:/config:ro --name caom2-artifact-discover caom2-artifact-discover:latest
+docker run --user opencadc:opencadc -v /path/to/external/config:/config:ro --name caom2-artifact-download caom2-artifact-download:latest
 ```
 
 ## apply version tags
 ```bash
 . VERSION && echo "tags: $TAGS" 
 for t in $TAGS; do
-   docker image tag caom2-artifact-discover:latest caom2-artifact-discover:$t
+   docker image tag caom2-artifact-download:latest caom2-artifact-download:$t
 done
 unset TAGS
 docker image list caom2-artifact-discover

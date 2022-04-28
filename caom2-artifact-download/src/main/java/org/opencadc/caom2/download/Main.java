@@ -67,10 +67,11 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifactsync;
+package org.opencadc.caom2.download;
 
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifactsync.DownloadArtifactFiles;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
@@ -98,44 +99,36 @@ import org.apache.log4j.Logger;
 public class Main {
     private static final Logger log = Logger.getLogger(Main.class);
 
-    public static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
+    private static final int BATCH_SIZE = 1000;
+    private static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
     private static final String CONFIG_FILE_NAME = "caom2-artifact-download.properties";
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
     private static final String PROFILE_CONFIG_KEY = CONFIG_PREFIX + ".profile";
-    private static final String DB_SERVER_CONFIG_KEY = CONFIG_PREFIX + ".server";
-    private static final String DB_DATABASE_CONFIG_KEY = CONFIG_PREFIX + ".database";
     private static final String DB_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".schema";
     private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".username";
     private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".password";
+    private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".url";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
     private static final String ARTIFACT_STORE_CONFIG_KEY = CONFIG_PREFIX + ".artifactStore";
-    private static final String CONTINUE_CONFIG_KEY = CONFIG_PREFIX + ".continue";
-    private static final String BATCH_SIZE_CONFIG_KEY = CONFIG_PREFIX + ".batchSize";
-
     private static final String THREADS_CONFIG_KEY = CONFIG_PREFIX + ".threads";
     private static final String RETRY_AFTER_CONFIG_KEY = CONFIG_PREFIX + ".retryAfter";
     private static final String TOLERATE_NULL_CHECKSUM_CONFIG_KEY = CONFIG_PREFIX + ".tolerateNullChecksum";
-    private static final String DOWNLOAD_THRESHOLD_CONFIG_KEY = CONFIG_PREFIX + ".downloadThreshold";
-
     private static final String JNDI_DATA_SOURCE_NAME = "jdbc/artifact-download";
 
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
         LOGGING_CONFIG_KEY,
         PROFILE_CONFIG_KEY,
-        DB_SERVER_CONFIG_KEY,
-        DB_DATABASE_CONFIG_KEY,
         DB_SCHEMA_CONFIG_KEY,
         DB_USERNAME_CONFIG_KEY,
         DB_PASSWORD_CONFIG_KEY,
+        DB_URL_CONFIG_KEY,
         COLLECTION_CONFIG_KEY,
         ARTIFACT_STORE_CONFIG_KEY,
-        CONTINUE_CONFIG_KEY,
         THREADS_CONFIG_KEY,
         RETRY_AFTER_CONFIG_KEY,
-        TOLERATE_NULL_CHECKSUM_CONFIG_KEY,
-        DOWNLOAD_THRESHOLD_CONFIG_KEY
+        TOLERATE_NULL_CHECKSUM_CONFIG_KEY
     };
 
     public static void main(final String[] args) {
@@ -172,16 +165,14 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.profiler", Level.INFO);
             }
 
-            final String configuredServer = props.getFirstPropertyValue(DB_SERVER_CONFIG_KEY);
-            final String configuredDatabase = props.getFirstPropertyValue(DB_DATABASE_CONFIG_KEY);
             final String configuredSchema = props.getFirstPropertyValue(DB_SCHEMA_CONFIG_KEY);
             final String configuredUsername = props.getFirstPropertyValue(DB_USERNAME_CONFIG_KEY);
             final String configuredPassword = props.getFirstPropertyValue(DB_PASSWORD_CONFIG_KEY);
+            final String configuredUrl = props.getFirstPropertyValue(DB_URL_CONFIG_KEY);
 
-            final String dbUrl = String.format("jdbc:postgresql://%s/%s", configuredServer, configuredDatabase);
             final ConnectionConfig connectionConfig = new ConnectionConfig(null, null,
                                                                            configuredUsername, configuredPassword,
-                                                                           "org.postgresql.Driver", dbUrl);
+                                                                           "org.postgresql.Driver", configuredUrl);
             try {
                 DBUtil.createJNDIDataSource(JNDI_DATA_SOURCE_NAME, connectionConfig);
             } catch (NamingException ne) {
@@ -190,8 +181,7 @@ public class Main {
             }
 
             final Map<String, Object> daoConfig = new TreeMap<>();
-            daoConfig.put("server", configuredServer);
-            daoConfig.put("database", configuredDatabase);
+            daoConfig.put("database", connectionConfig.getDatabase());
             daoConfig.put("schema", configuredSchema);
             daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             daoConfig.put("jndiDataSourceName", JNDI_DATA_SOURCE_NAME);
@@ -199,20 +189,15 @@ public class Main {
             ArtifactDAO artifactDAO = new ArtifactDAO();
             artifactDAO.setConfig(daoConfig);
 
+            String [] serverDatabase = parseServerDatabase(configuredUrl);
             final String configuredCollection = props.getFirstPropertyValue(COLLECTION_CONFIG_KEY);
-            HarvestResource harvestResource = new HarvestResource(configuredServer, configuredDatabase,
+            HarvestResource harvestResource = new HarvestResource(serverDatabase[0], serverDatabase[1],
                                                                   configuredSchema, configuredCollection);
 
             final String configuredArtifactStore = props.getFirstPropertyValue(ARTIFACT_STORE_CONFIG_KEY);
             Class<?> asClass = Class.forName(configuredArtifactStore);
             ArtifactStore artifactStore = (ArtifactStore) asClass.getDeclaredConstructor().newInstance();
             Log4jInit.setLevel(asClass.getPackage().getName(), loggingLevel);
-
-            final String configuredBatchSize = props.getFirstPropertyValue(BATCH_SIZE_CONFIG_KEY);
-            final int batchSize = Integer.parseInt(configuredBatchSize);
-
-            final String configuredContinue = props.getFirstPropertyValue(CONTINUE_CONFIG_KEY);
-            final boolean loop = Boolean.parseBoolean(configuredContinue);
 
             final String configuredThreads = props.getFirstPropertyValue(THREADS_CONFIG_KEY);
             final int threads = Integer.parseInt(configuredThreads);
@@ -223,14 +208,12 @@ public class Main {
             final String configuredTolerateNullChecksum = props.getFirstPropertyValue(TOLERATE_NULL_CHECKSUM_CONFIG_KEY);
             final boolean tolerateNullChecksum = Boolean.parseBoolean(configuredTolerateNullChecksum);
 
-            final String configuredDownloadThreshold = props.getFirstPropertyValue(DOWNLOAD_THRESHOLD_CONFIG_KEY);
-            final int downloadThreshold = Integer.parseInt(configuredDownloadThreshold);
-
             final Subject subject = SSLUtil.createSubject(new File(CERTIFICATE_FILE_LOCATION));
 
+            boolean loop = true;
             DownloadArtifactFiles downloader = new DownloadArtifactFiles(artifactDAO, harvestResource, artifactStore,
-                                                                         threads, batchSize, loop, retryAfter,
-                                                                         tolerateNullChecksum, downloadThreshold);
+                                                                         threads, BATCH_SIZE, loop, retryAfter,
+                                                                         tolerateNullChecksum, null);
             Subject.doAs(subject, downloader);
         } catch (Throwable unexpected) {
             log.fatal("Unexpected failure", unexpected);
@@ -246,6 +229,21 @@ public class Main {
     private static String[] verifyConfiguration(final MultiValuedProperties properties) {
         final Set<String> keySet = properties.keySet();
         return Arrays.stream(MANDATORY_PROPERTY_KEYS).filter(k -> !keySet.contains(k)).toArray(String[]::new);
+    }
+
+    /**
+     * Parse the database url into host(server) and path(database) components.
+     */
+    private static String[] parseServerDatabase(final String dbUrl) {
+        try {
+            String[] parts = dbUrl.split("/+");
+            String server = parts[1].split(":")[0];
+            String database = parts[2];
+            return new String[] {server, database};
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Unable to parse server/database from url %s because %s",
+                                                             dbUrl, e.getMessage()));
+        }
     }
 
     private Main() {

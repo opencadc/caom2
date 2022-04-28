@@ -20,48 +20,34 @@ Runtime configuration must be made available via the `/config` directory.
 ### caom2-artifact-discover.properties
 ```
 # log level
-ca.nrc.cadc.caom2.artifactsync.logging={info|debug}
+org.opencadc.caom2.discover.logging={info|debug}
 
 # Profile task execution
-ca.nrc.cadc.caom2.artifactsync.profile={true|false}
+org.opencadc.caom2.discover.profile={true|false}
 
 # caom2 database settings
-ca.nrc.cadc.caom2.artifactsync.host={hostname}
-ca.nrc.cadc.caom2.artifactsync.database={database}
-ca.nrc.cadc.caom2.artifactsync.schema={schema}
-ca.nrc.cadc.caom2.artifactsync.username={dbuser}
-ca.nrc.cadc.caom2.artifactsync.password={dbpassword}
+org.opencadc.caom2.discover.schema={schema}
+org.opencadc.caom2.discover.username={dbuser}
+org.opencadc.caom2.discover.password={dbpassword}
+org.opencadc.caom2.discover.url=jdbc:postgresql://{server}/{database}
 
 # ArtifactStore implementation
-ca.nrc.cadc.caom2.artifactsync.artifactStore={fully qualified class name for ArtifactStore implementation}
+org.opencadc.caom2.discover.artifactStore={fully qualified class name for ArtifactStore implementation}
 
 # The collection to use
-ca.nrc.cadc.caom2.artifactsync.collection={collection name}
-
-#  Max observations to check per batch
-ca.nrc.cadc.caom2.artifactsync.batchSize={integer}
-
-# Repeat batches until no work left
-ca.nrc.cadc.caom2.artifactsync.continue={true|false}
+org.opencadc.caom2.discover.collection={collection name}
 ```
 
-`ca.nrc.cadc.caom2.artifactsync.artifactStore` is the fully qualified class name 
+`org.opencadc.caom2.discover.artifactStore` is the fully qualified class name 
 to an ArtifactStore implementation, which may require properties file(s) in /config.
 
-`ca.nrc.cadc.caom2.artifactsync.collection` The collection name used to
+`org.opencadc.caom2.discover.collection` The collection name used to
  query for Artifacts in the caom2 database.
-
-`ca.nrc.cadc.caom2.artifactsync.batchSize` is the number of Artifact processed 
-as a single batch. It's a limit on the maximum number of Artifacts returned 
-from a caom2 database query.
-
-If `ca.nrc.cadc.caom2.artifactsync.continue` is true, Artifacts will be 
-processed in `batchSize` increments until the Artifact query returns empty. 
-If false, only the first `batchSize` Artifacts will be processed.
 
 
 ### cadcproxy.pem
-Certificate in /config used to authenticate when querying the ArtifactStore.
+Certificate in /config used to authenticate https calls to other services
+if challenged for a client certificate.
 
 
 ## building it

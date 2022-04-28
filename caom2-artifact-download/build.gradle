@@ -26,6 +26,6 @@ dependencies {
     runtime 'org.postgresql:postgresql:[42.0,43.0)'
 }
 
-mainClassName = 'ca.nrc.cadc.caom2.artifactsync.Main'
+mainClassName = 'org.opencadc.caom2.download.Main'
 
 apply from: '../opencadc.gradle'
