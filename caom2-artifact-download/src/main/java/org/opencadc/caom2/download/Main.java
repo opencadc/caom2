@@ -180,8 +180,12 @@ public class Main {
                                                               connectionConfig.getURL()), ne);
             }
 
+            String [] serverDatabase = parseServerDatabase(configuredUrl);
+            final String server = serverDatabase[0];
+            final String database = serverDatabase[1];
+
             final Map<String, Object> daoConfig = new TreeMap<>();
-            daoConfig.put("database", connectionConfig.getDatabase());
+            daoConfig.put("database", database);
             daoConfig.put("schema", configuredSchema);
             daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
             daoConfig.put("jndiDataSourceName", JNDI_DATA_SOURCE_NAME);
@@ -189,10 +193,9 @@ public class Main {
             ArtifactDAO artifactDAO = new ArtifactDAO();
             artifactDAO.setConfig(daoConfig);
 
-            String [] serverDatabase = parseServerDatabase(configuredUrl);
             final String configuredCollection = props.getFirstPropertyValue(COLLECTION_CONFIG_KEY);
-            HarvestResource harvestResource = new HarvestResource(serverDatabase[0], serverDatabase[1],
-                                                                  configuredSchema, configuredCollection);
+            HarvestResource harvestResource = new HarvestResource(server, database, configuredSchema,
+                                                                  configuredCollection);
 
             final String configuredArtifactStore = props.getFirstPropertyValue(ARTIFACT_STORE_CONFIG_KEY);
             Class<?> asClass = Class.forName(configuredArtifactStore);
