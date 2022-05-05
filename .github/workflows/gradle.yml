@@ -51,3 +51,6 @@ jobs:
 
     - name: build and test caom2-remove
       run: cd caom2-remove && ../gradlew --info clean build javadoc checkstyleMain install
+      
+    - name: build and test caom2-meta-sync
+      run: cd caom2-meta-sync && ../gradlew --info clean build javadoc checkstyleMain    
