@@ -32,7 +32,7 @@ org.opencadc.caom2.discover.password={dbpassword}
 org.opencadc.caom2.discover.url=jdbc:postgresql://{server}/{database}
 
 # ArtifactStore implementation
-org.opencadc.caom2.discover.artifactStore={fully qualified class name for ArtifactStore implementation}
+ca.nrc.cadc.caom2.artifact.ArtifactStore={fully qualified class name for ArtifactStore implementation}
 
 # The collection to use
 org.opencadc.caom2.discover.collection={collection name}

@@ -110,7 +110,7 @@ public class Main {
     private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".password";
     private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".url";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
-    private static final String ARTIFACT_STORE_CONFIG_KEY = CONFIG_PREFIX + ".artifactStore";
+    private static final String ARTIFACT_STORE_CONFIG_KEY = ArtifactStore.class.getName();
     private static final String THREADS_CONFIG_KEY = CONFIG_PREFIX + ".threads";
     private static final String RETRY_AFTER_CONFIG_KEY = CONFIG_PREFIX + ".retryAfter";
     private static final String TOLERATE_NULL_CHECKSUM_CONFIG_KEY = CONFIG_PREFIX + ".tolerateNullChecksum";

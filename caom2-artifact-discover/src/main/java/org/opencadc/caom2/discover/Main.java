@@ -110,7 +110,7 @@ public class Main {
     private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".password";
     private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".url";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
-    private static final String ARTIFACT_STORE_CONFIG_KEY = CONFIG_PREFIX + ".artifactStore";
+    private static final String ARTIFACT_STORE_CONFIG_KEY = ArtifactStore.class.getName();
     private static final String JNDI_DATA_SOURCE_NAME = "jdbc/caom2-discover";
 
     // Used to verify configuration items.  See the README for descriptions.

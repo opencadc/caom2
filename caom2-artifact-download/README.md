@@ -31,7 +31,7 @@ org.opencadc.caom2.download.password={dbpassword}
 org.opencadc.caom2.download.url=jdbc:postgresql://{server}/{database}
 
 # ArtifactStore implementation
-org.opencadc.caom2.download.artifactStore={fully qualified class name for ArtifactStore implementation}
+ca.nrc.cadc.caom2.artifact.ArtifactStore={fully qualified class name for ArtifactStore implementation}
 
 # The collection to use
 org.opencadc.caom2.download.collection={collection name}
