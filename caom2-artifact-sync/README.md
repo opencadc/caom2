@@ -6,16 +6,15 @@ Running of this tool requires an implementation of the ArtifactStore.java interf
         id 'java'
         id 'maven'
         id 'maven-publish'
-        id 'com.jfrog.bintray' version '1.7.1'
         id 'application'
     }
 
     repositories {
-        jcenter()
+        mavenCentral()
         mavenLocal()
     }
 
-    sourceCompatibility = 1.7
+    sourceCompatibility = 1.8
 
     group = 'org.opencadc'
 
@@ -24,5 +23,5 @@ Running of this tool requires an implementation of the ArtifactStore.java interf
     mainClassName = 'ca.nrc.cadc.caom2.artifactsync.Main'
 
     dependencies {
-        compile 'org.opoecadc:caom2-artifact-sync[2.3.0,)'
+        compile 'org.oponcadc:caom2-artifact-sync[2.3.0,)'
     }
