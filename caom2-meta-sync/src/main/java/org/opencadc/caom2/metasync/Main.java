@@ -73,7 +73,6 @@ import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.harvester.CaomHarvester;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
-import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
@@ -81,10 +80,7 @@ import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
@@ -102,7 +98,7 @@ public class Main {
     private static final String CONFIG_FILE_NAME = "caom2-meta-sync.properties";
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
-    // mandatory properties
+
     private static final String DESTINATION_SERVER_CONFIG_KEY = CONFIG_PREFIX + ".destination.server";
     private static final String DESTINATION_DATABASE_CONFIG_KEY = CONFIG_PREFIX + ".destination.database";
     private static final String DESTINATION_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".destination.schema";
@@ -111,11 +107,6 @@ public class Main {
     private static final String BASE_PUBLISHER_ID_CONFIG_KEY = CONFIG_PREFIX + ".basePublisherID";
     private static final String THREADS_CONFIG_KEY = CONFIG_PREFIX + ".threads";
     private static final String BATCH_SIZE_CONFIG_KEY = CONFIG_PREFIX + ".batchSize";
-    // optional properties
-    private static final String DRY_RUN_CONFIG_KEY = CONFIG_PREFIX + ".dryRun";
-    private static final String MIN_DATE_CONFIG_KEY = CONFIG_PREFIX + ".minDate";
-    private static final String MAX_DATE_CONFIG_KEY = CONFIG_PREFIX + ".maxDate";
-    private static final String NO_CHECKSUM_CONFIG_KEY = CONFIG_PREFIX + ".noChecksum";
 
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
@@ -210,50 +201,15 @@ public class Main {
             final String configuredThreads = props.getFirstPropertyValue(THREADS_CONFIG_KEY);
             final int threads = Integer.parseInt(configuredThreads);
 
-            final String configuredDryRun = props.getFirstPropertyValue(DRY_RUN_CONFIG_KEY);
-            final boolean dryRun = Boolean.parseBoolean(configuredDryRun);
-
-            final String configuredNoChecksum = props.getFirstPropertyValue(NO_CHECKSUM_CONFIG_KEY);
-            final boolean noChecksum = Boolean.parseBoolean(configuredNoChecksum);
-
-            DateFormat dateFormat = null;
-            Date minDate = null;
-            final String configuredMinDate = props.getFirstPropertyValue(MIN_DATE_CONFIG_KEY);
-            if (StringUtil.hasText(configuredMinDate)) {
-                dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-                try {
-                    minDate = dateFormat.parse(configuredMinDate);
-                } catch (ParseException e) {
-                    throw new IllegalArgumentException(String.format("%s - invalid value: %s because: %s",
-                                                                     MIN_DATE_CONFIG_KEY, configuredMinDate,
-                                                                     e.getMessage()));
-                }
-            }
-
-            Date maxDate = null;
-            final String configuredMaxDate = props.getFirstPropertyValue(MAX_DATE_CONFIG_KEY);
-            if (StringUtil.hasText(configuredMaxDate)) {
-                if (dateFormat == null) {
-                    dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-                }
-                try {
-                    maxDate = dateFormat.parse(configuredMaxDate);
-                } catch (ParseException e) {
-                    throw new IllegalArgumentException(String.format("%s - invalid value: %s because: %s",
-                                                                     MAX_DATE_CONFIG_KEY, configuredMaxDate,
-                                                                     e.getMessage()));
-                }
-            }
-
             CaomHarvester harvester;
             try {
                 // full=false, skip=false: incremental harvest
                 final boolean full = false;
                 final boolean skip = false;
+                final boolean dryRun = false;
+                final boolean noChecksum = false;
                 harvester = new CaomHarvester(dryRun, noChecksum, sourceHarvestResource, destinationHarvestResource,
                                               basePublisherID, batchSize, full, skip, threads);
-                harvester.setMinDate(minDate);
-                harvester.setMaxDate(maxDate);
             } catch (IOException e) {
                 throw new RuntimeException(String.format("Error initializing Harvester: %s", e.getMessage()));
             }
