@@ -69,7 +69,6 @@ package ca.nrc.cadc.caom2.wcs;
 
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
-import org.apache.log4j.LogMF;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
