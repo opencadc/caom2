@@ -20,7 +20,7 @@ description = 'OpenCADC ArtifactStore implmentation for Storage Inventory librar
 def git_url = 'https://github.com/opencadc/caom2db'
 
 dependencies {
-    compile 'org.opencadc:cadc-util:[1.5.12,2.0)'
+    compile 'org.opencadc:cadc-util:[1.6,2.0)'
     compile 'org.opencadc:caom2:[2.4.6,2.5)'
     compile 'org.opencadc:caom2-artifact-sync:[2.4.13,2.5)'
     compile 'org.opencadc:caom2-artifact-resolvers:[1.2.7,1.3)'
