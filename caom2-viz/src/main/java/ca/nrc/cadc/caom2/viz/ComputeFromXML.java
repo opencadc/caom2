@@ -107,8 +107,9 @@ public class ComputeFromXML {
                 sb.append(p.getProductID()).append(": ");
                 sb.append("\nposition: ").append(p.position);
                 if (p.position != null && p.position.bounds != null) {
-                    sb.append("\n  center: ").append(p.position.bounds.getCenter());
-                    sb.append("\n    area: ").append(p.position.bounds.getArea());
+                    sb.append("\n     center: ").append(p.position.bounds.getCenter());
+                    sb.append("\n       area: ").append(p.position.bounds.getArea());
+                    sb.append("\n dimensions: ").append(p.position.dimension);
                 }
                 sb.append("\nenergy : ").append(p.energy);
 
