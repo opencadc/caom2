@@ -16,15 +16,13 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '1.7.11'
+version = '1.7.12'
 
 description = 'OpenCADC CAOM2 TAP client library'
 def git_url = 'https://github.com/opencadc/caom2service'
 
 dependencies {
-    compile 'log4j:log4j:[1.2.0,)'
-
-    compile 'org.opencadc:cadc-util:[1.1.1,)'
+    compile 'org.opencadc:cadc-util:[1.6,2.0)'
     compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-registry:[1.5.0,)'
