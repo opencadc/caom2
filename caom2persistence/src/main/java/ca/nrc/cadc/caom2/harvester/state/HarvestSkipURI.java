@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -91,6 +92,7 @@ public class HarvestSkipURI {
     
     Date lastModified;
     UUID id;
+    String bucket;
 
     private HarvestSkipURI() {
     }
@@ -130,7 +132,14 @@ public class HarvestSkipURI {
 
     @Override
     public String toString() {
-        return "HarvestSkipURI[" + source + "," + name + "," + skipID + "]";
+        return "HarvestSkipURI[" + source + "," + name + "," + skipID 
+                + "," + tryAfter + "]";
+    }
+    
+    // intTest support
+    String toString(DateFormat df) {
+        return "HarvestSkipURI[" + source + "," + name + "," + skipID 
+                + "," + df.format(tryAfter) + "]";
     }
 
     public String getSource() {
