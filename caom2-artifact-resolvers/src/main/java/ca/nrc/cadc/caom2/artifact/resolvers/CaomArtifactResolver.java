@@ -211,13 +211,16 @@ public class CaomArtifactResolver {
      * @return A StorageResolver instance
      */
     public StorageResolver getStorageResolver(final URI uri) {
-        final StorageResolver storageResolver = handlers.get(uri.getScheme());
-
-        if (storageResolver != null) {
-            setStorageResolverAuthMethod(storageResolver);
+        StorageResolver ret = handlers.get(uri.getScheme());
+        if (ret == null && !ResolverUtil.URL_SCHEMES.contains(uri.getScheme())) {
+            ret = defaultResolver;
+        }
+        
+        if (ret != null) {
+            setStorageResolverAuthMethod(ret);
         }
 
-        return storageResolver;
+        return ret;
     }
 
     /**
@@ -245,10 +248,6 @@ public class CaomArtifactResolver {
                 ret = safeAppendRunID(ret);
             }
             return ret;
-        }
-
-        if (defaultResolver != null && !ResolverUtil.URL_SCHEMES.contains(uri.getScheme())) {
-            return defaultResolver.toURL(uri);
         }
         
         // fallback: hope for the best

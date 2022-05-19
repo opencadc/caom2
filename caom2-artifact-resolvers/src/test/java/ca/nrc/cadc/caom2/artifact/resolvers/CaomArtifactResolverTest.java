@@ -68,6 +68,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
+import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.util.Log4jInit;
 
 import java.net.URI;
@@ -138,6 +139,30 @@ public class CaomArtifactResolverTest {
             log.info("extURL: " + extURL);
             Assert.assertNotNull(extURL);
             Assert.assertEquals(ext.toASCIIString(), extURL.toExternalForm());
+            
+            StorageResolver dsr = car.getStorageResolver(def);
+            Assert.assertNotNull(dsr);
+            Assert.assertEquals(CadcResolver.class, dsr.getClass());
+            
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+        }
+    }
+    
+    @Test
+    public void testDefaultResolverReturned() {
+        try {
+            URL url = CaomArtifactResolver.class.getClassLoader().getResource(DEF_RESOLVER_CONFIG);
+            CaomArtifactResolver car = new CaomArtifactResolver(url);
+            
+            URI def = URI.create("def:BAR/baz");
+            URL defURL = car.getURL(def);
+            log.info("defURL: " + defURL);
+            Assert.assertNotNull(defURL);
+            
+            StorageResolver dsr = car.getStorageResolver(def);
+            Assert.assertNotNull(dsr);
+            Assert.assertEquals(CadcResolver.class.getName(), dsr.getClass().getName());
             
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
