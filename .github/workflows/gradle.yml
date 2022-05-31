@@ -47,7 +47,13 @@ jobs:
       run: cd caom2harvester && ../gradlew --info clean build javadoc checkstyleMain
 
     - name: build and test caom2-collection-validator
-      run: cd caom2-collection-validator && ../gradlew --info clean build javadoc checkstyleMain install
+      run: cd caom2-collection-validator && ../gradlew --info clean build javadoc checkstyleMain
 
     - name: build and test caom2-remove
-      run: cd caom2-remove && ../gradlew --info clean build javadoc checkstyleMain install
+      run: cd caom2-remove && ../gradlew --info clean build javadoc checkstyleMain
+
+    - name: build and test caom2-artifact-discover
+      run: cd caom2-artifact-discover && ../gradlew --info clean build javadoc checkstyleMain
+
+    - name: build and test caom2-artifact-download
+      run: cd caom2-artifact-download && ../gradlew --info clean build javadoc checkstyleMain       
