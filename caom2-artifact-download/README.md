@@ -78,7 +78,7 @@ docker run -it caom2-artifact-download:latest /bin/bash
 
 ## running it
 ```
-docker run --user opencadc:opencadc -v /path/to/external/config:/config:ro --name caom2-artifact-download caom2-artifact-download:latest
+docker run --rm --user opencadc:opencadc -v /path/to/external/config:/config:ro --name caom2-artifact-download caom2-artifact-download:latest
 ```
 
 ## apply version tags
