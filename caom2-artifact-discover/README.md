@@ -63,7 +63,7 @@ docker run -it caom2-artifact-discover:latest /bin/bash
 
 ## running it
 ```
-docker run --user opencadc:opencadc -v /path/to/external/config:/config:ro --name caom2-artifact-discover caom2-artifact-discover:latest
+docker run --rm --user opencadc:opencadc -v /path/to/external/config:/config:ro --name caom2-artifact-discover caom2-artifact-discover:latest
 ```
 
 ## apply version tags

@@ -72,13 +72,16 @@ package ca.nrc.cadc.caom2.persistence;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Part;
+import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.persistence.skel.ArtifactSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
+import ca.nrc.cadc.io.ResourceIterator;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -186,6 +189,19 @@ public class ArtifactDAO extends AbstractCaomEntityDAO<Artifact> {
         return null;
     }
 
+    /**
+     * Prototype API for use by caom2-artifact-discover. This method currently throws an
+     * UnsupportedOperationException.
+     * 
+     * @param namespace artifact uri prefix to match
+     * @param minLastModified minimum lastModified to consider (for incremental mode)
+     * @param maxLastModified maximum lastModified to consider
+     * @return resource iterator over matching artifacts
+     */
+    public ResourceIterator<ArtifactAccess> artifactIterator(String namespace, Date minLastModified, Date maxLastModified) {
+        throw new UnsupportedOperationException();
+    }
+    
     @Override
     protected void deleteChildren(Skeleton s, JdbcTemplate jdbc) {
         ArtifactSkeleton a = (ArtifactSkeleton) s;

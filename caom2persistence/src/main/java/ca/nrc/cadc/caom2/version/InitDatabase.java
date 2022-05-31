@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2018.                            (c) 2018.
+ *  (c) 2022.                            (c) 2022.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -82,8 +82,8 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.4.6";
-    public static final String PREV_MODEL_VERSION = "2.4.0";
+    public static final String MODEL_VERSION = "2.4.9";
+    public static final String PREV_MODEL_VERSION = "2.4.6";
     //public static final String PREV_MODEL_VERSION = "DO-NOT_UPGRADE-BY-ACCIDENT";
 
     static String[] CREATE_SQL = new String[]{
@@ -105,7 +105,7 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     };
 
     static String[] UPGRADE_SQL = new String[]{
-        "caom2.ObsCore.sql",
+        "caom2.upgrade-2.4.9.sql",
         "caom2.permissions.sql"
     };
 
