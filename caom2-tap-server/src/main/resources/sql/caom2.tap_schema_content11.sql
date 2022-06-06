@@ -428,7 +428,16 @@ insert into tap_schema.key_columns11 (key_id,from_column,target_column) values
 ;
 
 insert into tap_schema.tables11 (schema_name,table_name,table_type,description) values
-('caom2', 'caom2.HarvestSkipURI', 'table', 'list of observations that failed to be harvested');
+('caom2', 'caom2.HarvestState', 'table', 'observation sync state'),
+('caom2', 'caom2.HarvestSkipURI', 'table', 'list of observations to retry or artifacts to sync');
+
+insert into tap_schema.columns11 (table_name,column_name,utype,description,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
+( 'caom2.HarvestState', 'source',           'caom2:HarvestState.source',           'ID of the remote luskan (URI)', NULL, 'char','512*', 'uri', 1, 1, 1, 1 ),
+( 'caom2.HarvestState', 'cname',            'caom2:HarvestState.cname',            'classname of the harvested entity', NULL, 'char','64*', NULL, 1, 1, 1, 2 ),
+( 'caom2.HarvestState', 'curLastModified',  'caom2:HarvestState.curLastModified',  'lastModified timestamp of the last entity harvested', NULL, 'char','23*','timestamp', 1, 1, 1, 3 ),
+( 'caom2.HarvestState', 'curID',            'caom2:HarvestState`.curID',           'id of the last entity harvested', NULL, 'char','36','uuid', 1, 1, 1, 4 ),
+( 'caom2.HarvestState', 'lastModified',     'caom2:HarvestState.lastModified',     'timestamp of the event', NULL, 'char','23*','timestamp', 1, 1, 1, 5 ),
+( 'caom2.HarvestState', 'stateID',          'caom2:HarvestState`.stateID',         'primary key', NULL, 'char','36','uuid', 1, 1, 1, 6 );
 
 insert into tap_schema.columns11 (table_name,column_name,description,datatype,arraysize,xtype,principal,indexed,std) values
 ( 'caom2.HarvestSkipURI', 'source', 'harvesting source', 'char', '*', NULL, 1,1,1),
