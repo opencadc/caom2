@@ -78,8 +78,8 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class InitTapSchemaContentTest {
-    private static final Logger log = Logger.getLogger(InitTapSchemaContentTest.class);
+public class InitCaomTapSchemaContentTest {
+    private static final Logger log = Logger.getLogger(InitCaomTapSchemaContentTest.class);
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.tap.impl", Level.INFO);
@@ -91,8 +91,8 @@ public class InitTapSchemaContentTest {
     @Test
     public void testParseCreateDDL() {
         try {
-            InitTapSchemaContent init = new InitTapSchemaContent(null, null, schema);
-            for (String fname : InitTapSchemaContent.CREATE_SQL) {
+            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(null, null, schema);
+            for (String fname : InitCaomTapSchemaContent.CREATE_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = init.parseDDL(fname, schema);
                 Assert.assertNotNull(statements);
@@ -143,8 +143,8 @@ public class InitTapSchemaContentTest {
     @Test
     public void testParseUpgradeDDL() {
         try {
-            InitTapSchemaContent init = new InitTapSchemaContent(null, null, schema);
-            for (String fname : InitTapSchemaContent.UPGRADE_SQL) {
+            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(null, null, schema);
+            for (String fname : InitCaomTapSchemaContent.UPGRADE_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = init.parseDDL(fname, schema);
                 Assert.assertNotNull(statements);

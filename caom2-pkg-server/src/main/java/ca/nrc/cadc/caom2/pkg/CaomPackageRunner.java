@@ -161,12 +161,6 @@ public class CaomPackageRunner extends PackageRunner {
     }
 
     @Override
-    protected String getPackageName() {
-        return this.packageName;
-    }
-
-
-    @Override
      public Iterator<PackageItem> getItems() throws IOException {
 
 
