@@ -120,17 +120,18 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 -- Plane
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
 ( 'caom2.Plane', 'planeURI', 'unique internal URI for this product', 'caom2:Plane.uri', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 1, 'caomPlaneURI'),
-( 'caom2.Plane', 'publisherID', 'unique global identifier for this product', 'caom2:Plane.publisherID', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 1, 'caomPublisherID')
+( 'caom2.Plane', 'publisherID', 'unique publisher identifier for this product', 'caom2:Plane.publisherID', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 1, 'caomPublisherID')
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
 ( 'caom2.Plane', 'obsID', 'foreign key', NULL, NULL, NULL,                              'char','36','uuid', 0,1,0 , 2),
 ( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 0,1,0 , 3),
 
-( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '64*', NULL, 1,1,1 , 4),
-( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 5),
-( 'caom2.Plane', 'metaReadGroups', 'GMS groups that are authorized to see metadata [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 6),
-( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 7),
-( 'caom2.Plane', 'dataReadGroups', 'GMS groups that are authorized to see data [new in 2.4]', 'caom2:Plane.dataReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 8),
+( 'caom2.Plane', 'creatorID', 'unique creator identifier for this product', 'caom2:Plane.creatorID', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 4),
+( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '64*', NULL, 1,1,1 , 5),
+( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 6),
+( 'caom2.Plane', 'metaReadGroups', 'GMS groups that are authorized to see metadata [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 7),
+( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 8),
+( 'caom2.Plane', 'dataReadGroups', 'GMS groups that are authorized to see data [new in 2.4]', 'caom2:Plane.dataReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 9),
 ( 'caom2.Plane', 'dataProductType', 'IVOA ObsCore data product type', 	'caom2:Plane.dataProductType', NULL, NULL, 'char', '128*', NULL, 1,0,1 , 10),
 ( 'caom2.Plane', 'calibrationLevel', 'IVOA ObsCore calibration level (0,1,2,3,...)', 'caom2:Plane.calibrationLevel', NULL, NULL, 'int', NULL, NULL, 1,0,1 , 11),
 
