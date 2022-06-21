@@ -86,6 +86,7 @@ import java.util.Date;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -103,6 +104,7 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest
         log = Logger.getLogger(PostgresqlObservationDAOTest.class);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.util.db", Level.INFO);
 
         String testSchema = UtilTest.getTestSchema();
         if (testSchema != null)
@@ -116,10 +118,17 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest
     {
         super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
 
+        log.info("calling InitDatabase...");
         InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
         init.doInit();
+        log.info("calling InitDatabase... OK");
     }
 
+    @Test
+    public void noop() {
+        
+    }
+    
     @Override
     protected void checkOptimizations(Observation o, Date expectedMetaRelease)
     {
