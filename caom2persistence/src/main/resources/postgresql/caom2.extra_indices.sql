@@ -4,19 +4,9 @@ create index Plane_position_i1
     on <schema>.Plane using gist (position_bounds_spoly)
 ;
 
-create index Plane_position_i2
-    on <schema>.Plane using gist (position_bounds_center)
-;
-create index Plane_position_i3
-    on <schema>.Plane (position_bounds_area)
-;
-
 -- energy
 create index Plane_energy_ib
     on <schema>.Plane using gist (energy_bounds)
-;
-create index Plane_energy_ibw
-    on <schema>.Plane (energy_bounds_width)
 ;
 
 create index Plane_energy_ib1
@@ -24,10 +14,6 @@ create index Plane_energy_ib1
 ;
 create index Plane_energy_ib2
     on <schema>.Plane (energy_bounds_upper)
-;
-
-create index Plane_energy_iss
-    on <schema>.Plane (energy_sampleSize)
 ;
 
 create index Plane_energy_irw
@@ -39,15 +25,15 @@ where energy_restwav is not null
 create index Plane_time_ib
     on <schema>.Plane using gist (time_bounds)
 ;
-create index Plane_time_ibw
-    on <schema>.Plane (time_bounds_width)
-;
 
 create index Plane_time_ib1
     on <schema>.Plane (time_bounds_lower)
 ;
 create index Plane_time_ib2
     on <schema>.Plane (time_bounds_upper)
+;
+create index Plane_time_ibw
+    on <schema>.Plane (time_bounds_width)
 ;
 
 create index plane_pol_states_pattern
@@ -96,23 +82,6 @@ create index i_instrument_pattern
 create index i_telescope
     on <schema>.Observation (telescope_name)
 ;
-create index i_telescope_pattern
-    on <schema>.Observation (telescope_name varchar_pattern_ops)
-;
-
--- this is no longer meaningful since energyBands can have multiple values like keywords
---create index Plane_i_energyBands_dataProductType
---    on <schema>.Plane (energy_energyBands, dataProductType)
---;
-
--- these columns seem to have too-few different values for index to be used
--- with LIKE even when constraint matches very few records
---create index i_emband_pattern
---    on <schema>.Plane (energy_energyBands varchar_pattern_ops)
---;
---create index i_dataproducttype_pattern
---    on <schema>.Plane (dataProductType varchar_pattern_ops)
---;
 
 create index i_bandpassName
     on <schema>.Plane (energy_bandpassName)
@@ -127,36 +96,10 @@ create index i_provenance_runid
     on <schema>.Plane (provenance_runID)
     where provenance_runID is not null
 ;
-create index i_provenance_runid_pattern
-    on <schema>.Plane (provenance_runID varchar_pattern_ops)
-    where provenance_runID is not null
-;
 
 create index Plane_i_dataRelease
     on <schema>.Plane ( dataRelease )
 ;
-
--- keywords indices are not useful because most queries use LIKE %something%
-
---create index Observation_i_tel_kw
---    on <schema>.Observation (telescope_keywords varchar_pattern_ops)
---;
-
---create index Observation_i_instr_kw
---    on <schema>.Observation (instrument_keywords varchar_pattern_ops)
---;
-
---create index Observation_i_targ_kw
---    on <schema>.Observation (target_keywords varchar_pattern_ops)
---;
-
---create index Observation_i_prop_kw
---    on <schema>.Observation (proposal_keywords varchar_pattern_ops)
---;
-
---create index Plane_i_prov_kw
---    on <schema>.Plane (provenance_keywords varchar_pattern_ops)
---;
 
 create index Artifact_i_uri_pattern
     on <schema>.Artifact (uri varchar_pattern_ops)

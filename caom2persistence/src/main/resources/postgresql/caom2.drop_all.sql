@@ -18,7 +18,6 @@ drop table if exists <schema>.Observation;
 drop table if exists <schema>.DeletedObservation;
 
 drop table if exists <schema>.HarvestState;
-drop table if exists <schema>.HarvestSkip;
 drop table if exists <schema>.HarvestSkipURI;
 
 drop table if exists <schema>.ModelVersion;
