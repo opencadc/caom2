@@ -104,7 +104,7 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest
         log = Logger.getLogger(PostgresqlObservationDAOTest.class);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.persistence", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.util.db", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
 
         String testSchema = UtilTest.getTestSchema();
         if (testSchema != null)
