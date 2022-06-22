@@ -83,7 +83,7 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
 
     public static final String MODEL_NAME = "CAOM";
     public static final String MODEL_VERSION = "2.4.10";
-    public static final String PREV_MODEL_VERSION = "2.4.9";
+    public static final String PREV_MODEL_VERSION = "2.4.6";
     //public static final String PREV_MODEL_VERSION = "DO-NOT_UPGRADE-BY-ACCIDENT";
 
     static String[] CREATE_SQL = new String[]{
