@@ -163,10 +163,10 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_dimension_naxis2', 'dimensions (number of pixels) along other spatial axis', 'caom2:Plane.position.dimension.naxis2', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 55),
 ( 'caom2.Plane', 'position_timeDependent', 'flag indicating that the position is time-dependent (0=false, 1=true)', 'caom2:Plane.position.timeDependent', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 56),
 
-( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,0,0 , 61),
+( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,1,0 , 61),
 ( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '*', 'caom2:multiinterval', 0,0,0 , 61),
-( 'caom2.Plane', 'energy_bounds_lower', 'lower bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.lower', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 62),
-( 'caom2.Plane', 'energy_bounds_upper', 'upper bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.upper', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 63),
+( 'caom2.Plane', 'energy_bounds_lower', 'lower bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.lower', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 62),
+( 'caom2.Plane', 'energy_bounds_upper', 'upper bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.upper', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 63),
 ( 'caom2.Plane', 'energy_bounds_width', 'width of the energy bounds', 'caom2:Plane.energy.bounds.width', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 64),
 ( 'caom2.Plane', 'energy_dimension', 'dimension (number of pixels) along energy axis', 'caom2:Plane.energy.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 65),
 ( 'caom2.Plane', 'energy_resolvingPower', 'median spectral resolving power (R)', 'caom2:Plane.energy.resolvingPower', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 66),
@@ -181,13 +181,13 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'energy_transition_transition', 'specific energy transition of species', 'caom2:Plane.energy.transition.transition', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 72),
 ( 'caom2.Plane', 'energy_freqWidth', 'width of the energy bounds (convenience: in frequency)', 'caom2:Plane.energy.freqWidth', NULL, 'Hz', 'double', NULL, NULL, 0,0,0 , 73),
 ( 'caom2.Plane', 'energy_freqSampleSize', 'median sample (pixel) size on energy axis (convenience: in frequency)', 'caom2:Plane.energy.freqSampleSize', NULL, 'Hz', 'double', NULL, NULL, 0,0,0 , 74),
-( 'caom2.Plane', 'energy_restwav', 'rest wavelength of target spectral feature (barycentric)', 'caom2:Plane.energy.restwav', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 75),
+( 'caom2.Plane', 'energy_restwav', 'rest wavelength of target spectral feature (barycentric)', 'caom2:Plane.energy.restwav', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 75),
 
-( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 0,0,0 , 80),
+( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 0,1,0 , 80),
 ( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '*', 'caom2:multiinterval', 0,0,0 , 81),
-( 'caom2.Plane', 'time_bounds_lower', 'lower bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.lower', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 81),
-( 'caom2.Plane', 'time_bounds_upper', 'upper bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.upper', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 82),
-( 'caom2.Plane', 'time_bounds_width', 'width of the time bounds', 'caom2:Plane.time.bounds.width', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 83),
+( 'caom2.Plane', 'time_bounds_lower', 'lower bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.lower', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 81),
+( 'caom2.Plane', 'time_bounds_upper', 'upper bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.upper', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 82),
+( 'caom2.Plane', 'time_bounds_width', 'width of the time bounds', 'caom2:Plane.time.bounds.width', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 83),
 ( 'caom2.Plane', 'time_dimension', 'dimension (number of pixels) along time axis', 'caom2:Plane.time.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 84),
 ( 'caom2.Plane', 'time_resolution', 'median resolution on the time axis', 'caom2:Plane.time.resolution', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 85),
 ( 'caom2.Plane', 'time_resolutionBounds', 'range of resolution on the time axis [new in 2.4]', 'caom2:Plane.time.resolutionBounds', NULL, 'd', 'double', '2', 'interval', 0,0,0 , 86),
@@ -443,10 +443,12 @@ insert into tap_schema.columns11 (table_name,column_name,utype,description,unit,
 insert into tap_schema.columns11 (table_name,column_name,description,datatype,arraysize,xtype,principal,indexed,std) values
 ( 'caom2.HarvestSkipURI', 'source', 'harvesting source', 'char', '*', NULL, 1,1,1),
 ( 'caom2.HarvestSkipURI', 'cname', 'entity (class name)', 'char', '*', NULL, 1,1,1),
+( 'caom2.HarvestSkipURI', 'bucket', 'random bucket code', 'char', '3', NULL, 1,1,1),
 ( 'caom2.HarvestSkipURI', 'skipID', 'URI of skipped entity instance', 'char', '*', 'uri', 1,1,1),
 ( 'caom2.HarvestSkipURI', 'tryAfter', 'timestamp for next (re)try', 'char', '23*', 'timestamp', 1,1,1),
 ( 'caom2.HarvestSkipURI', 'errorMessage', 'reason for harvest failure', 'char', '*', NULL, 1,0,1),
-( 'caom2.HarvestSkipURI', 'lastModified', 'last modification of this entry', 'char', '23*', 'timestamp', 1,0,1);
+( 'caom2.HarvestSkipURI', 'lastModified', 'last modification of this entry', 'char', '23*', 'timestamp', 1,0,1),
+( 'caom2.HarvestSkipURI', 'id', 'primary key', 'char', '36', 'uuid', 1,1,1);
 
 
 -- additional tables and views to support data discovery --
