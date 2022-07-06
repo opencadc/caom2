@@ -117,99 +117,23 @@ public class PostgresqlHarvestSkipDAOTest {
 
     public PostgresqlHarvestSkipDAOTest()
             throws Exception {
-        try {
-            this.database = "cadctest";
-            DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
-            this.dataSource = DBUtil.getDataSource(cc);
 
-            InitDatabase init = new InitDatabase(dataSource, "cadctest", schema);
-            init.doInit();
+        this.database = "cadctest";
+        DBConfig dbrc = new DBConfig();
+        ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
+        this.dataSource = DBUtil.getDataSource(cc);
 
-            String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkip";
-            log.debug("cleanup: " + sql);
-            dataSource.getConnection().createStatement().execute(sql);
+        InitDatabase init = new InitDatabase(dataSource, "cadctest", schema);
+        init.doInit();
 
-            sql = "DELETE FROM " + database + "." + schema + ".HarvestSkipURI";
-            log.debug("cleanup: " + sql);
-            dataSource.getConnection().createStatement().execute(sql);
-        } catch (Exception ex) {
-            log.error("failed to init DataSource", ex);
-        }
+        String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkipURI";
+        log.debug("cleanup: " + sql);
+        dataSource.getConnection().createStatement().execute(sql);
     }
 
     //@Test
     public void testTemplate() {
         try {
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInsertUUID() {
-        try {
-            HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
-            UUID id1 = UUID.randomUUID();
-            UUID id2 = UUID.randomUUID();
-            UUID id3 = UUID.randomUUID();
-
-            HarvestSkip skip;
-            Date start = null;
-            Date end = null;
-
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id1, "m1");
-            dao.put(skip);
-            Thread.sleep(10L);
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id2, "m2");
-            dao.put(skip);
-            Thread.sleep(10L);
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id3, null);
-            dao.put(skip);
-
-            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start, end);
-            Assert.assertEquals("skips size", 3, skips.size());
-            Assert.assertEquals(id1, skips.get(0).skipID);
-            Assert.assertEquals(id2, skips.get(1).skipID);
-            Assert.assertEquals(id3, skips.get(2).skipID);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testUpdateUUID() {
-        try {
-            HarvestSkipDAO dao = new HarvestSkipDAO(dataSource, database, schema, null);
-            UUID id1 = UUID.randomUUID();
-
-            HarvestSkip skip;
-
-            skip = new HarvestSkip("testUpdate", Integer.class.getName(), id1, "initial error message");
-            dao.put(skip);
-
-            HarvestSkip actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
-            Assert.assertNotNull(actual1);
-            Assert.assertEquals(id1, actual1.skipID);
-            Assert.assertEquals("error message", skip.errorMessage, actual1.errorMessage);
-            Date d1 = actual1.lastModified;
-
-            Thread.sleep(100L);
-
-            skip.errorMessage = "modified error message";
-            dao.put(skip);
-
-            HarvestSkip actual2 = dao.get("testUpdate", Integer.class.getName(), id1);
-            Assert.assertNotNull(actual2);
-            Assert.assertEquals(id1, actual2.skipID);
-
-            log.debug("actual1.lastModified: " + actual1.lastModified.getTime());
-            log.debug("actual2.lastModified: " + actual2.lastModified.getTime());
-            Assert.assertTrue("lastModified increased", actual1.lastModified.getTime() < actual2.lastModified.getTime());
-            Assert.assertEquals("error message", skip.errorMessage, actual2.errorMessage);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
