@@ -77,7 +77,10 @@ import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.StringUtil;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -104,7 +107,7 @@ public class CaomArtifactResolver {
     private static final String CONFIG_FILENAME = CaomArtifactResolver.class.getSimpleName() + ".properties";
     private static final String CONFIG_FILENAME_DEFAULT = CaomArtifactResolver.class.getSimpleName() + ".properties.default";
 
-    private final Map<String, StorageResolver> handlers = new HashMap<>();
+    protected final Map<String, StorageResolver> handlers = new HashMap<>();
     private final StorageResolver defaultResolver;
 
     private AuthMethod authMethod;
@@ -126,6 +129,26 @@ public class CaomArtifactResolver {
      * are ignored) with a scheme and a class name of a class that implements the StorageResolver
      * interface for that particular scheme.</p>
      *
+     * @param config configuration file
+     */
+    public CaomArtifactResolver(File config) {
+        try {
+            if (!config.exists() || !config.canRead()) {
+                throw new IllegalStateException("not found or not readable: " + config);
+            }
+            this.defaultResolver = readConfig(new FileInputStream(config));
+            log.debug("default resolver: " + defaultResolver);
+        } catch (IOException ex) {
+            throw new IllegalStateException("CONFIG: failed to read config from " + config);
+        }
+    }
+    
+    /**
+     * Create a CaomArtifactResolver with configuration loaded from the specified URL.
+     * <p>The config resource has contains URIs (one per line, comments start line with #, blank lines
+     * are ignored) with a scheme and a class name of a class that implements the StorageResolver
+     * interface for that particular scheme.</p>
+     *
      * @param configUrl URL of the configuration
      */
     public CaomArtifactResolver(URL configUrl) {
@@ -136,38 +159,43 @@ public class CaomArtifactResolver {
         }
 
         try {
-            Properties props = new Properties();
-            props.load(url.openStream());
-            Iterator<String> i = props.stringPropertyNames().iterator();
-            StorageResolver defResolver = null;
-            while (i.hasNext()) {
-                String scheme = i.next();
-                String cname = props.getProperty(scheme);
-                try {
-                    log.debug("loading: " + cname);
-                    Class c = Class.forName(cname);
-                    log.debug("instantiating: " + c);
-                    StorageResolver handler = (StorageResolver) c.newInstance();
-                    
-                    if ("*".equals(scheme)) {
-                        defResolver = handler;
-                    } else {
-                        log.debug("adding: " + scheme + "," + handler);
-                        handlers.put(scheme, handler);
-                        log.debug("success: " + scheme + " is supported");
-                    }
-                    
-                } catch (Exception fail) {
-                    throw new RuntimeException("CONFIG: failed to load " + cname, fail);
-                }
-            }
-            this.defaultResolver = defResolver;
+            this.defaultResolver = readConfig(url.openStream());
             log.debug("default resolver: " + defaultResolver);
         } catch (IOException ex) {
-            throw new RuntimeException("CONFIG: failed to read config from " + url, ex);
+            throw new IllegalStateException("CONFIG: failed to read config from " + configUrl);
+        }
+    }
+    
+    private StorageResolver readConfig(InputStream istream) throws IOException {
+        StorageResolver defResolver = null;
+        Properties props = new Properties();
+        props.load(istream);
+        Iterator<String> i = props.stringPropertyNames().iterator();
+
+        while (i.hasNext()) {
+            String scheme = i.next();
+            String cname = props.getProperty(scheme);
+            try {
+                log.debug("loading: " + cname);
+                Class c = Class.forName(cname);
+                log.debug("instantiating: " + c);
+                StorageResolver handler = (StorageResolver) c.newInstance();
+
+                if ("*".equals(scheme)) {
+                    defResolver = handler;
+                } else {
+                    log.debug("adding: " + scheme + "," + handler);
+                    handlers.put(scheme, handler);
+                    log.debug("success: " + scheme + " is supported");
+                }
+
+            } catch (Exception fail) {
+                throw new RuntimeException("CONFIG: failed to load " + cname, fail);
+            }
         }
         // default
         setAuthMethod(AuthenticationUtil.getAuthMethod(AuthenticationUtil.getCurrentSubject()));
+        return defResolver;
     }
     
     /**
