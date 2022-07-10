@@ -14,7 +14,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '2.4.14'
+version = '2.4.15'
 
 description = 'OpenCADC CAOM artifact sync library'
 def git_url = 'https://github.com/opencadc/caom2db'
