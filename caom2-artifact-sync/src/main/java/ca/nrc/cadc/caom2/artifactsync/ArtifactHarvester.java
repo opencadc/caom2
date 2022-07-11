@@ -216,15 +216,17 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
             }
 
             log.info("Found: " + observationStates.size());
+            if (observationStates.isEmpty()) {
+                return true; // stop
+            }
+            
             for (ObservationState observationState : observationStates) {
 
                 try {
-                    this.observationDAO.getTransactionManager().startTransaction();
                     Observation observation = this.observationDAO.get(observationState.getID());
                     
-                    if (observation == null) {
-                        log.debug("Observation no longer exists: " + observationState.getURI());
-                    } else {
+                    if (observation != null) {
+                        this.observationDAO.getTransactionManager().startTransaction();
                         // will make progress even on failures
                         state.curLastModified = observation.getMaxLastModified();
                         state.curID = observation.getID();
@@ -284,17 +286,18 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                                         this.reason = "Failed to determine if artifact exists";
                                         log.error(message, ex);
                                     }
-                                    logEnd(format(state.curID), artifact, success, added, message);
+                                    logEnd(observation, artifact, success, added, message);
                                 }
                             }
                         }
-                    }
+                        this.harvestStateDAO.put(state);
+                        log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
+                        log.debug("Updated artifact harvest state.  ID: " + format(state.curID));
 
-                    this.harvestStateDAO.put(state);
-                    log.debug("Updated artifact harvest state.  Date: " + state.curLastModified);
-                    log.debug("Updated artifact harvest state.  ID: " + format(state.curID));
-                    
-                    this.observationDAO.getTransactionManager().commitTransaction();
+                        this.observationDAO.getTransactionManager().commitTransaction();
+                    } else {
+                        log.debug("Observation no longer exists: " + observationState.getURI());
+                    }
                     
                 } catch (Throwable t) {
                     this.observationDAO.getTransactionManager().rollbackTransaction();
@@ -302,7 +305,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                 }
             }
 
-            return (observationStates.size() < this.batchSize + 1);
+            // batch completed: try another
+            return false;
         } finally {
             logBatchEnd();
         }
@@ -347,11 +351,11 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
         log.info(startMessage.toString());
     }
 
-    private void logEnd(String observationID, Artifact artifact, boolean success, boolean added, String message) {
+    private void logEnd(Observation o, Artifact artifact, boolean success, boolean added, String message) {
         final String caomContentLengthStr = safeToString(this.caomContentLength);
         StringBuilder endMessage = new StringBuilder();
         endMessage.append("END: {");
-        endMessage.append("\"observationID\":\"").append(observationID).append("\"");
+        endMessage.append("\"observationID\":\"").append(o.getID()).append("\"");
         endMessage.append(",");
         endMessage.append("\"artifact\":\"").append(artifact.getURI()).append("\"");
         endMessage.append(",");
@@ -375,6 +379,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
             endMessage.append("\"message\":\"").append(message).append("\"");
         }
         endMessage.append(",");
+        endMessage.append("\"lastModified\":\"").append(df.format(o.getMaxLastModified())).append("\"");
         endMessage.append("\"date\":\"").append(df.format(new Date())).append("\"");
         endMessage.append("}");
         log.info(endMessage.toString());
