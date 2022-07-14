@@ -430,7 +430,15 @@ public abstract class RepoAction extends RestAction {
             }
         } catch (IllegalArgumentException ex) {
             log.debug(ex.getMessage(), ex);
-            throw new IllegalArgumentException("invalid input: " + uri + " reason: " + ex.getMessage(), ex);
+            // build complete error cause message because rest api only outputs the message,
+            // not the stack trace
+            StringBuilder sb = new StringBuilder();
+            Throwable cause = ex;
+            while (cause != null) {
+                sb.append("|").append("cause: ").append(cause.getMessage());
+                cause = cause.getCause();
+            }
+            throw new IllegalArgumentException("invalid input: " + uri + " " + sb.toString(), ex);
         }
     }
 
