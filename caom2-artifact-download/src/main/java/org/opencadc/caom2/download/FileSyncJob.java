@@ -67,6 +67,8 @@
 
 package org.opencadc.caom2.download;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.NotAuthenticatedException;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
@@ -76,20 +78,26 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.io.ByteCountInputStream;
+import ca.nrc.cadc.io.ByteLimitExceededException;
+import ca.nrc.cadc.io.WriteException;
 import ca.nrc.cadc.net.HttpGet;
-import ca.nrc.cadc.net.InputStreamWrapper;
-import ca.nrc.cadc.profiler.Profiler;
+import ca.nrc.cadc.net.PreconditionFailedException;
+import ca.nrc.cadc.net.RangeNotSatisfiableException;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
+import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.text.DateFormat;
+import java.security.AccessControlException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Logger;
@@ -102,6 +110,7 @@ import org.apache.log4j.Logger;
 public class FileSyncJob implements Runnable  {
     private static final Logger log = Logger.getLogger(FileSyncJob.class);
 
+    private static final long[] RETRY_DELAY = new long[] { 6000L, 12000L };
     public static final int DEFAULT_TIMEOUT = 600000;  // 10 minutes
 
     private final HarvestSkipURI harvestSkipURI;
@@ -111,7 +120,7 @@ public class FileSyncJob implements Runnable  {
     private final boolean tolerateNullChecksum;
     private final Date retryAfter;
     private final Subject subject;
-    private final DateFormat dateFormat;
+    private final List<Exception> fails = new ArrayList<>();
 
     /**
      * Construct a job to sync the specified artifact.
@@ -141,8 +150,6 @@ public class FileSyncJob implements Runnable  {
         this.tolerateNullChecksum = tolerateNullChecksum;
         this.retryAfter = retryAfter;
         this.subject = subject;
-
-        this.dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
     }
 
     @Override
@@ -159,225 +166,208 @@ public class FileSyncJob implements Runnable  {
 
     private void doSync() {
 
-        logStart(this.harvestSkipURI);
-        Profiler profiler = new Profiler(FileSyncJob.class);
-        ArtifactDownloadResult result = new ArtifactDownloadResult(this.harvestSkipURI.getSkipID());
+        log.info("FileSyncJob.START " + this.harvestSkipURI.getSkipID());
+        long start = System.currentTimeMillis();
+        int downloadAttempts = 0;
+        long byteTransferTime = 0;
+        boolean success = false;
+        String msg = "";
 
         try {
             URI artifactURI = this.harvestSkipURI.getSkipID();
-            final Artifact artifact = this.artifactDAO.get(artifactURI);
-            profiler.checkpoint("artifactDAO.get");
-
+            Artifact artifact = this.artifactDAO.get(artifactURI);
             if (artifact == null) {
                 // artifact no longer exists, remove from skip uri table
-                this.harvestSkipURIDAO.delete(this.harvestSkipURI);
-                result.message = "artifact no longer exists";
+                success = true;
+                msg = "reason=obsolete-artifact";
                 return;
             }
 
-            FileMetadata metadata = new FileMetadata();
-            metadata.setContentType(artifact.contentType);
-            metadata.setContentLength(artifact.contentLength);
+            FileMetadata fileMetadata = new FileMetadata();
+            fileMetadata.setContentType(artifact.contentType);
+            fileMetadata.setContentLength(artifact.contentLength);
             if (artifact.contentChecksum == null) {
                 if (!this.tolerateNullChecksum) {
-                    result.message = "artifact checksum is null";
+                    msg = "artifact content checksum is null";
                     return;
                 }
             } else {
                 String checksumFromCAOM = artifact.contentChecksum.getSchemeSpecificPart();
-                metadata.setMd5Sum(checksumFromCAOM);
-                result.md5sumMessage = "(md5sum from CAOM was " + checksumFromCAOM + ")";
-                log.debug(artifactURI.getScheme() + " content MD5 from CAOM: " + checksumFromCAOM);
+                fileMetadata.setMd5Sum(checksumFromCAOM);
+                log.debug(String.format("%s content MD5 from CAOM: %s", artifactURI.getScheme(), checksumFromCAOM));
             }
 
-            // get the md5 and contentLength of the artifact
             CaomArtifactResolver caomArtifactResolver = new CaomArtifactResolver();
-            URL url = caomArtifactResolver.getURL(artifactURI);
-            log.debug("caomArtifactResolver url: " + url);
-
-            OutputStream out = new ByteArrayOutputStream();
-            HttpGet head = new HttpGet(url, out);
-            head.setConnectionTimeout(DEFAULT_TIMEOUT);
-            head.setReadTimeout(DEFAULT_TIMEOUT);
-            head.setHeadOnly(true);
-            head.run();
-            int respCode = head.getResponseCode();
-            profiler.checkpoint("remote.httpHead");
-
-            if (head.getThrowable() != null || respCode != 200) {
-                StringBuilder sb = new StringBuilder("(" + respCode + ") ");
-                if (head.getThrowable() != null) {
-                    sb.append(head.getThrowable().getMessage());
-                    log.debug("Error determining artifact checksum: " + sb, head.getThrowable());
-                    result.message = sb.toString();
-                    return;
-                }
-
-                String md5String = head.getContentMD5();
-                log.debug(artifactURI.getScheme() + " content MD5: " + md5String);
-                if (md5String != null) {
-                    URI sourceChecksum = URI.create("MD5:" + md5String);
-                    if (!sourceChecksum.equals(artifact.contentChecksum)) {
-                        result.message = "Remote checksum doesn't match artifact checksum";
-                        return;
-                    }
-                }
-
-                long contentLength = head.getContentLength();
-                if (contentLength >= 0) {
-                    if (contentLength != artifact.contentLength) {
-                        result.message = "Remote content length doesn't match artifact content length";
-                        return;
-                    }
-                }
-            } else {
-                // if we don't have a checksum yet and if checksum in header is not null, use it
-                String md5FromHeader = head.getContentMD5();
-                if (md5FromHeader != null) {
-                    if (metadata.getMd5Sum() == null) {
-                        metadata.setMd5Sum(md5FromHeader);
-                        result.md5sumMessage = "(md5sum from Http header was " + md5FromHeader + ")";
-                        log.debug(artifactURI.getScheme() + " content MD5 from header: " + md5FromHeader);
-                    } else {
-                        // both md5sum from CAOM and md5sum from Http header are not null
-                        if (!metadata.getMd5Sum().equals(md5FromHeader)) {
-                            String msg = "md5Sums are different, CAOM: " + metadata.getMd5Sum()
-                                + ", Http header: " + md5FromHeader;
-                            throw new RuntimeException(msg);
-                        }
-                    }
-                }
-            }
-
-            // check again to be sure the destination doesn't already have it
-            ArtifactMetadata tempMetadata = this.artifactStore.get(artifactURI);
-            if (tempMetadata != null && tempMetadata.getChecksum() != null
-                && tempMetadata.getChecksum().equals(artifact.contentChecksum.getSchemeSpecificPart())) {
-                result.message = "ArtifactStore already has correct copy";
-                result.success = true;
+            URL url;
+            try {
+                url = caomArtifactResolver.getURL(artifactURI);
+                log.debug("download url: " + url);
+            } catch (MalformedURLException | IllegalStateException ex) {
+                log.debug("FileSyncJob.ERROR", ex);
+                msg = "ArtifactResolver error resolving artifact uri";
                 return;
             }
-            profiler.checkpoint("local.httpHead");
+            if (url == null) {
+                log.debug("FileSyncJob.ERROR ArtifactResolver unable to resolve " + artifactURI);
+                msg = "ArtifactResolver failed to resolve artifact uri";
+                return;
+            }
 
-            InputStreamWrapper wrapper = inputStream -> {
-                String threadName = Thread.currentThread().getName();
-                URI artifactURI1 = this.harvestSkipURI.getSkipID();
-                ByteCountInputStream byteCounter = new ByteCountInputStream(inputStream);
-                try {
-                    log.debug("[" + threadName + "] Starting upload of " + artifactURI1);
-                    this.artifactStore.store(artifactURI1, byteCounter, metadata);
-                    result.uploadSuccess = true;
-                    log.debug("[" + threadName + "] Completed upload of " + artifactURI1);
-                } catch (Throwable t) {
-                    result.uploadSuccess = false;
-                    // uncomment to obtain stack traces in log file
-                    // threadLog.error("[" + threadName + "] Failed to upload " + artifactURI, t);
-                    result.uploadErrorMessage = "Upload error: " + t.getMessage();
-                    throw new IOException(t);
-                } finally {
-                    result.bytesTransferred = byteCounter.getByteCount();
-                }
-            };
-            HttpGet download = new HttpGet(url, wrapper);
-            download.setConnectionTimeout(DEFAULT_TIMEOUT);
-            download.setReadTimeout(DEFAULT_TIMEOUT);
+            int retryCount = 0;
+            try {
+                while (!success && retryCount < RETRY_DELAY.length) {
+                    log.debug(String.format("FileSyncJob.SYNC %s attempts=%s", artifact.getURI(), retryCount));
 
-            log.debug("Starting download of " + artifactURI + " from " + url);
-            long dlStart = System.currentTimeMillis();
-            download.run();
-            result.elapsedTimeMillis = System.currentTimeMillis() - dlStart;
+                    Artifact curArtifact = this.artifactDAO.get(artifactURI);
+                    if (curArtifact == null) {
+                        msg = "reason=obsolete-artifact";
+                        success = true;
+                        return;
+                    }
 
-            respCode = download.getResponseCode();
-            log.debug("Download response code: " + respCode);
-            profiler.checkpoint("download/upload");
+                    boolean postPrepare = false;
+                    try {
+                        downloadAttempts++;
 
-            if (download.getThrowable() != null || respCode != 200) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("Download error (").append(respCode).append(")");
-                if (download.getThrowable() != null) {
-                    sb.append(": ").append(download.getThrowable().getMessage());
-                }
-                result.message = sb.toString();
-            } else {
-                if (result.uploadSuccess) {
-                    log.debug("Completed download of " + artifactURI + " from " + url);
-                    result.success = true;
-                } else {
-                    if (result.md5sumMessage == null) {
-                        result.message = result.uploadErrorMessage;
-                    } else {
-                        result.message = result.uploadErrorMessage + " " + result.md5sumMessage;
+                        // get the artifact metadata
+                        OutputStream out = new ByteArrayOutputStream();
+                        HttpGet head = new HttpGet(url, out);
+                        head.setConnectionTimeout(DEFAULT_TIMEOUT);
+                        head.setReadTimeout(DEFAULT_TIMEOUT);
+                        head.setHeadOnly(true);
+                        head.prepare();
+
+                        // compare artifact metadata
+                        if (!this.tolerateNullChecksum) {
+                            URI hdrContentChecksum = head.getDigest();
+                            if (hdrContentChecksum != null && !hdrContentChecksum.equals(curArtifact.contentChecksum)) {
+                                throw new PreconditionFailedException(
+                                    String.format("contentChecksum artifact: %s storage: %s", curArtifact.contentChecksum,
+                                                  hdrContentChecksum));
+                            }
+                        }
+
+                        long hdrContentLength = head.getContentLength();
+                        if (hdrContentLength != -1 && hdrContentLength != fileMetadata.getContentLength()) {
+                            throw new PreconditionFailedException(
+                                String.format("contentLength artifact: %s storage: %s", fileMetadata.getContentLength(),
+                                              hdrContentLength));
+                        }
+
+                        // check again to be sure the destination doesn't already have it
+                        ArtifactMetadata tempMetadata = this.artifactStore.get(artifactURI);
+                        if (tempMetadata != null && tempMetadata.getChecksum() != null
+                            && tempMetadata.getChecksum().equals(curArtifact.contentChecksum.getSchemeSpecificPart())) {
+                            msg = "ArtifactStore already has correct copy";
+                            success = true;
+                            return;
+                        }
+
+                        HttpGet download = new HttpGet(url, true);
+                        download.setConnectionTimeout(DEFAULT_TIMEOUT);
+                        download.setReadTimeout(DEFAULT_TIMEOUT);
+                        log.debug(String.format("download: %s as %s", url, AuthenticationUtil.getCurrentSubject()));
+
+                        long dlStart = System.currentTimeMillis();
+                        download.prepare();
+                        postPrepare = true;
+
+                        this.artifactStore.store(this.harvestSkipURI.getSkipID(),
+                                                 download.getInputStream(), fileMetadata);
+                        byteTransferTime = System.currentTimeMillis() - dlStart;
+                        success = true;
+                        log.debug(String.format("Completed download of %s from %s", artifactURI, url));
+
+                    } catch (ByteLimitExceededException | WriteException ex) {
+                        // IOException will capture this if not explicitly caught and rethrown
+                        log.debug("FileSyncJob.FAIL", ex);
+                        log.error(String.format("FileSyncJob.FAIL %s reason=%s", artifactURI, ex));
+                        throw ex;
+                    } catch (MalformedURLException | ResourceNotFoundException | ResourceAlreadyExistsException
+                             | PreconditionFailedException | RangeNotSatisfiableException
+                             | AccessControlException | NotAuthenticatedException ex) {
+                        log.debug("FileSyncJob.ERROR", ex);
+                        log.warn(String.format("FileSyncJob.ERROR %s reason=%s", artifactURI, ex));
+                        fails.add(ex);
+                    } catch (IOException | TransientException ex) {
+                        // includes ReadException
+                        // - prepare or put throwing this error
+                        log.debug("FileSyncJob.ERROR", ex);
+                        log.warn(String.format("FileSyncJob.ERROR %s reason=%s", artifactURI, ex));
+                        fails.add(ex);
+                    } catch (Exception ex) {
+                        if (!postPrepare) {
+                            // remote server 5xx response: discard
+                            log.debug("FileSyncJob.ERROR", ex);
+                            log.warn(String.format("FileSyncJob.ERROR %s reason=%s", artifactURI, ex));
+                            fails.add(ex);
+                        } else {
+                            // ArtifactStore.store internal fail: abort
+                            log.debug("FileSyncJob.FAIL", ex);
+                            log.warn(String.format("FileSyncJob.FAIL %s reason=%s", artifactURI, ex));
+                            throw ex;
+                        }
+                    }
+
+                    if (!success) {
+                        log.info("FileSyncJob.SLEEP dt=" + RETRY_DELAY[retryCount]);
+                        Thread.sleep(RETRY_DELAY[retryCount++]);
                     }
                 }
+                if (!success) {
+                    Exception commonFail = null;
+                    for (Exception e : fails) {
+                        if (commonFail == null) {
+                            commonFail = e;
+                        }
+                        if (!commonFail.getClass().equals(e.getClass())) {
+                            commonFail = null;
+                            break;
+                        }
+                    }
+                    if (commonFail != null) {
+                        msg = "reason=" + commonFail;
+                    }
+                }
+            }  catch (ByteLimitExceededException | IllegalStateException ex) {
+                log.debug("artifact download aborted: " + this.harvestSkipURI.getSkipID(), ex);
+                msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
+            } catch (IllegalArgumentException | InterruptedException | WriteException ex) {
+                log.debug("artifact download error: " + this.harvestSkipURI.getSkipID(), ex);
+                msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
+            } catch (Exception ex) {
+                log.debug("unexpected fail: " + this.harvestSkipURI.getSkipID(), ex);
+                msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
             }
-        } catch (Throwable t) {
-            // unexpected error
-            log.error("unexpected", t);
-            result.message = "unexpected error: " + t.getMessage();
         } finally {
             // Update the skip table
             try {
                 synchronized (this.harvestSkipURIDAO) {
-                    if (result.success) {
-                        this.harvestSkipURIDAO.delete(harvestSkipURI);
-                        profiler.checkpoint("harvestSkipURIDAO.delete");
+                    if (success) {
+                        this.harvestSkipURIDAO.delete(this.harvestSkipURI);
                     } else {
-                        result.bytesTransferred = 0;
-                        harvestSkipURI.errorMessage = result.message;
+                        harvestSkipURI.errorMessage = msg;
                         harvestSkipURI.setTryAfter(this.retryAfter);
-                        this.harvestSkipURIDAO.put(harvestSkipURI);
-                        profiler.checkpoint("harvestSkipURIDAO.update");
+                        this.harvestSkipURIDAO.put(this.harvestSkipURI);
                     }
                 }
             } catch (Throwable t) {
                 log.error("Failed to update or delete from skip table", t);
             }
-            logEnd(result);
-        }
-    }
-
-    private void logStart(HarvestSkipURI skip) {
-        StringBuilder startMessage = new StringBuilder();
-        startMessage.append("FileSyncJob.START: {");
-        startMessage.append("\"artifact\":\"").append(skip.getSkipID()).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"date\":\"").append(this.dateFormat.format(new Date())).append("\"");
-        startMessage.append("}");
-        log.info(startMessage.toString());
-    }
-
-    private void logEnd(ArtifactDownloadResult result) {
-        StringBuilder startMessage = new StringBuilder();
-        startMessage.append("FileSyncJob.END: {");
-        startMessage.append("\"artifact\":\"").append(result.artifactURI).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"success\":\"").append(result.success).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"time\":\"").append(result.elapsedTimeMillis).append("\"");
-        startMessage.append(",");
-        startMessage.append("\"bytes\":\"").append(result.bytesTransferred).append("\"");
-        if (result.message != null) {
-            startMessage.append(",");
-            startMessage.append("\"message\":\"").append(result.message).append("\"");
-        }
-        startMessage.append(",");
-        startMessage.append("\"date\":\"").append(this.dateFormat.format(new Date())).append("\"");
-        startMessage.append("}");
-        log.info(startMessage.toString());
-    }
-
-    static class ArtifactDownloadResult {
-        URI artifactURI;
-        boolean success = false;
-        boolean uploadSuccess = false;
-        String message;
-        String uploadErrorMessage;
-        String md5sumMessage;
-        long elapsedTimeMillis = 0;
-        long bytesTransferred = 0;
-
-        ArtifactDownloadResult(URI artifactURI) {
-            this.artifactURI = artifactURI;
+            // log final results
+            long dt = System.currentTimeMillis() - start;
+            long overheadTime = dt - byteTransferTime;
+            StringBuilder sb = new StringBuilder();
+            sb.append("FileSyncJob.END ").append(this.harvestSkipURI.getSkipID());
+            sb.append(" success=").append(success);
+            sb.append(" duration=").append(dt);
+            sb.append(" attempts=").append(downloadAttempts);
+            if (byteTransferTime > 0) {
+                sb.append(" transfer=").append(byteTransferTime);
+                sb.append(" overhead=").append(overheadTime);
+            }
+            sb.append(" ").append(msg);
+            log.info(sb.toString());
         }
     }
 

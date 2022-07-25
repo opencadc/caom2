@@ -105,10 +105,10 @@ public class FileSyncTest extends AbstractFileSyncTest {
         log.info("making 4 element dataset");
         // set up 4 IRIS artifacts
         List<Artifact> artifacts = new ArrayList<>();
-        artifacts.add(makeArtifact("ad:IRIS/I429B4H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/f429h000_preview_1024.png"));
-        artifacts.add(makeArtifact("ad:IRIS/I426B4H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/f426h000_preview_256.png"));
+        artifacts.add(makeArtifact("ad:IRIS/I429B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/f429h000_preview_1024.png", null, 471897L));
+        artifacts.add(makeArtifact("ad:IRIS/I426B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/f426h000_preview_256.png", null, 113116L));
         return artifacts;
     }
 
@@ -118,18 +118,18 @@ public class FileSyncTest extends AbstractFileSyncTest {
         // generate a 4 item list
         List<Artifact> artifacts = makeSmallDataset();
         // Build on the small dataset
-        artifacts.add(makeArtifact("ad:IRIS/I422B4H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I422B1H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I422B2H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I422B3H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I421B4H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I421B1H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I421B2H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I421B3H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I420B4H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I420B1H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I420B2H0.fits"));
-        artifacts.add(makeArtifact("ad:IRIS/I420B3H0.fits"));
+        artifacts.add(makeArtifact("ad:IRIS/I422B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I422B1H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I422B2H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I422B3H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I421B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I421B1H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I421B2H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I421B3H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I420B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I420B1H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I420B2H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("ad:IRIS/I420B3H0.fits", null, 1008000L));
         log.info("done making 16 element dataset");
         return artifacts;
     }

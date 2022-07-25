@@ -197,13 +197,16 @@ public abstract class AbstractFileSyncTest {
     }
 
     Artifact makeArtifact(final String uri) {
-        return makeArtifact(uri, null);
+        return makeArtifact(uri, null, null);
     }
 
-    Artifact makeArtifact(final String uri, String contentChecksum) {
+    Artifact makeArtifact(final String uri, String contentChecksum, Long contentLength) {
         Artifact artifact = new Artifact(URI.create(uri), ProductType.SCIENCE, ReleaseType.DATA);
         if (contentChecksum != null) {
             artifact.contentChecksum = URI.create(contentChecksum);
+        }
+        if (contentLength != null) {
+            artifact.contentLength = contentLength;
         }
         return artifact;
     }

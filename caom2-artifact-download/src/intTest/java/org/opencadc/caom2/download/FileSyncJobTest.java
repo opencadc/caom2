@@ -96,8 +96,9 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
     }
 
-    private static final String ARTIFACT_URI = "ad:IRIS/I212B2H0.fits";
-    private static final String ARTIFACT_CONTENT_CHECKSUM = "md5:0123456789abcdef0123456789abcdef";
+    private static final String ARTIFACT_URI =  "ad:IRIS/I212B2H0.fits";
+    private static final String ARTIFACT_CONTENT_CHECKSUM = "md5:646d3c548ffb98244a0fc52b60556082";
+    private static final long ARTIFACT_CONTENT_LENGTH = 1008000;
 
     public FileSyncJobTest() throws Exception {
         super();
@@ -117,7 +118,7 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
 
             // Source with a HarvestSkipURI but no Artifact.
-            Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM);
+            Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM, ARTIFACT_CONTENT_LENGTH);
 
             HarvestSkipURI skip = makeHarvestSkipURI(artifact);
             this.harvestSkipURIDAO.put(skip);
@@ -151,7 +152,7 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
 
             // Source Artifact without a checksum and a HarvestSkipURI
-            Artifact artifact = makeArtifact(ARTIFACT_URI, null);
+            Artifact artifact = makeArtifact(ARTIFACT_URI, null, ARTIFACT_CONTENT_LENGTH);
             Observation observation = makeObservation(artifact);
             this.observationDAO.put(observation);
 
@@ -210,7 +211,7 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             // Skip record should exist and contain the errorMessage
             skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
             Assert.assertNotNull("skip record should've been deleted", skip);
-            Assert.assertEquals("artifact checksum is null", skip.errorMessage);
+            Assert.assertEquals("artifact content checksum is null", skip.errorMessage);
         } catch (Exception unexpected) {
             Assert.fail("unexpected exception: " + unexpected);
             log.debug(unexpected);
@@ -227,7 +228,7 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
 
             // Artifact & HarvestSkipURI in the database to start.
-            Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM);
+            Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM, ARTIFACT_CONTENT_LENGTH);
             Observation observation = makeObservation(artifact);
             HarvestSkipURI skip = makeHarvestSkipURI(artifact);
 
