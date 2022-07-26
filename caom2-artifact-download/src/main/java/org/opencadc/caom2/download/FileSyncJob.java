@@ -268,7 +268,7 @@ public class FileSyncJob implements Runnable  {
                         download.setReadTimeout(DEFAULT_TIMEOUT);
                         log.debug(String.format("download: %s as %s", url, AuthenticationUtil.getCurrentSubject()));
 
-                        long dlStart = System.currentTimeMillis();
+                        final long dlStart = System.currentTimeMillis();
                         download.prepare();
                         postPrepare = true;
 
