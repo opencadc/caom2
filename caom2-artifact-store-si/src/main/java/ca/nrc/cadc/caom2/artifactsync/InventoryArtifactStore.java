@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.StoragePolicy;
 import ca.nrc.cadc.net.HttpGet;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.FileMetadata;
@@ -84,6 +85,7 @@ import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -189,7 +191,8 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
     }
 
-    public void store(URI artifactURI, InputStream data, FileMetadata metadata) throws TransientException {
+    public void store(URI artifactURI, URL src, FileMetadata metadata) throws TransientException, InterruptedException,
+            IOException, ResourceNotFoundException {
         // request all protocols that can be used
         if (storeProtocolList.isEmpty()) {
             Subject subject = AuthenticationUtil.getCurrentSubject();
@@ -209,7 +212,7 @@ public class InventoryArtifactStore implements ArtifactStore {
             throw new RuntimeException("No transfer endpoint available.");
         }
 
-        storageInventoryClient.upload(transfer, data, metadata);
+        storageInventoryClient.upload(transfer, src, metadata);
     }
 
     public Set<ArtifactMetadata> list(String collection)
