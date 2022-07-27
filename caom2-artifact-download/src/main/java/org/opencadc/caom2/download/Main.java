@@ -1,93 +1,88 @@
 /*
-************************************************************************
-*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
-**************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
-*
-*  (c) 2022.                            (c) 2022.
-*  Government of Canada                 Gouvernement du Canada
-*  National Research Council            Conseil national de recherches
-*  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
-*  All rights reserved                  Tous droits réservés
-*
-*  NRC disclaims any warranties,        Le CNRC dénie toute garantie
-*  expressed, implied, or               énoncée, implicite ou légale,
-*  statutory, of any kind with          de quelque nature que ce
-*  respect to the software,             soit, concernant le logiciel,
-*  including without limitation         y compris sans restriction
-*  any warranty of merchantability      toute garantie de valeur
-*  or fitness for a particular          marchande ou de pertinence
-*  purpose. NRC shall not be            pour un usage particulier.
-*  liable in any event for any          Le CNRC ne pourra en aucun cas
-*  damages, whether direct or           être tenu responsable de tout
-*  indirect, special or general,        dommage, direct ou indirect,
-*  consequential or incidental,         particulier ou général,
-*  arising from the use of the          accessoire ou fortuit, résultant
-*  software.  Neither the name          de l'utilisation du logiciel. Ni
-*  of the National Research             le nom du Conseil National de
-*  Council of Canada nor the            Recherches du Canada ni les noms
-*  names of its contributors may        de ses  participants ne peuvent
-*  be used to endorse or promote        être utilisés pour approuver ou
-*  products derived from this           promouvoir les produits dérivés
-*  software without specific prior      de ce logiciel sans autorisation
-*  written permission.                  préalable et particulière
-*                                       par écrit.
-*
-*  This file is part of the             Ce fichier fait partie du projet
-*  OpenCADC project.                    OpenCADC.
-*
-*  OpenCADC is free software:           OpenCADC est un logiciel libre ;
-*  you can redistribute it and/or       vous pouvez le redistribuer ou le
-*  modify it under the terms of         modifier suivant les termes de
-*  the GNU Affero General Public        la “GNU Affero General Public
-*  License as published by the          License” telle que publiée
-*  Free Software Foundation,            par la Free Software Foundation
-*  either version 3 of the              : soit la version 3 de cette
-*  License, or (at your option)         licence, soit (à votre gré)
-*  any later version.                   toute version ultérieure.
-*
-*  OpenCADC is distributed in the       OpenCADC est distribué
-*  hope that it will be useful,         dans l’espoir qu’il vous
-*  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
-*  without even the implied             GARANTIE : sans même la garantie
-*  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
-*  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
-*  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
-*  General Public License for           Générale Publique GNU Affero
-*  more details.                        pour plus de détails.
-*
-*  You should have received             Vous devriez avoir reçu une
-*  a copy of the GNU Affero             copie de la Licence Générale
-*  General Public License along         Publique GNU Affero avec
-*  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
-*  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
-*                                       <http://www.gnu.org/licenses/>.
-*
-*  $Revision: 5 $
-*
-************************************************************************
-*/
+ ************************************************************************
+ *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
+ **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
+ *
+ *  (c) 2022.                            (c) 2022.
+ *  Government of Canada                 Gouvernement du Canada
+ *  National Research Council            Conseil national de recherches
+ *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
+ *  All rights reserved                  Tous droits réservés
+ *
+ *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
+ *  expressed, implied, or               énoncée, implicite ou légale,
+ *  statutory, of any kind with          de quelque nature que ce
+ *  respect to the software,             soit, concernant le logiciel,
+ *  including without limitation         y compris sans restriction
+ *  any warranty of merchantability      toute garantie de valeur
+ *  or fitness for a particular          marchande ou de pertinence
+ *  purpose. NRC shall not be            pour un usage particulier.
+ *  liable in any event for any          Le CNRC ne pourra en aucun cas
+ *  damages, whether direct or           être tenu responsable de tout
+ *  indirect, special or general,        dommage, direct ou indirect,
+ *  consequential or incidental,         particulier ou général,
+ *  arising from the use of the          accessoire ou fortuit, résultant
+ *  software.  Neither the name          de l'utilisation du logiciel. Ni
+ *  of the National Research             le nom du Conseil National de
+ *  Council of Canada nor the            Recherches du Canada ni les noms
+ *  names of its contributors may        de ses  participants ne peuvent
+ *  be used to endorse or promote        être utilisés pour approuver ou
+ *  products derived from this           promouvoir les produits dérivés
+ *  software without specific prior      de ce logiciel sans autorisation
+ *  written permission.                  préalable et particulière
+ *                                       par écrit.
+ *
+ *  This file is part of the             Ce fichier fait partie du projet
+ *  OpenCADC project.                    OpenCADC.
+ *
+ *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
+ *  you can redistribute it and/or       vous pouvez le redistribuer ou le
+ *  modify it under the terms of         modifier suivant les termes de
+ *  the GNU Affero General Public        la “GNU Affero General Public
+ *  License as published by the          License” telle que publiée
+ *  Free Software Foundation,            par la Free Software Foundation
+ *  either version 3 of the              : soit la version 3 de cette
+ *  License, or (at your option)         licence, soit (à votre gré)
+ *  any later version.                   toute version ultérieure.
+ *
+ *  OpenCADC is distributed in the       OpenCADC est distribué
+ *  hope that it will be useful,         dans l’espoir qu’il vous
+ *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
+ *  without even the implied             GARANTIE : sans même la garantie
+ *  warranty of MERCHANTABILITY          implicite de COMMERCIALISABILITÉ
+ *  or FITNESS FOR A PARTICULAR          ni d’ADÉQUATION À UN OBJECTIF
+ *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
+ *  General Public License for           Générale Publique GNU Affero
+ *  more details.                        pour plus de détails.
+ *
+ *  You should have received             Vous devriez avoir reçu une
+ *  a copy of the GNU Affero             copie de la Licence Générale
+ *  General Public License along         Publique GNU Affero avec
+ *  with OpenCADC.  If not, see          OpenCADC ; si ce n’est
+ *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
+ *                                       <http://www.gnu.org/licenses/>.
+ *
+ ************************************************************************
+ */
 
 package org.opencadc.caom2.download;
 
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
-import ca.nrc.cadc.caom2.artifactsync.DownloadArtifactFiles;
-import ca.nrc.cadc.caom2.harvester.HarvestResource;
-import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
-import java.io.File;
+import ca.nrc.cadc.util.StringUtil;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import javax.naming.NamingException;
-import javax.security.auth.Subject;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -98,9 +93,6 @@ import org.apache.log4j.Logger;
  */
 public class Main {
     private static final Logger log = Logger.getLogger(Main.class);
-
-    private static final int BATCH_SIZE = 1000;
-    private static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
     private static final String CONFIG_FILE_NAME = "caom2-artifact-download.properties";
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
@@ -109,12 +101,11 @@ public class Main {
     private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".username";
     private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".password";
     private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".url";
-    private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
+    private static final String BUCKETS_CONFIG_KEY = CONFIG_PREFIX + ".buckets";
     private static final String ARTIFACT_STORE_CONFIG_KEY = ArtifactStore.class.getName();
     private static final String THREADS_CONFIG_KEY = CONFIG_PREFIX + ".threads";
     private static final String RETRY_AFTER_CONFIG_KEY = CONFIG_PREFIX + ".retryAfter";
     private static final String TOLERATE_NULL_CHECKSUM_CONFIG_KEY = CONFIG_PREFIX + ".tolerateNullChecksum";
-    private static final String JNDI_DATA_SOURCE_NAME = "jdbc/artifact-download";
 
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
@@ -124,7 +115,7 @@ public class Main {
         DB_USERNAME_CONFIG_KEY,
         DB_PASSWORD_CONFIG_KEY,
         DB_URL_CONFIG_KEY,
-        COLLECTION_CONFIG_KEY,
+        BUCKETS_CONFIG_KEY,
         ARTIFACT_STORE_CONFIG_KEY,
         THREADS_CONFIG_KEY,
         RETRY_AFTER_CONFIG_KEY,
@@ -166,42 +157,46 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.profiler", Level.INFO);
             }
 
+            final List<String> configuredBuckets = props.getProperty(BUCKETS_CONFIG_KEY);
+            List<String> buckets = new ArrayList<>();
+            for (String bucket : configuredBuckets) {
+                if (StringUtil.hasLength(bucket)) {
+                    buckets.add(bucket);
+                }
+            }
+            if (buckets.isEmpty()) {
+                throw new IllegalStateException(String.format("configuration not found for: %s", BUCKETS_CONFIG_KEY));
+            }
+
+            final String configuredArtifactStore = props.getFirstPropertyValue(ARTIFACT_STORE_CONFIG_KEY);
+            ArtifactStore artifactStore;
+            try {
+                Class<?> asClass = Class.forName(configuredArtifactStore);
+                artifactStore = (ArtifactStore) asClass.getDeclaredConstructor().newInstance();
+                Log4jInit.setLevel(asClass.getPackage().getName(), loggingLevel);
+            } catch (Throwable t) {
+                throw new IllegalStateException("failed to create artifact store: " + configuredArtifactStore, t);
+            }
+            log.debug("artifact store: " + artifactStore);
+
             final String configuredSchema = props.getFirstPropertyValue(DB_SCHEMA_CONFIG_KEY);
             final String configuredUsername = props.getFirstPropertyValue(DB_USERNAME_CONFIG_KEY);
             final String configuredPassword = props.getFirstPropertyValue(DB_PASSWORD_CONFIG_KEY);
             final String configuredUrl = props.getFirstPropertyValue(DB_URL_CONFIG_KEY);
 
-            final ConnectionConfig connectionConfig = new ConnectionConfig(null, null,
-                                                                           configuredUsername, configuredPassword,
-                                                                           "org.postgresql.Driver", configuredUrl);
-            try {
-                DBUtil.createJNDIDataSource(JNDI_DATA_SOURCE_NAME, connectionConfig);
-            } catch (NamingException ne) {
-                throw new IllegalStateException(String.format("Unable to access database: %s",
-                                                              connectionConfig.getURL()), ne);
-            }
-
             String [] serverDatabase = parseServerDatabase(configuredUrl);
             final String server = serverDatabase[0];
             final String database = serverDatabase[1];
 
+            final ConnectionConfig connectionConfig =
+                new ConnectionConfig(null, null, configuredUsername, configuredPassword,
+                                     "org.postgresql.Driver", configuredUrl);
+
             final Map<String, Object> daoConfig = new TreeMap<>();
+            daoConfig.put("server", server);
             daoConfig.put("database", database);
             daoConfig.put("schema", configuredSchema);
             daoConfig.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
-            daoConfig.put("jndiDataSourceName", JNDI_DATA_SOURCE_NAME);
-
-            ArtifactDAO artifactDAO = new ArtifactDAO();
-            artifactDAO.setConfig(daoConfig);
-
-            final String configuredCollection = props.getFirstPropertyValue(COLLECTION_CONFIG_KEY);
-            HarvestResource harvestResource = new HarvestResource(server, database, configuredSchema,
-                                                                  configuredCollection);
-
-            final String configuredArtifactStore = props.getFirstPropertyValue(ARTIFACT_STORE_CONFIG_KEY);
-            Class<?> asClass = Class.forName(configuredArtifactStore);
-            ArtifactStore artifactStore = (ArtifactStore) asClass.getDeclaredConstructor().newInstance();
-            Log4jInit.setLevel(asClass.getPackage().getName(), loggingLevel);
 
             final String configuredThreads = props.getFirstPropertyValue(THREADS_CONFIG_KEY);
             final int threads = Integer.parseInt(configuredThreads);
@@ -212,13 +207,9 @@ public class Main {
             final String configuredTolerateNullChecksum = props.getFirstPropertyValue(TOLERATE_NULL_CHECKSUM_CONFIG_KEY);
             final boolean tolerateNullChecksum = Boolean.parseBoolean(configuredTolerateNullChecksum);
 
-            final Subject subject = SSLUtil.createSubject(new File(CERTIFICATE_FILE_LOCATION));
-
-            boolean loop = true;
-            DownloadArtifactFiles downloader = new DownloadArtifactFiles(artifactDAO, harvestResource, artifactStore,
-                                                                         threads, BATCH_SIZE, loop, retryAfter,
-                                                                         tolerateNullChecksum, null);
-            Subject.doAs(subject, downloader);
+            FileSync fileSync = new FileSync(daoConfig, connectionConfig, artifactStore,
+                                             buckets, threads, retryAfter, tolerateNullChecksum);
+            fileSync.run();
         } catch (Throwable unexpected) {
             log.fatal("Unexpected failure", unexpected);
             System.exit(-1);

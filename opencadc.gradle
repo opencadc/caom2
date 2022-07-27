@@ -16,6 +16,7 @@ sourceSets {
             runtimeClasspath += main.output + test.output
         }
         resources.srcDir file('src/intTest/resources')
+	resources.srcDirs += new File(System.getenv('A') + '/test-certificates/')
     }
 }
 
