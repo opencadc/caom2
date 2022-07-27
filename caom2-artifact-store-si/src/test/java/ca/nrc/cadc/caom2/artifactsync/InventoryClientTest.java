@@ -67,21 +67,8 @@
 
 package ca.nrc.cadc.caom2.artifactsync;
 
-
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
-import ca.nrc.cadc.caom2.artifact.ArtifactStore;
-import ca.nrc.cadc.caom2.artifact.StoragePolicy;
-import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
-import java.io.InputStream;
-import java.net.URI;
-import java.security.AccessControlException;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -89,43 +76,42 @@ import org.junit.Test;
  *
  * @author adriand
  */
-public class InventoryClientTest
-{
-   @Test
-   public void testGetSegmentPlan() throws Exception {
-       FileMetadata fm = new FileMetadata();
-       fm.setContentLength(new Long(10));
-       long minSize = 1;
-       long maxSize = 1;
-       List<InventoryClient.PutSegment> segments =
-               InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-       Assert.assertEquals(fm.getContentLength()/maxSize, segments.size());
+public class InventoryClientTest {
+    @Test
+    public void testGetSegmentPlan() throws Exception {
+        FileMetadata fm = new FileMetadata();
+        fm.setContentLength(new Long(10));
+        long minSize = 1;
+        long maxSize = 1;
+        List<InventoryClient.PutSegment> segments =
+                InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
+        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
 
-       maxSize = 10;
-       segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-       Assert.assertEquals(fm.getContentLength()/maxSize, segments.size());
-       Assert.assertEquals(10, segments.get(0).contentLength);
-       Assert.assertEquals(0, segments.get(0).start);
-       Assert.assertEquals(9, segments.get(0).end);
+        maxSize = 10;
+        segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
+        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
+        Assert.assertEquals(10, segments.get(0).contentLength);
+        Assert.assertEquals(0, segments.get(0).start);
+        Assert.assertEquals(9, segments.get(0).end);
 
-       maxSize = 6;
-       segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-       Assert.assertEquals((int)Math.ceil(fm.getContentLength()*1.0/maxSize), segments.size());
-       Assert.assertEquals(6, segments.get(0).contentLength);
-       Assert.assertEquals(0, segments.get(0).start);
-       Assert.assertEquals(5, segments.get(0).end);
-       Assert.assertEquals(4, segments.get(1).contentLength);
-       Assert.assertEquals(6, segments.get(1).start);
-       Assert.assertEquals(9, segments.get(1).end);
+        maxSize = 6;
+        segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
+        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
+        Assert.assertEquals(6, segments.get(0).contentLength);
+        Assert.assertEquals(0, segments.get(0).start);
+        Assert.assertEquals(5, segments.get(0).end);
+        Assert.assertEquals(4, segments.get(1).contentLength);
+        Assert.assertEquals(6, segments.get(1).start);
+        Assert.assertEquals(9, segments.get(1).end);
 
-       maxSize = 9;
-       segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-       Assert.assertEquals((int)Math.ceil(fm.getContentLength()*1.0/maxSize), segments.size());
-       Assert.assertEquals(9, segments.get(0).contentLength);
-       Assert.assertEquals(0, segments.get(0).start);
-       Assert.assertEquals(8, segments.get(0).end);
-       Assert.assertEquals(1, segments.get(1).contentLength);
-       Assert.assertEquals(9, segments.get(1).start);
-       Assert.assertEquals(9, segments.get(1).end);
-   }
+        maxSize = 9;
+        segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
+        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
+        Assert.assertEquals(9, segments.get(0).contentLength);
+        Assert.assertEquals(0, segments.get(0).start);
+        Assert.assertEquals(8, segments.get(0).end);
+        Assert.assertEquals(1, segments.get(1).contentLength);
+        Assert.assertEquals(9, segments.get(1).start);
+        Assert.assertEquals(9, segments.get(1).end);
+    }
 }

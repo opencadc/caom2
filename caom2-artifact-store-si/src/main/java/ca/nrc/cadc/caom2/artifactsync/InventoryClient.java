@@ -280,10 +280,10 @@ public class InventoryClient {
         try {
             for (PutSegment seg : segments) {
                 log.debug("Sending segment " + seg.toString());
-                TxnMetadata sendTnx = new TxnMetadata(null, txnID, seg.contentLength);
                 srcSegment = new HttpGet(src, true);
                 srcSegment.setRequestProperty("Range", seg.getRangeHeaderVal());
                 doPrepare(srcSegment);
+                TxnMetadata sendTnx = new TxnMetadata(null, txnID, seg.contentLength);
                 runTxnRequest(dest, sendTnx, srcSegment.getInputStream(), metadata);
                 success = true;
             }
