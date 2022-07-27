@@ -96,6 +96,7 @@ import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.security.auth.Subject;
@@ -119,7 +120,7 @@ public class FileSyncJob implements Runnable  {
     private final ArtifactDAO artifactDAO;
     private final ArtifactStore artifactStore;
     private final boolean tolerateNullChecksum;
-    private final Date retryAfter;
+    private final int retryAfter;
     private final Subject subject;
     private final List<Exception> fails = new ArrayList<>();
 
@@ -136,12 +137,11 @@ public class FileSyncJob implements Runnable  {
      */
     public FileSyncJob(HarvestSkipURI harvestSkipURI, HarvestSkipURIDAO harvestSkipURIDAO,
                        ArtifactDAO artifactDAO, ArtifactStore artifactStore,
-                       boolean tolerateNullChecksum, Date retryAfter, Subject subject) {
+                       boolean tolerateNullChecksum, int retryAfter, Subject subject) {
         CaomValidator.assertNotNull(FileSyncJob.class, "harvestSkipURI", harvestSkipURI);
         CaomValidator.assertNotNull(FileSyncJob.class, "harvestSkipURIDAO", harvestSkipURIDAO);
         CaomValidator.assertNotNull(FileSyncJob.class, "artifactDAO", artifactDAO);
         CaomValidator.assertNotNull(FileSyncJob.class, "artifactStore", artifactStore);
-        CaomValidator.assertNotNull(FileSyncJob.class, "retryAfter", retryAfter);
         CaomValidator.assertNotNull(FileSyncJob.class, "subject", subject);
 
         this.harvestSkipURI = harvestSkipURI;
@@ -347,7 +347,9 @@ public class FileSyncJob implements Runnable  {
                         harvestSkipURIDAO.delete(harvestSkipURI);
                     } else {
                         harvestSkipURI.errorMessage = msg;
-                        harvestSkipURI.setTryAfter(retryAfter);
+                        Calendar c = Calendar.getInstance();
+                        c.add(Calendar.HOUR, retryAfter);
+                        harvestSkipURI.setTryAfter(c.getTime());
                         harvestSkipURIDAO.put(harvestSkipURI);
                     }
                 }

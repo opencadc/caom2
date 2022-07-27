@@ -101,8 +101,6 @@ public class FileSync implements Runnable {
 
     private static final int MAX_THREADS = 16;
 
-    private static final int DEFAULT_RETRY_AFTER_ERROR_HOURS = 6;
-
     // The number of hours that the validity checker for the current Subject will request ahead to see if the Subject's
     // X500 certificate is about to expire.  This will also be used to update to schedule updates to the Subject's
     // credentials.
@@ -112,14 +110,14 @@ public class FileSync implements Runnable {
 
     private final ArtifactStore artifactStore;
     private final List<String> buckets;
-    private final Date retryAfter;
+    private final int retryAfterHours;
     private final boolean tolerateNullChecksum;
     private final ArtifactDAO artifactDAO;
     private final HarvestSkipURIDAO harvestSkipURIDAO;
     private final HarvestSkipURIDAO jobHarvestSkipURIDAO;
     private final ThreadedRunnableExecutor threadPool;
     private final LinkedBlockingQueue<Runnable> jobQueue;
-    private final String className;
+    private final String storageNamespace;
 
     // test usage only
     int testRunLoops = 0; // default: forever
@@ -136,7 +134,8 @@ public class FileSync implements Runnable {
      * @param tolerateNullChecksum download even when checksum is null
      */
     public FileSync(Map<String, Object> daoConfig, ConnectionConfig connectionConfig, ArtifactStore artifactStore,
-                    List<String> buckets, int threads, Integer retryAfterHours, boolean tolerateNullChecksum) {
+                    String storageNamespace, List<String> buckets, 
+                    int threads, int retryAfterHours, boolean tolerateNullChecksum) {
 
         CaomValidator.assertNotNull(FileSync.class, "daoConfig", daoConfig);
         CaomValidator.assertNotNull(FileSync.class, "connectionConfig", connectionConfig);
@@ -152,10 +151,7 @@ public class FileSync implements Runnable {
                                                              MAX_THREADS, threads));
         }
 
-        retryAfterHours = retryAfterHours == null ? DEFAULT_RETRY_AFTER_ERROR_HOURS : retryAfterHours;
-        Calendar c = Calendar.getInstance();
-        c.add(Calendar.HOUR, retryAfterHours);
-        this.retryAfter = c.getTime();
+        this.retryAfterHours = retryAfterHours;
 
         // For managing the artifact iterator FileSync loops over
         try {
@@ -206,7 +202,7 @@ public class FileSync implements Runnable {
         this.jobQueue = new LinkedBlockingQueue<>(threads * 2);
         this.threadPool = new ThreadedRunnableExecutor(this.jobQueue, threads);
 
-        this.className = Artifact.class.getSimpleName();
+        this.storageNamespace = null; // all
 
         log.debug("FileSync ctor done");
     }
@@ -256,14 +252,14 @@ public class FileSync implements Runnable {
                     log.debug("FileSync.QUERY bucket=" + bucketPrefix);
 
                     try (final ResourceIterator<HarvestSkipURI> skipIterator =
-                        harvestSkipURIDAO.iterator(null, className, bucketPrefix, retryAfter)) {
+                        harvestSkipURIDAO.iterator(Artifact.class.getSimpleName(), storageNamespace, bucketPrefix, new Date())) {
                         while (skipIterator.hasNext()) {
                             HarvestSkipURI harvestSkipURI = skipIterator.next();
                             log.debug("skip: " + harvestSkipURI.getSkipID());
 
                             FileSyncJob fileSyncJob =
                                 new FileSyncJob(harvestSkipURI, jobHarvestSkipURIDAO, artifactDAO, artifactStore,
-                                                tolerateNullChecksum, retryAfter, currentUser);
+                                                tolerateNullChecksum, retryAfterHours, currentUser);
                             jobQueue.put(fileSyncJob); // blocks when queue capacity is reached
                             log.debug("FileSync.CREATE: HarvestSkipURI.id=" + harvestSkipURI.getSkipID());
                             num++;

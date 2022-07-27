@@ -101,6 +101,7 @@ public class Main {
     private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".username";
     private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".password";
     private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".url";
+    private static final String NAMESPACE_CONFIG_KEY = CONFIG_PREFIX + ".namespace";
     private static final String BUCKETS_CONFIG_KEY = CONFIG_PREFIX + ".buckets";
     private static final String ARTIFACT_STORE_CONFIG_KEY = ArtifactStore.class.getName();
     private static final String THREADS_CONFIG_KEY = CONFIG_PREFIX + ".threads";
@@ -115,6 +116,7 @@ public class Main {
         DB_USERNAME_CONFIG_KEY,
         DB_PASSWORD_CONFIG_KEY,
         DB_URL_CONFIG_KEY,
+        NAMESPACE_CONFIG_KEY,
         BUCKETS_CONFIG_KEY,
         ARTIFACT_STORE_CONFIG_KEY,
         THREADS_CONFIG_KEY,
@@ -156,6 +158,8 @@ public class Main {
             if (profile) {
                 Log4jInit.setLevel("ca.nrc.cadc.profiler", Level.INFO);
             }
+            
+            final String storageNamespace = props.getFirstPropertyValue(NAMESPACE_CONFIG_KEY);
 
             final List<String> configuredBuckets = props.getProperty(BUCKETS_CONFIG_KEY);
             List<String> buckets = new ArrayList<>();
@@ -208,7 +212,7 @@ public class Main {
             final boolean tolerateNullChecksum = Boolean.parseBoolean(configuredTolerateNullChecksum);
 
             FileSync fileSync = new FileSync(daoConfig, connectionConfig, artifactStore,
-                                             buckets, threads, retryAfter, tolerateNullChecksum);
+                                    storageNamespace, buckets, threads, retryAfter, tolerateNullChecksum);
             fileSync.run();
         } catch (Throwable unexpected) {
             log.fatal("Unexpected failure", unexpected);
