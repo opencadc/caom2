@@ -81,6 +81,7 @@ import ca.nrc.cadc.caom2.repo.client.transform.ObservationStateListReader;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Capabilities;
 import ca.nrc.cadc.reg.CapabilitiesReader;
 import ca.nrc.cadc.reg.Capability;
@@ -183,7 +184,6 @@ public class RepoClient {
         this.resourceID = resourceID;
         this.rc = new RegistryClient();
         init();
-        initDel();
     }
 
     public RepoClient(URL capabilitiesURL, int nthreads) {
@@ -193,7 +193,6 @@ public class RepoClient {
         this.nthreads = nthreads;
         this.capabilitiesURL = capabilitiesURL;
         init();
-        initDel();
     }
 
     private void init() {
@@ -203,91 +202,64 @@ public class RepoClient {
             meth = AuthMethod.ANON;
         }
 
+        Capabilities caps;
         if (resourceID != null) {
-            this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_24, meth);
-            if (baseServiceURL == null) {
-                this.baseServiceURL = rc.getServiceURL(this.resourceID, Standards.CAOM2REPO_OBS_23, meth);
-            }
-            if (baseServiceURL == null) {
-                throw new RuntimeException("not found: " + resourceID 
-                        + " + one of {" + Standards.CAOM2REPO_OBS_24 + " " + Standards.CAOM2REPO_OBS_23 + "} + " + meth);
-            }
-        } else if (capabilitiesURL != null) {
-            CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
-
-            Capabilities capabilities;
             try {
-                capabilities = capabilitiesReader.read(capabilitiesURL.openStream());
+                caps = rc.getCapabilities(resourceID);
+            } catch (IOException ex) {
+                throw new RuntimeException("failed to read capabilities: " + resourceID, ex);
+            } catch (ResourceNotFoundException ex) {
+                throw new RuntimeException(ex.getMessage(), ex);
+            }
+        } else {
+            CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
+            try {
+                caps = capabilitiesReader.read(capabilitiesURL.openStream());
             } catch (IOException e) {
                 throw new RuntimeException("Imposible to read capabilities: " + capabilitiesURL);
             }
-
-            Capability cap = capabilities.findCapability(Standards.CAOM2REPO_OBS_23);
-
-            if (cap != null) {
-                // locate the associated interface, throws RuntimeException if
-                // more than
-                // one interface match
-                Interface intf = cap.findInterface(meth);
-
-                if (intf != null) {
-                    this.baseServiceURL = intf.getAccessURL().getURL();
-                }
-            }
-
-        } else {
-            throw new RuntimeException("BUG: no resourceID or capabilitiesURL");
+            
         }
-
         
+        Capability obs = caps.findCapability(Standards.CAOM2REPO_OBS_24);
+        if (obs == null) {
+            obs = caps.findCapability(Standards.CAOM2REPO_OBS_23);
+        }
+        if (obs == null) {
+            throw new RuntimeException("observation list capability not found");
+        }
+        Interface iface = obs.findInterface(meth);
+        if (iface == null) {
+            throw new RuntimeException("observation list capability does not suppoort auth: " + meth.getValue());
+        }
+        this.baseServiceURL = iface.getAccessURL().getURL();
         log.debug("observation list URL: " + baseServiceURL.toString());
         log.debug("AuthMethod:  " + meth);
         this.isObsAvailable = true;
-    }
-
-    private void initDel() {
-        Subject s = AuthenticationUtil.getCurrentSubject();
-        AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(s);
-        if (meth == null) {
-            meth = AuthMethod.ANON;
-        }
-
-        if (resourceID != null) {
-            this.baseDeletionURL = rc.getServiceURL(resourceID, Standards.CAOM2REPO_DEL_23, meth);
-        } else if (capabilitiesURL != null) {
-            CapabilitiesReader capabilitiesReader = new CapabilitiesReader();
-
-            Capabilities capabilities;
-            try {
-                capabilities = capabilitiesReader.read(capabilitiesURL.openStream());
-            } catch (IOException e) {
-                throw new RuntimeException("Imposible to read capabilities: " + capabilitiesURL);
+        
+        Capability del = caps.findCapability(Standards.CAOM2REPO_DEL_23);
+        // for now: tolerate missing deletion endpoint
+        //if (del == null) {
+        //    throw new RuntimeException("deleted observation list capability not found");
+        //}
+        //Interface iface2 = del.findInterface(meth);
+        //if (iface2 == null) {
+        //    throw new RuntimeException("deleted observation list capability does not suppoort auth: " + meth.getValue());
+        //}
+        //this.baseDeletionURL = iface2.getAccessURL().getURL();
+        
+        if (del != null) {
+            Interface iface2 = del.findInterface(meth);
+            if (iface2 != null) {
+                this.baseDeletionURL = iface2.getAccessURL().getURL();
             }
-
-            Capability cap = capabilities.findCapability(Standards.CAOM2REPO_DEL_23);
-
-            if (cap != null) {
-                // locate the associated interface, throws RuntimeException if
-                // more than
-                // one interface match
-                Interface intf = cap.findInterface(meth);
-
-                if (intf != null) {
-                    this.baseDeletionURL = intf.getAccessURL().getURL();
-                }
-            }
-
-        } else {
-            throw new RuntimeException("BUG: no resourceID or capabilitiesURL");
         }
-
         if (baseDeletionURL == null) {
             isDelAvailable = false;
             return;
         }
         log.debug("deletion list URL: " + baseDeletionURL.toString());
         log.debug("AuthMethod:  " + meth);
-
         this.isDelAvailable = true;
     }
 
