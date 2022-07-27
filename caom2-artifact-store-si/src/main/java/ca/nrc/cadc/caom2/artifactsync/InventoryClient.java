@@ -276,11 +276,12 @@ public class InventoryClient {
         }
         List<PutSegment> segments = getSegmentPlan(metadata, txnMinBytes, txnMaxBytes);
         boolean success = false;
+        HttpGet srcSegment = null;
         try {
             for (PutSegment seg : segments) {
                 log.debug("Sending segment " + seg.toString());
                 TxnMetadata sendTnx = new TxnMetadata(null, txnID, seg.contentLength);
-                HttpGet srcSegment = new HttpGet(src, true);
+                srcSegment = new HttpGet(src, true);
                 srcSegment.setRequestProperty("Range", seg.getRangeHeaderVal());
                 doPrepare(srcSegment);
                 runTxnRequest(dest, sendTnx, srcSegment.getInputStream(), metadata);
@@ -291,6 +292,9 @@ public class InventoryClient {
         } catch (Exception ex) {
             throw new RuntimeException("Unexpected error ", ex);
         } finally {
+            if ((srcSegment != null) && (srcSegment.getInputStream() != null)) {
+                srcSegment.getInputStream().close();
+            }
             if (!success) {
                 TxnMetadata abortTxn = new TxnMetadata(PUT_TXN_OP_ABORT, txnID, 0);
                 runTxnRequest(dest, abortTxn, null, metadata);
@@ -301,7 +305,7 @@ public class InventoryClient {
         runTxnRequest(dest, commitTxn, new ByteArrayInputStream(new byte[0]), metadata);
     }
 
-    private static class PutSegment {
+    static class PutSegment {
         long start;
         long end;
         long contentLength;
@@ -443,6 +447,10 @@ public class InventoryClient {
             throw pass;
         } catch (Exception ex) {
             throw new RuntimeException("Unexpected error ", ex);
+        } finally {
+            if (httpOp.getInputStream() != null) {
+                httpOp.getInputStream().close();
+            }
         }
 
         int respCode = httpOp.getResponseCode();
