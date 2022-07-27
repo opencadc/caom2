@@ -30,6 +30,9 @@ org.opencadc.caom2.download.url=jdbc:postgresql://{server}/{database}
 # ArtifactStore implementation
 ca.nrc.cadc.caom2.artifact.ArtifactStore={fully qualified class name for ArtifactStore implementation}
 
+# storage namespace aka Artifact.uri prefix
+org.opencadc.caom2.download.namespace={Artifact.uri prefix}
+
 # Prefix of artifacts to download
 org.opencadc.caom2.download.buckets={uriBucket prefix or range of prefixes}
 
@@ -46,6 +49,10 @@ org.opencadc.caom2.download.tolerateNullChecksum={true|false}
 `org.opencadc.caom2.download.artifactStore` is the fully qualified 
 class name to an ArtifactStore implementation, which may require 
 properties file(s) in /config.
+
+`org.opencadc.caom2.download.namespace` The storage namespace is specified
+as a prefix of Artiafct.uri values; it must end with a `:` or `/` so that it
+won't accidentally match a different namespace.
 
 `org.opencadc.caom2.download.buckets` The range of uriBucket prefixes 
 is specified with two values separated by a single - (dash) character; 

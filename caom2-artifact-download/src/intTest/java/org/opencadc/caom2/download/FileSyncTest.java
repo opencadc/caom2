@@ -67,9 +67,11 @@
 
 package org.opencadc.caom2.download;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.util.FileUtil;
@@ -107,10 +109,10 @@ public class FileSyncTest extends AbstractFileSyncTest {
         log.info("making 4 element dataset");
         // set up 4 IRIS artifacts
         List<Artifact> artifacts = new ArrayList<>();
-        artifacts.add(makeArtifact("ad:IRIS/I429B4H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/f429h000_preview_1024.png", null, 471897L));
-        artifacts.add(makeArtifact("ad:IRIS/I426B4H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/f426h000_preview_256.png", null, 113116L));
+        artifacts.add(makeArtifact("cadc:IRIS/I429B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/f429h000_preview_1024.png", null, 471897L));
+        artifacts.add(makeArtifact("cadc:IRIS/I426B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/f426h000_preview_256.png", null, 113116L));
         return artifacts;
     }
 
@@ -120,18 +122,18 @@ public class FileSyncTest extends AbstractFileSyncTest {
         // generate a 4 item list
         List<Artifact> artifacts = makeSmallDataset();
         // Build on the small dataset
-        artifacts.add(makeArtifact("ad:IRIS/I422B4H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I422B1H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I422B2H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I422B3H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I421B4H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I421B1H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I421B2H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I421B3H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I420B4H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I420B1H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I420B2H0.fits", null, 1008000L));
-        artifacts.add(makeArtifact("ad:IRIS/I420B3H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I422B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I422B1H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I422B2H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I422B3H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I421B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I421B1H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I421B2H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I421B3H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I420B4H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I420B1H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I420B2H0.fits", null, 1008000L));
+        artifacts.add(makeArtifact("cadc:IRIS/I420B3H0.fits", null, 1008000L));
         log.info("done making 16 element dataset");
         return artifacts;
     }
@@ -147,62 +149,38 @@ public class FileSyncTest extends AbstractFileSyncTest {
         }
     }
 
-    public void fileSyncTestBody(List<Artifact> artifacts, int threads, Integer retryAfterHours,
-                                 boolean tolerateNummChecksum)
+    public void fileSyncTestBody(List<Artifact> artifacts, int threads)
         throws Exception {
 
-        File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-        Subject subject = SSLUtil.createSubject(certificateFile);
+        //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+        //Subject subject = SSLUtil.createSubject(certificateFile);
+        final Subject subject = AuthenticationUtil.getAnonSubject();
 
         // instantiate ArtifactStore when it's config is in place.
-        ArtifactStore artifactStore = getArtifactStore();
+        final ArtifactStore artifactStore = TestUtil.getArtifactStore();
 
         createTestMetadata(artifacts);
         log.info("test metadata put to database");
         log.debug("threads: " + threads);
-        log.debug("retryAfterHours: " + retryAfterHours);
-        log.debug("tolerateNummChecksum: " + tolerateNummChecksum);
 
         // bucket to cover all ranges
+        String namespace = null; // all
         List<String> buckets = Collections.singletonList("%");
         log.debug("buckets: " + buckets);
 
         log.info("FileSync: START");
-        FileSync fs = new FileSync(daoConfig, cc, artifactStore, buckets, threads,
-                                   retryAfterHours, tolerateNummChecksum);
+        FileSync fs = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, threads,
+                                   2, true);
         fs.testRunLoops = 1;
         fs.doit(subject);
         log.info("FileSync: DONE");
 
-        // Loop until the job has updated the artifact store.
-        Connection con = artifactStoreDataSource.getConnection();
-        String sql = String.format("select uri from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
-        PreparedStatement ps = con.prepareStatement(sql);
-        ResultSet rs = ps.executeQuery();
-        while (!rs.next()) {
-            log.debug("waiting for file sync jobs to update database");
-            Thread.sleep(1000);
-            rs = ps.executeQuery();
-        }
 
-        // Check the artifact store database for artifacts.
-        sql = String.format("select uri from %s.artifact where uri = ?", TestUtil.ARTIFACT_STORE_SCHEMA);
-        ps = con.prepareStatement(sql);
+        // Check the artifact store for artifacts.
         for (Artifact artifact : artifacts) {
-            String artifactUri = artifact.getURI().toASCIIString();
-            ps.setString(1, artifactUri);
-            try {
-                rs = ps.executeQuery();
-                if (rs.next()) {
-                    String uri = rs.getString(1);
-                    Assert.assertEquals(artifactUri, uri);
-                } else {
-                    Assert.fail(String.format("Artifact %s not found in artifact store", artifactUri));
-                }
-            } catch (SQLException e) {
-                log.error(String.format("Artifact %s not found in ArtifactStore", artifactUri));
-                Assert.fail(e.getMessage());
-            }
+            ArtifactMetadata am = artifactStore.get(artifact.getURI());
+            log.info("check: " + artifact.getURI() + " found: " + am);
+            Assert.assertNotNull(artifact.getURI().toASCIIString(), am);
         }
     }
 
@@ -213,10 +191,10 @@ public class FileSyncTest extends AbstractFileSyncTest {
             System.setProperty("user.home", TestUtil.TMP_DIR);
 
             List<Artifact> artifacts = makeSmallDataset();
-            fileSyncTestBody(artifacts, 1, null, true);
+            fileSyncTestBody(artifacts, 1);
         } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
         } finally {
             System.setProperty("user.home", TestUtil.USER_HOME);
         }
@@ -230,10 +208,10 @@ public class FileSyncTest extends AbstractFileSyncTest {
             System.setProperty("user.home", TestUtil.TMP_DIR);
 
             List<Artifact> artifacts = makeSmallDataset();
-            fileSyncTestBody(artifacts, 4, null, true);
+            fileSyncTestBody(artifacts, 4);
         } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
         } finally {
             System.setProperty("user.home", TestUtil.USER_HOME);
         }
@@ -247,10 +225,10 @@ public class FileSyncTest extends AbstractFileSyncTest {
             System.setProperty("user.home", TestUtil.TMP_DIR);
 
             List<Artifact> artifacts = makeLargeDataset();
-            fileSyncTestBody(artifacts, 2, null, true);
+            fileSyncTestBody(artifacts, 2);
         } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
         } finally {
             System.setProperty("user.home", TestUtil.USER_HOME);
         }
@@ -261,26 +239,27 @@ public class FileSyncTest extends AbstractFileSyncTest {
     public void testRetryOnRepeatedQuery() {
         log.info("testRetryOnRepeatedQuery - START");
         try {
-            System.setProperty("user.home", TestUtil.TMP_DIR);
-
-            //Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
-            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-            Subject subject = SSLUtil.createSubject(certificateFile);
+            //System.setProperty("user.home", TestUtil.TMP_DIR);
+            //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            //Subject subject = SSLUtil.createSubject(certificateFile);
+            final Subject subject = AuthenticationUtil.getAnonSubject();
 
             // instantiate ArtifactStore when it's config is in place.
-            ArtifactStore artifactStore = getArtifactStore();
+            final ArtifactStore artifactStore = TestUtil.getArtifactStore();
 
-            Artifact testArtifact = makeArtifact("ad:IRIS/no-such-file.fits");
+
+            Artifact testArtifact = makeArtifact("cadc:IRIS/no-such-file.fits");
             Observation observation = makeObservation(testArtifact);
             observationDAO.put(observation);
             HarvestSkipURI skip = makeHarvestSkipURI(testArtifact);
             harvestSkipURIDAO.put(skip);
 
+            String namespace = null; // all
             List<String> buckets = Collections.singletonList("g");
 
             // make sure FileSyncJob actually fails to update
             log.info("FileSync: START");
-            final FileSync fs = new FileSync(daoConfig, cc, artifactStore, buckets, 1, null, true);
+            final FileSync fs = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, 1, 2, true);
             fs.testRunLoops = 1;
             fs.doit(subject);
             log.info("FileSync: DONE");
@@ -290,7 +269,7 @@ public class FileSyncTest extends AbstractFileSyncTest {
 
             // now with loops
             log.info("FileSync: START");
-            final FileSync fs2 = new FileSync(daoConfig, cc, artifactStore, buckets, 1, null, true);
+            final FileSync fs2 = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, 1, 2, true);
             fs2.testRunLoops = 4;
             fs.doit(subject);
             log.info("FileSync: DONE");

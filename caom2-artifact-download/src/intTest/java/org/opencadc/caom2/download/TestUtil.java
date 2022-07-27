@@ -67,9 +67,25 @@
 
 package org.opencadc.caom2.download;
 
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.caom2.artifact.StoragePolicy;
+import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.util.FileMetadata;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.CopyOption;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.AccessControlException;
 import java.util.Properties;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -81,19 +97,11 @@ public class TestUtil {
 
     static String TMP_DIR = "build/tmp";
     static final String USER_HOME = System.getProperty("user.home");
-    public static final String ARTIFACT_STORE_CONFIG = "caom2-artifact-store-si.properties";
-    public static final String COLLECTION_PREFIX_CONFIG = "collection-prefix.properties";
 
-    static String CAOM2_SERVER = "ARTIFACT_DOWNLOAD_TEST_CAOM2";
+    static String CAOM2_SERVER = "CAOM2_ARTIFACT_DOWNLOAD_TEST";
     static String CAOM2_DATABASE = "cadctest";
     static String CAOM2_SCHEMA = "caom2";
 
-    static String ARTIFACT_STORE_SERVER = "ARTIFACT_DOWNLOAD_TEST_STORE";
-    static String ARTIFACT_STORE_DATABASE = "cadctest";
-    static String ARTIFACT_STORE_SCHEMA = "inventory";
-    static String ARTIFACT_STORE_IMPL = "ca.nrc.cadc.caom2.artifactsync.InventoryArtifactStore";
-    static String CERTIFICATE_FILE = "artifact-download-test.pem";
-    
     static {
         try {
             File opt = new File("intTest.properties");
@@ -114,34 +122,115 @@ public class TestUtil {
                     CAOM2_SCHEMA = s.trim();
                 }
 
-                // artifact store database properties
-                s = props.getProperty("artifactStore.server");
-                if (s != null) {
-                    ARTIFACT_STORE_SERVER = s.trim();
-                }
-                s = props.getProperty("artifactStore.database");
-                if (s != null) {
-                    ARTIFACT_STORE_DATABASE = s.trim();
-                }
-                s = props.getProperty("artifactStore.schema");
-                if (s != null) {
-                    ARTIFACT_STORE_SCHEMA = s.trim();
-                }
-
-                // fully qualified ArtifactStore classpath
-                s = props.getProperty("artifactStore.impl");
-                if (s != null) {
-                    ARTIFACT_STORE_IMPL = s.trim();
-                }
             }
             log.debug("intTest caom2 database config: " + CAOM2_SERVER + " " + CAOM2_DATABASE + " " + CAOM2_SCHEMA);
-            log.debug("intTest ArtifactStore database config: " + ARTIFACT_STORE_SERVER + " " + ARTIFACT_STORE_DATABASE
-                          + " " + ARTIFACT_STORE_SCHEMA + " " + ARTIFACT_STORE_IMPL);
         } catch (Exception oops) {
             log.debug("failed to load/read optional db config", oops);
         }
     }
     
+    static ArtifactStore getArtifactStore() {
+        return new TestArtifactStore();
+    }
+    
     private TestUtil() { 
+    }
+    
+    static class TestArtifactStore implements ArtifactStore {
+        
+        File baseDir = new File("build/tmp/TestArtifactStore");
+        FileSystem fs = FileSystems.getDefault();
+        
+        public TestArtifactStore() {
+            baseDir.mkdirs();
+            for (File c : baseDir.listFiles()) {
+                delete(c);
+            }
+        }
+        
+        private void delete(File f) {
+            if (f.isDirectory()) {
+                for (File c : f.listFiles()) {
+                    delete(c);
+                }
+                return;
+            }
+            f.delete();
+        }
+        
+        private Path toPath(URI artifactURI) {
+            String scheme = artifactURI.getScheme();
+            String ssp = artifactURI.getSchemeSpecificPart();
+            int i = ssp.lastIndexOf("/");
+            String filename = ssp.substring(i + 1);
+            String path = scheme + "/" + ssp.substring(0, i);
+            log.info("store: " + artifactURI + " -> " + path + "/" + filename);
+            File dir = new File(baseDir, path);
+            log.info("mkdir: " + dir);
+            dir.mkdirs();
+            Path ret = fs.getPath(dir.getAbsolutePath(), filename);
+            log.info("path: " + ret);
+            return ret;
+        }
+        
+        private URI toURI(Path p) {
+            String abs = p.toFile().getAbsolutePath();
+            String base = baseDir.getAbsolutePath();
+            String rel = abs.replace(base, "");
+            log.info("toURI rel: " + rel);
+            rel = rel.replaceFirst("/", "");
+            rel = rel.replaceFirst("/", ":");
+            return URI.create(rel);
+        }
+        
+        @Override
+        public ArtifactMetadata get(URI artifactURI) 
+                throws TransientException, UnsupportedOperationException, IllegalArgumentException, 
+                AccessControlException, IllegalStateException {
+            Path p = toPath(artifactURI);
+            File f = p.toFile();
+            if (f.exists() && f.isFile() && f.length() > 0) {
+                URI u = toURI(p);
+                ArtifactMetadata am = new ArtifactMetadata(u, null);
+                am.contentLength = p.toFile().length();
+                return am;
+            }
+            return null;
+        }
+
+        @Override
+        public StoragePolicy getStoragePolicy(String collection) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void store(URI artifactURI, InputStream data, FileMetadata metadata) 
+                throws TransientException, UnsupportedOperationException, IllegalArgumentException, 
+                AccessControlException, IllegalStateException {
+            
+            try {
+                Path target = toPath(artifactURI);
+                Files.copy(data, target, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ex) {
+                throw new RuntimeException("store failed", ex);
+            }
+        }
+
+        @Override
+        public Set<ArtifactMetadata> list(String collection) 
+                throws TransientException, UnsupportedOperationException, AccessControlException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public String toStorageID(String artifactURI) throws IllegalArgumentException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void processResults(long total, long successes, long totalElapsedTime, long totalBytes, int threads) {
+            throw new UnsupportedOperationException();
+        }
+        
     }
 }

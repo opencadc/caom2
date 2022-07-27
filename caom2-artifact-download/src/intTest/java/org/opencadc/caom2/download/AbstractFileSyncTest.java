@@ -80,6 +80,7 @@ import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
@@ -113,7 +114,6 @@ public abstract class AbstractFileSyncTest {
     final ObservationDAO observationDAO;
     final HarvestSkipURIDAO harvestSkipURIDAO;
     final DataSource caom2DataSource;
-    final DataSource artifactStoreDataSource;
 
     public AbstractFileSyncTest() throws Exception {
         daoConfig = new TreeMap<>();
@@ -137,31 +137,15 @@ public abstract class AbstractFileSyncTest {
 
             this.observationDAO = new ObservationDAO();
             this.observationDAO.setConfig(daoConfig);
+            
+            InitDatabase init = new InitDatabase(caom2DataSource, TestUtil.CAOM2_DATABASE, TestUtil.CAOM2_SCHEMA);
+            init.doInit();
 
-            // artifact store database
-            ConnectionConfig asCC = dbrc.getConnectionConfig(TestUtil.ARTIFACT_STORE_SERVER,
-                                                             TestUtil.ARTIFACT_STORE_DATABASE);
-            this.artifactStoreDataSource = DBUtil.getDataSource(asCC);
         } catch (Exception ex) {
             log.error("setup failed", ex);
             throw ex;
         }
 
-    }
-
-    @BeforeClass
-    public static void setup() throws Exception {
-        // tmp config directory
-        Path dest = Paths.get(TestUtil.TMP_DIR + "/config");
-        if (!Files.exists(dest)) {
-            Files.createDirectories(dest);
-        }
-
-        // copy ArtifactStore config files to tmp config
-        File file = FileUtil.getFileFromResource(TestUtil.ARTIFACT_STORE_CONFIG, FileSyncJobTest.class);
-        Files.copy(file.toPath(), dest.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
-        file = FileUtil.getFileFromResource(TestUtil.COLLECTION_PREFIX_CONFIG, FileSyncJobTest.class);
-        Files.copy(file.toPath(), dest.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
     }
 
     @Before
@@ -170,25 +154,9 @@ public abstract class AbstractFileSyncTest {
         String sql = String.format("delete from %s.harvestSkipURI", TestUtil.CAOM2_SCHEMA);
         this.caom2DataSource.getConnection().createStatement().execute(sql);
 
-        log.debug("cleaning caom2 artifacts...");
+        log.debug("cleaning caom2 observations...");
         sql = String.format("truncate table %s.observation cascade", TestUtil.CAOM2_SCHEMA);
         this.caom2DataSource.getConnection().createStatement().execute(sql);
-
-        log.debug("cleaning artifact store artifacts...");
-        sql = String.format("delete from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
-        this.artifactStoreDataSource.getConnection().createStatement().execute(sql);
-    }
-
-    ArtifactStore getArtifactStore() {
-        try {
-            Class<?> asClass = Class.forName(TestUtil.ARTIFACT_STORE_IMPL);
-            ArtifactStore artifactStore = (ArtifactStore) asClass.getDeclaredConstructor().newInstance();
-            Log4jInit.setLevel(asClass.getPackage().getName(), Level.INFO);
-            log.debug("ArtifactStore: " + artifactStore);
-            return artifactStore;
-        } catch (Throwable t) {
-            throw new IllegalStateException("failed to create artifact store: " + TestUtil.ARTIFACT_STORE_IMPL, t);
-        }
     }
 
     Artifact makeArtifact(final String uri) {
