@@ -227,7 +227,7 @@ public class InventoryClient {
      * @throws IOException
      * @throws ResourceNotFoundException
      */
-    public void upload(URL src, FileMetadata metadata, URL dest) throws TransientException,
+    private static void upload(URL src, FileMetadata metadata, URL dest) throws TransientException,
             InterruptedException, IOException, ResourceNotFoundException {
         HttpGet srcInfo = new HttpGet(src, true);
         srcInfo.setHeadOnly(true);
@@ -275,6 +275,7 @@ public class InventoryClient {
                     "BUG: PUT txn start returned minBytes>maxBytes: " + txnMinBytes + " vs " + txnMaxBytes);
         }
         List<PutSegment> segments = getSegmentPlan(metadata, txnMinBytes, txnMaxBytes);
+        boolean success = false;
         try {
             for (PutSegment seg : segments) {
                 log.debug("Sending segment " + seg.toString());
@@ -283,17 +284,16 @@ public class InventoryClient {
                 srcSegment.setRequestProperty("Range", seg.getRangeHeaderVal());
                 doPrepare(srcSegment);
                 runTxnRequest(dest, sendTnx, srcSegment.getInputStream(), metadata);
+                success = true;
             }
+        } catch (TransientException | IOException | InterruptedException | ResourceNotFoundException | AccessControlException pass) {
+            throw pass;
         } catch (Exception ex) {
-            TxnMetadata abortTxn = new TxnMetadata(PUT_TXN_OP_ABORT, txnID, 0);
-            runTxnRequest(dest, abortTxn, null, metadata);
-            if (ex instanceof TransientException ||
-                    ex instanceof IOException ||
-                    ex instanceof InterruptedException ||
-                    ex instanceof ResourceNotFoundException ) {
-                throw ex;
-            } else {
-                throw new RuntimeException("Unexpected error ", ex);
+            throw new RuntimeException("Unexpected error ", ex);
+        } finally {
+            if (!success) {
+                TxnMetadata abortTxn = new TxnMetadata(PUT_TXN_OP_ABORT, txnID, 0);
+                runTxnRequest(dest, abortTxn, null, metadata);
             }
         }
         // commit trans
@@ -330,7 +330,7 @@ public class InventoryClient {
             this.totalSize = -1;
         }
 
-        Map<String, Object> toHttpHeaders(){
+        Map<String, Object> toHttpHeaders() {
             Map<String, Object> headers = new HashMap<>();
             if (txnOperation != null) {
                 headers.put(PUT_TXN_OP, txnOperation);
@@ -379,7 +379,7 @@ public class InventoryClient {
         return segs;
     }
 
-    private void doPrepare(HttpGet get) throws InterruptedException, ResourceNotFoundException, IOException {
+    private static void doPrepare(HttpGet get) throws InterruptedException, ResourceNotFoundException, IOException {
         try {
             get.prepare();
         } catch (ResourceAlreadyExistsException ex) {
@@ -387,13 +387,14 @@ public class InventoryClient {
         }
     }
 
-    private static HttpTransfer runTxnRequest(URL target, TxnMetadata txnMetadata, InputStream inputStream,
-                                              FileMetadata fileMetadata) {
+    private static HttpTransfer runTxnRequest(
+            URL target, TxnMetadata txnMetadata, InputStream inputStream, FileMetadata fileMetadata)
+            throws InterruptedException, ResourceNotFoundException, IOException {
         if ((txnMetadata == null) && (inputStream == null)) {
             throw new IllegalArgumentException("No operation specified to run");
         }
         HttpTransfer httpOp;
-        if( PUT_TXN_OP_ABORT.equals(txnMetadata.txnOperation) || PUT_TXN_OP_REVERT.equals(txnMetadata.txnOperation)){
+        if (PUT_TXN_OP_ABORT.equals(txnMetadata.txnOperation) || PUT_TXN_OP_REVERT.equals(txnMetadata.txnOperation)) {
             httpOp = new HttpPost(target, txnMetadata.toHttpHeaders(), true);
             httpOp.setRequestProperty(PUT_TXN_ID, txnMetadata.txnID);
             httpOp.setRequestProperty(PUT_TXN_OP, txnMetadata.txnOperation);
@@ -436,17 +437,12 @@ public class InventoryClient {
         httpOp.setConnectionTimeout(InventoryArtifactStore.DEFAULT_TIMEOUT);
         httpOp.setReadTimeout(InventoryArtifactStore.DEFAULT_TIMEOUT);
 
-        httpOp.run();
-        if (httpOp.getThrowable() != null) {
-            if (httpOp.getThrowable() instanceof Exception) {
-                if (httpOp.getThrowable() instanceof AccessControlException) {
-                    throw (AccessControlException) httpOp.getThrowable();
-                } else {
-                    throw new IllegalStateException(httpOp.getThrowable().getMessage());
-                }
-            } else {
-                throw new RuntimeException(httpOp.getThrowable());
-            }
+        try {
+            httpOp.prepare();
+        } catch (TransientException | IOException | InterruptedException | ResourceNotFoundException | AccessControlException pass) {
+            throw pass;
+        } catch (Exception ex) {
+            throw new RuntimeException("Unexpected error ", ex);
         }
 
         int respCode = httpOp.getResponseCode();
@@ -455,6 +451,5 @@ public class InventoryClient {
             throw new RuntimeException(msg);
         }
         return httpOp;
-
     }
 }
