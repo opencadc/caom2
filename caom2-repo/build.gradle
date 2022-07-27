@@ -17,7 +17,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '1.4.2'
+version = '1.4.3'
 
 description = 'OpenCADC CAOM repository client library'
 def git_url = 'https://github.com/opencadc/caom2db'
