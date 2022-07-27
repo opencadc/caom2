@@ -69,6 +69,7 @@ package org.opencadc.caom2.download;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
@@ -118,6 +119,7 @@ public class FileSync implements Runnable {
     private final HarvestSkipURIDAO jobHarvestSkipURIDAO;
     private final ThreadedRunnableExecutor threadPool;
     private final LinkedBlockingQueue<Runnable> jobQueue;
+    private final String className;
 
     // test usage only
     int testRunLoops = 0; // default: forever
@@ -204,6 +206,8 @@ public class FileSync implements Runnable {
         this.jobQueue = new LinkedBlockingQueue<>(threads * 2);
         this.threadPool = new ThreadedRunnableExecutor(this.jobQueue, threads);
 
+        this.className = Artifact.class.getSimpleName();
+
         log.debug("FileSync ctor done");
     }
 
@@ -248,19 +252,18 @@ public class FileSync implements Runnable {
                 long startQ = System.currentTimeMillis();
                 long num = 0L;
                 log.debug("FileSync.QUERY START");
-                for (String bucketPrefix : this.buckets) {
+                for (String bucketPrefix : buckets) {
                     log.debug("FileSync.QUERY bucket=" + bucketPrefix);
 
                     try (final ResourceIterator<HarvestSkipURI> skipIterator =
-                        harvestSkipURIDAO.iterator(null, null, bucketPrefix, this.retryAfter)) {
+                        harvestSkipURIDAO.iterator(null, className, bucketPrefix, retryAfter)) {
                         while (skipIterator.hasNext()) {
                             HarvestSkipURI harvestSkipURI = skipIterator.next();
                             log.debug("skip: " + harvestSkipURI.getSkipID());
 
                             FileSyncJob fileSyncJob =
-                                new FileSyncJob(harvestSkipURI, this.jobHarvestSkipURIDAO, this.artifactDAO,
-                                                this.artifactStore, this.tolerateNullChecksum,
-                                                this.retryAfter, currentUser);
+                                new FileSyncJob(harvestSkipURI, jobHarvestSkipURIDAO, artifactDAO, artifactStore,
+                                                tolerateNullChecksum, retryAfter, currentUser);
                             jobQueue.put(fileSyncJob); // blocks when queue capacity is reached
                             log.debug("FileSync.CREATE: HarvestSkipURI.id=" + harvestSkipURI.getSkipID());
                             num++;

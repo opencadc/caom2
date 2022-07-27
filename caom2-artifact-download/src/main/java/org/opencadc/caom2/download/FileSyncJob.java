@@ -111,7 +111,8 @@ public class FileSyncJob implements Runnable  {
     private static final Logger log = Logger.getLogger(FileSyncJob.class);
 
     private static final long[] RETRY_DELAY = new long[] { 6000L, 12000L };
-    public static final int DEFAULT_TIMEOUT = 600000;  // 10 minutes
+    public static final int DEFAULT_CONNECTION_TIMEOUT = 6000;
+    public static final int DEFAULT_READ_TIMEOUT = 60000;
 
     private final HarvestSkipURI harvestSkipURI;
     private final HarvestSkipURIDAO harvestSkipURIDAO;
@@ -157,16 +158,16 @@ public class FileSyncJob implements Runnable  {
         Subject currentSubject = new Subject();
 
         // Also synchronized in FileSync.run()
-        synchronized (this.subject) {
-            currentSubject.getPrincipals().addAll(this.subject.getPrincipals());
-            currentSubject.getPublicCredentials().addAll(this.subject.getPublicCredentials());
+        synchronized (subject) {
+            currentSubject.getPrincipals().addAll(subject.getPrincipals());
+            currentSubject.getPublicCredentials().addAll(subject.getPublicCredentials());
         }
         Subject.doAs(currentSubject, new RunnableAction(this::doSync));
     }
 
     private void doSync() {
 
-        log.info("FileSyncJob.START " + this.harvestSkipURI.getSkipID());
+        log.info("FileSyncJob.START " + harvestSkipURI.getSkipID());
         long start = System.currentTimeMillis();
         int downloadAttempts = 0;
         long byteTransferTime = 0;
@@ -174,8 +175,8 @@ public class FileSyncJob implements Runnable  {
         String msg = "";
 
         try {
-            URI artifactURI = this.harvestSkipURI.getSkipID();
-            Artifact artifact = this.artifactDAO.get(artifactURI);
+            URI artifactURI = harvestSkipURI.getSkipID();
+            Artifact artifact = artifactDAO.get(artifactURI);
             if (artifact == null) {
                 // artifact no longer exists, remove from skip uri table
                 success = true;
@@ -187,7 +188,7 @@ public class FileSyncJob implements Runnable  {
             fileMetadata.setContentType(artifact.contentType);
             fileMetadata.setContentLength(artifact.contentLength);
             if (artifact.contentChecksum == null) {
-                if (!this.tolerateNullChecksum) {
+                if (!tolerateNullChecksum) {
                     msg = "artifact content checksum is null";
                     return;
                 }
@@ -204,12 +205,12 @@ public class FileSyncJob implements Runnable  {
                 log.debug("download url: " + url);
             } catch (MalformedURLException | IllegalStateException ex) {
                 log.debug("FileSyncJob.ERROR", ex);
-                msg = "ArtifactResolver error resolving artifact uri";
+                msg = "CaomArtifactResolver failed: " + ex;
                 return;
             }
             if (url == null) {
-                log.debug("FileSyncJob.ERROR ArtifactResolver unable to resolve " + artifactURI);
-                msg = "ArtifactResolver failed to resolve artifact uri";
+                log.debug("FileSyncJob.ERROR CaomArtifactResolver unable to resolve " + artifactURI);
+                msg = "CaomArtifactResolver failed to resolve artifact uri";
                 return;
             }
 
@@ -218,7 +219,7 @@ public class FileSyncJob implements Runnable  {
                 while (!success && retryCount < RETRY_DELAY.length) {
                     log.debug(String.format("FileSyncJob.SYNC %s attempts=%s", artifact.getURI(), retryCount));
 
-                    Artifact curArtifact = this.artifactDAO.get(artifactURI);
+                    Artifact curArtifact = artifactDAO.get(artifactURI);
                     if (curArtifact == null) {
                         msg = "reason=obsolete-artifact";
                         success = true;
@@ -232,13 +233,13 @@ public class FileSyncJob implements Runnable  {
                         // get the artifact metadata
                         OutputStream out = new ByteArrayOutputStream();
                         HttpGet head = new HttpGet(url, out);
-                        head.setConnectionTimeout(DEFAULT_TIMEOUT);
-                        head.setReadTimeout(DEFAULT_TIMEOUT);
+                        head.setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+                        head.setReadTimeout(DEFAULT_READ_TIMEOUT);
                         head.setHeadOnly(true);
                         head.prepare();
 
                         // compare artifact metadata
-                        if (!this.tolerateNullChecksum) {
+                        if (!tolerateNullChecksum) {
                             URI hdrContentChecksum = head.getDigest();
                             if (hdrContentChecksum != null && !hdrContentChecksum.equals(curArtifact.contentChecksum)) {
                                 throw new PreconditionFailedException(
@@ -255,7 +256,7 @@ public class FileSyncJob implements Runnable  {
                         }
 
                         // check again to be sure the destination doesn't already have it
-                        ArtifactMetadata tempMetadata = this.artifactStore.get(artifactURI);
+                        ArtifactMetadata tempMetadata = artifactStore.get(artifactURI);
                         if (tempMetadata != null && tempMetadata.getChecksum() != null
                             && tempMetadata.getChecksum().equals(curArtifact.contentChecksum.getSchemeSpecificPart())) {
                             msg = "ArtifactStore already has correct copy";
@@ -264,16 +265,15 @@ public class FileSyncJob implements Runnable  {
                         }
 
                         HttpGet download = new HttpGet(url, true);
-                        download.setConnectionTimeout(DEFAULT_TIMEOUT);
-                        download.setReadTimeout(DEFAULT_TIMEOUT);
+                        download.setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+                        download.setReadTimeout(DEFAULT_READ_TIMEOUT);
                         log.debug(String.format("download: %s as %s", url, AuthenticationUtil.getCurrentSubject()));
 
                         final long dlStart = System.currentTimeMillis();
                         download.prepare();
                         postPrepare = true;
 
-                        this.artifactStore.store(this.harvestSkipURI.getSkipID(),
-                                                 download.getInputStream(), fileMetadata);
+                        artifactStore.store(harvestSkipURI.getSkipID(), download.getInputStream(), fileMetadata);
                         byteTransferTime = System.currentTimeMillis() - dlStart;
                         success = true;
                         log.debug(String.format("Completed download of %s from %s", artifactURI, url));
@@ -330,25 +330,25 @@ public class FileSyncJob implements Runnable  {
                     }
                 }
             }  catch (ByteLimitExceededException | IllegalStateException ex) {
-                log.debug("artifact download aborted: " + this.harvestSkipURI.getSkipID(), ex);
+                log.debug("artifact download aborted: " + harvestSkipURI.getSkipID(), ex);
                 msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
             } catch (IllegalArgumentException | InterruptedException | WriteException ex) {
-                log.debug("artifact download error: " + this.harvestSkipURI.getSkipID(), ex);
+                log.debug("artifact download error: " + harvestSkipURI.getSkipID(), ex);
                 msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
             } catch (Exception ex) {
-                log.debug("unexpected fail: " + this.harvestSkipURI.getSkipID(), ex);
+                log.debug("unexpected fail: " + harvestSkipURI.getSkipID(), ex);
                 msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
             }
         } finally {
             // Update the skip table
             try {
-                synchronized (this.harvestSkipURIDAO) {
+                synchronized (harvestSkipURIDAO) {
                     if (success) {
-                        this.harvestSkipURIDAO.delete(this.harvestSkipURI);
+                        harvestSkipURIDAO.delete(harvestSkipURI);
                     } else {
                         harvestSkipURI.errorMessage = msg;
-                        harvestSkipURI.setTryAfter(this.retryAfter);
-                        this.harvestSkipURIDAO.put(this.harvestSkipURI);
+                        harvestSkipURI.setTryAfter(retryAfter);
+                        harvestSkipURIDAO.put(harvestSkipURI);
                     }
                 }
             } catch (Throwable t) {
@@ -358,7 +358,7 @@ public class FileSyncJob implements Runnable  {
             long dt = System.currentTimeMillis() - start;
             long overheadTime = dt - byteTransferTime;
             StringBuilder sb = new StringBuilder();
-            sb.append("FileSyncJob.END ").append(this.harvestSkipURI.getSkipID());
+            sb.append("FileSyncJob.END ").append(harvestSkipURI.getSkipID());
             sb.append(" success=").append(success);
             sb.append(" duration=").append(dt);
             sb.append(" attempts=").append(downloadAttempts);

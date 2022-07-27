@@ -81,12 +81,8 @@ public class TestUtil {
 
     static String TMP_DIR = "build/tmp";
     static final String USER_HOME = System.getProperty("user.home");
-
-    public static final String CERTIFICATE_FILE_LOCATION = USER_HOME + "/.ssl/cadcproxy.pem";
-    static final String CONFIG_DIR = USER_HOME + "/config";
-    public static final String ARTIFACT_DOWNLOAD_CONFIG = CONFIG_DIR + "/caom2-artifact-download.properties";
-    public static final String ARTIFACT_STORE_CONFIG = CONFIG_DIR + "/caom2-artifact-store-si.properties";
-    public static final String COLLECTION_PREFIX_CONFIG = CONFIG_DIR + "/collection-prefix.properties";
+    public static final String ARTIFACT_STORE_CONFIG = "caom2-artifact-store-si.properties";
+    public static final String COLLECTION_PREFIX_CONFIG = "collection-prefix.properties";
 
     static String CAOM2_SERVER = "ARTIFACT_DOWNLOAD_TEST_CAOM2";
     static String CAOM2_DATABASE = "cadctest";
@@ -96,7 +92,7 @@ public class TestUtil {
     static String ARTIFACT_STORE_DATABASE = "cadctest";
     static String ARTIFACT_STORE_SCHEMA = "inventory";
     static String ARTIFACT_STORE_IMPL = "ca.nrc.cadc.caom2.artifactsync.InventoryArtifactStore";
-
+    static String CERTIFICATE_FILE = "artifact-download-test.pem";
     
     static {
         try {

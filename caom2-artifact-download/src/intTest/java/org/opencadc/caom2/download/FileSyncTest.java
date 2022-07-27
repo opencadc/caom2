@@ -70,7 +70,9 @@ package org.opencadc.caom2.download;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
 import java.io.File;
@@ -137,10 +139,10 @@ public class FileSyncTest extends AbstractFileSyncTest {
     private void createTestMetadata(List<Artifact> artifacts) {
         for(Artifact artifact : artifacts) {
             Observation observation = makeObservation(artifact);
-            this.observationDAO.put(observation);
+            observationDAO.put(observation);
             log.debug("put test Artifact " + artifact.getURI());
             HarvestSkipURI harvestSkipURI = makeHarvestSkipURI(artifact);
-            this.harvestSkipURIDAO.put(harvestSkipURI);
+            harvestSkipURIDAO.put(harvestSkipURI);
             log.debug("put test HarvestSkipURI " + harvestSkipURI.getSkipID());
         }
     }
@@ -149,7 +151,12 @@ public class FileSyncTest extends AbstractFileSyncTest {
                                  boolean tolerateNummChecksum)
         throws Exception {
 
-        Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
+        File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+        Subject subject = SSLUtil.createSubject(certificateFile);
+
+        // instantiate ArtifactStore when it's config is in place.
+        ArtifactStore artifactStore = getArtifactStore();
+
         createTestMetadata(artifacts);
         log.info("test metadata put to database");
         log.debug("threads: " + threads);
@@ -161,14 +168,14 @@ public class FileSyncTest extends AbstractFileSyncTest {
         log.debug("buckets: " + buckets);
 
         log.info("FileSync: START");
-        FileSync fs = new FileSync(daoConfig, cc, this.artifactStore, buckets, threads,
+        FileSync fs = new FileSync(daoConfig, cc, artifactStore, buckets, threads,
                                    retryAfterHours, tolerateNummChecksum);
         fs.testRunLoops = 1;
         fs.doit(subject);
         log.info("FileSync: DONE");
 
         // Loop until the job has updated the artifact store.
-        Connection con = this.artifactStoreDataSource.getConnection();
+        Connection con = artifactStoreDataSource.getConnection();
         String sql = String.format("select uri from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
         PreparedStatement ps = con.prepareStatement(sql);
         ResultSet rs = ps.executeQuery();
@@ -256,28 +263,34 @@ public class FileSyncTest extends AbstractFileSyncTest {
         try {
             System.setProperty("user.home", TestUtil.TMP_DIR);
 
-            Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
+            //Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
+            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            Subject subject = SSLUtil.createSubject(certificateFile);
+
+            // instantiate ArtifactStore when it's config is in place.
+            ArtifactStore artifactStore = getArtifactStore();
+
             Artifact testArtifact = makeArtifact("ad:IRIS/no-such-file.fits");
             Observation observation = makeObservation(testArtifact);
-            this.observationDAO.put(observation);
+            observationDAO.put(observation);
             HarvestSkipURI skip = makeHarvestSkipURI(testArtifact);
-            this.harvestSkipURIDAO.put(skip);
+            harvestSkipURIDAO.put(skip);
 
             List<String> buckets = Collections.singletonList("g");
 
             // make sure FileSyncJob actually fails to update
             log.info("FileSync: START");
-            final FileSync fs = new FileSync(daoConfig, cc, this.artifactStore, buckets, 1, null, true);
+            final FileSync fs = new FileSync(daoConfig, cc, artifactStore, buckets, 1, null, true);
             fs.testRunLoops = 1;
             fs.doit(subject);
             log.info("FileSync: DONE");
 
-            skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
+            skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
             Assert.assertNotNull(skip);
 
             // now with loops
             log.info("FileSync: START");
-            final FileSync fs2 = new FileSync(daoConfig, cc, this.artifactStore, buckets, 1, null, true);
+            final FileSync fs2 = new FileSync(daoConfig, cc, artifactStore, buckets, 1, null, true);
             fs2.testRunLoops = 4;
             fs.doit(subject);
             log.info("FileSync: DONE");

@@ -83,8 +83,10 @@ import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
+import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -110,7 +112,6 @@ public abstract class AbstractFileSyncTest {
     final ArtifactDAO artifactDAO;
     final ObservationDAO observationDAO;
     final HarvestSkipURIDAO harvestSkipURIDAO;
-    final ArtifactStore artifactStore;
     final DataSource caom2DataSource;
     final DataSource artifactStoreDataSource;
 
@@ -127,16 +128,6 @@ public abstract class AbstractFileSyncTest {
             daoConfig.put("server", TestUtil.CAOM2_SERVER);
             daoConfig.put("database", TestUtil.CAOM2_DATABASE);
             daoConfig.put("schema", TestUtil.CAOM2_SCHEMA);
-
-            // destination artifact store
-            try {
-                Class<?> asClass = Class.forName(TestUtil.ARTIFACT_STORE_IMPL);
-                this.artifactStore = (ArtifactStore) asClass.getDeclaredConstructor().newInstance();
-                Log4jInit.setLevel(asClass.getPackage().getName(), Level.INFO);
-            } catch (Throwable t) {
-                throw new IllegalStateException("failed to create artifact store: " + TestUtil.ARTIFACT_STORE_IMPL, t);
-            }
-            log.debug("artifact store: " + this.artifactStore);
 
             DataSource dataSource = DBUtil.getDataSource(cc, true, true);
             this.harvestSkipURIDAO = new HarvestSkipURIDAO(dataSource, TestUtil.CAOM2_DATABASE, TestUtil.CAOM2_SCHEMA);
@@ -160,25 +151,17 @@ public abstract class AbstractFileSyncTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        // proxy cert
-        Path dest = Paths.get(TestUtil.TMP_DIR + "/.ssl");
+        // tmp config directory
+        Path dest = Paths.get(TestUtil.TMP_DIR + "/config");
         if (!Files.exists(dest)) {
             Files.createDirectories(dest);
         }
-        Path src = Paths.get(TestUtil.CERTIFICATE_FILE_LOCATION);
-        Files.copy(src, dest.resolve(src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
 
-        // config files
-        dest = Paths.get(TestUtil.TMP_DIR + "/config");
-        if (!Files.exists(dest)) {
-            Files.createDirectories(dest);
-        }
-        src = Paths.get(TestUtil.ARTIFACT_DOWNLOAD_CONFIG);
-        Files.copy(src, dest.resolve(src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-        src = Paths.get(TestUtil.ARTIFACT_STORE_CONFIG);
-        Files.copy(src, dest.resolve(src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-        src = Paths.get(TestUtil.COLLECTION_PREFIX_CONFIG);
-        Files.copy(src, dest.resolve(src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+        // copy ArtifactStore config files to tmp config
+        File file = FileUtil.getFileFromResource(TestUtil.ARTIFACT_STORE_CONFIG, FileSyncJobTest.class);
+        Files.copy(file.toPath(), dest.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
+        file = FileUtil.getFileFromResource(TestUtil.COLLECTION_PREFIX_CONFIG, FileSyncJobTest.class);
+        Files.copy(file.toPath(), dest.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
     }
 
     @Before
@@ -194,6 +177,18 @@ public abstract class AbstractFileSyncTest {
         log.debug("cleaning artifact store artifacts...");
         sql = String.format("delete from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
         this.artifactStoreDataSource.getConnection().createStatement().execute(sql);
+    }
+
+    ArtifactStore getArtifactStore() {
+        try {
+            Class<?> asClass = Class.forName(TestUtil.ARTIFACT_STORE_IMPL);
+            ArtifactStore artifactStore = (ArtifactStore) asClass.getDeclaredConstructor().newInstance();
+            Log4jInit.setLevel(asClass.getPackage().getName(), Level.INFO);
+            log.debug("ArtifactStore: " + artifactStore);
+            return artifactStore;
+        } catch (Throwable t) {
+            throw new IllegalStateException("failed to create artifact store: " + TestUtil.ARTIFACT_STORE_IMPL, t);
+        }
     }
 
     Artifact makeArtifact(final String uri) {

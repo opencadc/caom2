@@ -21,9 +21,6 @@ Runtime configuration must be made available via the `/config` directory.
 # log level
 org.opencadc.caom2.download.logging={info|debug}
 
-# Profile task execution
-org.opencadc.caom2.download.profile={true|false}
-
 # caom2 database settings
 org.opencadc.caom2.download.schema={schema}
 org.opencadc.caom2.download.username={dbuser}
@@ -39,7 +36,7 @@ org.opencadc.caom2.download.buckets={uriBucket prefix or range of prefixes}
 # Number of download threads
 org.opencadc.caom2.download.threads={number of download threads}
 
-# Hours after failed downloads should be retried (default: 6)
+# Hours after failed downloads should be retried
 org.opencadc.caom2.download.retryAfter={integer}
 
 # Download even when checksum is null

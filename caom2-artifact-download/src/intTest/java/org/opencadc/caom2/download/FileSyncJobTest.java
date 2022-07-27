@@ -70,7 +70,9 @@ package org.opencadc.caom2.download;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
 import java.io.File;
@@ -115,7 +117,11 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         log.info("testMissingSourceArtifact - START");
         try {
             System.setProperty("user.home", TestUtil.TMP_DIR);
-            Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
+            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            Subject subject = SSLUtil.createSubject(certificateFile);
+
+            // instantiate ArtifactStore when it's config is in place.
+            ArtifactStore artifactStore = getArtifactStore();
 
             // Source with a HarvestSkipURI but no Artifact.
             Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM, ARTIFACT_CONTENT_LENGTH);
@@ -127,7 +133,7 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             Date retryAfterDate = getRetryAfterDate();
 
             log.info("FileSyncJob: START");
-            FileSyncJob job = new FileSyncJob(skip, this.harvestSkipURIDAO, this.artifactDAO, this.artifactStore,
+            FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
                                               tolerateNullChecksum, retryAfterDate, subject);
             job.run();
             log.info("FileSyncJob: DONE");
@@ -149,7 +155,11 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         log.info("testTolerateNullChecksum - START");
         try {
             System.setProperty("user.home", TestUtil.TMP_DIR);
-            Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
+            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            Subject subject = SSLUtil.createSubject(certificateFile);
+
+            // instantiate ArtifactStore when it's config is in place.
+            ArtifactStore artifactStore = getArtifactStore();
 
             // Source Artifact without a checksum and a HarvestSkipURI
             Artifact artifact = makeArtifact(ARTIFACT_URI, null, ARTIFACT_CONTENT_LENGTH);
@@ -164,13 +174,13 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             Date retryAfterDate = getRetryAfterDate();
 
             log.info("FileSyncJob: START");
-            FileSyncJob job = new FileSyncJob(skip, this.harvestSkipURIDAO, this.artifactDAO, this.artifactStore,
+            FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
                                               tolerateNullChecksum, retryAfterDate, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
             // Loop until the job has updated the artifact store.
-            Connection con = this.artifactStoreDataSource.getConnection();
+            Connection con = artifactStoreDataSource.getConnection();
             String sql = String.format("select uri from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
             PreparedStatement ps = con.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
@@ -188,7 +198,7 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             }
 
             // Skip record should be deleted
-            skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
+            skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
             Assert.assertNull("skip record should've been deleted", skip);
 
             // truncate source databases
@@ -203,13 +213,13 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             tolerateNullChecksum = false;
 
             log.info("FileSyncJob: START");
-            job = new FileSyncJob(skip, this.harvestSkipURIDAO, this.artifactDAO, this.artifactStore,
+            job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
                                   tolerateNullChecksum, retryAfterDate, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
             // Skip record should exist and contain the errorMessage
-            skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
+            skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
             Assert.assertNotNull("skip record should've been deleted", skip);
             Assert.assertEquals("artifact content checksum is null", skip.errorMessage);
         } catch (Exception unexpected) {
@@ -225,7 +235,11 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
     public void testValidJob() {
         try {
             System.setProperty("user.home", TestUtil.TMP_DIR);
-            Subject subject = SSLUtil.createSubject(new File(FileSync.CERTIFICATE_FILE_LOCATION));
+            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            Subject subject = SSLUtil.createSubject(certificateFile);
+
+            // instantiate ArtifactStore when it's config is in place.
+            ArtifactStore artifactStore = getArtifactStore();
 
             // Artifact & HarvestSkipURI in the database to start.
             Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM, ARTIFACT_CONTENT_LENGTH);
@@ -240,13 +254,13 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             Date retryAfterDate = getRetryAfterDate();
 
             log.info("FileSyncJob: START");
-            FileSyncJob job = new FileSyncJob(skip, this.harvestSkipURIDAO, this.artifactDAO, this.artifactStore,
+            FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
                                               tolerateNullChecksum, retryAfterDate, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
             // Loop until the job has updated the artifact store.
-            Connection con = this.artifactStoreDataSource.getConnection();
+            Connection con = artifactStoreDataSource.getConnection();
             String sql = String.format("select uri from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
             PreparedStatement ps = con.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
