@@ -41,9 +41,6 @@ org.opencadc.caom2.download.threads={number of download threads}
 
 # Hours after failed downloads should be retried
 org.opencadc.caom2.download.retryAfter={integer}
-
-# Download even when checksum is null
-org.opencadc.caom2.download.tolerateNullChecksum={true|false}
 ```
 
 `org.opencadc.caom2.download.artifactStore` is the fully qualified 
@@ -51,7 +48,7 @@ class name to an ArtifactStore implementation, which may require
 properties file(s) in /config.
 
 `org.opencadc.caom2.download.namespace` The storage namespace is specified
-as a prefix of Artiafct.uri values; it must end with a `:` or `/` so that it
+as a prefix of Artifact.uri values; it must end with a `:` or `/` so that it
 won't accidentally match a different namespace.
 
 `org.opencadc.caom2.download.buckets` The range of uriBucket prefixes 
@@ -64,10 +61,6 @@ configures a database connection pool that is shared between file sync jobs
 
 `org.opencadc.caom2.download.retryAfter` is the number of hours after 
 failed downloads should be retried.
-
-if `org.opencadc.caom2.download.tolerateNullChecksum` is true, download
-Artifacts with a null checksum.
-
 
 ### cadcproxy.pem
 Certificate in /config is used to authenticate https calls to other services 
@@ -82,7 +75,7 @@ docker build -t caom2-artifact-download -f Dockerfile .
 
 ## checking it
 ```
-docker run -it caom2-artifact-download:latest /bin/bash
+docker run --rm --user opencadc:opencadc -it caom2-artifact-download:latest /bin/bash
 ```
 
 ## running it

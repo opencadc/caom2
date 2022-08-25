@@ -22,6 +22,7 @@ description = 'OpenCADC CAOM artifact download application'
 def git_url = 'https://github.com/opencadc/caom2db'
 
 dependencies {
+    compile 'org.opencadc:cadc-util:[1.6.7,2.0)'
     compile 'org.opencadc:caom2:[2.4,2.5)'
     compile 'org.opencadc:caom2-persist:[2.4,2.5)'
     compile 'org.opencadc:caom2persistence:[2.4.10,2.5)'

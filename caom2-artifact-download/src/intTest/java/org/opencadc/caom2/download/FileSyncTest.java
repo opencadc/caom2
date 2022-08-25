@@ -68,22 +68,15 @@
 package org.opencadc.caom2.download;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
-import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.BucketSelector;
 import ca.nrc.cadc.util.Log4jInit;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.security.auth.Subject;
 
@@ -165,12 +158,11 @@ public class FileSyncTest extends AbstractFileSyncTest {
 
         // bucket to cover all ranges
         String namespace = null; // all
-        List<String> buckets = Collections.singletonList("%");
+        BucketSelector buckets = new BucketSelector("0-f");
         log.debug("buckets: " + buckets);
 
         log.info("FileSync: START");
-        FileSync fs = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, threads,
-                                   2, true);
+        FileSync fs = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, threads, 2);
         fs.testRunLoops = 1;
         fs.doit(subject);
         log.info("FileSync: DONE");
@@ -255,11 +247,11 @@ public class FileSyncTest extends AbstractFileSyncTest {
             harvestSkipURIDAO.put(skip);
 
             String namespace = null; // all
-            List<String> buckets = Collections.singletonList("g");
+            BucketSelector buckets = new BucketSelector("0-f");
 
             // make sure FileSyncJob actually fails to update
             log.info("FileSync: START");
-            final FileSync fs = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, 1, 2, true);
+            final FileSync fs = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, 1, 2);
             fs.testRunLoops = 1;
             fs.doit(subject);
             log.info("FileSync: DONE");
@@ -269,12 +261,12 @@ public class FileSyncTest extends AbstractFileSyncTest {
 
             // now with loops
             log.info("FileSync: START");
-            final FileSync fs2 = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, 1, 2, true);
+            final FileSync fs2 = new FileSync(daoConfig, cc, artifactStore, namespace, buckets, 1, 2);
             fs2.testRunLoops = 4;
             fs.doit(subject);
             log.info("FileSync: DONE");
         } catch (Exception unexpected) {
-            log.info("unexpected exception", unexpected);
+            log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         } finally {
             System.setProperty("user.home", TestUtil.USER_HOME);

@@ -76,14 +76,14 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.persistence.ArtifactDAO;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.version.InitDatabase;
+import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.thread.ThreadedRunnableExecutor;
-
+import ca.nrc.cadc.util.BucketSelector;
 import java.io.File;
-import java.util.Calendar;
+import java.text.DateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -92,10 +92,14 @@ import java.util.concurrent.TimeUnit;
 import javax.naming.NamingException;
 import javax.security.auth.Subject;
 import javax.sql.DataSource;
-
 import org.apache.log4j.Logger;
 import org.opencadc.inventory.util.DBUtil;
 
+/**
+ * FileSync code that queries for and queues download jobs.
+ * 
+ * @author pdowler
+ */
 public class FileSync implements Runnable {
     private static final Logger log = Logger.getLogger(FileSync.class);
 
@@ -109,9 +113,8 @@ public class FileSync implements Runnable {
     public static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
 
     private final ArtifactStore artifactStore;
-    private final List<String> buckets;
+    private final BucketSelector buckets;
     private final int retryAfterHours;
-    private final boolean tolerateNullChecksum;
     private final ArtifactDAO artifactDAO;
     private final HarvestSkipURIDAO harvestSkipURIDAO;
     private final HarvestSkipURIDAO jobHarvestSkipURIDAO;
@@ -131,11 +134,10 @@ public class FileSync implements Runnable {
      * @param buckets uriBucket prefix or range of prefixes
      * @param threads number of threads in download thread pool
      * @param retryAfterHours hours after which to retry failed downloads
-     * @param tolerateNullChecksum download even when checksum is null
      */
     public FileSync(Map<String, Object> daoConfig, ConnectionConfig connectionConfig, ArtifactStore artifactStore,
-                    String storageNamespace, List<String> buckets, 
-                    int threads, int retryAfterHours, boolean tolerateNullChecksum) {
+                    String storageNamespace, BucketSelector buckets, 
+                    int threads, int retryAfterHours) {
 
         CaomValidator.assertNotNull(FileSync.class, "daoConfig", daoConfig);
         CaomValidator.assertNotNull(FileSync.class, "connectionConfig", connectionConfig);
@@ -144,14 +146,12 @@ public class FileSync implements Runnable {
 
         this.artifactStore = artifactStore;
         this.buckets = buckets;
-        this.tolerateNullChecksum = tolerateNullChecksum;
-
+        this.retryAfterHours = retryAfterHours;
+        
         if (threads <= 0 || threads > MAX_THREADS) {
             throw new IllegalArgumentException(String.format("invalid config: threads must be in [1,%s], found: %s",
                                                              MAX_THREADS, threads));
         }
-
-        this.retryAfterHours = retryAfterHours;
 
         // For managing the artifact iterator FileSync loops over
         try {
@@ -245,34 +245,32 @@ public class FileSync implements Runnable {
         while (ok) {
             try {
                 loopCount++;
-                long startQ = System.currentTimeMillis();
+                final long startQ = System.currentTimeMillis();
                 long num = 0L;
                 log.debug("FileSync.QUERY START");
-                for (String bucketPrefix : buckets) {
-                    log.debug("FileSync.QUERY bucket=" + bucketPrefix);
 
-                    try (final ResourceIterator<HarvestSkipURI> skipIterator =
-                        harvestSkipURIDAO.iterator(Artifact.class.getSimpleName(), storageNamespace, bucketPrefix, new Date())) {
-                        while (skipIterator.hasNext()) {
-                            HarvestSkipURI harvestSkipURI = skipIterator.next();
-                            log.debug("skip: " + harvestSkipURI.getSkipID());
-
-                            FileSyncJob fileSyncJob =
-                                new FileSyncJob(harvestSkipURI, jobHarvestSkipURIDAO, artifactDAO, artifactStore,
-                                                tolerateNullChecksum, retryAfterHours, currentUser);
-                            jobQueue.put(fileSyncJob); // blocks when queue capacity is reached
-                            log.debug("FileSync.CREATE: HarvestSkipURI.id=" + harvestSkipURI.getSkipID());
-                            num++;
-                        }
-                    } catch (Exception e) {
-                        // TODO:  handle errors from this more sanely after they
-                        // are available from the cadc-inventory-db API
-                        throw e;
+                String minBucket = buckets.getMinBucket(HarvestSkipURIDAO.BUCKET_LENGTH);
+                String maxBucket = buckets.getMaxBucket(HarvestSkipURIDAO.BUCKET_LENGTH);
+                Date now = new Date();
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                log.info("FileSync.QUERY buckets=" + minBucket + "-" + maxBucket + " end=" + df.format(now));
+                try (final ResourceIterator<HarvestSkipURI> skipIterator =
+                    harvestSkipURIDAO.iterator(Artifact.class.getSimpleName(), storageNamespace, minBucket, maxBucket, now)) {
+                    while (skipIterator.hasNext()) {
+                        HarvestSkipURI harvestSkipURI = skipIterator.next();
+                        FileSyncJob fileSyncJob = new FileSyncJob(harvestSkipURI, 
+                                jobHarvestSkipURIDAO, artifactDAO, artifactStore, retryAfterHours, currentUser);
+                        jobQueue.put(fileSyncJob); // blocks when queue capacity is reached
+                        log.info("FileSync.CREATE: HarvestSkipURI.id=" + harvestSkipURI.getSkipID());
+                        num++;
                     }
-                    log.debug("FileSync.QUERY bucket=" + bucketPrefix);
+                } catch (Exception e) {
+                    // TODO:  handle errors from this more sanely after they
+                    // are available from the cadc-inventory-db API
+                    throw e;
                 }
                 long dtQ = System.currentTimeMillis() - startQ;
-                log.debug("FileSync.QUERY END dt=" + dtQ + " num=" + num);
+                log.info("FileSync.QUERY END dt=" + dtQ + " num=" + num);
 
                 boolean waiting = true;
                 while (waiting) {
@@ -282,11 +280,11 @@ public class FileSync implements Runnable {
                             log.debug("queue empty; jobs complete");
                             waiting = false;
                         } else {
-                            log.debug("FileSync.POLL dt=" + poll);
+                            log.info("FileSync.POLL dt=" + poll);
                             Thread.sleep(poll);
                         }
                     } else {
-                        log.debug("FileSync.POLL dt=" + poll);
+                        log.info("FileSync.POLL dt=" + poll);
                         Thread.sleep(poll);
                     }
 
@@ -301,7 +299,7 @@ public class FileSync implements Runnable {
             }
             if (ok) {
                 try {
-                    log.debug("FileSync.IDLE dt=" + idle);
+                    log.info("FileSync.IDLE dt=" + idle);
                     Thread.sleep(idle);
                 } catch (InterruptedException ex) {
                     ok = false;

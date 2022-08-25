@@ -123,12 +123,11 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             HarvestSkipURI skip = makeHarvestSkipURI(artifact);
             this.harvestSkipURIDAO.put(skip);
 
-            boolean tolerateNullChecksum = true;
             int retryAfter = 2;
 
             log.info("FileSyncJob: START");
             FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                              tolerateNullChecksum, retryAfter, subject);
+                                            retryAfter, subject);
             job.run();
             log.info("FileSyncJob: DONE");
             
@@ -169,12 +168,11 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             this.harvestSkipURIDAO.put(skip);
 
             // Test tolerate  null checksum
-            boolean tolerateNullChecksum = true;
             int retryAfter = 2;
 
             log.info("FileSyncJob: START");
             FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                              tolerateNullChecksum, retryAfter, subject);
+                                            retryAfter, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
@@ -186,27 +184,6 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
             Assert.assertNull("skip record should've been deleted", skip);
 
-            // truncate source databases
-            cleanTestEnvironment();
-
-            // Source Artifact without a checksum & HarvestSkipURI
-            this.observationDAO.put(observation);
-            skip = makeHarvestSkipURI(artifact);
-            this.harvestSkipURIDAO.put(skip);
-
-            // Test do not tolerate null checksum
-            tolerateNullChecksum = false;
-
-            log.info("FileSyncJob: START");
-            job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                  tolerateNullChecksum, retryAfter, subject);
-            job.run();
-            log.info("FileSyncJob: DONE");
-
-            // Skip record should exist and contain the errorMessage
-            skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
-            Assert.assertNotNull("skip record should've been deleted", skip);
-            Assert.assertEquals("artifact content checksum is null", skip.errorMessage);
         } catch (Exception unexpected) {
             Assert.fail("unexpected exception: " + unexpected);
             log.debug(unexpected);
@@ -236,12 +213,11 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             this.observationDAO.put(observation);
             this.harvestSkipURIDAO.put(skip);
 
-            boolean tolerateNullChecksum = true;
             int retryAfter = 2;
 
             log.info("FileSyncJob: START");
             FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                              tolerateNullChecksum, retryAfter, subject);
+                                            retryAfter, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
