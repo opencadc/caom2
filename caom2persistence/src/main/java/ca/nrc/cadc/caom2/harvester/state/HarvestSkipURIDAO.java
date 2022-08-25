@@ -112,6 +112,8 @@ public class HarvestSkipURIDAO {
     private final RowMapper extractor;
 
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
+    
+    public static final int BUCKET_LENGTH = 3;
 
     public HarvestSkipURIDAO(DataSource dataSource, String database, String schema) {
         this.jdbc = new JdbcTemplate(dataSource);
@@ -162,13 +164,22 @@ public class HarvestSkipURIDAO {
         iter.setMaxTryAfter(maxTryAfter);
         return iter.query(dataSource);
     }
-            
+    
+    public ResourceIterator<HarvestSkipURI> iterator(String name, String namespace, 
+            String minBucket, String maxBucket, Date maxTryAfter) {
+        IteratorQuery iter = new IteratorQuery(name);
+        iter.setNamespace(namespace);
+        iter.setBucketRange(minBucket, maxBucket);
+        iter.setMaxTryAfter(maxTryAfter);
+        return iter.query(dataSource);
+    }
+    
     public void put(HarvestSkipURI skip) {
         boolean update = true;
         if (skip.getID() == null) {
             update = false;
             skip.id = UUID.randomUUID();
-            skip.bucket = skip.getID().toString().substring(0, 3);
+            skip.bucket = skip.getID().toString().substring(0, BUCKET_LENGTH);
         }
         skip.lastModified = new Date();
         PutStatementCreator put = new PutStatementCreator(update);
@@ -338,8 +349,12 @@ public class HarvestSkipURIDAO {
 
         private final String name;
         private String namespace;
-        private String bucketPrefix;
+        
         private Date maxTryAfter;
+        
+        private String bucketPrefix;
+        private String minBucket;
+        private String maxBucket;
 
         public IteratorQuery(String name) {
             if (name == null) {
@@ -360,6 +375,11 @@ public class HarvestSkipURIDAO {
             }
         }
 
+        public void setBucketRange(String minBucket, String maxBucket) {
+            this.minBucket = minBucket;
+            this.maxBucket = maxBucket;
+        }
+
         public void setMaxTryAfter(Date end) {
             this.maxTryAfter = end;
         }
@@ -374,6 +394,8 @@ public class HarvestSkipURIDAO {
             }
             if (bucketPrefix != null) {
                 sb.append(" AND bucket LIKE ?");
+            } else if (minBucket != null && maxBucket != null) {
+                sb.append(" AND bucket BETWEEN ? AND ?");
             }
             if (maxTryAfter != null) {
                 
@@ -406,6 +428,10 @@ public class HarvestSkipURIDAO {
                     String val = bucketPrefix + "%";
                     log.debug("bucket prefix: " + val);
                     ps.setString(col++, val);
+                } else if (minBucket != null && maxBucket != null) {
+                    log.debug("bucket range: " + minBucket + "," + maxBucket);
+                    ps.setString(col++, minBucket);
+                    ps.setString(col++, maxBucket);
                 }
                 if (maxTryAfter != null) {
                     ps.setTimestamp(col, new Timestamp(maxTryAfter.getTime()), Calendar.getInstance(DateUtil.UTC));
