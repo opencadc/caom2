@@ -96,6 +96,7 @@ import java.net.URI;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.security.auth.Subject;
@@ -118,8 +119,7 @@ public class FileSyncJob implements Runnable  {
     private final HarvestSkipURIDAO harvestSkipURIDAO;
     private final ArtifactDAO artifactDAO;
     private final ArtifactStore artifactStore;
-    private final boolean tolerateNullChecksum;
-    private final Date retryAfter;
+    private final int retryAfter;
     private final Subject subject;
     private final List<Exception> fails = new ArrayList<>();
 
@@ -130,25 +130,22 @@ public class FileSyncJob implements Runnable  {
      * @param harvestSkipURIDAO harvest skip database persistence
      * @param artifactDAO artifact database persistence
      * @param artifactStore back end storage
-     * @param tolerateNullChecksum download even when checksum is null
      * @param retryAfter date after which to retry failed downloads
      * @param subject caller with credentials for downloads
      */
     public FileSyncJob(HarvestSkipURI harvestSkipURI, HarvestSkipURIDAO harvestSkipURIDAO,
                        ArtifactDAO artifactDAO, ArtifactStore artifactStore,
-                       boolean tolerateNullChecksum, Date retryAfter, Subject subject) {
+                       int retryAfter, Subject subject) {
         CaomValidator.assertNotNull(FileSyncJob.class, "harvestSkipURI", harvestSkipURI);
         CaomValidator.assertNotNull(FileSyncJob.class, "harvestSkipURIDAO", harvestSkipURIDAO);
         CaomValidator.assertNotNull(FileSyncJob.class, "artifactDAO", artifactDAO);
         CaomValidator.assertNotNull(FileSyncJob.class, "artifactStore", artifactStore);
-        CaomValidator.assertNotNull(FileSyncJob.class, "retryAfter", retryAfter);
         CaomValidator.assertNotNull(FileSyncJob.class, "subject", subject);
 
         this.harvestSkipURI = harvestSkipURI;
         this.harvestSkipURIDAO = harvestSkipURIDAO;
         this.artifactDAO = artifactDAO;
         this.artifactStore = artifactStore;
-        this.tolerateNullChecksum = tolerateNullChecksum;
         this.retryAfter = retryAfter;
         this.subject = subject;
     }
@@ -176,26 +173,12 @@ public class FileSyncJob implements Runnable  {
 
         try {
             URI artifactURI = harvestSkipURI.getSkipID();
-            Artifact artifact = artifactDAO.get(artifactURI);
-            if (artifact == null) {
+            Artifact curArtifact = artifactDAO.get(artifactURI);
+            if (curArtifact == null) {
                 // artifact no longer exists, remove from skip uri table
                 success = true;
                 msg = "reason=obsolete-artifact";
                 return;
-            }
-
-            FileMetadata fileMetadata = new FileMetadata();
-            fileMetadata.setContentType(artifact.contentType);
-            fileMetadata.setContentLength(artifact.contentLength);
-            if (artifact.contentChecksum == null) {
-                if (!tolerateNullChecksum) {
-                    msg = "artifact content checksum is null";
-                    return;
-                }
-            } else {
-                String checksumFromCAOM = artifact.contentChecksum.getSchemeSpecificPart();
-                fileMetadata.setMd5Sum(checksumFromCAOM);
-                log.debug(String.format("%s content MD5 from CAOM: %s", artifactURI.getScheme(), checksumFromCAOM));
             }
 
             CaomArtifactResolver caomArtifactResolver = new CaomArtifactResolver();
@@ -217,13 +200,20 @@ public class FileSyncJob implements Runnable  {
             int retryCount = 0;
             try {
                 while (!success && retryCount < RETRY_DELAY.length) {
-                    log.debug(String.format("FileSyncJob.SYNC %s attempts=%s", artifact.getURI(), retryCount));
+                    log.debug(String.format("FileSyncJob.SYNC %s attempts=%s", artifactURI, retryCount));
 
-                    Artifact curArtifact = artifactDAO.get(artifactURI);
+                    curArtifact = artifactDAO.get(artifactURI);
                     if (curArtifact == null) {
                         msg = "reason=obsolete-artifact";
                         success = true;
                         return;
+                    }
+                    
+                    FileMetadata fileMetadata = new FileMetadata();
+                    fileMetadata.setContentType(curArtifact.contentType);
+                    fileMetadata.setContentLength(curArtifact.contentLength);
+                    if (curArtifact.contentChecksum != null) {
+                        fileMetadata.setMd5Sum(curArtifact.contentChecksum.getSchemeSpecificPart());
                     }
 
                     boolean postPrepare = false;
@@ -239,9 +229,9 @@ public class FileSyncJob implements Runnable  {
                         head.prepare();
 
                         // compare artifact metadata
-                        if (!tolerateNullChecksum) {
-                            URI hdrContentChecksum = head.getDigest();
-                            if (hdrContentChecksum != null && !hdrContentChecksum.equals(curArtifact.contentChecksum)) {
+                        URI hdrContentChecksum = head.getDigest();
+                        if (curArtifact.contentChecksum != null && hdrContentChecksum != null) {
+                            if (!hdrContentChecksum.equals(curArtifact.contentChecksum)) {
                                 throw new PreconditionFailedException(
                                     String.format("contentChecksum artifact: %s storage: %s", curArtifact.contentChecksum,
                                                   hdrContentChecksum));
@@ -289,6 +279,7 @@ public class FileSyncJob implements Runnable  {
                         log.debug("FileSyncJob.ERROR", ex);
                         log.warn(String.format("FileSyncJob.ERROR %s reason=%s", artifactURI, ex));
                         fails.add(ex);
+                        return; // fatal
                     } catch (IOException | TransientException ex) {
                         // includes ReadException
                         // - prepare or put throwing this error
@@ -347,7 +338,9 @@ public class FileSyncJob implements Runnable  {
                         harvestSkipURIDAO.delete(harvestSkipURI);
                     } else {
                         harvestSkipURI.errorMessage = msg;
-                        harvestSkipURI.setTryAfter(retryAfter);
+                        Calendar c = Calendar.getInstance();
+                        c.add(Calendar.HOUR, retryAfter);
+                        harvestSkipURI.setTryAfter(c.getTime());
                         harvestSkipURIDAO.put(harvestSkipURI);
                     }
                 }

@@ -71,18 +71,14 @@ import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.util.BucketSelector;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.util.StringUtil;
-
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -101,25 +97,25 @@ public class Main {
     private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".username";
     private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".password";
     private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".url";
+    private static final String NAMESPACE_CONFIG_KEY = CONFIG_PREFIX + ".namespace";
     private static final String BUCKETS_CONFIG_KEY = CONFIG_PREFIX + ".buckets";
     private static final String ARTIFACT_STORE_CONFIG_KEY = ArtifactStore.class.getName();
     private static final String THREADS_CONFIG_KEY = CONFIG_PREFIX + ".threads";
     private static final String RETRY_AFTER_CONFIG_KEY = CONFIG_PREFIX + ".retryAfter";
-    private static final String TOLERATE_NULL_CHECKSUM_CONFIG_KEY = CONFIG_PREFIX + ".tolerateNullChecksum";
 
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
         LOGGING_CONFIG_KEY,
-        PROFILE_CONFIG_KEY,
+        //PROFILE_CONFIG_KEY,
         DB_SCHEMA_CONFIG_KEY,
         DB_USERNAME_CONFIG_KEY,
         DB_PASSWORD_CONFIG_KEY,
         DB_URL_CONFIG_KEY,
+        NAMESPACE_CONFIG_KEY,
         BUCKETS_CONFIG_KEY,
         ARTIFACT_STORE_CONFIG_KEY,
         THREADS_CONFIG_KEY,
-        RETRY_AFTER_CONFIG_KEY,
-        TOLERATE_NULL_CHECKSUM_CONFIG_KEY
+        RETRY_AFTER_CONFIG_KEY
     };
 
     public static void main(final String[] args) {
@@ -151,22 +147,16 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.net", loggingLevel);
             }
 
-            final String configuredProfile = props.getFirstPropertyValue(PROFILE_CONFIG_KEY);
-            final boolean profile = Boolean.parseBoolean(configuredProfile);
-            if (profile) {
-                Log4jInit.setLevel("ca.nrc.cadc.profiler", Level.INFO);
-            }
+            //final String configuredProfile = props.getFirstPropertyValue(PROFILE_CONFIG_KEY);
+            //final boolean profile = Boolean.parseBoolean(configuredProfile);
+            //if (profile) {
+            //    Log4jInit.setLevel("ca.nrc.cadc.profiler", Level.INFO);
+            //}
+            
+            final String storageNamespace = props.getFirstPropertyValue(NAMESPACE_CONFIG_KEY);
 
-            final List<String> configuredBuckets = props.getProperty(BUCKETS_CONFIG_KEY);
-            List<String> buckets = new ArrayList<>();
-            for (String bucket : configuredBuckets) {
-                if (StringUtil.hasLength(bucket)) {
-                    buckets.add(bucket);
-                }
-            }
-            if (buckets.isEmpty()) {
-                throw new IllegalStateException(String.format("configuration not found for: %s", BUCKETS_CONFIG_KEY));
-            }
+            String configuredBuckets = props.getFirstPropertyValue(BUCKETS_CONFIG_KEY);
+            final BucketSelector buckets = new BucketSelector(configuredBuckets);
 
             final String configuredArtifactStore = props.getFirstPropertyValue(ARTIFACT_STORE_CONFIG_KEY);
             ArtifactStore artifactStore;
@@ -204,11 +194,8 @@ public class Main {
             final String configuredRetryAfter = props.getFirstPropertyValue(RETRY_AFTER_CONFIG_KEY);
             final int retryAfter = Integer.parseInt(configuredRetryAfter);
 
-            final String configuredTolerateNullChecksum = props.getFirstPropertyValue(TOLERATE_NULL_CHECKSUM_CONFIG_KEY);
-            final boolean tolerateNullChecksum = Boolean.parseBoolean(configuredTolerateNullChecksum);
-
             FileSync fileSync = new FileSync(daoConfig, connectionConfig, artifactStore,
-                                             buckets, threads, retryAfter, tolerateNullChecksum);
+                                    storageNamespace, buckets, threads, retryAfter);
             fileSync.run();
         } catch (Throwable unexpected) {
             log.fatal("Unexpected failure", unexpected);

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2022.                            (c) 2022.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -76,6 +76,7 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.io.ResourceIterator;
+import ca.nrc.cadc.util.BucketSelector;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.text.DateFormat;
@@ -242,6 +243,7 @@ public class PostgresqlHarvestSkipDAOTest {
         final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         final String source = "testIterator";
         final String cname = "Foo";
+        final String namespace = "foo:";
         try {
             HarvestSkipURIDAO dao = new HarvestSkipURIDAO(dataSource, database, schema);
             URI id1 = URI.create("foo:" + UUID.randomUUID());
@@ -252,7 +254,7 @@ public class PostgresqlHarvestSkipDAOTest {
             Date mid = null;
             Date end = null;
             for (int i = 0; i < num; i++) {
-                URI skipID = URI.create("foo:" + UUID.randomUUID().toString());
+                URI skipID = URI.create(namespace + UUID.randomUUID().toString());
                 Date tryAfter = new Date(t + i * 10L);
                 HarvestSkipURI skip = new HarvestSkipURI(source, cname, skipID, tryAfter);
                 log.info("created: " + skip.toString(df));
@@ -266,7 +268,7 @@ public class PostgresqlHarvestSkipDAOTest {
             }
             
             log.info("iterator -> " + df.format(mid));
-            ResourceIterator<HarvestSkipURI> i1 = dao.iterator(source, cname, null, mid);
+            ResourceIterator<HarvestSkipURI> i1 = dao.iterator(cname, namespace, null, mid);
             Iterator<HarvestSkipURI> si1 = skips.iterator();
             int foundMid = 0;
             while (i1.hasNext()) {
@@ -280,7 +282,7 @@ public class PostgresqlHarvestSkipDAOTest {
             
             
             log.info("iterator -> " + df.format(end));
-            ResourceIterator<HarvestSkipURI> i2 = dao.iterator(source, cname, null, end);
+            ResourceIterator<HarvestSkipURI> i2 = dao.iterator(cname, namespace, null, end);
             Iterator<HarvestSkipURI> si2 = skips.iterator();
             int foundEnd = 0;
             while (i2.hasNext()) {
@@ -293,7 +295,7 @@ public class PostgresqlHarvestSkipDAOTest {
             Assert.assertEquals(num, foundEnd);
             
             log.info("iterator close");
-            ResourceIterator<HarvestSkipURI> i3 = dao.iterator(source, cname, null, end);
+            ResourceIterator<HarvestSkipURI> i3 = dao.iterator(cname, namespace, null, end);
             i3.next();
             Assert.assertTrue(i3.hasNext());
             i3.close();
@@ -310,10 +312,10 @@ public class PostgresqlHarvestSkipDAOTest {
         final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         final String source = "testIteratorBucket";
         final String cname = "Foo";
-        
+        final String namespace = "foo:";
         try {
             HarvestSkipURIDAO dao = new HarvestSkipURIDAO(dataSource, database, schema);
-            URI id1 = URI.create("foo:" + UUID.randomUUID());
+            URI id1 = URI.create(namespace + UUID.randomUUID());
 
             long t = System.currentTimeMillis();
             SortedSet<HarvestSkipURI> skips = new TreeSet<>(new TryAfterComparator());
@@ -332,7 +334,7 @@ public class PostgresqlHarvestSkipDAOTest {
             
             for (String b : buckets) {
                 log.info("iterator: " + b);
-                ResourceIterator<HarvestSkipURI> i = dao.iterator(source, cname, b, null);
+                ResourceIterator<HarvestSkipURI> i = dao.iterator(cname, namespace, b, null);
                 Assert.assertTrue("found something in " + b, i.hasNext());
                 while (i.hasNext()) {
                     HarvestSkipURI actual = i.next();
@@ -340,6 +342,50 @@ public class PostgresqlHarvestSkipDAOTest {
                     Assert.assertTrue(actual.bucket.startsWith(b));
                 }
             }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testIteratorBucketRange() {
+        final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+        final String source = "testIteratorBucket";
+        final String cname = "Foo";
+        final String namespace = "foo:";
+        try {
+            HarvestSkipURIDAO dao = new HarvestSkipURIDAO(dataSource, database, schema);
+            URI id1 = URI.create(namespace + UUID.randomUUID());
+
+            long t = System.currentTimeMillis();
+            SortedSet<HarvestSkipURI> skips = new TreeSet<>(new TryAfterComparator());
+            SortedSet<String> buckets = new TreeSet<>();
+            int num = 20;
+            for (int i = 0; i < num; i++) {
+                URI skipID = URI.create("foo:" + UUID.randomUUID().toString());
+                Date tryAfter = new Date(t + i * 10L);
+                HarvestSkipURI skip = new HarvestSkipURI(source, cname, skipID, tryAfter);
+                skips.add(skip);
+                dao.put(skip);
+                String b = skip.bucket.substring(0, 1);
+                buckets.add(b);
+                log.info("created: " + skip.bucket + " " + skip.toString(df));
+            }
+            
+            BucketSelector bs = new BucketSelector("0-f");
+            String minB = bs.getMinBucket(HarvestSkipURIDAO.BUCKET_LENGTH);
+            String maxB = bs.getMaxBucket(HarvestSkipURIDAO.BUCKET_LENGTH);
+            log.info("iterator: " + minB + "-" + maxB);
+            ResourceIterator<HarvestSkipURI> i = dao.iterator(cname, namespace, minB, maxB, null);
+            Assert.assertTrue("found something", i.hasNext());
+            int found = 0;
+            while (i.hasNext()) {
+                HarvestSkipURI actual = i.next();
+                log.info("found: " + actual.bucket + " " + actual.toString(df));
+                found++;
+            }
+            Assert.assertEquals("found", num, found);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import java.io.File;
 import java.io.FileReader;
@@ -478,6 +479,7 @@ public class ObservationHarvester extends Harvester {
                             }
                         } else if (skipped && ow.entity == null) {
                             // observation was simply missing from source == missed deletion
+                            // ugh: this branch when source is a database
                             ObservationURI uri = new ObservationURI(hs.getSkipID());
                             log.info("delete: " + uri);
                             destObservationDAO.delete(uri);
@@ -489,7 +491,19 @@ public class ObservationHarvester extends Harvester {
                                 state.curLastModified = ow.entity.observationState.maxLastModified;
                                 state.curID = null; // unknown
                             }
-                            throw new HarvestReadException(ow.entity.error);
+                            if (ow.entity.error instanceof ResourceNotFoundException) {
+                                // observation was simply missing from source == missed deletion
+                                // ugh: this branch when source is a repo service
+                                ObservationURI uri = new ObservationURI(hs.getSkipID());
+                                log.info("delete: " + uri);
+                                destObservationDAO.delete(uri);
+                                if (hs != null) {
+                                    log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                                    harvestSkipDAO.delete(hs);
+                                }
+                            } else {
+                                throw new HarvestReadException(ow.entity.error);
+                            }
                         }
 
                         log.debug("committing transaction");
