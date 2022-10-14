@@ -162,6 +162,7 @@ public class InventoryArtifactStore implements ArtifactStore {
         URL url = getLocateFilesURL(artifactURI);
         HttpGet head = new HttpGet(url, true);
         head.setHeadOnly(true);
+        head.setConnectionTimeout(5000);
         head.setReadTimeout(5000);
 
         long start = System.currentTimeMillis();
@@ -170,14 +171,16 @@ public class InventoryArtifactStore implements ArtifactStore {
         } catch (ResourceAlreadyExistsException e) {
             throw new RuntimeException("BUG: ResourceAlreadyExistsException thrown for HEAD request", e);
         } catch (ResourceNotFoundException ignore) {
-            // return null metadata
+            return null;
         } catch (IOException | InterruptedException e) {
             throw new IllegalStateException(e);
         }
         log.debug("Finished physical get query in " + (System.currentTimeMillis() - start) + " ms");
 
         if (head.getResponseCode() == 200) {
-            ArtifactMetadata artifactMetadata = new ArtifactMetadata(artifactURI, head.getContentMD5());
+            URI digest = head.getDigest();
+            String checksum = digest != null ? digest.getSchemeSpecificPart() : null;
+            ArtifactMetadata artifactMetadata = new ArtifactMetadata(artifactURI, checksum);
             artifactMetadata.contentLength = head.getContentLength();
             artifactMetadata.contentType = head.getContentType();
             return artifactMetadata;
