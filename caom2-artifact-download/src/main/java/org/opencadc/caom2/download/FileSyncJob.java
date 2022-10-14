@@ -177,7 +177,7 @@ public class FileSyncJob implements Runnable  {
             if (curArtifact == null) {
                 // artifact no longer exists, remove from skip uri table
                 success = true;
-                msg = "reason=obsolete-artifact";
+                msg = "obsolete-artifact";
                 return;
             }
 
@@ -186,12 +186,7 @@ public class FileSyncJob implements Runnable  {
             try {
                 url = caomArtifactResolver.getURL(artifactURI);
                 log.debug("download url: " + url);
-            } catch (MalformedURLException | IllegalStateException ex) {
-                log.debug("FileSyncJob.ERROR", ex);
-                msg = "CaomArtifactResolver failed: " + ex;
-                return;
-            }
-            if (url == null) {
+            } catch (MalformedURLException | IllegalArgumentException ex) {
                 log.debug("FileSyncJob.ERROR CaomArtifactResolver unable to resolve " + artifactURI);
                 msg = "CaomArtifactResolver failed to resolve artifact uri";
                 return;
@@ -204,7 +199,7 @@ public class FileSyncJob implements Runnable  {
 
                     curArtifact = artifactDAO.get(artifactURI);
                     if (curArtifact == null) {
-                        msg = "reason=obsolete-artifact";
+                        msg = "obsolete-artifact";
                         success = true;
                         return;
                     }
@@ -233,16 +228,16 @@ public class FileSyncJob implements Runnable  {
                         if (curArtifact.contentChecksum != null && hdrContentChecksum != null) {
                             if (!hdrContentChecksum.equals(curArtifact.contentChecksum)) {
                                 throw new PreconditionFailedException(
-                                    String.format("contentChecksum artifact: %s storage: %s", curArtifact.contentChecksum,
-                                                  hdrContentChecksum));
+                                    String.format("contentChecksum mismatch - artifact: %s storage: %s",
+                                                  curArtifact.contentChecksum, hdrContentChecksum));
                             }
                         }
 
                         long hdrContentLength = head.getContentLength();
                         if (hdrContentLength != -1 && hdrContentLength != fileMetadata.getContentLength()) {
                             throw new PreconditionFailedException(
-                                String.format("contentLength artifact: %s storage: %s", fileMetadata.getContentLength(),
-                                              hdrContentLength));
+                                String.format("contentLength mismatch - artifact: %s storage: %s",
+                                              fileMetadata.getContentLength(), hdrContentLength));
                         }
 
                         // check again to be sure the destination doesn't already have it
@@ -271,31 +266,34 @@ public class FileSyncJob implements Runnable  {
                     } catch (ByteLimitExceededException | WriteException ex) {
                         // IOException will capture this if not explicitly caught and rethrown
                         log.debug("FileSyncJob.FAIL", ex);
-                        log.error(String.format("FileSyncJob.FAIL %s reason=%s", artifactURI, ex));
+                        log.error(String.format("FileSyncJob.FAIL %s %s", artifactURI, ex));
                         throw ex;
                     } catch (MalformedURLException | ResourceNotFoundException | ResourceAlreadyExistsException
                              | PreconditionFailedException | RangeNotSatisfiableException
                              | AccessControlException | NotAuthenticatedException ex) {
                         log.debug("FileSyncJob.ERROR", ex);
-                        log.warn(String.format("FileSyncJob.ERROR %s reason=%s", artifactURI, ex));
+                        log.warn(String.format("FileSyncJob.ERROR %s %s", artifactURI, ex));
                         fails.add(ex);
+                        msg = ex.getMessage();
                         return; // fatal
                     } catch (IOException | TransientException ex) {
                         // includes ReadException
                         // - prepare or put throwing this error
                         log.debug("FileSyncJob.ERROR", ex);
-                        log.warn(String.format("FileSyncJob.ERROR %s reason=%s", artifactURI, ex));
+                        log.warn(String.format("FileSyncJob.ERROR %s %s", artifactURI, ex));
                         fails.add(ex);
+                        msg = ex.getMessage();
                     } catch (Exception ex) {
                         if (!postPrepare) {
                             // remote server 5xx response: discard
                             log.debug("FileSyncJob.ERROR", ex);
-                            log.warn(String.format("FileSyncJob.ERROR %s reason=%s", artifactURI, ex));
+                            log.warn(String.format("FileSyncJob.ERROR %s %s", artifactURI, ex));
                             fails.add(ex);
+                            msg = ex.getMessage();
                         } else {
                             // ArtifactStore.store internal fail: abort
                             log.debug("FileSyncJob.FAIL", ex);
-                            log.warn(String.format("FileSyncJob.FAIL %s reason=%s", artifactURI, ex));
+                            log.warn(String.format("FileSyncJob.FAIL %s %s", artifactURI, ex));
                             throw ex;
                         }
                     }
@@ -317,18 +315,18 @@ public class FileSyncJob implements Runnable  {
                         }
                     }
                     if (commonFail != null) {
-                        msg = "reason=" + commonFail;
+                        msg = commonFail.getMessage();
                     }
                 }
             }  catch (ByteLimitExceededException | IllegalStateException ex) {
                 log.debug("artifact download aborted: " + harvestSkipURI.getSkipID(), ex);
-                msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
+                msg = ex.getMessage();
             } catch (IllegalArgumentException | InterruptedException | WriteException ex) {
                 log.debug("artifact download error: " + harvestSkipURI.getSkipID(), ex);
-                msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
+                msg = ex.getMessage();
             } catch (Exception ex) {
                 log.debug("unexpected fail: " + harvestSkipURI.getSkipID(), ex);
-                msg = "reason=" + ex.getClass().getName() + " " + ex.getMessage();
+                msg = ex.getMessage();
             }
         } finally {
             // Update the skip table
@@ -359,7 +357,7 @@ public class FileSyncJob implements Runnable  {
                 sb.append(" transfer=").append(byteTransferTime);
                 sb.append(" overhead=").append(overheadTime);
             }
-            sb.append(" ").append(msg);
+            sb.append(" reason=").append(msg);
             log.info(sb.toString());
         }
     }
