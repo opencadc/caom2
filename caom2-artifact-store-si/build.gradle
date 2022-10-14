@@ -14,7 +14,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '0.1.0'
+version = '0.1.1'
 
 description = 'OpenCADC ArtifactStore implmentation for Storage Inventory library'
 def git_url = 'https://github.com/opencadc/caom2db'

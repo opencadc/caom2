@@ -75,8 +75,11 @@ import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.StoragePolicy;
 import ca.nrc.cadc.net.HttpGet;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileMetadata;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
@@ -84,6 +87,7 @@ import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -131,6 +135,7 @@ public class InventoryArtifactStore implements ArtifactStore {
     private URI locateServiceResourceID;
     private URI queryServiceResourceID;
     private URL storageInventoryTapURL;
+    private URL locateServicesFilesURL;
     private List<Protocol> storeProtocolList = new ArrayList<>();
 
     public InventoryArtifactStore() {
@@ -154,20 +159,30 @@ public class InventoryArtifactStore implements ArtifactStore {
     }
 
     public ArtifactMetadata get(URI artifactURI) {
-        init();
-        String adql = "select distinct uri, contentChecksum, contentLength, contentType "
-                + "from inventory.Artifact where uri='" + artifactURI.toString() + "'";
-        log.debug("physical get query: " + adql);
+        URL url = getLocateFilesURL(artifactURI);
+        HttpGet head = new HttpGet(url, true);
+        head.setHeadOnly(true);
+        head.setReadTimeout(5000);
 
         long start = System.currentTimeMillis();
-        TreeSet<ArtifactMetadata> result = query(storageInventoryTapURL, adql);
-        ArtifactMetadata retMetadata = null;
-        if (result != null && result.iterator().hasNext()) {
-            retMetadata = result.iterator().next();
+        try {
+            head.prepare();
+        } catch (ResourceAlreadyExistsException e) {
+            throw new RuntimeException("BUG: ResourceAlreadyExistsException thrown for HEAD request", e);
+        } catch (ResourceNotFoundException ignore) {
+            // return null metadata
+        } catch (IOException | InterruptedException e) {
+            throw new IllegalStateException(e);
         }
-
         log.debug("Finished physical get query in " + (System.currentTimeMillis() - start) + " ms");
-        return retMetadata;
+
+        if (head.getResponseCode() == 200) {
+            ArtifactMetadata artifactMetadata = new ArtifactMetadata(artifactURI, head.getContentMD5());
+            artifactMetadata.contentLength = head.getContentLength();
+            artifactMetadata.contentType = head.getContentType();
+            return artifactMetadata;
+        }
+        return null;
     }
 
     public StoragePolicy getStoragePolicy(String collection) {
@@ -321,6 +336,25 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
 
         return resultReader.metadata;
+    }
+
+    private URL getLocateFilesURL(URI artifactURI) {
+        try {
+            RegistryClient rc = new RegistryClient();
+            Subject subject = AuthenticationUtil.getCurrentSubject();
+            AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+            if (authMethod == null) {
+                authMethod = AuthMethod.ANON;
+            }
+
+            URL serviceURL = rc.getServiceURL(locateServiceResourceID, Standards.SI_FILES, authMethod);
+            return new URL(serviceURL.toExternalForm() + "/" + artifactURI.toASCIIString());
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        } catch (Throwable t) {
+            String message = "Failed to initialize storage inventory URLs";
+            throw new RuntimeException(message, t);
+        }
     }
 
     @Override
