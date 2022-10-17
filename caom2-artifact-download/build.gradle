@@ -29,7 +29,7 @@ dependencies {
     compile 'org.opencadc:caom2-artifact-resolvers:[1.2.6,1.3)'
     compile 'org.opencadc:cadc-inventory-util:[0.1,1.0)'
 
-    runtime 'org.opencadc:caom2-artifact-store-si:[0.1.0,1.0)'
+    runtime 'org.opencadc:caom2-artifact-store-si:[0.1.1,1.0)'
     runtime 'org.postgresql:postgresql:[42.0,43.0)'
 
     testCompile 'junit:junit:[4.12,5.0)'
