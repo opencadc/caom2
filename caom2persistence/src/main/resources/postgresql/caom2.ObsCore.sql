@@ -126,7 +126,7 @@ AS SELECT
 
 FROM <schema>.Observation o JOIN <schema>.Plane p ON o.obsID=p.obsID
 WHERE o.intent = 'science' 
-  AND p.calibrationLevel IS NOT NULL
+  AND p.calibrationLevel BETWEEN 0 AND 4
   AND p.dataProductType NOT LIKE 'http:%'
   AND p.dataProductType != 'eventlist'
 ;

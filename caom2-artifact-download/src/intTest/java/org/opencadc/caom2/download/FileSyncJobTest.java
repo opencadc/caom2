@@ -67,15 +67,14 @@
 
 package org.opencadc.caom2.download;
 
-import ca.nrc.cadc.auth.SSLUtil;
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
-import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -98,7 +97,7 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
     }
 
-    private static final String ARTIFACT_URI =  "ad:IRIS/I212B2H0.fits";
+    private static final String ARTIFACT_URI =  "cadc:IRIS/I212B2H0.fits";
     private static final String ARTIFACT_CONTENT_CHECKSUM = "md5:646d3c548ffb98244a0fc52b60556082";
     private static final long ARTIFACT_CONTENT_LENGTH = 1008000;
 
@@ -106,22 +105,17 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         super();
     }
 
-    private Date getRetryAfterDate() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.roll(Calendar.HOUR, 6);
-        return calendar.getTime();
-    }
-
     @Test
     public void testMissingSourceArtifact() {
         log.info("testMissingSourceArtifact - START");
         try {
-            System.setProperty("user.home", TestUtil.TMP_DIR);
-            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-            Subject subject = SSLUtil.createSubject(certificateFile);
+            //System.setProperty("user.home", TestUtil.TMP_DIR);
+            //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            //Subject subject = SSLUtil.createSubject(certificateFile);
+            final Subject subject = AuthenticationUtil.getAnonSubject();
 
             // instantiate ArtifactStore when it's config is in place.
-            ArtifactStore artifactStore = getArtifactStore();
+            final ArtifactStore artifactStore = TestUtil.getArtifactStore();
 
             // Source with a HarvestSkipURI but no Artifact.
             Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM, ARTIFACT_CONTENT_LENGTH);
@@ -129,23 +123,26 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             HarvestSkipURI skip = makeHarvestSkipURI(artifact);
             this.harvestSkipURIDAO.put(skip);
 
-            boolean tolerateNullChecksum = true;
-            Date retryAfterDate = getRetryAfterDate();
+            int retryAfter = 2;
 
             log.info("FileSyncJob: START");
             FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                              tolerateNullChecksum, retryAfterDate, subject);
+                                            retryAfter, subject);
             job.run();
             log.info("FileSyncJob: DONE");
+            
+            // artifact should not be stored
+            ArtifactMetadata am = artifactStore.get(skip.getSkipID());
+            Assert.assertNull(am);
 
             // Skip record should be deleted
             skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), artifact.getURI());
-            Assert.assertNull("skip record should've been deleted", skip);
+            Assert.assertNull("skip record should been deleted", skip);
         } catch (Exception unexpected) {
             Assert.fail("unexpected exception: " + unexpected);
             log.debug(unexpected);
         } finally {
-            System.setProperty("user.home", TestUtil.USER_HOME);
+            //System.setProperty("user.home", TestUtil.USER_HOME);
         }
         log.info("testMissingSourceArtifact - DONE");
     }
@@ -154,12 +151,13 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
     public void testTolerateNullChecksum() {
         log.info("testTolerateNullChecksum - START");
         try {
-            System.setProperty("user.home", TestUtil.TMP_DIR);
-            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-            Subject subject = SSLUtil.createSubject(certificateFile);
+            //System.setProperty("user.home", TestUtil.TMP_DIR);
+            //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            //Subject subject = SSLUtil.createSubject(certificateFile);
+            final Subject subject = AuthenticationUtil.getAnonSubject();
 
             // instantiate ArtifactStore when it's config is in place.
-            ArtifactStore artifactStore = getArtifactStore();
+            final ArtifactStore artifactStore = TestUtil.getArtifactStore();
 
             // Source Artifact without a checksum and a HarvestSkipURI
             Artifact artifact = makeArtifact(ARTIFACT_URI, null, ARTIFACT_CONTENT_LENGTH);
@@ -170,58 +168,22 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             this.harvestSkipURIDAO.put(skip);
 
             // Test tolerate  null checksum
-            boolean tolerateNullChecksum = true;
-            Date retryAfterDate = getRetryAfterDate();
+            int retryAfter = 2;
 
             log.info("FileSyncJob: START");
             FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                              tolerateNullChecksum, retryAfterDate, subject);
+                                            retryAfter, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
-            // Loop until the job has updated the artifact store.
-            Connection con = artifactStoreDataSource.getConnection();
-            String sql = String.format("select uri from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            try {
-                while (!rs.next()) {
-                    log.debug("waiting for file sync jobs to update database");
-                    Thread.sleep(1000);
-                    rs = ps.executeQuery();
-                }
-                String uri = rs.getString(1);
-                Assert.assertNotNull(uri);
-            } catch (SQLException e) {
-                log.error(String.format("Artifact %s not found in ArtifactStore", ARTIFACT_URI));
-                Assert.fail(e.getMessage());
-            }
-
+            // artifact should be stored
+            ArtifactMetadata am = artifactStore.get(skip.getSkipID());
+            Assert.assertNotNull(am);
+            
             // Skip record should be deleted
             skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
             Assert.assertNull("skip record should've been deleted", skip);
 
-            // truncate source databases
-            cleanTestEnvironment();
-
-            // Source Artifact without a checksum & HarvestSkipURI
-            this.observationDAO.put(observation);
-            skip = makeHarvestSkipURI(artifact);
-            this.harvestSkipURIDAO.put(skip);
-
-            // Test do not tolerate null checksum
-            tolerateNullChecksum = false;
-
-            log.info("FileSyncJob: START");
-            job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                  tolerateNullChecksum, retryAfterDate, subject);
-            job.run();
-            log.info("FileSyncJob: DONE");
-
-            // Skip record should exist and contain the errorMessage
-            skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
-            Assert.assertNotNull("skip record should've been deleted", skip);
-            Assert.assertEquals("artifact content checksum is null", skip.errorMessage);
         } catch (Exception unexpected) {
             Assert.fail("unexpected exception: " + unexpected);
             log.debug(unexpected);
@@ -234,12 +196,13 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
     @Test
     public void testValidJob() {
         try {
-            System.setProperty("user.home", TestUtil.TMP_DIR);
-            File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-            Subject subject = SSLUtil.createSubject(certificateFile);
+            //System.setProperty("user.home", TestUtil.TMP_DIR);
+            //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
+            //Subject subject = SSLUtil.createSubject(certificateFile);
+            final Subject subject = AuthenticationUtil.getAnonSubject();
 
             // instantiate ArtifactStore when it's config is in place.
-            ArtifactStore artifactStore = getArtifactStore();
+            final ArtifactStore artifactStore = TestUtil.getArtifactStore();
 
             // Artifact & HarvestSkipURI in the database to start.
             Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM, ARTIFACT_CONTENT_LENGTH);
@@ -250,35 +213,25 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             this.observationDAO.put(observation);
             this.harvestSkipURIDAO.put(skip);
 
-            boolean tolerateNullChecksum = true;
-            Date retryAfterDate = getRetryAfterDate();
+            int retryAfter = 2;
 
             log.info("FileSyncJob: START");
             FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                              tolerateNullChecksum, retryAfterDate, subject);
+                                            retryAfter, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
-            // Loop until the job has updated the artifact store.
-            Connection con = artifactStoreDataSource.getConnection();
-            String sql = String.format("select uri from %s.artifact", TestUtil.ARTIFACT_STORE_SCHEMA);
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            try {
-                while (!rs.next()) {
-                    log.debug("waiting for file sync jobs to update database");
-                    Thread.sleep(1000);
-                    rs = ps.executeQuery();
-                }
-                String uri = rs.getString(1);
-                Assert.assertNotNull(uri);
-            } catch (SQLException e) {
-                log.error(String.format("Artifact %s not found in ArtifactStore", ARTIFACT_URI));
-                Assert.fail(e.getMessage());
-            }
+            // artifact should be stored
+            ArtifactMetadata am = artifactStore.get(skip.getSkipID());
+            Assert.assertNotNull(am);
+            
+            // Skip record should be deleted
+            skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), artifact.getURI());
+            Assert.assertNull("skip record should been deleted", skip);
         } catch (Exception unexpected) {
+            log.error("unexpedcted exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
+            
         } finally {
             System.setProperty("user.home", TestUtil.USER_HOME);
         }
