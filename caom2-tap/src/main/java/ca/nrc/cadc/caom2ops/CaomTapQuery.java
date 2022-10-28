@@ -247,7 +247,7 @@ public class CaomTapQuery {
 
         VOTableDocument doc = execQuery(uri.toASCIIString(), adql);
         ArtifactQueryResult ar = buildArtifacts(doc);
-        if (ar.getArtifacts().isEmpty()) {
+        if (ar == null || ar.getArtifacts().isEmpty()) {
             return null;
         }
         
