@@ -403,7 +403,7 @@ public class ObservationHarvester extends Harvester {
                 log.warn("skipped=" + skipped
                         + " o=" + o
                         + " ow.entity=" + ow.entity
-                        + " ow.entity.error=" + (ow.entity != null || ow.entity.error != null) );
+                        + " ow.entity.error=" + (ow.entity != null || ow.entity.error != null));
                 try {
                     // o could be null in skip mode cleanup
                     if (o != null) {
