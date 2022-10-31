@@ -400,7 +400,7 @@ public class ObservationHarvester extends Harvester {
                     destObservationDAO.getTransactionManager().startTransaction();
                 }
                 boolean ok = false;
-                log.warn("skipped=" + skipped
+                log.debug("skipped=" + skipped
                         + " o=" + o
                         + " ow.entity=" + ow.entity
                         + " ow.entity.error=" + (ow.entity != null || ow.entity.error != null));
