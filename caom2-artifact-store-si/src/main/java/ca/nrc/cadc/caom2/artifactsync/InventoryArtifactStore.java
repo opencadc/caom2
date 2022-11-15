@@ -158,6 +158,12 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
     }
 
+    /**
+     * Get the ArtifactMetadata for the given Artifact URI.
+     *
+     * @param artifactURI the Artifact URI
+     * @return the ArtifactMetadata for the artifactURI, or null if the Artifact is not found.
+     */
     public ArtifactMetadata get(URI artifactURI) {
         URL url = getLocateFilesURL(artifactURI);
         HttpGet head = new HttpGet(url, true);
@@ -207,6 +213,17 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
     }
 
+    /**
+     * Add an Artifact to a Storage Inventory.
+     *
+     * @param artifactURI the Artifact URI to store
+     * @param data Artifact inputstream
+     * @param metadata Artifact metadata
+     * @throws TransientException
+     * @throws InterruptedException
+     * @throws IOException
+     * @throws ResourceNotFoundException
+     */
     public void store(URI artifactURI, InputStream data, FileMetadata metadata) throws TransientException {
         // request all protocols that can be used
         if (storeProtocolList.isEmpty()) {
@@ -230,12 +247,21 @@ public class InventoryArtifactStore implements ArtifactStore {
         storageInventoryClient.upload(transfer, data, metadata);
     }
 
-    public Set<ArtifactMetadata> list(String collection)
+    /**
+     * Get a list of ArtifactMetadata for artifacts matching the given namespace.
+     *
+     * @param namespace artifact uri prefix to match
+     * @return Set of ArtifactMetadata with matching namespace, or an empty set if no
+     *         matching Artifacts found, never null.
+     * @throws TransientException
+     * @throws UnsupportedOperationException
+     * @throws AccessControlException
+     */
+    public Set<ArtifactMetadata> list(String namespace)
             throws TransientException, UnsupportedOperationException, AccessControlException {
         this.init();
-        String prefixes = getPrefixes(collection);
-        String adql = "select uri, contentChecksum, contentLength, contentType "
-                + "from inventory.Artifact where split_part(uri,'/',1) IN (" + prefixes + ")";
+        String adql = String.format("select uri, contentChecksum, contentLength, contentType "
+                                        + "from inventory.Artifact where uri like '%s%%'", namespace);
         log.debug("physical list query: " + adql);
         long start = System.currentTimeMillis();
         TreeSet<ArtifactMetadata> result = query(storageInventoryTapURL, adql);
