@@ -219,10 +219,7 @@ public class InventoryArtifactStore implements ArtifactStore {
      * @param artifactURI the Artifact URI to store
      * @param data Artifact inputstream
      * @param metadata Artifact metadata
-     * @throws TransientException
-     * @throws InterruptedException
-     * @throws IOException
-     * @throws ResourceNotFoundException
+     * @throws TransientException if an unexpected, temporary exception occurred
      */
     public void store(URI artifactURI, InputStream data, FileMetadata metadata) throws TransientException {
         // request all protocols that can be used
@@ -253,12 +250,12 @@ public class InventoryArtifactStore implements ArtifactStore {
      * @param namespace artifact uri prefix to match
      * @return Set of ArtifactMetadata with matching namespace, or an empty set if no
      *         matching Artifacts found, never null.
-     * @throws TransientException
-     * @throws UnsupportedOperationException
-     * @throws AccessControlException
+     * @throws TransientException if an unexpected, temporary exception occurred
+     * @throws UnsupportedOperationException if an unsupported operation occurs
+     * @throws AccessControlException if the caller doesn't have permission to access the resource
      */
     public Set<ArtifactMetadata> list(String namespace)
-            throws TransientException, UnsupportedOperationException, AccessControlException {
+            throws TransientException, AccessControlException {
         this.init();
         String adql = String.format("select uri, contentChecksum, contentLength, contentType "
                                         + "from inventory.Artifact where uri like '%s%%'", namespace);
