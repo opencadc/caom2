@@ -217,11 +217,13 @@ public class InventoryArtifactStore implements ArtifactStore {
      * Add an Artifact to a Storage Inventory.
      *
      * @param artifactURI the Artifact URI to store
-     * @param data Artifact inputstream
+     * @param src URl to retrieve file from
      * @param metadata Artifact metadata
      * @throws TransientException if an unexpected, temporary exception occurred
      */
-    public void store(URI artifactURI, InputStream data, FileMetadata metadata) throws TransientException {
+    public void store(URI artifactURI, URL src, FileMetadata metadata) throws TransientException, InterruptedException,
+            IOException, ResourceNotFoundException {
+
         // request all protocols that can be used
         if (storeProtocolList.isEmpty()) {
             Subject subject = AuthenticationUtil.getCurrentSubject();
@@ -241,7 +243,7 @@ public class InventoryArtifactStore implements ArtifactStore {
             throw new RuntimeException("No transfer endpoint available.");
         }
 
-        storageInventoryClient.upload(transfer, data, metadata);
+        storageInventoryClient.upload(transfer, src, metadata);
     }
 
     /**
