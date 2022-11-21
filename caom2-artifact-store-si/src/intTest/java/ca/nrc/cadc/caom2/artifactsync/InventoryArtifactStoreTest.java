@@ -62,66 +62,65 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  : 5 $
+ *
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.version;
+package ca.nrc.cadc.caom2.artifactsync;
 
-import java.net.URL;
-import javax.sql.DataSource;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.util.Set;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Utility class to setup the caom2 tables in the database. This currently works
- * for the postgresql implementation only.
- *
- * @author pdowler
- */
-public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
+public class InventoryArtifactStoreTest {
 
-    private static final Logger log = Logger.getLogger(InitDatabase.class);
+    private static final Logger log = Logger.getLogger(InventoryArtifactStoreTest.class);
 
-    public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.4.12";
-    public static final String PREV_MODEL_VERSION = "2.4.10";
-    //public static final String PREV_MODEL_VERSION = "DO-NOT_UPGRADE-BY-ACCIDENT";
-
-    static String[] CREATE_SQL = new String[]{
-        "caom2.ModelVersion.sql",
-        "caom2.Observation.sql",
-        "caom2.Plane.sql",
-        "caom2.Artifact.sql",
-        "caom2.Part.sql",
-        "caom2.Chunk.sql",
-        "caom2.HarvestState.sql",
-        "caom2.HarvestSkipURI.sql",
-        "caom2.deleted.sql",
-        "caom2.extra_indices.sql",
-        "caom2.ObsCore.sql",
-        "caom2.ObsCore-x.sql",
-        "caom2.SIAv1.sql",
-        "caom2.permissions.sql"
-    };
-
-    static String[] UPGRADE_SQL = new String[]{
-        "caom2.upgrade-2.4.12.sql",
-        "caom2.ObsCore.sql",
-        "caom2.permissions.sql"
-    };
-
-    public InitDatabase(DataSource dataSource, String database, String schema) {
-        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION, PREV_MODEL_VERSION);
-        for (String s : CREATE_SQL) {
-            createSQL.add(s);
-        }
-        for (String s : UPGRADE_SQL) {
-            upgradeSQL.add(s);
-        }
+    static {
+        Log4jInit.setLevel("org.opencadc.caom2.artifactsync", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
     }
 
-    @Override
-    protected URL findSQL(String fname) {
-        // SQL files are stored inside the jar file
-        return InitDatabase.class.getClassLoader().getResource("postgresql/" + fname);
+    private static final String TEST_NAMESPACE = "cadc:IRIS/";
+    private static final URI TEST_ARTIFACT_URI = URI.create("cadc:IRIS/I212B2H0.fits");
+
+    @Test
+    public void testGet() {
+        log.info("testGet - START");
+        try {
+            final ArtifactStore artifactStore = new InventoryArtifactStore();
+            ArtifactMetadata artifactMetadata = artifactStore.get(TEST_ARTIFACT_URI);
+            Assert.assertNotNull(artifactMetadata);
+            Assert.assertNotNull(artifactMetadata.contentType);
+            Assert.assertNotNull(artifactMetadata.contentLength);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected exception: " + unexpected);
+            log.debug(unexpected);
+        }
+        log.info("testGet - DONE");
     }
+
+    @Test
+    public void testList() {
+        log.info("testList - START");
+        try {
+            final ArtifactStore artifactStore = new InventoryArtifactStore();
+            Set<ArtifactMetadata> artifactMetadataSet = artifactStore.list(TEST_NAMESPACE);
+            Assert.assertNotNull(artifactMetadataSet);
+            Assert.assertTrue(artifactMetadataSet.size() > 0);
+        } catch (Exception unexpected) {
+            Assert.fail("unexpected exception: " + unexpected);
+            log.debug(unexpected);
+        }
+        log.info("testList - DONE");
+    }
+
 }

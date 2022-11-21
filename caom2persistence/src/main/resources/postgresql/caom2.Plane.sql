@@ -1,7 +1,7 @@
 
 create table <schema>.Plane
 (
-    productID varchar(64) not null,
+    productID varchar(128) not null,
     publisherID varchar(512) not null,
     planeURI varchar(512) not null,
     creatorID varchar(512),
