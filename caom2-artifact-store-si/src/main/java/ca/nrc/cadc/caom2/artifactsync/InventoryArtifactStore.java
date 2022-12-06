@@ -158,6 +158,12 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
     }
 
+    /**
+     * Get the ArtifactMetadata for the given Artifact URI.
+     *
+     * @param artifactURI the Artifact URI
+     * @return the ArtifactMetadata for the artifactURI, or null if the Artifact is not found.
+     */
     public ArtifactMetadata get(URI artifactURI) {
         URL url = getLocateFilesURL(artifactURI);
         HttpGet head = new HttpGet(url, true);
@@ -207,7 +213,17 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
     }
 
-    public void store(URI artifactURI, InputStream data, FileMetadata metadata) throws TransientException {
+    /**
+     * Add an Artifact to a Storage Inventory.
+     *
+     * @param artifactURI the Artifact URI to store
+     * @param src URl to retrieve file from
+     * @param metadata Artifact metadata
+     * @throws TransientException if an unexpected, temporary exception occurred
+     */
+    public void store(URI artifactURI, URL src, FileMetadata metadata) throws TransientException, InterruptedException,
+            IOException, ResourceNotFoundException {
+
         // request all protocols that can be used
         if (storeProtocolList.isEmpty()) {
             Subject subject = AuthenticationUtil.getCurrentSubject();
@@ -227,15 +243,24 @@ public class InventoryArtifactStore implements ArtifactStore {
             throw new RuntimeException("No transfer endpoint available.");
         }
 
-        storageInventoryClient.upload(transfer, data, metadata);
+        storageInventoryClient.upload(transfer, src, metadata);
     }
 
-    public Set<ArtifactMetadata> list(String collection)
-            throws TransientException, UnsupportedOperationException, AccessControlException {
+    /**
+     * Get a list of ArtifactMetadata for artifacts matching the given namespace.
+     *
+     * @param namespace artifact uri prefix to match
+     * @return Set of ArtifactMetadata with matching namespace, or an empty set if no
+     *         matching Artifacts found, never null.
+     * @throws TransientException if an unexpected, temporary exception occurred
+     * @throws UnsupportedOperationException if an unsupported operation occurs
+     * @throws AccessControlException if the caller doesn't have permission to access the resource
+     */
+    public Set<ArtifactMetadata> list(String namespace)
+            throws TransientException, AccessControlException {
         this.init();
-        String prefixes = getPrefixes(collection);
-        String adql = "select uri, contentChecksum, contentLength, contentType "
-                + "from inventory.Artifact where split_part(uri,'/',1) IN (" + prefixes + ")";
+        String adql = String.format("select uri, contentChecksum, contentLength, contentType "
+                                        + "from inventory.Artifact where uri like '%s%%'", namespace);
         log.debug("physical list query: " + adql);
         long start = System.currentTimeMillis();
         TreeSet<ArtifactMetadata> result = query(storageInventoryTapURL, adql);

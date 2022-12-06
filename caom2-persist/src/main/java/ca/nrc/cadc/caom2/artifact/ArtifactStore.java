@@ -69,11 +69,13 @@
 
 package ca.nrc.cadc.caom2.artifact;
 
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Set;
 
@@ -122,8 +124,8 @@ public interface ArtifactStore {
      *
      * @param artifactURI
      *            The artifact identifier.
-     * @param data
-     *            The artifact data.
+     * @param src
+     *            URL of the source to access the data. Must support HTTP Range requests
      * @param metadata
      *            Artifact metadata, including md5sum, contentLength and contentType
      *
@@ -137,13 +139,20 @@ public interface ArtifactStore {
      *             If the calling user is not allowed to upload the artifact.
      * @throws IllegalStateException
      *             If the artifact already exists.
+     * @throws InterruptedException
+     *             If the transfer gets interrupted
+     * @throws IOException
+     *             If an IO exception occurs
+     * @throws ResourceNotFoundException
+     *             If the src URL points to a non-existent resource
      * @throws TransientException
      *             If an unexpected runtime error occurs.
      * @throws RuntimeException
      *             If an unrecovarable error occurs.
      */
-    public void store(URI artifactURI, InputStream data, FileMetadata metadata)
-            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
+    public void store(URI artifactURI, URL src, FileMetadata metadata)
+            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException,
+            IllegalStateException, InterruptedException, IOException, ResourceNotFoundException;
 
     /**
      * Get the list of all artifacts in a certain archive.
