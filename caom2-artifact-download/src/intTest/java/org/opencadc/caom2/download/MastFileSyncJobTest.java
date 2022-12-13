@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2022.                            (c) 2022.
+ *  (c) 2021.                            (c) 2021.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,6 +62,8 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  : 5 $
+ *
  ************************************************************************
  */
 
@@ -74,16 +76,14 @@ import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.util.Log4jInit;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class FileSyncJobTest extends AbstractFileSyncTest {
-    private static final Logger log = Logger.getLogger(FileSyncJobTest.class);
+public class MastFileSyncJobTest extends AbstractFileSyncTest {
+    private static final Logger log = Logger.getLogger(MastFileSyncJobTest.class);
 
     static {
         Log4jInit.setLevel("org.opencadc.caom2.download", Level.INFO);
@@ -91,90 +91,12 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
     }
 
-    private static final String ARTIFACT_URI =  "cadc:IRIS/I212B2H0.fits";
-    private static final String ARTIFACT_CONTENT_CHECKSUM = "md5:646d3c548ffb98244a0fc52b60556082";
-    private static final long ARTIFACT_CONTENT_LENGTH = 1008000;
+    private static final String ARTIFACT_URI =  "mast:HST/product/w0q20204t_c0f.fits";
+    private static final String ARTIFACT_CONTENT_CHECKSUM = "md5:64138ebf7a050325b51b0b8d1c04e410";
+    private static final long ARTIFACT_CONTENT_LENGTH = 10275840;
 
-    public FileSyncJobTest() throws Exception {
+    public MastFileSyncJobTest() throws Exception {
         super();
-    }
-
-    @Test
-    public void testMissingSourceArtifact() {
-        log.info("testMissingSourceArtifact - START");
-        try {
-            final Subject subject = AuthenticationUtil.getAnonSubject();
-
-            // instantiate ArtifactStore when it's config is in place.
-            final ArtifactStore artifactStore = TestUtil.getArtifactStore();
-
-            // Source with a HarvestSkipURI but no Artifact.
-            Artifact artifact = makeArtifact(ARTIFACT_URI, ARTIFACT_CONTENT_CHECKSUM, ARTIFACT_CONTENT_LENGTH);
-
-            HarvestSkipURI skip = makeHarvestSkipURI(artifact);
-            this.harvestSkipURIDAO.put(skip);
-
-            int retryAfter = 2;
-
-            log.info("FileSyncJob: START");
-            FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                            retryAfter, subject);
-            job.run();
-            log.info("FileSyncJob: DONE");
-            
-            // artifact should not be stored
-            ArtifactMetadata am = artifactStore.get(skip.getSkipID());
-            Assert.assertNull(am);
-
-            // Skip record should be deleted
-            skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), artifact.getURI());
-            Assert.assertNull("skip record should been deleted", skip);
-        } catch (Exception unexpected) {
-            Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
-        }
-        log.info("testMissingSourceArtifact - DONE");
-    }
-
-    @Test
-    public void testTolerateNullChecksum() {
-        log.info("testTolerateNullChecksum - START");
-        try {
-            final Subject subject = AuthenticationUtil.getAnonSubject();
-
-            // instantiate ArtifactStore when it's config is in place.
-            final ArtifactStore artifactStore = TestUtil.getArtifactStore();
-
-            // Source Artifact without a checksum and a HarvestSkipURI
-            Artifact artifact = makeArtifact(ARTIFACT_URI, null, ARTIFACT_CONTENT_LENGTH);
-            Observation observation = makeObservation(artifact);
-            this.observationDAO.put(observation);
-
-            HarvestSkipURI skip = makeHarvestSkipURI(artifact);
-            this.harvestSkipURIDAO.put(skip);
-
-            // Test tolerate  null checksum
-            int retryAfter = 2;
-
-            log.info("FileSyncJob: START");
-            FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                            retryAfter, subject);
-            job.run();
-            log.info("FileSyncJob: DONE");
-
-            // artifact should be stored
-            ArtifactMetadata am = artifactStore.get(skip.getSkipID());
-            Assert.assertNotNull(am);
-            
-            // Skip record should be deleted
-            skip = harvestSkipURIDAO.get(skip.getSource(), skip.getName(), skip.getSkipID());
-            Assert.assertNull("skip record should've been deleted", skip);
-
-        } catch (Exception unexpected) {
-            Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
-        }
-        log.info("testTolerateNullChecksum - DONE");
     }
 
     @Test
@@ -197,15 +119,14 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             int retryAfter = 2;
 
             log.info("FileSyncJob: START");
-            FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore,
-                                            retryAfter, subject);
+            FileSyncJob job = new FileSyncJob(skip, harvestSkipURIDAO, artifactDAO, artifactStore, retryAfter, subject);
             job.run();
             log.info("FileSyncJob: DONE");
 
             // artifact should be stored
             ArtifactMetadata am = artifactStore.get(skip.getSkipID());
             Assert.assertNotNull(am);
-            
+
             // Skip record should be deleted
             skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), artifact.getURI());
             Assert.assertNull("skip record should been deleted", skip);
