@@ -75,12 +75,6 @@ import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.util.Log4jInit;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Calendar;
-import java.util.Date;
 import javax.security.auth.Subject;
 
 import org.apache.log4j.Level;
@@ -109,9 +103,6 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
     public void testMissingSourceArtifact() {
         log.info("testMissingSourceArtifact - START");
         try {
-            //System.setProperty("user.home", TestUtil.TMP_DIR);
-            //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-            //Subject subject = SSLUtil.createSubject(certificateFile);
             final Subject subject = AuthenticationUtil.getAnonSubject();
 
             // instantiate ArtifactStore when it's config is in place.
@@ -141,8 +132,6 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         } catch (Exception unexpected) {
             Assert.fail("unexpected exception: " + unexpected);
             log.debug(unexpected);
-        } finally {
-            //System.setProperty("user.home", TestUtil.USER_HOME);
         }
         log.info("testMissingSourceArtifact - DONE");
     }
@@ -151,9 +140,6 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
     public void testTolerateNullChecksum() {
         log.info("testTolerateNullChecksum - START");
         try {
-            //System.setProperty("user.home", TestUtil.TMP_DIR);
-            //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-            //Subject subject = SSLUtil.createSubject(certificateFile);
             final Subject subject = AuthenticationUtil.getAnonSubject();
 
             // instantiate ArtifactStore when it's config is in place.
@@ -187,8 +173,6 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
         } catch (Exception unexpected) {
             Assert.fail("unexpected exception: " + unexpected);
             log.debug(unexpected);
-        } finally {
-            System.setProperty("user.home", TestUtil.USER_HOME);
         }
         log.info("testTolerateNullChecksum - DONE");
     }
@@ -196,9 +180,6 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
     @Test
     public void testValidJob() {
         try {
-            //System.setProperty("user.home", TestUtil.TMP_DIR);
-            //File certificateFile = FileUtil.getFileFromResource(TestUtil.CERTIFICATE_FILE, FileSyncJobTest.class);
-            //Subject subject = SSLUtil.createSubject(certificateFile);
             final Subject subject = AuthenticationUtil.getAnonSubject();
 
             // instantiate ArtifactStore when it's config is in place.
@@ -229,11 +210,8 @@ public class FileSyncJobTest extends AbstractFileSyncTest {
             skip = this.harvestSkipURIDAO.get(skip.getSource(), skip.getName(), artifact.getURI());
             Assert.assertNull("skip record should been deleted", skip);
         } catch (Exception unexpected) {
-            log.error("unexpedcted exception", unexpected);
+            log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-            
-        } finally {
-            System.setProperty("user.home", TestUtil.USER_HOME);
         }
         log.info("testValidJob - DONE");
     }

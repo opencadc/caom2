@@ -248,17 +248,9 @@ public class FileSyncJob implements Runnable  {
                             success = true;
                             return;
                         }
-
-                        HttpGet download = new HttpGet(url, true);
-                        download.setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
-                        download.setReadTimeout(DEFAULT_READ_TIMEOUT);
-                        log.debug(String.format("download: %s as %s", url, AuthenticationUtil.getCurrentSubject()));
-
+                        
                         final long dlStart = System.currentTimeMillis();
-                        download.prepare();
-                        postPrepare = true;
-
-                        artifactStore.store(harvestSkipURI.getSkipID(), download.getInputStream(), fileMetadata);
+                        artifactStore.store(harvestSkipURI.getSkipID(), url, fileMetadata);
                         byteTransferTime = System.currentTimeMillis() - dlStart;
                         success = true;
                         log.debug(String.format("Completed download of %s from %s", artifactURI, url));

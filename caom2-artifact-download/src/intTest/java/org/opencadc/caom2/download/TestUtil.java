@@ -70,6 +70,9 @@ package org.opencadc.caom2.download;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.StoragePolicy;
+import ca.nrc.cadc.net.HttpGet;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
 import java.io.File;
@@ -77,6 +80,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.CopyOption;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -204,13 +208,20 @@ public class TestUtil {
         }
 
         @Override
-        public void store(URI artifactURI, InputStream data, FileMetadata metadata) 
+        public void store(URI artifactURI, URL src, FileMetadata metadata)
                 throws TransientException, UnsupportedOperationException, IllegalArgumentException, 
                 AccessControlException, IllegalStateException {
             
             try {
+                HttpGet get = new HttpGet(src, true);
+                try {
+                    get.prepare();
+                } catch (ResourceAlreadyExistsException | ResourceNotFoundException | InterruptedException ex) {
+                    throw new RuntimeException("source error", ex);
+                }
+
                 Path target = toPath(artifactURI);
-                Files.copy(data, target, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(get.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException ex) {
                 throw new RuntimeException("store failed", ex);
             }
