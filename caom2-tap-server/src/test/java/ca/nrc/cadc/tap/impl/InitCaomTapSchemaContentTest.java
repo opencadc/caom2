@@ -68,11 +68,18 @@
 package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.util.Log4jInit;
+
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+
+import javax.sql.DataSource;
 
 /**
  *
@@ -91,7 +98,7 @@ public class InitCaomTapSchemaContentTest {
     @Test
     public void testParseCreateDDL() {
         try {
-            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(null, null, schema);
+            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(new TestDataSource(), null, schema);
             for (String fname : InitCaomTapSchemaContent.CREATE_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = init.parseDDL(fname, schema);
@@ -143,7 +150,7 @@ public class InitCaomTapSchemaContentTest {
     @Test
     public void testParseUpgradeDDL() {
         try {
-            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(null, null, schema);
+            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(new TestDataSource(), null, schema);
             for (String fname : InitCaomTapSchemaContent.UPGRADE_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = init.parseDDL(fname, schema);
@@ -153,6 +160,53 @@ public class InitCaomTapSchemaContentTest {
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    private static class TestDataSource implements DataSource {
+        @Override
+        public <T> T unwrap(Class<T> iface) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public boolean isWrapperFor(Class<?> iface) throws SQLException {
+            return false;
+        }
+
+        @Override
+        public Connection getConnection() throws SQLException {
+            return null;
+        }
+
+        @Override
+        public Connection getConnection(String username, String password) throws SQLException {
+            return null;
+        }
+
+        @Override
+        public PrintWriter getLogWriter() throws SQLException {
+            return null;
+        }
+
+        @Override
+        public void setLogWriter(PrintWriter out) throws SQLException {
+
+        }
+
+        @Override
+        public void setLoginTimeout(int seconds) throws SQLException {
+
+        }
+
+        @Override
+        public int getLoginTimeout() throws SQLException {
+            return 0;
+        }
+
+        @Override
+        public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            return null;
         }
     }
 }
