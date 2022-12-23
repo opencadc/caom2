@@ -113,6 +113,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
+
+import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 import org.opencadc.tap.TapClient;
 
@@ -267,7 +269,7 @@ public class CaomTapQuery {
         }
 
         TapClient tc = new TapClient(tapServiceID);
-        URL tapSyncURL = tc.getSyncURL(queryAuthMethod);
+        URL tapSyncURL = tc.getSyncURL(Standards.getSecurityMethod(queryAuthMethod));
         
         log.debug("post: " + uri + " " + tapSyncURL);
         HttpPost httpPost = new HttpPost(tapSyncURL, getQueryParameters(VOTABLE_FORMAT, adql), false);
