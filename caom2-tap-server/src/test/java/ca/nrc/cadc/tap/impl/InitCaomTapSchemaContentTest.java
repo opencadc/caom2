@@ -71,10 +71,8 @@ import ca.nrc.cadc.util.Log4jInit;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.ConnectionBuilder;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.sql.ShardingKeyBuilder;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
