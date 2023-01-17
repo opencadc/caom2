@@ -78,6 +78,7 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.thread.ThreadedRunnableExecutor;
 import ca.nrc.cadc.util.BucketSelector;
@@ -93,7 +94,6 @@ import javax.naming.NamingException;
 import javax.security.auth.Subject;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
-import org.opencadc.inventory.util.DBUtil;
 
 /**
  * FileSync code that queries for and queues download jobs.
@@ -184,7 +184,7 @@ public class FileSync implements Runnable {
             try {
                 String database = null; // unused (String) daoConfig.get("database");
                 String schema = (String) daoConfig.get("schema");
-                DataSource ds = ca.nrc.cadc.db.DBUtil.findJNDIDataSource(artifactJobDS);
+                DataSource ds = DBUtil.findJNDIDataSource(artifactJobDS);
                 InitDatabase init = new InitDatabase(ds, database, schema);
                 init.doInit();
                 log.info("initDatabase: " + schema + " OK");
