@@ -3,7 +3,7 @@
 M*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2021.                            (c) 2021.
+*  (c) 2022.                            (c) 2022.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,13 +67,15 @@ M*******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.artifactsync;
+package ca.nrc.cadc.caom2.artifact.si;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.artifact.StoragePolicy;
+import ca.nrc.cadc.io.ByteLimitExceededException;
+import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -88,14 +90,10 @@ import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
 import ca.nrc.cadc.vos.VOS;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.security.AccessControlException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -104,6 +102,7 @@ import java.util.TreeSet;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.opencadc.tap.TapClient;
+import org.opencadc.tap.TapRowMapper;
 
 /**
  * CADC Implementation of the ArtifactStore interface that uses Storage Inventory.
@@ -132,8 +131,8 @@ public class InventoryArtifactStore implements ArtifactStore {
         QUERY_SERVICE_CONFIG_KEY
     };
 
-    private URI locateServiceResourceID;
-    private URI queryServiceResourceID;
+    private URI locatorService;
+    private URI queryService;
     private URL storageInventoryTapURL;
     private URL locateServicesFilesURL;
     private List<Protocol> storeProtocolList = new ArrayList<>();
@@ -141,21 +140,11 @@ public class InventoryArtifactStore implements ArtifactStore {
     public InventoryArtifactStore() {
         initConfig();
     }
-
-    private void init() {
-        Subject subject = AuthenticationUtil.getCurrentSubject();
-        AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-        URI securityMethod = Standards.getSecurityMethod(authMethod);
-
-        if (storageInventoryTapURL == null) {
-            try {
-                TapClient tapClient = new TapClient<>(queryServiceResourceID);
-                storageInventoryTapURL = tapClient.getSyncURL(securityMethod);
-            } catch (Throwable t) {
-                String message = "Failed to initialize Storage-Inventory TAP URL";
-                throw new RuntimeException(message, t);
-            }
-        }
+    
+    // ctor for intTest
+    InventoryArtifactStore(URI locatorService, URI queryService) {
+        this.locatorService = locatorService;
+        this.queryService = queryService;
     }
 
     /**
@@ -168,8 +157,8 @@ public class InventoryArtifactStore implements ArtifactStore {
         URL url = getLocateFilesURL(artifactURI);
         HttpGet head = new HttpGet(url, true);
         head.setHeadOnly(true);
-        head.setConnectionTimeout(5000);
-        head.setReadTimeout(5000);
+        head.setConnectionTimeout(6000);
+        head.setReadTimeout(12000);
 
         long start = System.currentTimeMillis();
         try {
@@ -220,7 +209,11 @@ public class InventoryArtifactStore implements ArtifactStore {
      * @param src URl to retrieve file from
      * @param metadata Artifact metadata
      * @throws TransientException if an unexpected, temporary exception occurred
+     * @throws java.lang.InterruptedException
+     * @throws java.io.IOException
+     * @throws ca.nrc.cadc.net.ResourceNotFoundException
      */
+    @Override
     public void store(URI artifactURI, URL src, FileMetadata metadata) throws TransientException, InterruptedException,
             IOException, ResourceNotFoundException {
 
@@ -237,7 +230,7 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
 
         Direction direction = Direction.pushToVoSpace;
-        InventoryClient storageInventoryClient = new InventoryClient(locateServiceResourceID);
+        InventoryClient storageInventoryClient = new InventoryClient(locatorService);
         Transfer transfer = storageInventoryClient.createTransferSync(artifactURI, direction, storeProtocolList);
         if (transfer.getAllEndpoints().isEmpty()) {
             throw new RuntimeException("No transfer endpoint available.");
@@ -256,18 +249,56 @@ public class InventoryArtifactStore implements ArtifactStore {
      * @throws UnsupportedOperationException if an unsupported operation occurs
      * @throws AccessControlException if the caller doesn't have permission to access the resource
      */
+    @Override
     public Set<ArtifactMetadata> list(String namespace)
-            throws TransientException, AccessControlException {
-        this.init();
-        String adql = String.format("select uri, contentChecksum, contentLength, contentType "
-                                        + "from inventory.Artifact where uri like '%s%%'", namespace);
-        log.debug("physical list query: " + adql);
-        long start = System.currentTimeMillis();
-        TreeSet<ArtifactMetadata> result = query(storageInventoryTapURL, adql);
-        log.debug("Finished physical list query in " + (System.currentTimeMillis() - start) + " ms");
+            throws IOException, InterruptedException,
+            ResourceNotFoundException, TransientException, AccessControlException {
+        
+        ResourceIterator<ArtifactMetadata> iter = iterator(namespace);
+        TreeSet<ArtifactMetadata> result = new TreeSet<>(ArtifactMetadata.getComparator());
+        while (iter.hasNext()) {
+            result.add(iter.next());
+        }
         return result;
     }
+    
+    // soon: list() will be replaced by iterator()
+    public ResourceIterator<ArtifactMetadata> iterator(String namespace)
+            throws IOException, InterruptedException,
+            ResourceNotFoundException, TransientException, AccessControlException {
+        String adql = ArtifactRowMapper.SELECT + " WHERE uri LIKE '" + namespace + "%'";
+        log.warn("query: " + adql);
+        try {
+            long start = System.currentTimeMillis();
+            TapClient tap = new TapClient(queryService);
+            tap.setConnectionTimeout(6000);
+            tap.setReadTimeout(12000);
+            ResourceIterator<ArtifactMetadata> ret = tap.query(adql, new ArtifactRowMapper(), true);
+            log.debug("Finished query in " + (System.currentTimeMillis() - start) + " ms");
+            return ret;
+        } catch (ByteLimitExceededException ex) {
+            throw new RuntimeException("UNEXPECTED fail: " + ex, ex);
+        }
+    }
 
+    class ArtifactRowMapper implements TapRowMapper<ArtifactMetadata>  {
+        public static final String SELECT = "SELECT uri, contentChecksum, contentLength, contentType"
+                + " FROM inventory.Artifact";
+
+        @Override
+        public ArtifactMetadata mapRow(final List<Object> row) {
+            int index = 0;
+            final URI uri = (URI) row.get(index++);
+            final URI contentChecksum = (URI) row.get(index++);
+
+            final ArtifactMetadata artifact = new ArtifactMetadata(uri, contentChecksum.getSchemeSpecificPart());
+            artifact.contentLength = (Long) row.get(index++);
+            artifact.contentType = (String) row.get(index++);
+            return artifact;
+        }
+    }
+    
+    @Override
     public String toStorageID(String artifactURI) throws IllegalArgumentException {
         throw new UnsupportedOperationException("toStorageID(...) is no longer supported.");
     }
@@ -301,8 +332,8 @@ public class InventoryArtifactStore implements ArtifactStore {
 
         final String configuredQueryService = props.getFirstPropertyValue(QUERY_SERVICE_CONFIG_KEY);
         final String configuredLocateService = props.getFirstPropertyValue(LOCATE_SERVICE_CONFIG_KEY);
-        this.locateServiceResourceID = URI.create(configuredLocateService);
-        this.queryServiceResourceID = URI.create(configuredQueryService);
+        this.locatorService = URI.create(configuredLocateService);
+        this.queryService = URI.create(configuredQueryService);
     }
 
     private String getPrefixes(String collection) {
@@ -328,44 +359,6 @@ public class InventoryArtifactStore implements ArtifactStore {
         }
     }
 
-    private TreeSet<ArtifactMetadata> query(URL baseURL, String adql) {
-        HttpGet get;
-        CADCResultReader resultReader;
-        try {
-            StringBuilder queryString = new StringBuilder();
-            queryString.append("LANG=ADQL&RESPONSEFORMAT=tsv&QUERY=");
-            queryString.append(URLEncoder.encode(adql, "UTF-8"));
-            log.debug("query URL: " + baseURL.toString() + "?" + queryString.toString());
-            URL url = new URL(baseURL.toString() + "?" + queryString.toString());
-            resultReader = new CADCResultReader();
-            get = new HttpGet(url, resultReader);
-            get.setConnectionTimeout(DEFAULT_TIMEOUT);
-            get.setReadTimeout(DEFAULT_TIMEOUT);
-        } catch (UnsupportedEncodingException | MalformedURLException | NoSuchAlgorithmException ex) {
-            throw new IllegalArgumentException(ex);
-        }
-
-        try {
-            get.run();
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw new RuntimeException(t);
-        }
-        if (get.getThrowable() != null) {
-            if (get.getThrowable() instanceof Exception) {
-                if (get.getThrowable() instanceof AccessControlException) {
-                    throw (AccessControlException) get.getThrowable();
-                } else {
-                    throw new IllegalStateException(get.getThrowable().getCause());
-                }
-            } else {
-                throw new RuntimeException(get.getThrowable());
-            }
-        }
-
-        return resultReader.metadata;
-    }
-
     private URL getLocateFilesURL(URI artifactURI) {
         try {
             RegistryClient rc = new RegistryClient();
@@ -375,7 +368,7 @@ public class InventoryArtifactStore implements ArtifactStore {
                 authMethod = AuthMethod.ANON;
             }
 
-            URL serviceURL = rc.getServiceURL(locateServiceResourceID, Standards.SI_FILES, authMethod);
+            URL serviceURL = rc.getServiceURL(locatorService, Standards.SI_FILES, authMethod);
             return new URL(serviceURL.toExternalForm() + "/" + artifactURI.toASCIIString());
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);

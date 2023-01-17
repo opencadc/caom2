@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2022.                            (c) 2022.
+*  (c) 2021.                            (c) 2021.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,56 +62,83 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.caom2.artifactsync;
+package ca.nrc.cadc.caom2.artifact.si;
 
-import ca.nrc.cadc.util.FileMetadata;
-import java.util.List;
-import org.junit.Assert;
-import org.junit.Test;
+import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
+import ca.nrc.cadc.net.InputStreamWrapper;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.security.NoSuchAlgorithmException;
+import java.util.TreeSet;
+import org.apache.log4j.Logger;
 
 /**
+ * Class that reads the results of an ADQL query generated and handled by
+ * CADCArtifactStore.query().
  *
- * @author adriand
+ * @author majorb
+ *
  */
-public class InventoryClientTest {
-    @Test
-    public void testGetSegmentPlan() throws Exception {
-        FileMetadata fm = new FileMetadata();
-        fm.setContentLength(new Long(10));
-        long minSize = 1;
-        long maxSize = 1;
-        List<InventoryClient.PutSegment> segments =
-                InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
+public class CADCResultReader implements InputStreamWrapper {
 
-        maxSize = 10;
-        segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
-        Assert.assertEquals(10, segments.get(0).contentLength);
-        Assert.assertEquals(0, segments.get(0).start);
-        Assert.assertEquals(9, segments.get(0).end);
+    private static final Logger log = Logger.getLogger(CADCResultReader.class);
 
-        maxSize = 6;
-        segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
-        Assert.assertEquals(6, segments.get(0).contentLength);
-        Assert.assertEquals(0, segments.get(0).start);
-        Assert.assertEquals(5, segments.get(0).end);
-        Assert.assertEquals(4, segments.get(1).contentLength);
-        Assert.assertEquals(6, segments.get(1).start);
-        Assert.assertEquals(9, segments.get(1).end);
+    TreeSet<ArtifactMetadata> metadata;
 
-        maxSize = 9;
-        segments = InventoryClient.getSegmentPlan(fm, new Long(minSize), new Long(maxSize));
-        Assert.assertEquals((int)Math.ceil((float)fm.getContentLength() / maxSize), segments.size());
-        Assert.assertEquals(9, segments.get(0).contentLength);
-        Assert.assertEquals(0, segments.get(0).start);
-        Assert.assertEquals(8, segments.get(0).end);
-        Assert.assertEquals(1, segments.get(1).contentLength);
-        Assert.assertEquals(9, segments.get(1).start);
-        Assert.assertEquals(9, segments.get(1).end);
+    public CADCResultReader()
+            throws NoSuchAlgorithmException {
+        metadata = new TreeSet<>(ArtifactMetadata.getComparator());
+    }
+
+    @Override
+    public void read(InputStream inputStream) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String line;
+        String[] parts;
+        ArtifactMetadata am = null;
+        boolean firstLine = true;
+        while ((line = reader.readLine()) != null) {
+            if (firstLine) {
+                // first line is a header
+                firstLine = false;
+            } else {
+                try {
+                    parts = line.split("\t");
+                    if (parts.length == 0) {
+                        // empty line
+                    } else {
+                        URI artifactURI = new URI(parts[0]);
+
+                        String acs = null;
+                        if (parts.length > 1) {
+                            String checksum = parts[1];
+                            int colon = checksum.indexOf(":");
+                            acs = checksum.substring(colon + 1, checksum.length());
+                        }
+                        am = new ArtifactMetadata(artifactURI, acs);
+                        if (parts.length > 2) {
+                            am.contentLength = Long.parseLong(parts[2]);
+                        }
+
+                        if (parts.length > 3) {
+                            am.contentType = parts[3];
+                        }
+
+                        metadata.add(am);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to read physical artifact: " + line, e);
+                }
+            }
+        }
+        log.debug("Finished reading physical artifacts.");
     }
 }
