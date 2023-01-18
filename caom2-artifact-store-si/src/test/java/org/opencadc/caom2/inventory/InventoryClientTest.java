@@ -65,9 +65,8 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.artifact.si;
+package org.opencadc.caom2.inventory;
 
-import ca.nrc.cadc.caom2.artifact.si.InventoryClient;
 import ca.nrc.cadc.util.FileMetadata;
 import java.util.List;
 import org.junit.Assert;

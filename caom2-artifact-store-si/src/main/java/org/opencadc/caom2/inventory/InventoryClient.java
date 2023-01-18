@@ -67,7 +67,7 @@
 ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.artifact.si;
+package org.opencadc.caom2.inventory;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;

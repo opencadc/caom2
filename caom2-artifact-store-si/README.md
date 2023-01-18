@@ -3,21 +3,21 @@
 This libary provides a caom2-persist ArtifactStore implementation that
 works with the CADC Storage Inventory backend (luskan and minoc).
 
-The ArtifactStore implementation provided is `ca.nrc.cadc.caom2.artifactsync.InventoryArtifactStore`.
+The ArtifactStore implementation provided is `org.opencadc.caom2.inventory.InventoryArtifactStore`.
 
 ## configuration files
 
 ### caom2-artifact-store-si.properties
 
 ```
-ca.nrc.cadc.caom2.artifactsync.locateService = {resourceID for global inventory locator service}
-ca.nrc.cadc.caom2.artifactsync.queryService = {resourceID for global inventory query service}
+org.opencadc.caom2.inventory.locateService = {resourceID for global inventory locator service}
+org.opencadc.caom2.inventory.queryService = {resourceID for global inventory query service}
 ```
 
 Example for CADC deployment:
 ```
-ca.nrc.cadc.caom2.artifactsync.locateService=ivo://cadc.nrc.ca/global/raven
-ca.nrc.cadc.caom2.artifactsync.queryService=ivo://cadc.nrc.ca/global/luskan
+org.opencadc.caom2.inventory.locateService=ivo://cadc.nrc.ca/global/raven
+org.opencadc.caom2.inventory.queryService=ivo://cadc.nrc.ca/global/luskan
 ```
 
 ### collection-prefix.properties (legacy)

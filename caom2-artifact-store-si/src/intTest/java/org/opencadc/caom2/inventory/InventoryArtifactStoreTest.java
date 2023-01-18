@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.artifact.si;
+package org.opencadc.caom2.inventory;
 
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
@@ -94,7 +94,7 @@ public class InventoryArtifactStoreTest {
     static Subject subject;
     
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.artifact", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2.inventory", Level.INFO);
         String certFilename = System.getProperty("user.name") + ".pem";
         File pem = FileUtil.getFileFromResource(certFilename, InventoryArtifactStoreTest.class);
         subject = SSLUtil.createSubject(pem);
