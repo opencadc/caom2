@@ -67,26 +67,37 @@
  ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.artifactsync;
+package org.opencadc.caom2.inventory;
 
+import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.caom2.artifact.ArtifactMetadata;
 import ca.nrc.cadc.caom2.artifact.ArtifactStore;
+import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.File;
 import java.net.URI;
+import java.security.PrivilegedExceptionAction;
 import java.util.Set;
+import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class InventoryArtifactStoreTest {
-
     private static final Logger log = Logger.getLogger(InventoryArtifactStoreTest.class);
+    
+    // test vs CADC productiohn services
+    private static final URI LOCATOR = URI.create("ivo://cadc.nrc.ca/global/raven");
+    private static final URI QUERY = URI.create("ivo://cadc.nrc.ca/global/luskan");
 
+    static Subject subject;
+    
     static {
-        Log4jInit.setLevel("org.opencadc.caom2.artifactsync", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2.inventory", Level.INFO);
+        String certFilename = System.getProperty("user.name") + ".pem";
+        File pem = FileUtil.getFileFromResource(certFilename, InventoryArtifactStoreTest.class);
+        subject = SSLUtil.createSubject(pem);
     }
 
     private static final String TEST_NAMESPACE = "cadc:IRIS/";
@@ -96,14 +107,17 @@ public class InventoryArtifactStoreTest {
     public void testGet() {
         log.info("testGet - START");
         try {
-            final ArtifactStore artifactStore = new InventoryArtifactStore();
-            ArtifactMetadata artifactMetadata = artifactStore.get(TEST_ARTIFACT_URI);
+            final ArtifactStore artifactStore = new InventoryArtifactStore(LOCATOR, QUERY);
+            
+            ArtifactMetadata artifactMetadata = Subject.doAs(subject , 
+                    (PrivilegedExceptionAction<ArtifactMetadata>) () -> artifactStore.get(TEST_ARTIFACT_URI));
             Assert.assertNotNull(artifactMetadata);
+            Assert.assertEquals(TEST_ARTIFACT_URI, artifactMetadata.getArtifactURI());
             Assert.assertNotNull(artifactMetadata.contentType);
             Assert.assertNotNull(artifactMetadata.contentLength);
         } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
         }
         log.info("testGet - DONE");
     }
@@ -112,13 +126,21 @@ public class InventoryArtifactStoreTest {
     public void testList() {
         log.info("testList - START");
         try {
-            final ArtifactStore artifactStore = new InventoryArtifactStore();
-            Set<ArtifactMetadata> artifactMetadataSet = artifactStore.list(TEST_NAMESPACE);
+            final ArtifactStore artifactStore = new InventoryArtifactStore(LOCATOR, QUERY);
+            Set<ArtifactMetadata> artifactMetadataSet = Subject.doAs(subject , 
+                    (PrivilegedExceptionAction<Set<ArtifactMetadata>>) () -> artifactStore.list(TEST_NAMESPACE));
             Assert.assertNotNull(artifactMetadataSet);
-            Assert.assertTrue(artifactMetadataSet.size() > 0);
+            Assert.assertFalse(artifactMetadataSet.isEmpty());
+            int num = 0;
+            for (ArtifactMetadata am : artifactMetadataSet) {
+                log.debug("found: " + am);
+                num++;
+            }
+            log.info("found: " + num);
         } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-            log.debug(unexpected);
+            
         }
         log.info("testList - DONE");
     }
