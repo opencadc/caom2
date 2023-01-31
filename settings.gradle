@@ -1,2 +1,0 @@
-rootProject.name = 'caom2service'
-include 'caom2-tap', 'caom2-tap-server', 'caom2-datalink-server', 'caom2-meta-server', 'caom2-pkg-server', 'caom2-soda-server'
