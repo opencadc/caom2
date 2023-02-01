@@ -97,4 +97,11 @@ public class ArtifactQueryResult {
     public List<Artifact> getArtifacts() {
         return artifacts;
     }
+
+    @Override
+    public String toString() {
+        return "ArtifactQueryResult["
+                + publisherID
+                + "," + artifacts.size() + "]";
+    }
 }

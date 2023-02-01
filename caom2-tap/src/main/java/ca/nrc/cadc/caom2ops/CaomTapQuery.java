@@ -100,6 +100,7 @@ import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.net.InputStreamWrapper;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.reg.Standards;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -267,7 +268,7 @@ public class CaomTapQuery {
         }
 
         TapClient tc = new TapClient(tapServiceID);
-        URL tapSyncURL = tc.getSyncURL(queryAuthMethod);
+        URL tapSyncURL = tc.getSyncURL(Standards.getSecurityMethod(queryAuthMethod));
         
         log.debug("post: " + uri + " " + tapSyncURL);
         HttpPost httpPost = new HttpPost(tapSyncURL, getQueryParameters(VOTABLE_FORMAT, adql), false);
