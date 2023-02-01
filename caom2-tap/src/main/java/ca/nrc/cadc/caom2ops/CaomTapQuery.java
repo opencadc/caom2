@@ -114,6 +114,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.security.auth.Subject;
+
+import ca.nrc.cadc.reg.Standards;
 import org.apache.log4j.Logger;
 import org.opencadc.tap.TapClient;
 
@@ -248,7 +250,7 @@ public class CaomTapQuery {
 
         VOTableDocument doc = execQuery(uri.toASCIIString(), adql);
         ArtifactQueryResult ar = buildArtifacts(doc);
-        if (ar.getArtifacts().isEmpty()) {
+        if (ar == null || ar.getArtifacts().isEmpty()) {
             return null;
         }
         

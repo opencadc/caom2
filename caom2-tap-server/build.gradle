@@ -23,7 +23,7 @@ description = 'OpenCADC CAOM2 TAP server library'
 def git_url = 'https://github.com/opencadc/caom2service'
 
 dependencies {
-    compile 'org.opencadc:cadc-util:[1.6,2.0)'
+    compile 'org.opencadc:cadc-util:[1.8.4,2.0)'
     compile 'org.opencadc:cadc-log:[1.0,)'
     compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-registry:[1.0,)'
