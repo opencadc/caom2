@@ -151,9 +151,10 @@ public class DynamicTableData implements DataLinkSource {
             }
 
             if (curIter == null) {
+                log.debug("ConcatIterator.hasNext: curIter==null");
                 return false;
             }
-
+            log.debug("ConcatIterator.hasNext: " + curIter.hasNext());
             return curIter.hasNext();
         }
 

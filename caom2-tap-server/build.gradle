@@ -3,6 +3,7 @@ plugins {
     id 'maven'
     id 'maven-publish'
     id 'checkstyle'
+    id 'application'
 }
 
 repositories {
@@ -41,3 +42,7 @@ dependencies {
     
     testCompile 'junit:junit:[4.0,5.0)'
 }
+
+mainClassName = 'ca.nrc.cadc.tap.tools.Main'
+
+

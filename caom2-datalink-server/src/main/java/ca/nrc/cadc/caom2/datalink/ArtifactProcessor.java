@@ -144,6 +144,7 @@ public class ArtifactProcessor {
     }
 
     public List<DataLink> process(URI uri, ArtifactQueryResult ar) {
+        log.debug("process: " + uri + " " + ar);
         List<DataLink> ret = new ArrayList<>(ar.getArtifacts().size());
         int numFiles = ar.getArtifacts().size();
         boolean pkgReadable = true;
@@ -181,6 +182,9 @@ public class ArtifactProcessor {
                 dl.accessURL = getDownloadURL(a);
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
+                dl.contentQualifier = null; // TODO: get plane.datatProductType?
+                dl.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
+                dl.linkAuthorized = readable;
                 dl.readable = readable;
                 dl.description = "download " + a.getURI().toASCIIString();
                 ret.add(dl);
@@ -198,9 +202,12 @@ public class ArtifactProcessor {
                     syncLink.serviceDef = "soda-" + UUID.randomUUID();
                     syncLink.contentType = a.contentType; // unchanged
                     syncLink.contentLength = null; // unknown
+                    syncLink.contentQualifier = null; // unknown or still plane.datatProductType?
+                    syncLink.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
+                    syncLink.linkAuthorized = readable;
                     syncLink.readable = readable;
                     syncLink.description = "SODA-sync cutout of " + a.getURI().toASCIIString();
-                    ServiceDescriptor sds = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_SYNC_10, syncLink.serviceDef, a.getURI(), ab);
+                    ServiceDescriptor sds = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_SYNC_10, syncLink.serviceDef, a, ab);
                     log.debug("SODA-sync: " + sds);
                     if (sds != null) {
                         syncLink.descriptor = sds;
@@ -211,9 +218,12 @@ public class ArtifactProcessor {
                     asyncLink.serviceDef = "soda-" + UUID.randomUUID();
                     asyncLink.contentType = a.contentType; // unchanged
                     asyncLink.contentLength = null; // unknown
+                    asyncLink.contentQualifier = null; // unknown or still plane.datatProductType?
+                    asyncLink.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
+                    asyncLink.linkAuthorized = readable;
                     asyncLink.readable = readable;
                     asyncLink.description = "SODA-async cutout of " + a.getURI().toASCIIString();
-                    ServiceDescriptor sda = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_ASYNC_10, asyncLink.serviceDef, a.getURI(), ab);
+                    ServiceDescriptor sda = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_ASYNC_10, asyncLink.serviceDef, a, ab);
                     log.debug("SODA-async: " + sda);
                     if (sda != null) {
                         asyncLink.descriptor = sda;
@@ -339,7 +349,7 @@ public class ArtifactProcessor {
         return ret;
     }
 
-    private ServiceDescriptor generateServiceDescriptor(PublisherID pubID, URI standardID, String id, URI artifactURI, ArtifactBounds ab) {
+    private ServiceDescriptor generateServiceDescriptor(PublisherID pubID, URI standardID, String id, Artifact a, ArtifactBounds ab) {
         if (ab.poly == null && ab.bandMin == null && ab.bandMax == null
                 && ab.timeMin == null && ab.timeMax == null && ab.pol == null) {
             return null;
@@ -361,10 +371,15 @@ public class ArtifactProcessor {
         ServiceDescriptor sd = new ServiceDescriptor(accessURL);
         sd.id = id;
         sd.standardID = standardID;
-        sd.resourceIdentifier = pubID.getResourceID();
-
+        sd.resourceIdentifier = pubID.getResourceID(); // the data collection
+        sd.contentType = a.contentType;
+        
+        // TODO: example?
+        sd.exampleURL = null;
+        sd.exampleDescription = null;
+        
         ServiceParameter sp;
-        String val = artifactURI.toASCIIString();
+        String val = a.getURI().toASCIIString();
         String arraysize = Integer.toString(val.length());
         sp = new ServiceParameter("ID", "char", arraysize, "meta.id;meta.dataset");
         sp.setValueRef(val, null);
