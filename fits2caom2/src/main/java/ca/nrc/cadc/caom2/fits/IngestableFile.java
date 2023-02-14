@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.fits;
 import ca.nrc.cadc.ad.AdSchemeHandler;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -226,45 +227,15 @@ public class IngestableFile
             headOnly = true;
         }
 
-        URL url = null;
-        AdSchemeHandler schemeHandler = null;
-        if (uri.getScheme().equalsIgnoreCase("vos"))
-        {
-            // use VOSpace API to get the URL
-            url = getFromVOSpace();
-        }
-        else if (uri.getScheme().equalsIgnoreCase("ad"))
-        {
-            // Anonymous HTTP download
-            schemeHandler = new AdSchemeHandler();
-            url = schemeHandler.getURL(uri);
-        }
-        else
-        {
-            url = uri.toURL();
-        }
+        CaomArtifactResolver storageResolver = new CaomArtifactResolver();
+        URL url = storageResolver.getURL(uri);
         
         log.debug(op + uri + " -- trying " + url);
         HttpDownload download = doDownload(url, op, headOnly);
+        if (download.getThrowable() != null) {
+            throw new RuntimeException("download " + uri + "failed: " + download.getThrowable(), download.getThrowable());
+        }
         
-        if (download.getThrowable() != null && 
-            download.getThrowable() instanceof AccessControlException)
-        {
-            if (uri.getScheme().equalsIgnoreCase("ad"))
-            {
-                // Authenticated HTTPS download
-                url = schemeHandler.getURL(uri);
-            }
-            
-            log.debug(op + uri + " -- trying " + url);
-            download = doDownload(url, op, headOnly);            
-        }
-
-        if (download.getThrowable() != null)
-        {
-            throw new RuntimeException(op + url + " failed", download.getThrowable());
-        }
-
         if (localFile != null)
             this.file = localFile;
         else
@@ -331,46 +302,5 @@ public class IngestableFile
         long duration = System.currentTimeMillis() - start;
         log.debug(op + " " + url.toString() + " (" + duration + "ms)");
         return download;
-    }
-
-    /**
-     * Transfer the file from VOSpace to the local file system
-     * and return a File object.
-     * 
-     * @return URL.
-     * @throws URISyntaxException 
-     * @throws IOException 
-     * @throws RuntimeException 
-     * @throws InterruptedException 
-     */
-    protected URL getFromVOSpace() 
-    	throws URISyntaxException, IOException, RuntimeException, InterruptedException
-    {
-        VOSURI src = new VOSURI(uri);
-        URI serverUri = src.getServiceURI();
-        log.debug("server uri: " + serverUri);
-
-        
-
-        // schema validation is always enabled
-        VOSpaceClient client = new VOSpaceClient(serverUri);
-        Transfer transfer = new Transfer(src.getURI(), Direction.pullFromVoSpace);
-        transfer.getProtocols().add(new Protocol(VOS.PROTOCOL_HTTPS_GET));
-        transfer.getProtocols().add(new Protocol(VOS.PROTOCOL_HTTP_GET));
-        
-        ClientTransfer clientTransfer = client.createTransfer(transfer);
-        List<Protocol> protocols = clientTransfer.getTransfer().getProtocols();
-        URL url = null;
-        for (Protocol protocol: protocols)
-        {
-            String uriString = protocol.getEndpoint();
-            if (( uriString != null) && (uriString.length() > 0))
-            {
-                url = new URI(uriString).toURL();
-                break;
-            }
-        }
-
-        return url;
     }
 }
