@@ -90,6 +90,8 @@ import static org.junit.Assert.*;
 public class IngestableFileIntTest
 {
     private static Logger log = Logger.getLogger(IngestableFileIntTest.class);
+    
+    private static final URI STORAGE_URI = URI.create("cadc:IRIS/I036B2H0.fits");
 
     public IngestableFileIntTest() { }
 
@@ -147,14 +149,14 @@ public class IngestableFileIntTest
     }
 
     @Test
-    public void testGetSuccess()
+    public void testGetSuccessCADC()
     {
         try
         {
             log.debug("testGetSuccess");
 
-            // case 1: get from ad without authenticating
-            URI uri = new URI("ad", "TEST/public_mef_fits", null);
+            // case: get from ad without authenticating
+            final URI uri = STORAGE_URI;
             File localFile = null;
             IngestableFile ingestableFile = new IngestableFile(uri, localFile);
             File file = null;
@@ -168,26 +170,10 @@ public class IngestableFileIntTest
             }
             assertNotNull("File returned by Get should not be null", file);
 
-            // case 2: get from vos without authenticating
-            uri = new URI("vos", "//cadc.nrc.ca~vospace/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits", null);
-            localFile = null;
-            ingestableFile = new IngestableFile(uri, localFile);
-            file = null;
-            try
-            {
-                file = ingestableFile.get();
-            }
-            catch (Exception e)
-            {
-                fail("Get should not throw an exception " + e.getMessage());
-            }
-            assertNotNull("File returned by Get should not be null", file);
-
-            // case3: get from ad with authentication.
+            // case: get from ad with authentication.
             File certFile = FileUtil.getFileFromResource("fits2caom2.pem", VOSUriTest.class);
             Subject s = SSLUtil.createSubject(certFile);
             
-            uri = new URI("ad", "TEST/simple_fits", null);
             final IngestableFile ingestableFile2 = new IngestableFile(uri, localFile);
             file = null;
             try
@@ -219,8 +205,106 @@ public class IngestableFileIntTest
             }
             assertNotNull("File returned by Get should not be null", file);
 
-            // case 4: get from vos with authentication.
-            uri = new URI("vos", "//cadc.nrc.ca~vospace/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits", null);
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testGetSuccessAD()
+    {
+        try
+        {
+            log.debug("testGetSuccess");
+
+            // case: get from ad without authenticating
+            final URI uri = new URI("ad", STORAGE_URI.getSchemeSpecificPart(), null);
+            File localFile = null;
+            IngestableFile ingestableFile = new IngestableFile(uri, localFile);
+            File file = null;
+            try
+            {
+                file = ingestableFile.get();
+            }
+            catch (RuntimeException e)
+            {
+                fail("Get should not throw a runtime exception " + e.getMessage());
+            }
+            assertNotNull("File returned by Get should not be null", file);
+
+            // case: get from ad with authentication.
+            File certFile = FileUtil.getFileFromResource("fits2caom2.pem", VOSUriTest.class);
+            Subject s = SSLUtil.createSubject(certFile);
+            
+            final IngestableFile ingestableFile2 = new IngestableFile(uri, localFile);
+            file = null;
+            try
+            {
+                file = (File) Subject.doAs(s, new PrivilegedAction<File>()
+                    {
+                        @SuppressWarnings("finally")
+			public File run()
+                        {
+                            File file = null;
+                            try 
+                            {
+                                file = ingestableFile2.get();
+                            } 
+                            catch (Exception e)
+                            {
+                                fail("Get should not throw an exception " + e.getMessage());
+                            }
+                            finally
+                            {
+                                return file;
+                            }
+                        }
+                    });
+            }
+            catch (RuntimeException e)
+            {
+                fail("Get should not throw a runtime exception " + e.getMessage());
+            }
+            assertNotNull("File returned by Get should not be null", file);
+
+        }
+        catch (Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testGetSuccessVOS()
+    {
+        try
+        {
+            log.debug("testGetSuccess");
+
+            // case: get from vos without authenticating
+            URI uri = new URI("vos", "//cadc.nrc.ca~vault/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits", null);
+            File localFile = null;
+            IngestableFile ingestableFile = new IngestableFile(uri, localFile);
+            File file = null;
+            try
+            {
+                file = ingestableFile.get();
+            }
+            catch (Exception e)
+            {
+                fail("Get should not throw an exception " + e.getMessage());
+            }
+            assertNotNull("File returned by Get should not be null", file);
+
+            // case: get from vos with authentication.
+            File certFile = FileUtil.getFileFromResource("fits2caom2.pem", VOSUriTest.class);
+            Subject s = SSLUtil.createSubject(certFile);
+            
+            uri = new URI("vos", "//cadc.nrc.ca~vault/CADCRegtest1/DONOTDELETE_FITS2CAOM2_TESTFILES/BLAST_250.fits", null);
             final IngestableFile ingestableFile3 = new IngestableFile(uri, localFile);
             file = null;
             try
@@ -260,4 +344,5 @@ public class IngestableFileIntTest
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+
 }
