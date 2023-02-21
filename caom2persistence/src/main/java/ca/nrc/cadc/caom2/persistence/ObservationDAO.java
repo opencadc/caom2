@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2011.                            (c) 2011.
+ *  (c) 2023.                            (c) 2023.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -89,12 +89,10 @@ import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.PreconditionFailedException;
+import ca.nrc.cadc.net.TransientException;
 import java.net.URI;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -102,9 +100,9 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Persistence layer operations.
@@ -351,7 +349,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         if (uri == null && id == null) {
             throw new IllegalArgumentException("args cannot be null");
         }
-        log.debug("GET: " + uri);
+        String idStr = (uri != null ? uri.toString() : id.toString());
+        log.debug("GET: " + idStr);
         long t = System.currentTimeMillis();
 
         try {
@@ -366,35 +365,51 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 log.debug("GET: " + Util.formatSQL(sql));
             }
 
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            return (Observation) jdbc.query(sql, gen.getObservationExtractor());
-            /**
-            Object result = jdbc.query(sql, gen.getObservationExtractor());
-            if (result == null) {
-                return null;
+            try {
+                log.debug("starting transaction");
+                getTransactionManager().startTransaction();
+                JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+                // jcmt example with 4016 rows because 2 planes and 2008 artifacts/plane
+                // fetch-size 10: :183265ms
+                // fetch-size 100: 181775ms
+                jdbc.setFetchSize(100);
+                Observation ret = (Observation) jdbc.query(sql, gen.getObservationExtractor());
+                getTransactionManager().commitTransaction();
+                return ret;
+            } catch (DataAccessResourceFailureException | OutOfMemoryError oops) {
+                // result set exceeded available buffer size
+                // log at debug since this is handled and plausible for a working system
+                log.debug("failed to get observation", oops);
+                Throwable cause = oops;
+                if (oops.getCause() != null) {
+                    cause = oops.getCause();
+                }
+                throw new IllegalStateException("failed to get observation: " + idStr
+                    + " cause: " + cause.getMessage());
             }
-            
-            if (result instanceof List) {
-                List obs = (List) result;
-                if (obs.isEmpty()) {
-                    return null;
-                }
-                if (obs.size() > 1) {
-                    throw new RuntimeException("BUG: get " + uri + " query returned " + obs.size() + " observations");
-                }
-                Object o = obs.get(0);
-                if (o instanceof Observation) {
-                    Observation ret = (Observation) obs.get(0);
-                    return ret;
-                } else {
-                    throw new RuntimeException("BUG: query returned an unexpected type " + o.getClass().getName());
+        } catch (RuntimeException ex) {
+            if (getTransactionManager().isOpen()) {
+                try {
+                    log.debug("failed to get " + idStr);
+                    getTransactionManager().rollbackTransaction();
+                    log.debug("rollback: OK");
+                } catch (Exception ex2) {
+                    log.debug("transaction was automatically rolled back by driver");
                 }
             }
-            throw new RuntimeException("BUG: query returned an unexpected type " + result.getClass().getName());
-            */
+            throw ex;
         } finally {
+            if (getTransactionManager().isOpen()) {
+                try {
+                    log.error("BUG - open transaction in finally");
+                    getTransactionManager().rollbackTransaction();
+                    log.error("BUG - rollback: OK");
+                } catch (Exception ex2) {
+                    log.error("BUG - transaction was automatically rolled back by driver");
+                }
+            }
             long dt = System.currentTimeMillis() - t;
-            log.debug("GET: " + uri + " " + dt + "ms");
+            log.debug("GET: " + idStr + " " + dt + "ms");
         }
     }
 

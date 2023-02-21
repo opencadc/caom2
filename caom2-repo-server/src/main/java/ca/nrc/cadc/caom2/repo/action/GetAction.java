@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -125,7 +125,7 @@ public class GetAction extends RepoAction {
         ObservationResponse resp = dao.getObservationResponse(uri);
 
         if (resp.error != null) {
-            throw new RuntimeException("failed to retrieve observation: " + uri, resp.error);
+            throw resp.error;
         }
         if (resp.observation == null) {
             throw new ResourceNotFoundException("not found: " + uri);
