@@ -185,7 +185,6 @@ public class ArtifactProcessor {
                 dl.contentQualifier = null; // TODO: get plane.datatProductType?
                 dl.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
                 dl.linkAuthorized = readable;
-                dl.readable = readable;
                 dl.description = "download " + a.getURI().toASCIIString();
                 ret.add(dl);
             } catch (MalformedURLException ex) {
@@ -205,7 +204,6 @@ public class ArtifactProcessor {
                     syncLink.contentQualifier = null; // unknown or still plane.datatProductType?
                     syncLink.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
                     syncLink.linkAuthorized = readable;
-                    syncLink.readable = readable;
                     syncLink.description = "SODA-sync cutout of " + a.getURI().toASCIIString();
                     ServiceDescriptor sds = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_SYNC_10, syncLink.serviceDef, a, ab);
                     log.debug("SODA-sync: " + sds);
@@ -221,7 +219,6 @@ public class ArtifactProcessor {
                     asyncLink.contentQualifier = null; // unknown or still plane.datatProductType?
                     asyncLink.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
                     asyncLink.linkAuthorized = readable;
-                    asyncLink.readable = readable;
                     asyncLink.description = "SODA-async cutout of " + a.getURI().toASCIIString();
                     ServiceDescriptor sda = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_ASYNC_10, asyncLink.serviceDef, a, ab);
                     log.debug("SODA-async: " + sda);
@@ -245,7 +242,6 @@ public class ArtifactProcessor {
                     link.accessURL = getPackageURL(pkg, ar.getPublisherID());
                     link.contentType = PKG_CONTENT_TYPE_TAR;
                     link.description = "single download containing all files (previews and thumbnails excluded)";
-                    link.readable = pkgReadable;
                 } catch (MalformedURLException ex) {
                     link.errorMessage = "failed to create package link: " + ex;
                 }
