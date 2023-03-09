@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2020.                            (c) 2020.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -76,6 +76,7 @@ import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.Position;
@@ -215,7 +216,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                 }
                 plane.energy.bandpassName = Util.getString(data, map.get("caom2:Plane.energy.bandpassName"));
                 plane.energy.dimension = Util.getLong(data, map.get("caom2:Plane.energy.dimension"));
-                String ebs = Util.getString(data, map.get("caom2:Plane.energy.emBand"));
+                String ebs = Util.getString(data, map.get("caom2:Plane.energy.energyBands")); // CAOM-2.4
                 if (ebs != null) {
                     CaomUtil.decodeBands(ebs, plane.energy.getEnergyBands());
                 }
@@ -323,6 +324,11 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
             String qualityFlag = Util.getString(data, map.get("caom2:Plane.quality.flag"));
             if (qualityFlag != null) {
                 plane.quality = new DataQuality(Quality.toValue(qualityFlag));
+            }
+            
+            String observableUCD = Util.getString(data, map.get("caom2:Plane.observable.ucd")); // CAOM-2.4
+            if (observableUCD != null) {
+                plane.observable = new Observable(observableUCD);
             }
 
             Date lastModified = Util.getDate(data, map.get("caom2:Plane.lastModified"));

@@ -151,7 +151,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'metrics_fluxDensityLimit', 'flux density limit where S:N=5 for point source', 'caom2:Plane.metrics.fluxDensityLimit', NULL, 'Jy', 'double', NULL, NULL, 0,0,0 , 33),
 ( 'caom2.Plane', 'metrics_magLimit', 'AB magnitude limit where S:N=5 for point source', 'caom2:Plane.metrics.magLimit', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 34),
 
-( 'caom2.Plane', 'quality_flag', 'flag describing the data quality (possible values: junk)', 'caom2:Plane.quality.flag', NULL, NULL, 'char', '16*', NULL, 1,0,0 , 40),
+( 'caom2.Plane', 'observable_ucd', 'UCD (Universal Content Descriptor) for the observed/measure quantity', 'caom2:Plane.observable.ucd', NULL, NULL, 'char', '64*', NULL, 0,0,0 , 40),
+( 'caom2.Plane', 'quality_flag', 'flag describing the data quality (possible values: junk)', 'caom2:Plane.quality.flag', NULL, NULL, 'char', '16*', NULL, 0,0,0 , 41),
 
 ( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'char', '*', 'caom2:shape', 0,0,0 , 50),
 ( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'double', '*', 'caom2:multipolygon', 0,0,0 , 50),
