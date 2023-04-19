@@ -92,6 +92,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.erfa.ERFALib;
 
 /**
  * @author pdowler
@@ -541,6 +542,67 @@ public class TimeUtilTest {
             Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
             Assert.assertNotNull(actual.sampleSize);
             Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testTimesys() {
+        try {
+            double mjd = 60053.333D;
+            double[] jd = TimeUtil.mjd2jd(mjd);
+
+            // transform TAI -> UTC
+            double tai2utc = TimeUtil.jd2mjd(ERFALib.tai2utc(jd[0], jd[1]));
+            log.debug(String.format("tai[%s] -> utc[%s]", mjd, tai2utc));
+
+            // transform TT -> UTC
+            double tt2utc = TimeUtil.jd2mjd(ERFALib.tt2utc(jd[0], jd[1]));
+            log.debug(String.format("tt[%s] ->  utc[%s]", mjd, tt2utc));
+
+            // test wcs
+            CoordAxis1D axis = new CoordAxis1D(new Axis("TIME", "d"));
+            TemporalWCS wcs = new TemporalWCS(axis);
+            RefCoord refCoord = new RefCoord(0.5, mjd);
+            wcs.getAxis().function = new CoordFunction1D(1L, 0.0, refCoord);
+
+            wcs.timesys = "UTC";
+            Interval interval = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            log.debug(String.format("%s - > UTC interval: %s", wcs.getAxis().function, interval));
+            Assert.assertEquals(mjd, interval.getLower(), 0.0000000001);
+            Assert.assertEquals(mjd, interval.getUpper(), 0.0000000001);
+
+            wcs.timesys = "TAI";
+            interval =  TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            log.debug(String.format("%s - > TAI interval: %s", wcs.getAxis().function, interval));
+            Assert.assertEquals(tai2utc, interval.getLower(), 0.0000000001);
+            Assert.assertEquals(tai2utc, interval.getUpper(), 0.0000000001);
+
+            wcs.timesys = "TT";
+            interval =  TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            log.debug(String.format("%s - >  TT interval: %s", wcs.getAxis().function, interval));
+            Assert.assertEquals(tt2utc, interval.getLower(), 0.0000000001);
+            Assert.assertEquals(tt2utc, interval.getUpper(), 0.0000000001);
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testMJD2JD() {
+        try {
+            double[] foo = {60053.0D, 60053.0001D, 60053.5D, 60053.999D};
+            for (double expected : foo) {
+                double[] jd = TimeUtil.mjd2jd(expected);
+                double actual = TimeUtil.jd2mjd(jd);
+                log.debug(String.format("mjd->jd->mjd %s -> %s -> %s", expected, (jd[0] + jd[1]), actual));
+                Assert.assertEquals(expected, actual, 0.000000001);
+            }
+
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

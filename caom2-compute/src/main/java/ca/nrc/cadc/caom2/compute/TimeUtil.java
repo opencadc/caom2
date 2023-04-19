@@ -79,9 +79,14 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
+import org.opencadc.erfa.DubiousYearException;
+import org.opencadc.erfa.ERFALib;
+import org.opencadc.erfa.ERFALibException;
+import org.opencadc.erfa.UnacceptableDateException;
 
 /**
  * Utility class for 1-d Time calculations.
@@ -97,6 +102,10 @@ public final class TimeUtil {
     private static final String TARGET_CTYPE = "TIME";
     private static final String TARGET_CUNIT = "d";
     public static double DEFAULT_UNION_SCALE = 0.10;
+    private static final String TAI_TIMESYS = "TAI";
+    private static final String TT_TIMESYS = "TT";
+    private static final List<String> SUPPORTED_TIMESYS =
+        Arrays.asList(TAI_TIMESYS, TT_TIMESYS, TARGET_TIMESYS );
 
     private TimeUtil() {
     }
@@ -165,6 +174,7 @@ public final class TimeUtil {
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
+        // TODO convert timesys?
         return new SampledInterval(lb, ub, subs);
     }
 
@@ -262,7 +272,7 @@ public final class TimeUtil {
         double x2 = val2pix(sw, sw.getAxis().function, bounds.getUpper());
 
         log.debug("computeDimensionFromWCS: " + x1 + "," + x2);
-        return new Long(Math.round(Math.abs(x2 - x1)));
+        return Math.round(Math.abs(x2 - x1));
     }
 
     /**
@@ -289,7 +299,7 @@ public final class TimeUtil {
 
         if (numPixels > 0.0) {
             log.debug("computeDimensionFromRangeBounds: " + numPixels);
-            return new Long((long) numPixels);
+            return (long) numPixels;
         }
         log.debug("computeDimensionFromRangeBounds: null");
         return null;
@@ -324,7 +334,7 @@ public final class TimeUtil {
         }
 
         if (totExposureTime > 0.0 && numPixels > 0.0) {
-            return new Double(totExposureTime / numPixels);
+            return totExposureTime / numPixels;
         }
         return null;
     }
@@ -357,7 +367,7 @@ public final class TimeUtil {
         }
 
         if (totResolution > 0.0 && numPixels > 0.0) {
-            return new Double(totResolution / numPixels);
+            return totResolution / numPixels;
         }
         return null;
     }
@@ -378,9 +388,13 @@ public final class TimeUtil {
         }
         
         if (wcs.mjdref != null) {
-            a += wcs.mjdref.doubleValue();
-            b += wcs.mjdref.doubleValue();
+            a += wcs.mjdref;
+            b += wcs.mjdref;
         }
+
+        // for TIMESYS other than UTC do the time scale transform to UTC
+        a = transform(wcs, a);
+        b = transform(wcs, b);
 
         return new Interval(Math.min(a, b), Math.max(a, b));
     }
@@ -401,9 +415,13 @@ public final class TimeUtil {
         double a = Util.pix2val(func, p1);
         double b = Util.pix2val(func, p2);
         if (wcs.mjdref != null) {
-            a += wcs.mjdref.doubleValue();
-            b += wcs.mjdref.doubleValue();
+            a += wcs.mjdref;
+            b += wcs.mjdref;
         }
+
+        // for TIMESYS other than UTC do the time scale transform to UTC
+        a = transform(wcs, a);
+        b = transform(wcs, b);
 
         return new Interval(Math.min(a, b), Math.max(a, b));
     }
@@ -412,14 +430,14 @@ public final class TimeUtil {
     private static void validateWCS(TemporalWCS wcs) {
         StringBuilder sb = new StringBuilder();
         String ctype = wcs.getAxis().getAxis().getCtype();
-        if (ctype.equals(TARGET_CTYPE) && (wcs.timesys == null || wcs.timesys.equals(TARGET_TIMESYS))) {
+        if (ctype.equals(TARGET_CTYPE) && (wcs.timesys == null || SUPPORTED_TIMESYS.contains(wcs.timesys))) {
             // OK
-        } else if (ctype.equals(TARGET_TIMESYS) && wcs.timesys == null) {
+        } else if (SUPPORTED_TIMESYS.contains(ctype) && wcs.timesys == null) {
             // OK
         } else {
             sb.append("unexpected TIMESYS, CTYPE: ").append(wcs.timesys).append(",").append(ctype);
         }
-        String cunit = wcs.getAxis().getAxis().getCunit();
+        String cunit = wcs.getAxis().getAxis().cunit;
         if (!TARGET_CUNIT.equals(cunit)) {
             sb.append("unexpected CUNIT: ").append(cunit);
         }
@@ -438,7 +456,7 @@ public final class TimeUtil {
 
         double ret = Util.pix2val(func, pix);
         if (wcs.mjdref != null) {
-            ret += wcs.mjdref.doubleValue();
+            ret += wcs.mjdref;
         }
         return ret;
     }
@@ -451,8 +469,105 @@ public final class TimeUtil {
         // from mjdref
 
         if (wcs.mjdref != null) {
-            val -= wcs.mjdref.doubleValue();
+            val -= wcs.mjdref;
         }
         return Util.val2pix(func, val);
     }
+
+    private static double transform(TemporalWCS wcs, double mjd) {
+        String timeScale;
+        if (wcs.timesys != null) {
+            timeScale = wcs.timesys;
+        } else {
+            timeScale = wcs.getAxis().getAxis().getCtype();
+        }
+
+        switch(timeScale) {
+            case TAI_TIMESYS:
+                return tai2utc(mjd);
+            case TT_TIMESYS:
+                return tt2utc(mjd);
+            default:
+                return mjd;
+        }
+    }
+
+    /**
+     * Transform the time scale of a Modified Julian Date from TAI to UTC.
+     *
+     * @param mjd the Modified Julian Date to transform.
+     * @return mjd in the UTC time scale.
+     */
+    public static double tai2utc(double mjd) {
+        double[] tai = mjd2jd(mjd);
+        double[] utc;
+        try {
+            utc = ERFALib.tai2utc(tai[0], tai[1]);
+        } catch (ERFALibException e) {
+            String msg = String.format("error transforming %f from TAI to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalStateException(msg, e);
+        } catch (DubiousYearException | UnacceptableDateException e) {
+            String msg = String.format("unable to transform %f from TAI to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalArgumentException(msg, e);
+        }
+        return jd2mjd(utc);
+    }
+
+    /**
+     * Transform the time scale of a Modified Julian Date from TT to UTC.
+     *
+     * @param mjd the Modified Julian Date to transform.
+     * @return mjd in the UTC time scale.
+     */
+    public static double tt2utc(double mjd) {
+        double[] tt = mjd2jd(mjd);
+        double[] utc;
+        try {
+            utc = ERFALib.tt2utc(tt[0], tt[1]);
+        } catch (ERFALibException e) {
+            String msg = String.format("error transforming %f from TT to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalStateException(msg, e);
+        } catch (DubiousYearException | UnacceptableDateException e) {
+            String msg = String.format("unable to transform %f from TT to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalArgumentException(msg, e);
+        }
+        return jd2mjd(utc);
+    }
+
+    /**
+     * Convert a Modified Julian Date to a 2 part Julian Date.
+     * The first part of the jd will be the day, and the
+     * second part the fraction of the day.
+     * i.e. 60053.25 (mjd) ->  [2460053.5, 0.25] (jd)
+     *
+     * @param mjd the Modified Julian Date to convert.
+     * @return 2 part Julian Date
+     */
+    public static double[] mjd2jd(double mjd) {
+        double jd = mjd + 2400000.5D;
+        double jd1, jd2;
+        double floor = Math.floor(jd);
+        if (jd < floor + 0.5D) {
+            jd1 = floor - 0.5D;
+        } else {
+            jd1 = floor + 0.5D;
+        }
+        jd2 = jd - jd1;
+        return new double[]{jd1, jd2};
+    }
+
+    /**
+     * Convert a 2 part Julian Date to a Modified Julian Date.
+     *
+     * @param jd the 2 part Julian Date to convert.
+     * @return a Modified Julian Date.
+     */
+    public static double jd2mjd(double[] jd) {
+        return jd[0] + jd[1] - 2400000.5D;
+    }
+
 }

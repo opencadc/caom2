@@ -14,7 +14,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '2.4.8'
+version = '2.4.9'
 
 description = 'OpenCADC CAOM compute library'
 def git_url = 'https://github.com/opencadc/caom2'
@@ -24,8 +24,9 @@ dependencies {
     compile 'org.opencadc:caom2:[2.4.3,2.5)'
     compile 'org.opencadc:cadc-wcs:[2.0,3.0)'
     compile 'org.opencadc:jsky:[1.0,2.0)'
+    compile 'org.opencadc:cadc-erfa:[1.0,2.0)'
 
-    testCompile 'junit:junit:4.13'
+    testCompile 'junit:junit:[4.13.1,5.0)'
 }
 
 apply from: '../opencadc.gradle'
