@@ -595,8 +595,8 @@ public class TimeUtilTest {
     @Test
     public void testMJD2JD() {
         try {
-            double[] foo = {60053.0D, 60053.0001D, 60053.5D, 60053.999D};
-            for (double expected : foo) {
+            double[] testMJD = {60053.0D, 60053.0001D, 60053.5D, 60053.999D};
+            for (double expected : testMJD) {
                 double[] jd = TimeUtil.mjd2jd(expected);
                 double actual = TimeUtil.jd2mjd(jd);
                 log.debug(String.format("mjd->jd->mjd %s -> %s -> %s", expected, (jd[0] + jd[1]), actual));

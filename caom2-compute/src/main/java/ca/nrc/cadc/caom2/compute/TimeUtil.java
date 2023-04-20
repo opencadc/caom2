@@ -174,7 +174,7 @@ public final class TimeUtil {
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
-        // TODO convert timesys?
+
         return new SampledInterval(lb, ub, subs);
     }
 
