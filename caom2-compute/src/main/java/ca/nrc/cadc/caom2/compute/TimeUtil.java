@@ -105,7 +105,7 @@ public final class TimeUtil {
     private static final String TAI_TIMESYS = "TAI";
     private static final String TT_TIMESYS = "TT";
     private static final List<String> SUPPORTED_TIMESYS =
-        Arrays.asList(TAI_TIMESYS, TT_TIMESYS, TARGET_TIMESYS );
+        Arrays.asList(TAI_TIMESYS, TT_TIMESYS, TARGET_TIMESYS);
 
     private TimeUtil() {
     }
@@ -181,7 +181,8 @@ public final class TimeUtil {
     /**
      * Compute mean sample size (pixel scale).
      *
-     * @param wcs
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return a new Polygon computed with the default union scale
      */
     static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType) {
@@ -227,7 +228,9 @@ public final class TimeUtil {
      * assumes
      * that the energy axis is roughly continuous (e.g. it ignores gaps).
      *
-     * @param wcsArray
+     * @param bounds the interval bounds
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return number of pixels (approximate)
      */
     static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType) {
@@ -278,7 +281,8 @@ public final class TimeUtil {
     /**
      * Compute dimensionality (number of pixels).
      *
-     * @param wcsArray
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return number of pixels (approximate)
      */
     static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType) {
@@ -310,7 +314,8 @@ public final class TimeUtil {
      * pixels.
      * in the chunk.
      *
-     * @param wcs
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return exposure time in seconds
      */
     static Double computeExposureTime(Set<Artifact> artifacts, ProductType productType) {
@@ -343,7 +348,8 @@ public final class TimeUtil {
      * Compute the mean resolution per chunk, weighted by the number of pixels.
      * in the chunk.
      *
-     * @param wcs
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return exposure time in seconds
      */
     static Double computeResolution(Set<Artifact> artifacts, ProductType productType) {
@@ -482,7 +488,7 @@ public final class TimeUtil {
             timeScale = wcs.getAxis().getAxis().getCtype();
         }
 
-        switch(timeScale) {
+        switch (timeScale) {
             case TAI_TIMESYS:
                 return tai2utc(mjd);
             case TT_TIMESYS:
@@ -549,7 +555,8 @@ public final class TimeUtil {
      */
     public static double[] mjd2jd(double mjd) {
         double jd = mjd + 2400000.5D;
-        double jd1, jd2;
+        double jd1;
+        double jd2;
         double floor = Math.floor(jd);
         if (jd < floor + 0.5D) {
             jd1 = floor - 0.5D;
