@@ -548,7 +548,7 @@ public final class TimeUtil {
      * Convert a Modified Julian Date to a 2 part Julian Date.
      * The first part of the jd will be the day, and the
      * second part the fraction of the day.
-     * i.e. 60053.25 (mjd) ->  [2460053.5, 0.25] (jd)
+     * i.e. 60053.25 (mjd) to [2460053.5, 0.25] (jd)
      *
      * @param mjd the Modified Julian Date to convert.
      * @return 2 part Julian Date
