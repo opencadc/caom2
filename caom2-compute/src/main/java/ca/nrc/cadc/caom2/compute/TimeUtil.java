@@ -79,9 +79,14 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
+import org.opencadc.erfa.DubiousYearException;
+import org.opencadc.erfa.ERFALib;
+import org.opencadc.erfa.ERFALibException;
+import org.opencadc.erfa.UnacceptableDateException;
 
 /**
  * Utility class for 1-d Time calculations.
@@ -97,6 +102,11 @@ public final class TimeUtil {
     private static final String TARGET_CTYPE = "TIME";
     private static final String TARGET_CUNIT = "d";
     public static double DEFAULT_UNION_SCALE = 0.10;
+    private static final String TAI_TIMESYS = "TAI";
+    private static final String TT_TIMESYS = "TT";
+    private static final List<String> SUPPORTED_TIMESYS =
+        Arrays.asList(TAI_TIMESYS, TT_TIMESYS, TARGET_TIMESYS);
+    public static double MJD2JD_OFFSET = 2400000.5D;
 
     private TimeUtil() {
     }
@@ -165,13 +175,15 @@ public final class TimeUtil {
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
+
         return new SampledInterval(lb, ub, subs);
     }
 
     /**
      * Compute mean sample size (pixel scale).
      *
-     * @param wcs
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return a new Polygon computed with the default union scale
      */
     static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType) {
@@ -217,7 +229,9 @@ public final class TimeUtil {
      * assumes
      * that the energy axis is roughly continuous (e.g. it ignores gaps).
      *
-     * @param wcsArray
+     * @param bounds the interval bounds
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return number of pixels (approximate)
      */
     static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType) {
@@ -262,13 +276,14 @@ public final class TimeUtil {
         double x2 = val2pix(sw, sw.getAxis().function, bounds.getUpper());
 
         log.debug("computeDimensionFromWCS: " + x1 + "," + x2);
-        return new Long(Math.round(Math.abs(x2 - x1)));
+        return Math.round(Math.abs(x2 - x1));
     }
 
     /**
      * Compute dimensionality (number of pixels).
      *
-     * @param wcsArray
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return number of pixels (approximate)
      */
     static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType) {
@@ -289,7 +304,7 @@ public final class TimeUtil {
 
         if (numPixels > 0.0) {
             log.debug("computeDimensionFromRangeBounds: " + numPixels);
-            return new Long((long) numPixels);
+            return (long) numPixels;
         }
         log.debug("computeDimensionFromRangeBounds: null");
         return null;
@@ -300,7 +315,8 @@ public final class TimeUtil {
      * pixels.
      * in the chunk.
      *
-     * @param wcs
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return exposure time in seconds
      */
     static Double computeExposureTime(Set<Artifact> artifacts, ProductType productType) {
@@ -324,7 +340,7 @@ public final class TimeUtil {
         }
 
         if (totExposureTime > 0.0 && numPixels > 0.0) {
-            return new Double(totExposureTime / numPixels);
+            return totExposureTime / numPixels;
         }
         return null;
     }
@@ -333,7 +349,8 @@ public final class TimeUtil {
      * Compute the mean resolution per chunk, weighted by the number of pixels.
      * in the chunk.
      *
-     * @param wcs
+     * @param artifacts the set of Artifact's
+     * @param productType the artifact ProductType
      * @return exposure time in seconds
      */
     static Double computeResolution(Set<Artifact> artifacts, ProductType productType) {
@@ -357,7 +374,7 @@ public final class TimeUtil {
         }
 
         if (totResolution > 0.0 && numPixels > 0.0) {
-            return new Double(totResolution / numPixels);
+            return totResolution / numPixels;
         }
         return null;
     }
@@ -376,13 +393,13 @@ public final class TimeUtil {
         if (delta == 0.0 && np > 1.0) {
             throw new IllegalArgumentException("invalid CoordRange1D: found " + np + " + pixels and delta = 0.0 in [" + a + "," + b + "]");
         }
-        
-        if (wcs.mjdref != null) {
-            a += wcs.mjdref.doubleValue();
-            b += wcs.mjdref.doubleValue();
-        }
 
-        return new Interval(Math.min(a, b), Math.max(a, b));
+        // for TIMESYS other than UTC do the time scale transform to UTC
+        double[] ta = transform(wcs, a);
+        double[] tb = transform(wcs, b);
+        double lower = ta[0] + ta[1];
+        double upper = tb[0] + tb[1];
+        return new Interval(Math.min(lower, upper), Math.max(lower, upper));
     }
 
     static Interval toInterval(TemporalWCS wcs, CoordFunction1D func) {
@@ -400,26 +417,27 @@ public final class TimeUtil {
         double p2 = func.getNaxis().doubleValue() + 0.5;
         double a = Util.pix2val(func, p1);
         double b = Util.pix2val(func, p2);
-        if (wcs.mjdref != null) {
-            a += wcs.mjdref.doubleValue();
-            b += wcs.mjdref.doubleValue();
-        }
 
-        return new Interval(Math.min(a, b), Math.max(a, b));
+        // for TIMESYS other than UTC do the time scale transform to UTC
+        double[] ta = transform(wcs, a);
+        double[] tb = transform(wcs, b);
+        double lower = ta[0] + ta[1];
+        double upper = tb[0] + tb[1];
+        return new Interval(Math.min(lower, upper), Math.max(lower, upper));
     }
 
     // check that the provided wcs includes supported combination of CTYPE, CUNIT, and TIMESYS
     private static void validateWCS(TemporalWCS wcs) {
         StringBuilder sb = new StringBuilder();
         String ctype = wcs.getAxis().getAxis().getCtype();
-        if (ctype.equals(TARGET_CTYPE) && (wcs.timesys == null || wcs.timesys.equals(TARGET_TIMESYS))) {
+        if (ctype.equals(TARGET_CTYPE) && (wcs.timesys == null || SUPPORTED_TIMESYS.contains(wcs.timesys))) {
             // OK
         } else if (ctype.equals(TARGET_TIMESYS) && wcs.timesys == null) {
             // OK
         } else {
             sb.append("unexpected TIMESYS, CTYPE: ").append(wcs.timesys).append(",").append(ctype);
         }
-        String cunit = wcs.getAxis().getAxis().getCunit();
+        String cunit = wcs.getAxis().getAxis().cunit;
         if (!TARGET_CUNIT.equals(cunit)) {
             sb.append("unexpected CUNIT: ").append(cunit);
         }
@@ -438,7 +456,7 @@ public final class TimeUtil {
 
         double ret = Util.pix2val(func, pix);
         if (wcs.mjdref != null) {
-            ret += wcs.mjdref.doubleValue();
+            ret += wcs.mjdref;
         }
         return ret;
     }
@@ -451,8 +469,80 @@ public final class TimeUtil {
         // from mjdref
 
         if (wcs.mjdref != null) {
-            val -= wcs.mjdref.doubleValue();
+            val -= wcs.mjdref;
         }
         return Util.val2pix(func, val);
     }
+
+    private static double[] transform(TemporalWCS wcs, double mjd) {
+        String timeScale;
+        if (wcs.timesys != null) {
+            timeScale = wcs.timesys;
+        } else {
+            timeScale = wcs.getAxis().getAxis().getCtype();
+        }
+
+        double mjdref = wcs.mjdref == null ? 0.0 : wcs.mjdref;
+        switch (timeScale) {
+            case TAI_TIMESYS:
+                return tai2utc(mjdref, mjd);
+            case TT_TIMESYS:
+                return tt2utc(mjdref, mjd);
+            default:
+                return new double[] {mjdref ,mjd};
+        }
+    }
+
+    /**
+     * Transform the time scale of a Modified Julian Date from TAI to UTC.
+     *
+     * @param mjdref the Modified Julian Date reference value.
+     * @param mjd the Modified Julian Date.
+     * @return mjd in the UTC time scale.
+     */
+    public static double[] tai2utc(double mjdref, double mjd) {
+        // ERFALib expects Julian Date, convert MJD reference value to JD
+        double jdref = mjdref + MJD2JD_OFFSET;
+        double[] utc;
+        try {
+            utc = ERFALib.tai2utc(jdref, mjd);
+        } catch (ERFALibException e) {
+            String msg = String.format("error transforming %f from TAI to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalStateException(msg, e);
+        } catch (DubiousYearException | UnacceptableDateException e) {
+            String msg = String.format("unable to transform %f from TAI to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalArgumentException(msg, e);
+        }
+        // convert JD reference value back to MJD
+        return new double[]{utc[0] - MJD2JD_OFFSET, utc[1]};
+    }
+
+    /**
+     * Transform the time scale of a Modified Julian Date from TT to UTC.
+     *
+     * @param mjdref the Modified Julian Date reference value.
+     * @param mjd the Modified Julian Date.
+     * @return mjd in the UTC time scale.
+     */
+    public static double[] tt2utc(double mjdref, double mjd) {
+        // ERFALib expects Julian Date, convert MJD reference value to JD
+        double jdref = mjdref + MJD2JD_OFFSET;
+        double[] utc;
+        try {
+            utc = ERFALib.tt2utc(jdref, mjd);
+        } catch (ERFALibException e) {
+            String msg = String.format("error transforming %f from TT to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalStateException(msg, e);
+        } catch (DubiousYearException | UnacceptableDateException e) {
+            String msg = String.format("unable to transform %f from TT to UTC: %s",
+                                       mjd, e.getMessage());
+            throw new IllegalArgumentException(msg, e);
+        }
+        // convert JD reference value back to MJD
+        return new double[]{utc[0] - MJD2JD_OFFSET, utc[1]};
+    }
+
 }
