@@ -18,13 +18,19 @@ Runtime configuration must be made available via the `/config` directory.
 org.opencadc.caom2.metasync.logging={info|debug}
 
 # Destination caom2 database settings
-org.opencadc.caom2.metasync.destination.schema={schema}
-org.opencadc.caom2.metasync.destination.username={dbuser}
-org.opencadc.caom2.metasync.destination.password={dbpassword}
-org.opencadc.caom2.metasync.destination.url=jdbc:postgresql://{server}/{database}
+org.opencadc.caom2.metasync.destination.db.schema={schema}
+org.opencadc.caom2.metasync.destination.db.username={dbuser}
+org.opencadc.caom2.metasync.destination.db.password={dbpassword}
+org.opencadc.caom2.metasync.destination.db.url=jdbc:postgresql://{server}/{database}
 
-# Source service resource identifier
-org.opencadc.caom2.metasync.source.resourceID={uri}
+# Source repository service
+org.opencadc.caom2.metasync.source.repoService={uri}
+
+# Source caom2 database settings
+org.opencadc.caom2.metasync.source.db.schema={schema}
+org.opencadc.caom2.metasync.source.db.usrname={dbuser}
+org.opencadc.caom2.metasync.source.db.password={dbpassword}
+org.opencadc.caom2.metasync.source.db.url=jdbc:postgresql://{server}/{database}
 
 # The collection to sync
 org.opencadc.caom2.metasync.collection={collection name}
@@ -39,9 +45,14 @@ org.opencadc.caom2.metasync.threads={integer}
 org.opencadc.caom2.metasync.batchSize={integer}
 
 ```
+The source can be either a repository service, or a caom2 database. Only one of 
+`org.opencadc.caom2.metasync.source.repoService` or 
+`org.opencadc.caom2.metasync.source.db.*` can be configured.
 
-`org.opencadc.caom2.metasync.source.resourceID` is the resource identifier for 
+`org.opencadc.caom2.metasync.source.repoService` is the resource identifier for 
 a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)
+
+`org.opencadc.caom2.metasync.source.db.*` is the caom2 database connection settings.
 
 `org.opencadc.caom2.metasync.collection` The collection name used to query
 for Artifacts in the repository service.
