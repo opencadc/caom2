@@ -16,8 +16,9 @@ jobs:
       with:
         java-version: 1.8
   
-    - name: build and test caom2-dm
-      run: cd caom2-dm && ../gradlew --info clean build xslt
+    # 2023-05-02 disabled because unit-test downloads from ivoa.net, which is down
+    # - name: build and test caom2-dm
+    #   run: cd caom2-dm && ../gradlew --info clean build xslt
 
     - name: build and test caom2
       run: cd caom2 && ../gradlew --info clean build javadoc checkstyleMain install
