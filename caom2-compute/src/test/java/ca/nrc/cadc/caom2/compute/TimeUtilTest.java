@@ -551,40 +551,48 @@ public class TimeUtilTest {
     @Test
     public void testTimesys() {
         try {
-            double mjd = 60053.333D;
-            double[] jd = TimeUtil.mjd2jd(mjd);
+            // MJD: 60053.333 = JD: 2460053.833
+            double mjdref = 60000.0D;
+            double mjd = 53.333D;
+            double jdref = 2460000.5D;
+            double jd = 53.333D;
 
             // transform TAI -> UTC
-            double tai2utc = TimeUtil.jd2mjd(ERFALib.tai2utc(jd[0], jd[1]));
-            log.debug(String.format("tai[%s] -> utc[%s]", mjd, tai2utc));
+            double[] tai2utc = ERFALib.tai2utc(jdref, jd);
+            log.debug(String.format("JD - tai[%s,%s] -> utc[%s,%s]", jdref, jd, tai2utc[0], tai2utc[1]));
+            double taiMJD = tai2utc[0] + tai2utc[1] - TimeUtil.MJD2JD_OFFSET;
+            log.debug(String.format("MJD - tai[%s] -> utc[%s]", mjdref + mjd, taiMJD));
 
             // transform TT -> UTC
-            double tt2utc = TimeUtil.jd2mjd(ERFALib.tt2utc(jd[0], jd[1]));
-            log.debug(String.format("tt[%s] ->  utc[%s]", mjd, tt2utc));
+            double[] tt2utc = ERFALib.tt2utc(jdref, jd);
+            log.debug(String.format("LD - tt[%s,%s] -> utc[%s,%s]", jdref, jd, tt2utc[0], tt2utc[1]));
+            double ttMJD = tt2utc[0] + tt2utc[1] - TimeUtil.MJD2JD_OFFSET;
+            log.debug(String.format("MJD - tt[%s] -> utc[%s]", mjdref + mjd, ttMJD));
 
             // test wcs
             CoordAxis1D axis = new CoordAxis1D(new Axis("TIME", "d"));
             TemporalWCS wcs = new TemporalWCS(axis);
+            wcs.mjdref = mjdref;
             RefCoord refCoord = new RefCoord(0.5, mjd);
             wcs.getAxis().function = new CoordFunction1D(1L, 0.0, refCoord);
 
             wcs.timesys = "UTC";
             Interval interval = TimeUtil.toInterval(wcs, wcs.getAxis().function);
             log.debug(String.format("%s - > UTC interval: %s", wcs.getAxis().function, interval));
-            Assert.assertEquals(mjd, interval.getLower(), 0.0000000001);
-            Assert.assertEquals(mjd, interval.getUpper(), 0.0000000001);
+            Assert.assertEquals(mjdref + mjd, interval.getLower(), 0.0000000001);
+            Assert.assertEquals(mjdref + mjd, interval.getUpper(), 0.0000000001);
 
             wcs.timesys = "TAI";
             interval =  TimeUtil.toInterval(wcs, wcs.getAxis().function);
             log.debug(String.format("%s - > TAI interval: %s", wcs.getAxis().function, interval));
-            Assert.assertEquals(tai2utc, interval.getLower(), 0.0000000001);
-            Assert.assertEquals(tai2utc, interval.getUpper(), 0.0000000001);
+            Assert.assertEquals(taiMJD, interval.getLower(), 0.0000000001);
+            Assert.assertEquals(taiMJD, interval.getUpper(), 0.0000000001);
 
             wcs.timesys = "TT";
             interval =  TimeUtil.toInterval(wcs, wcs.getAxis().function);
             log.debug(String.format("%s - >  TT interval: %s", wcs.getAxis().function, interval));
-            Assert.assertEquals(tt2utc, interval.getLower(), 0.0000000001);
-            Assert.assertEquals(tt2utc, interval.getUpper(), 0.0000000001);
+            Assert.assertEquals(ttMJD, interval.getLower(), 0.0000000001);
+            Assert.assertEquals(ttMJD, interval.getUpper(), 0.0000000001);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -592,22 +600,39 @@ public class TimeUtilTest {
         }
     }
 
-    @Test
-    public void testMJD2JD() {
-        try {
-            double[] testMJD = {60053.0D, 60053.0001D, 60053.5D, 60053.999D};
-            for (double expected : testMJD) {
-                double[] jd = TimeUtil.mjd2jd(expected);
-                double actual = TimeUtil.jd2mjd(jd);
-                log.debug(String.format("mjd->jd->mjd %s -> %s -> %s", expected, (jd[0] + jd[1]), actual));
-                Assert.assertEquals(expected, actual, 0.000000001);
-            }
-
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+/**
+ * Convert a Modified Julian Date to a 2 part Julian Date.
+ * The first part of the jd will be the day, and the
+ * second part the fraction of the day.
+ * i.e. 60053.25 (mjd) to [2460053.5, 0.25] (jd)
+ *
+ * @param mjd the Modified Julian Date to convert.
+ * @return 2 part Julian Date
+ */
+public static double[] mjd2jd(double mjd) {
+    double jd = mjd + 2400000.5D;
+    double jd1;
+    double jd2;
+    double floor = Math.floor(jd);
+    if (jd < floor + 0.5D) {
+        jd1 = floor - 0.5D;
+    } else {
+        jd1 = floor + 0.5D;
     }
+    jd2 = jd - jd1;
+    return new double[]{jd1, jd2};
+}
+
+/**
+* Convert a 2 part Julian Date to a Modified Julian Date.
+*
+* @param jd the 2 part Julian Date to convert.
+* @return a Modified Julian Date.
+*/
+public static double jd2mjd(double[] jd) {
+    return jd[0] + jd[1] - 2400000.5D;
+}
+
 
     Plane getTestSetRange(int numA, int numP, int numC)
         throws URISyntaxException {

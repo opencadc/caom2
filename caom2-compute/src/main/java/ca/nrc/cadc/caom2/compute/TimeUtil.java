@@ -106,6 +106,7 @@ public final class TimeUtil {
     private static final String TT_TIMESYS = "TT";
     private static final List<String> SUPPORTED_TIMESYS =
         Arrays.asList(TAI_TIMESYS, TT_TIMESYS, TARGET_TIMESYS);
+    public static double MJD2JD_OFFSET = 2400000.5D;
 
     private TimeUtil() {
     }
@@ -392,17 +393,13 @@ public final class TimeUtil {
         if (delta == 0.0 && np > 1.0) {
             throw new IllegalArgumentException("invalid CoordRange1D: found " + np + " + pixels and delta = 0.0 in [" + a + "," + b + "]");
         }
-        
-        if (wcs.mjdref != null) {
-            a += wcs.mjdref;
-            b += wcs.mjdref;
-        }
 
         // for TIMESYS other than UTC do the time scale transform to UTC
-        a = transform(wcs, a);
-        b = transform(wcs, b);
-
-        return new Interval(Math.min(a, b), Math.max(a, b));
+        double[] ta = transform(wcs, a);
+        double[] tb = transform(wcs, b);
+        double lower = ta[0] + ta[1];
+        double upper = tb[0] + tb[1];
+        return new Interval(Math.min(lower, upper), Math.max(lower, upper));
     }
 
     static Interval toInterval(TemporalWCS wcs, CoordFunction1D func) {
@@ -420,16 +417,13 @@ public final class TimeUtil {
         double p2 = func.getNaxis().doubleValue() + 0.5;
         double a = Util.pix2val(func, p1);
         double b = Util.pix2val(func, p2);
-        if (wcs.mjdref != null) {
-            a += wcs.mjdref;
-            b += wcs.mjdref;
-        }
 
         // for TIMESYS other than UTC do the time scale transform to UTC
-        a = transform(wcs, a);
-        b = transform(wcs, b);
-
-        return new Interval(Math.min(a, b), Math.max(a, b));
+        double[] ta = transform(wcs, a);
+        double[] tb = transform(wcs, b);
+        double lower = ta[0] + ta[1];
+        double upper = tb[0] + tb[1];
+        return new Interval(Math.min(lower, upper), Math.max(lower, upper));
     }
 
     // check that the provided wcs includes supported combination of CTYPE, CUNIT, and TIMESYS
@@ -438,7 +432,7 @@ public final class TimeUtil {
         String ctype = wcs.getAxis().getAxis().getCtype();
         if (ctype.equals(TARGET_CTYPE) && (wcs.timesys == null || SUPPORTED_TIMESYS.contains(wcs.timesys))) {
             // OK
-        } else if (SUPPORTED_TIMESYS.contains(ctype) && wcs.timesys == null) {
+        } else if (ctype.equals(TARGET_TIMESYS) && wcs.timesys == null) {
             // OK
         } else {
             sb.append("unexpected TIMESYS, CTYPE: ").append(wcs.timesys).append(",").append(ctype);
@@ -480,7 +474,7 @@ public final class TimeUtil {
         return Util.val2pix(func, val);
     }
 
-    private static double transform(TemporalWCS wcs, double mjd) {
+    private static double[] transform(TemporalWCS wcs, double mjd) {
         String timeScale;
         if (wcs.timesys != null) {
             timeScale = wcs.timesys;
@@ -488,27 +482,30 @@ public final class TimeUtil {
             timeScale = wcs.getAxis().getAxis().getCtype();
         }
 
+        double mjdref = wcs.mjdref == null ? 0.0 : wcs.mjdref;
         switch (timeScale) {
             case TAI_TIMESYS:
-                return tai2utc(mjd);
+                return tai2utc(mjdref, mjd);
             case TT_TIMESYS:
-                return tt2utc(mjd);
+                return tt2utc(mjdref, mjd);
             default:
-                return mjd;
+                return new double[] {mjdref ,mjd};
         }
     }
 
     /**
      * Transform the time scale of a Modified Julian Date from TAI to UTC.
      *
-     * @param mjd the Modified Julian Date to transform.
+     * @param mjdref the Modified Julian Date reference value.
+     * @param mjd the Modified Julian Date.
      * @return mjd in the UTC time scale.
      */
-    public static double tai2utc(double mjd) {
-        double[] tai = mjd2jd(mjd);
+    public static double[] tai2utc(double mjdref, double mjd) {
+        // ERFALib expects Julian Date, convert MJD reference value to JD
+        double jdref = mjdref + MJD2JD_OFFSET;
         double[] utc;
         try {
-            utc = ERFALib.tai2utc(tai[0], tai[1]);
+            utc = ERFALib.tai2utc(jdref, mjd);
         } catch (ERFALibException e) {
             String msg = String.format("error transforming %f from TAI to UTC: %s",
                                        mjd, e.getMessage());
@@ -518,20 +515,23 @@ public final class TimeUtil {
                                        mjd, e.getMessage());
             throw new IllegalArgumentException(msg, e);
         }
-        return jd2mjd(utc);
+        // convert JD reference value back to MJD
+        return new double[]{utc[0] - MJD2JD_OFFSET, utc[1]};
     }
 
     /**
      * Transform the time scale of a Modified Julian Date from TT to UTC.
      *
-     * @param mjd the Modified Julian Date to transform.
+     * @param mjdref the Modified Julian Date reference value.
+     * @param mjd the Modified Julian Date.
      * @return mjd in the UTC time scale.
      */
-    public static double tt2utc(double mjd) {
-        double[] tt = mjd2jd(mjd);
+    public static double[] tt2utc(double mjdref, double mjd) {
+        // ERFALib expects Julian Date, convert MJD reference value to JD
+        double jdref = mjdref + MJD2JD_OFFSET;
         double[] utc;
         try {
-            utc = ERFALib.tt2utc(tt[0], tt[1]);
+            utc = ERFALib.tt2utc(jdref, mjd);
         } catch (ERFALibException e) {
             String msg = String.format("error transforming %f from TT to UTC: %s",
                                        mjd, e.getMessage());
@@ -541,40 +541,8 @@ public final class TimeUtil {
                                        mjd, e.getMessage());
             throw new IllegalArgumentException(msg, e);
         }
-        return jd2mjd(utc);
-    }
-
-    /**
-     * Convert a Modified Julian Date to a 2 part Julian Date.
-     * The first part of the jd will be the day, and the
-     * second part the fraction of the day.
-     * i.e. 60053.25 (mjd) to [2460053.5, 0.25] (jd)
-     *
-     * @param mjd the Modified Julian Date to convert.
-     * @return 2 part Julian Date
-     */
-    public static double[] mjd2jd(double mjd) {
-        double jd = mjd + 2400000.5D;
-        double jd1;
-        double jd2;
-        double floor = Math.floor(jd);
-        if (jd < floor + 0.5D) {
-            jd1 = floor - 0.5D;
-        } else {
-            jd1 = floor + 0.5D;
-        }
-        jd2 = jd - jd1;
-        return new double[]{jd1, jd2};
-    }
-
-    /**
-     * Convert a 2 part Julian Date to a Modified Julian Date.
-     *
-     * @param jd the 2 part Julian Date to convert.
-     * @return a Modified Julian Date.
-     */
-    public static double jd2mjd(double[] jd) {
-        return jd[0] + jd[1] - 2400000.5D;
+        // convert JD reference value back to MJD
+        return new double[]{utc[0] - MJD2JD_OFFSET, utc[1]};
     }
 
 }
