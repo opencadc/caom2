@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2022.                            (c) 2022.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,6 +71,9 @@ package ca.nrc.cadc.caom2.harvester.state;
 
 import ca.nrc.cadc.caom2.persistence.Util;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.io.ResourceIterator;
+import ca.nrc.cadc.util.StringUtil;
+import java.io.IOException;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -81,6 +84,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
@@ -98,20 +102,28 @@ public class HarvestSkipURIDAO {
 
     private static final String[] COLUMNS
             = {
-                "source", "cname", "skipID", "tryAfter", "errorMessage", 
+                "source", "cname", "bucket", "skipID", "tryAfter", "errorMessage", 
                 "lastModified", "id"
             };
 
     private final String tableName;
+    private final DataSource dataSource;
     private final JdbcTemplate jdbc;
     private final RowMapper extractor;
 
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
+    
+    public static final int BUCKET_LENGTH = 3;
 
     public HarvestSkipURIDAO(DataSource dataSource, String database, String schema) {
         this.jdbc = new JdbcTemplate(dataSource);
-        this.tableName = database + "." + schema + ".HarvestSkipURI";
-        this.extractor = new HarvestSkipMapper();
+        this.dataSource = dataSource;
+        if (database != null) {
+            this.tableName = database + "." + schema + ".HarvestSkipURI";
+        } else {
+            this.tableName = schema + ".HarvestSkipURI";
+        }
+        this.extractor = new HarvestSkipMapper(Calendar.getInstance(DateUtil.UTC));
     }
 
     public HarvestSkipURI get(String source, String cname, URI skipID) {
@@ -128,18 +140,46 @@ public class HarvestSkipURIDAO {
         SelectStatementCreator sel = new SelectStatementCreator();
         sel.setValues(source, cname, null, start, end, batchSize);
         List result = jdbc.query(sel, extractor);
-        List<HarvestSkipURI> ret = new ArrayList<HarvestSkipURI>(result.size());
+        List<HarvestSkipURI> ret = new ArrayList<>(result.size());
         for (Object o : result) {
             ret.add((HarvestSkipURI) o);
         }
         return ret;
     }
-
+    
+    /**
+     * Iterator for use by caom2-artifact-download.The underlying connection remains 
+     * open until the ResourceIterator is closed or the iteration reaches the end.
+     * 
+     * @param name class name of target skip record(s)
+     * @param namespace storage namespace (prefix of the skipID aka Artifact.uri)
+     * @param bucketPrefix prefix on random hex bucket
+     * @param maxTryAfter maximum tryAfter date to consider
+     * @return iterator of matching skip records in tryAfter order
+     */
+    public ResourceIterator<HarvestSkipURI> iterator(String name, String namespace, String bucketPrefix, Date maxTryAfter) {
+        IteratorQuery iter = new IteratorQuery(name);
+        iter.setNamespace(namespace);
+        iter.setBucketPrefix(bucketPrefix);
+        iter.setMaxTryAfter(maxTryAfter);
+        return iter.query(dataSource);
+    }
+    
+    public ResourceIterator<HarvestSkipURI> iterator(String name, String namespace, 
+            String minBucket, String maxBucket, Date maxTryAfter) {
+        IteratorQuery iter = new IteratorQuery(name);
+        iter.setNamespace(namespace);
+        iter.setBucketRange(minBucket, maxBucket);
+        iter.setMaxTryAfter(maxTryAfter);
+        return iter.query(dataSource);
+    }
+    
     public void put(HarvestSkipURI skip) {
         boolean update = true;
         if (skip.getID() == null) {
             update = false;
             skip.id = UUID.randomUUID();
+            skip.bucket = skip.getID().toString().substring(0, BUCKET_LENGTH);
         }
         skip.lastModified = new Date();
         PutStatementCreator put = new PutStatementCreator(update);
@@ -166,7 +206,7 @@ public class HarvestSkipURIDAO {
         String sql = "DELETE FROM " + tableName + " WHERE source = '" + source + "' and cname = '" + cname + "'";
         jdbc.update(sql);
     }
-
+    
     private class SelectStatementCreator implements PreparedStatementCreator {
 
         private String source;
@@ -264,6 +304,7 @@ public class HarvestSkipURIDAO {
             int col = 1;
             ps.setString(col++, skip.getSource());
             ps.setString(col++, skip.getName());
+            ps.setString(col++, skip.bucket);
             ps.setString(col++, skip.getSkipID().toASCIIString());
             ps.setTimestamp(col++, new Timestamp(skip.getTryAfter().getTime()), utcCalendar);
             String es = skip.errorMessage;
@@ -279,21 +320,195 @@ public class HarvestSkipURIDAO {
 
     private class HarvestSkipMapper implements RowMapper {
 
-        public Object mapRow(ResultSet rs, int i) throws SQLException {
+        private Calendar utc;
+        
+        HarvestSkipMapper(Calendar utc) {
+            this.utc = utc;
+        }
+        
+        public HarvestSkipURI mapRow(ResultSet rs, int i) throws SQLException {
             
             int col = 1;
             String source = rs.getString(col++);
             String name = rs.getString(col++);
+            String bucket = rs.getString(col++);
             URI skipID = Util.getURI(rs, col++);
-            Date retryAfter = Util.getDate(rs, col++, utcCalendar);
+            Date retryAfter = Util.getDate(rs, col++, utc);
             
             HarvestSkipURI ret = new HarvestSkipURI(source, name, skipID, retryAfter);
+            ret.bucket = bucket;
             ret.errorMessage = rs.getString(col++);
-            
-            ret.lastModified = Util.getDate(rs, col++, utcCalendar);
+            ret.lastModified = Util.getDate(rs, col++, utc);
             ret.id = Util.getUUID(rs, col++);
+            
             return ret;
         }
+    }
+    
+    class IteratorQuery {
 
+        private final String name;
+        private String namespace;
+        
+        private Date maxTryAfter;
+        
+        private String bucketPrefix;
+        private String minBucket;
+        private String maxBucket;
+
+        public IteratorQuery(String name) {
+            if (name == null) {
+                throw new IllegalArgumentException("IteratorQuery: name cannot be null");
+            }
+            this.name = name;
+        }
+
+        public void setNamespace(String namespace) {
+            this.namespace = namespace;
+        }
+
+        public void setBucketPrefix(String prefix) {
+            if (StringUtil.hasText(prefix)) {
+                this.bucketPrefix = prefix.trim();
+            } else {
+                this.bucketPrefix = null;
+            }
+        }
+
+        public void setBucketRange(String minBucket, String maxBucket) {
+            this.minBucket = minBucket;
+            this.maxBucket = maxBucket;
+        }
+
+        public void setMaxTryAfter(Date end) {
+            this.maxTryAfter = end;
+        }
+
+        public ResourceIterator<HarvestSkipURI> query(DataSource ds) {
+            
+            StringBuilder sb = new StringBuilder(SqlUtil.getSelectSQL(COLUMNS, tableName));
+            sb.append(" WHERE cname = ?");
+            
+            if (namespace != null) {
+                sb.append(" AND skipID LIKE ?");
+            }
+            if (bucketPrefix != null) {
+                sb.append(" AND bucket LIKE ?");
+            } else if (minBucket != null && maxBucket != null) {
+                sb.append(" AND bucket BETWEEN ? AND ?");
+            }
+            if (maxTryAfter != null) {
+                
+                sb.append(" AND tryAfter <= ?");
+                //pre = " AND";
+            }
+            sb.append(" ORDER BY tryAfter");
+            
+            String sql = sb.toString();
+            log.debug("sql: " + sql);
+            
+            try {
+                Connection con = ds.getConnection();
+                log.debug("IteratorQuery: setAutoCommit(false)");
+                con.setAutoCommit(false);
+                // defaults for options: ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY
+                PreparedStatement ps = con.prepareStatement(sql);
+                ps.setFetchSize(1000);
+                ps.setFetchDirection(ResultSet.FETCH_FORWARD);
+                int col = 1;
+                log.debug("name: " + name);
+                ps.setString(col++, name);
+                    
+                if (namespace != null) {
+                    String val = namespace + "%";
+                    log.debug("namespace prefix: " + val);
+                    ps.setString(col++, val);
+                }
+                if (bucketPrefix != null) {
+                    String val = bucketPrefix + "%";
+                    log.debug("bucket prefix: " + val);
+                    ps.setString(col++, val);
+                } else if (minBucket != null && maxBucket != null) {
+                    log.debug("bucket range: " + minBucket + "," + maxBucket);
+                    ps.setString(col++, minBucket);
+                    ps.setString(col++, maxBucket);
+                }
+                if (maxTryAfter != null) {
+                    ps.setTimestamp(col, new Timestamp(maxTryAfter.getTime()), Calendar.getInstance(DateUtil.UTC));
+                }
+                ResultSet rs = ps.executeQuery();
+                
+                return new ResultSetIterator(con, rs);
+            } catch (SQLException ex) {
+                throw new RuntimeException("BUG: iterator query failed", ex);
+            }
+        }
+    }
+    
+    private class ResultSetIterator implements ResourceIterator<HarvestSkipURI> {
+        final Calendar utc = Calendar.getInstance(DateUtil.UTC);
+        private final Connection con;
+        private final ResultSet rs;
+        boolean hasRow;
+        private int rowNum = 0;
+        HarvestSkipMapper mapper = new HarvestSkipMapper(utc);
+        
+        ResultSetIterator(Connection con, ResultSet rs) throws SQLException {
+            this.con = con;
+            this.rs = rs;
+            hasRow = rs.next();
+            log.debug("ResultSetIterator: " + super.toString() + " ctor " + hasRow);
+            if (hasRow) {
+                rowNum++;
+            } else {
+                log.debug("ResultSetIterator:  " + super.toString() + " ctor - setAutoCommit(true)");
+                con.setAutoCommit(true);
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (hasRow) {
+                log.debug("ResultSetIterator:  " + super.toString() + " CLOSE - setAutoCommit(true)");
+                try {
+                    con.setAutoCommit(true);
+                    hasRow = false;
+                } catch (SQLException ex) {
+                    throw new RuntimeException("BUG: list query failed during close()", ex);
+                }
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return hasRow;
+        }
+
+        @Override
+        public HarvestSkipURI next() {
+            if (!hasRow) {
+                throw new NoSuchElementException();
+            }
+            try {
+                HarvestSkipURI ret = mapper.mapRow(rs, rowNum++);
+                hasRow = rs.next();
+                if (!hasRow) {
+                    log.debug("ResultSetIterator:  " + super.toString() + " DONE - setAutoCommit(true)");
+                    con.setAutoCommit(true);
+                }
+                return ret;
+            } catch (Exception ex) {
+                if (hasRow) {
+                    log.debug("ResultSetIterator:  " + super.toString() + " ResultSet.next() FAILED - setAutoCommit(true)");
+                    try {
+                        close();
+                        hasRow = false;
+                    } catch (IOException unexpected) {
+                        log.debug("BUG: unexpected IOException from close", unexpected);
+                    }
+                }
+                throw new RuntimeException("BUG: list query failed while iterating", ex);
+            }
+        }
     }
 }

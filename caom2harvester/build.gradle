@@ -15,7 +15,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '2.5.7'
+version = '2.5.9'
 ext {
     // release number for building packages (rpm, deb, etc)
     // when only library dependencies change
@@ -31,7 +31,7 @@ applicationDefaultJvmArgs = ['-Xms2048m','-Xmx8192m','-XX:OnOutOfMemoryError="ki
 dependencies {
     compile 'org.opencadc:cadc-util:[1.6,2.0)'
     compile 'org.opencadc:caom2:[2.4.4,2.5)'
-    compile 'org.opencadc:caom2persistence:[2.4.6,2.5)'
+    compile 'org.opencadc:caom2persistence:[2.4.12,2.5)'
     compile 'org.opencadc:caom2-repo:[1.4,1.5)'
     compile 'org.opencadc:caom2-persist:[2.4,2.5)'
     

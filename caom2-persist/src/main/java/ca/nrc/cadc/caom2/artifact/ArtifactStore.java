@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,11 +69,13 @@
 
 package ca.nrc.cadc.caom2.artifact;
 
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Set;
 
@@ -91,8 +93,8 @@ public interface ArtifactStore {
      *            The artifact identifier.
      * @return archive metadata object, null if none found.
      *
-     * @throws UnsupportedOperationException
-     *             If the artifact uri cannot be resolved.
+     * @throws ResourceNotFoundException
+     *             If the artifact is not in storage
      * @throws UnsupportedOperationException
      *             If the checksum algorith is not supported.
      * @throws IllegalArgumentException
@@ -105,10 +107,12 @@ public interface ArtifactStore {
      *             If an unrecovarable error occurs.
      */
     public ArtifactMetadata get(URI artifactURI)
-            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
+            throws TransientException, ResourceNotFoundException, 
+            IllegalArgumentException, AccessControlException, IllegalStateException;
 
     /**
-     * Get the storage policy based on the collection provided.
+     * Get the storage policy based on the collection provided. TODO: this method will be
+     * removed in a later version of the API (once tools that need it are directly configurable).
      *
      * @param collection
      *            The collection containing the files.
@@ -118,12 +122,13 @@ public interface ArtifactStore {
 
 
     /**
-     * Saves an artifact. The artifact will be replaced if artifact already exists with a different checksum.
+     * Saves an artifact. The artifact will be replaced if artifact already exists 
+     * with a different checksum.
      *
      * @param artifactURI
      *            The artifact identifier.
-     * @param data
-     *            The artifact data.
+     * @param src
+     *            URL of the source to access the data; should support HTTP Range requests
      * @param metadata
      *            Artifact metadata, including md5sum, contentLength and contentType
      *
@@ -137,25 +142,33 @@ public interface ArtifactStore {
      *             If the calling user is not allowed to upload the artifact.
      * @throws IllegalStateException
      *             If the artifact already exists.
+     * @throws InterruptedException
+     *             If the transfer gets interrupted
+     * @throws IOException
+     *             If an IO exception occurs
+     * @throws ResourceNotFoundException
+     *             If the src URL points to a non-existent resource
      * @throws TransientException
      *             If an unexpected runtime error occurs.
      * @throws RuntimeException
      *             If an unrecovarable error occurs.
      */
-    public void store(URI artifactURI, InputStream data, FileMetadata metadata)
-            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException, IllegalStateException;
+    public void store(URI artifactURI, URL src, FileMetadata metadata)
+            throws TransientException, UnsupportedOperationException, IllegalArgumentException, AccessControlException,
+            IllegalStateException, InterruptedException, IOException, ResourceNotFoundException;
 
     /**
-     * Get the list of all artifacts in a certain archive.
+     * Get the list of all artifacts in a certain archive. TODO: this method will be
+     * replaced by an iterator method in a later version of the API.
      *
-     * @param collection
-     *            The collection on which to search for files.
-     * @return A list of archive metadata objects
-     * @throws TransientException
-     * @throws UnsupportedOperationException
-     * @throws AccessControlException
+     * @param namespace storage namespace (Artifact.uri prefix)
+     * @return A set of archive metadata objects
+     * @throws java.io.IOException
+     * @throws java.lang.InterruptedException
+     * @throws ca.nrc.cadc.net.ResourceNotFoundException
      */
-    public Set<ArtifactMetadata> list(String collection) throws TransientException, UnsupportedOperationException, AccessControlException;
+    public Set<ArtifactMetadata> list(String namespace) throws IOException, InterruptedException,
+            ResourceNotFoundException, TransientException, AccessControlException;
 
     /**
      * Convert an artifact URI to a storage ID.
@@ -166,6 +179,7 @@ public interface ArtifactStore {
      * @throws IllegalArgumentException
      *             If an aspect of the artifact uri is incorrect.
      */
+    @Deprecated
     public String toStorageID(String artifactURI) throws IllegalArgumentException;
 
     /**

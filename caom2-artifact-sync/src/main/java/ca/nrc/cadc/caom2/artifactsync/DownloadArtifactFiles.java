@@ -154,7 +154,7 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
 
         this.stopDate = new Date();
         if (retryAfterHours == null) {
-            retryAfterHours = DEFAULT_RETRY_AFTER_ERROR_HOURS;
+            this.retryAfterHours = DEFAULT_RETRY_AFTER_ERROR_HOURS;
         } else {
             this.retryAfterHours = retryAfterHours;
         }
@@ -379,9 +379,10 @@ public class DownloadArtifactFiles implements PrivilegedExceptionAction<NullType
                 profiler.checkpoint("download/upload");
 
                 if (download.getThrowable() != null || respCode != 200) {
-                    StringBuilder sb = new StringBuilder("Download error (" + respCode + ")");
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Download error (").append(respCode).append(")");
                     if (download.getThrowable() != null) {
-                        sb.append(": " + download.getThrowable().getMessage());
+                        sb.append(": ").append(download.getThrowable().getMessage());
                     }
                     result.message = sb.toString();
                 } else {

@@ -135,7 +135,11 @@ public class Worker implements Callable<ObservationResponse> {
 
         ObservationResponse wr = new ObservationResponse(state);
         if (get.getThrowable() != null) {
-            wr.error = new RuntimeException("failed to get observation", get.getThrowable());
+            if (get.getThrowable() instanceof Exception) {
+                wr.error = (Exception) get.getThrowable();
+            } else {
+                wr.error = new RuntimeException("failed to get observation", get.getThrowable());
+            }
         } else {
             try {
                 ObservationReader obsReader = new ObservationReader();

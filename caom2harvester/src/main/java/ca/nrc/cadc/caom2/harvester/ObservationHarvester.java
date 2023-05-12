@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import java.io.File;
 import java.io.FileReader;
@@ -399,6 +400,10 @@ public class ObservationHarvester extends Harvester {
                     destObservationDAO.getTransactionManager().startTransaction();
                 }
                 boolean ok = false;
+                log.debug("skipped=" + skipped
+                        + " o=" + o
+                        + " ow.entity=" + ow.entity
+                        + " ow.entity.error=" + (ow.entity != null || ow.entity.error != null));
                 try {
                     // o could be null in skip mode cleanup
                     if (o != null) {
@@ -476,20 +481,36 @@ public class ObservationHarvester extends Harvester {
                                 log.info("delete: " + hs + " " + format(hs.getLastModified()));
                                 harvestSkipDAO.delete(hs);
                             }
-                        } else if (skipped && ow.entity == null) {
-                            // observation was simply missing from source == missed deletion
-                            ObservationURI uri = new ObservationURI(hs.getSkipID());
-                            log.info("delete: " + uri);
-                            destObservationDAO.delete(uri);
-                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
-                            harvestSkipDAO.delete(hs);
+                        } else if (skipped) {
+                            // o == null
+                            if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
+                                // observation not obtainable from source == missed deletion
+                                ObservationURI uri = new ObservationURI(hs.getSkipID());
+                                log.info("delete: " + uri);
+                                destObservationDAO.delete(uri);
+                                log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                                harvestSkipDAO.delete(hs);
+                            } else {
+                                // defer to the main catch for error handling
+                                throw new HarvestReadException(ow.entity.error);
+                            }
                         } else if (ow.entity.error != null) {
-                            // try to make progress on failures
+                            // o == null when harvesting from service: try to make progress on failures
                             if (state != null && ow.entity.observationState.maxLastModified != null) {
                                 state.curLastModified = ow.entity.observationState.maxLastModified;
                                 state.curID = null; // unknown
                             }
-                            throw new HarvestReadException(ow.entity.error);
+                            if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
+                                ObservationURI uri = new ObservationURI(hs.getSkipID());
+                                log.info("delete: " + uri);
+                                destObservationDAO.delete(uri);
+                                if (hs != null) {
+                                    log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                                    harvestSkipDAO.delete(hs);
+                                }
+                            } else {
+                                throw new HarvestReadException(ow.entity.error);
+                            }
                         }
 
                         log.debug("committing transaction");
