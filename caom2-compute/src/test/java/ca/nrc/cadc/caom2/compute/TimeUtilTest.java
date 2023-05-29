@@ -151,6 +151,101 @@ public class TimeUtilTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testComputeTimesysCtypeCunit() {
+        
+        String[] timeSys = new String[] { "UTC", "TT", "TAI" };
+        
+        CoordAxis1D[] ctypeOnly = new CoordAxis1D[] {
+            new CoordAxis1D(new Axis("UTC", "d")),
+            new CoordAxis1D(new Axis("TT", "d")),
+            new CoordAxis1D(new Axis("TAI", "d"))
+        };
+        CoordAxis1D time = new CoordAxis1D(new Axis("TIME", "d"));
+        
+        try {
+            Plane plane = new Plane("foo");
+            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
+            plane.getArtifacts().add(a);
+            Part p = new Part(1);
+            a.getParts().add(p);
+            Chunk c = new Chunk();
+            p.getChunks().add(c);
+             
+            c.naxis = 1;
+            c.timeAxis = 1;
+            // allowed: CTYPE only
+            for (CoordAxis1D ca : ctypeOnly) {
+                c.time = new TemporalWCS(ca);
+                c.time.getAxis().range = new CoordRange1D(new RefCoord(0.5, 54321.0), new RefCoord(1.5, 54321.1));
+                
+                log.info("timesys: " + c.time.timesys + " axis: " + c.time.getAxis());
+                Time actual = TimeUtil.compute(plane.getArtifacts());
+                log.info("testComputeTimesysCtypeCunit: " + actual);
+                
+                Assert.assertNotNull(actual);
+                Assert.assertNotNull(actual.bounds);
+            }
+            // allowed: CTYPE=TIME && TIMESYS
+            for (String ts : timeSys) {
+                c.time = new TemporalWCS(time);
+                c.time.timesys = ts;
+                c.time.getAxis().range = new CoordRange1D(new RefCoord(0.5, 54321.0), new RefCoord(1.5, 54321.1));
+                
+                log.info("timesys: " + c.time.timesys + " axis: " + c.time.getAxis());
+                Time actual = TimeUtil.compute(plane.getArtifacts());
+                log.info("testComputeTimesysCtypeCunit: " + actual);
+                
+                Assert.assertNotNull(actual);
+                Assert.assertNotNull(actual.bounds);
+            }
+            
+            // allowed: CTYPE and redundant TIMESYS
+            for (CoordAxis1D ca : ctypeOnly) {
+                c.time = new TemporalWCS(ca);
+                c.time.timesys = ca.getAxis().getCtype();
+                c.time.getAxis().range = new CoordRange1D(new RefCoord(0.5, 54321.0), new RefCoord(1.5, 54321.1));
+                
+                log.info("timesys: " + c.time.timesys + " axis: " + c.time.getAxis());
+                Time actual = TimeUtil.compute(plane.getArtifacts());
+                log.info("testComputeTimesysCtypeCunit: " + actual);
+                
+                Assert.assertNotNull(actual);
+                Assert.assertNotNull(actual.bounds);
+            }
+            
+            // not allowed: CTYPE=TIME only
+            try {
+                c.time = new TemporalWCS(time);
+                c.time.timesys = null;
+                c.time.getAxis().range = new CoordRange1D(new RefCoord(0.5, 54321.0), new RefCoord(1.5, 54321.1));
+                
+                log.info("timesys: " + c.time.timesys + " axis: " + c.time.getAxis());
+                Time actual = TimeUtil.compute(plane.getArtifacts());
+                Assert.fail("expected UnsupportedOperationException, got: " + actual);
+            } catch (UnsupportedOperationException ex) {
+                log.info("caught expected: "  + ex);
+            }
+            
+            // not allowed: CUNIT other than d (days)
+            try {
+                CoordAxis1D ta = new CoordAxis1D(new Axis("UTC", "sec"));
+                c.time = new TemporalWCS(ta);
+                c.time.timesys = null;
+                c.time.getAxis().range = new CoordRange1D(new RefCoord(0.5, 54321.0), new RefCoord(1.5, 54321.1));
+                
+                log.info("timesys: " + c.time.timesys + " axis: " + c.time.getAxis());
+                Time actual = TimeUtil.compute(plane.getArtifacts());
+                Assert.fail("expected UnsupportedOperationException, got: " + actual);
+            } catch (UnsupportedOperationException ex) {
+                log.info("caught expected: "  + ex);
+            }
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 
     @Test
     public void testComputeFromRange() {
@@ -244,7 +339,7 @@ public class TimeUtilTest {
              
             c.naxis = 1;
             c.timeAxis = 1;
-            c.time = new TemporalWCS(new CoordAxis1D(new Axis("TIME", "d")));
+            c.time = new TemporalWCS(new CoordAxis1D(new Axis("UTC", "d")));
             c.time.getAxis().bounds = new CoordBounds1D();
             c.time.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 54321.0), new RefCoord(1.5, 54321.1)));
             c.time.getAxis().bounds.getSamples().add(new CoordRange1D(new RefCoord(0.5, 54321.2), new RefCoord(1.5, 54321.3)));
