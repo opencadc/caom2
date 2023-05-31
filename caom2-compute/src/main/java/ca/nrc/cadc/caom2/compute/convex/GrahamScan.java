@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Stack;
 
 /**
- * The <tt>GrahamScan</tt> data type provides methods for computing the convex hull of a set of <em>N</em> points in the plane.
+ * The GrahamScan data type provides methods for computing the convex hull of a set of <em>N</em> points in the plane.
  * 
  * <p>The implementation uses the Graham-Scan convex hull algorithm. It runs in O(<em>N</em> log <em>N</em>) time in the worst case and uses O(<em>N</em>) extra
  * memory.
@@ -32,7 +32,7 @@ public class GrahamScan implements Serializable {
      * @param pts
      *            the array of points
      * @throws NullPointerException
-     *             if <tt>points</tt> is <tt>null</tt> or if any entry in <tt>points[]</tt> is <tt>null</tt>
+     *             if points is null or if any entry in points[] is null
      */
     public GrahamScan(SortablePoint2D[] pts) {
 

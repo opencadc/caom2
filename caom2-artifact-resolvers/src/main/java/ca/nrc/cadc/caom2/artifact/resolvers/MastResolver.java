@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -83,7 +83,7 @@ import org.apache.log4j.Logger;
 public class MastResolver implements StorageResolver {
 
     public static final String SCHEME = "mast";
-    private static final String MAST_BASE_ARTIFACT_URL = "https://mastpartners.stsci.edu/portal/Download/file/";
+    private static final String MAST_BASE_ARTIFACT_URL = "https://mast.stsci.edu/portal/Download/file/";
 
     public MastResolver() {
     }
