@@ -99,7 +99,7 @@ public final class TimeUtil {
     // sort of a hack: we assume absolute MJD values in the TimeWCS which
     // is the default if MJDREF, JDREF, and DATEREF are all absent = 0.0 in FITS
     private static final String TARGET_TIMESYS = "UTC";
-    private static final String TARGET_CTYPE = "TIME";
+    private static final String COMPAT_CTYPE = "TIME";
     private static final String TARGET_CUNIT = "d";
     public static double DEFAULT_UNION_SCALE = 0.10;
     private static final String TAI_TIMESYS = "TAI";
@@ -430,13 +430,16 @@ public final class TimeUtil {
     private static void validateWCS(TemporalWCS wcs) {
         StringBuilder sb = new StringBuilder();
         String ctype = wcs.getAxis().getAxis().getCtype();
-        if (ctype.equals(TARGET_CTYPE) && (wcs.timesys == null || SUPPORTED_TIMESYS.contains(wcs.timesys))) {
+        if (wcs.timesys != null && SUPPORTED_TIMESYS.contains(wcs.timesys)
+                && (ctype.equals(wcs.timesys) || ctype.equals(COMPAT_CTYPE))) {
             // OK
-        } else if (ctype.equals(TARGET_TIMESYS) && wcs.timesys == null) {
+        } else if (wcs.timesys == null && SUPPORTED_TIMESYS.contains(ctype)) {
             // OK
         } else {
             sb.append("unexpected TIMESYS, CTYPE: ").append(wcs.timesys).append(",").append(ctype);
         }
+        
+        // TODO: with wcs.mjdref != null, CUNIT could be in alt units (eg sec)
         String cunit = wcs.getAxis().getAxis().cunit;
         if (!TARGET_CUNIT.equals(cunit)) {
             sb.append("unexpected CUNIT: ").append(cunit);
