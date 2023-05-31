@@ -11,7 +11,7 @@ import java.util.Comparator;
 
 
 /**
- * The <tt>Point</tt> class is an immutable data type to encapsulate a
+ * The SortablePoint2D class is an immutable data type to encapsulate a
  * two-dimensional point with real-value coordinates.
  * <p>
  * Note: in order to deal with the difference behavior of double and
@@ -47,9 +47,9 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      *
      * @param x the coordX-coordinate
      * @param y the coordY-coordinate
-     * @throws IllegalArgumentException if either <tt>coordX</tt> or <tt>coordY</tt>
-     *                                  is <tt>Double.NaN</tt>, <tt>Double.POSITIVE_INFINITY</tt> or
-     *                                  <tt>Double.NEGATIVE_INFINITY</tt>
+     * @throws IllegalArgumentException if either coordX or coordY
+     *                                  is Double.NaN, Double.POSITIVE_INFINITY or
+     *                                  Double.NEGATIVE_INFINITY
      */
     public SortablePoint2D(double x, double y) {
         if (Double.isInfinite(x) || Double.isInfinite(y)) {
@@ -183,8 +183,8 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      * if and only if either y0 &lt; y1 or if y0 = y1 and x0 &lt; x1.
      *
      * @param that the other point
-     * @return the value <tt>0</tt> if this string is equal to the argument
-     *     string (precisely when <tt>equals()</tt> returns <tt>true</tt>);
+     * @return the value 0 if this string is equal to the argument
+     *     string (precisely when equals() returns true);
      *     a negative integer if this point is less than the argument
      *     point; and a positive integer if this point is greater than the
      *     argument point
@@ -236,8 +236,8 @@ public final class SortablePoint2D implements Comparable<ca.nrc.cadc.caom2.compu
      * Compares this point to the specified point.
      *
      * @param other the other point
-     * @return <tt>true</tt> if this point equals <tt>other</tt>;
-     *     <tt>false</tt> otherwise
+     * @return true if this point equals other;
+     *     false otherwise
      */
     @Override
     public boolean equals(Object other) {

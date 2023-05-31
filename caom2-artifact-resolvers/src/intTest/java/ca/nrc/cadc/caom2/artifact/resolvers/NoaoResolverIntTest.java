@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.artifact.resolvers;
 
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -87,9 +87,9 @@ public class NoaoResolverIntTest {
         Log4jInit.setLevel("ca.nrc.cadc", Level.INFO);
     }
 
-    String VALID_URI = "noao:c13a_140805_212140_ori.fits.fz";
+    private static final String VALID_URI = "noao:c13a_140805_212140_ori.fits.fz";
 
-    NoaoResolver noaoResolver = new NoaoResolver();;
+    NoaoResolver noaoResolver = new NoaoResolver();
 
     public NoaoResolverIntTest() {
     }
@@ -100,17 +100,19 @@ public class NoaoResolverIntTest {
             URI noaoUri = new URI(VALID_URI);
             URL url = noaoResolver.toURL(noaoUri);
 
-            log.debug("opening connection to: " + url.toString());
+            log.info("opening connection to: " + url.toString());
 
             OutputStream out = new ByteArrayOutputStream();
-            HttpDownload head = new HttpDownload(url, out);
+            HttpGet head = new HttpGet(url, out);
             head.setHeadOnly(true);
             head.run();
             // THe server being hit is apparently only up 80% of
             // the time, so this assertEquals could throw a large
             // percentage of 'false failures'
+            log.info("response code: " + head.getResponseCode()
+                + " fail: " + head.getThrowable());
             Assert.assertEquals(200, head.getResponseCode());
-            log.info("response code: " + head.getResponseCode());
+            
         } catch (Exception unexpected) {
             log.error("Unexpected exception", unexpected);
             Assert.fail("Unexpected exception: " + unexpected);
