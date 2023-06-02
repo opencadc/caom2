@@ -241,6 +241,8 @@ public class ArtifactProcessor {
                 try {
                     link.accessURL = getPackageURL(pkg, ar.getPublisherID());
                     link.contentType = PKG_CONTENT_TYPE_TAR;
+                    link.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
+                    link.linkAuthorized = pkgReadable;
                     link.description = "single download containing all files (previews and thumbnails excluded)";
                 } catch (MalformedURLException ex) {
                     link.errorMessage = "failed to create package link: " + ex;
