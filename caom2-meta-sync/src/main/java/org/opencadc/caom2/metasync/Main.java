@@ -175,11 +175,11 @@ public class Main {
             final String configuredDestinationUsername = props.getFirstPropertyValue(DESTINATION_USERNAME_CONFIG_KEY);
             final String configuredDestinationPassword = props.getFirstPropertyValue(DESTINATION_PASSWORD_CONFIG_KEY);
 
-            HarvesterResource destinationHarvestResource = new HarvesterResource(configuredDestinationUrl,
+            final HarvesterResource destinationHarvestResource = new HarvesterResource(configuredDestinationUrl,
                     destinationServer, destinationDatabase, configuredDestinationUsername,
                     configuredDestinationPassword, configuredDestinationSchema);
 
-            HarvesterResource sourceHarvestResource;
+            final HarvesterResource sourceHarvestResource;
             final String configuredSourceRepoService = props.getFirstPropertyValue(SOURCE_REPO_SERVICE_CONFIG_KEY);
             final String configuredSourceURL = props.getFirstPropertyValue(SOURCE_URL_CONFIG_KEY);
             if (StringUtil.hasText(configuredSourceRepoService)) {
