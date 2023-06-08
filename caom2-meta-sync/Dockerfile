@@ -1,4 +1,4 @@
-FROM cadc-java:1
+FROM images.opencadc.org/library/cadc-java:1
 
 ADD build/distributions/caom2-meta-sync.tar /
 

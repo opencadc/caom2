@@ -71,20 +71,20 @@ package org.opencadc.caom2.metasync;
 
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.caom2.harvester.CaomHarvester;
-import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.harvester.CaomHarvester;
+import org.opencadc.caom2.harvester.HarvesterResource;
 
 /**
  * Entry point for running the caom2-meta-sync process.
@@ -94,35 +94,52 @@ import org.apache.log4j.Logger;
 public class Main {
     private static final Logger log = Logger.getLogger(Main.class);
 
-    private static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
     private static final String CONFIG_FILE_NAME = "caom2-meta-sync.properties";
+    private static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
 
-    private static final String DESTINATION_SERVER_CONFIG_KEY = CONFIG_PREFIX + ".destination.server";
-    private static final String DESTINATION_DATABASE_CONFIG_KEY = CONFIG_PREFIX + ".destination.database";
-    private static final String DESTINATION_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".destination.schema";
-    private static final String SOURCE_RESOURCE_ID_CONFIG_KEY = CONFIG_PREFIX + ".source.resourceID";
+    private static final String SOURCE_REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".source.repoService";
+    private static final String SOURCE_URL_CONFIG_KEY = CONFIG_PREFIX + ".source.db.url";
+    private static final String SOURCE_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".source.db.schema";
+    private static final String SOURCE_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".source.db.username";
+    private static final String SOURCE_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".source.db.password";
+
+    private static final String DESTINATION_URL_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.url";
+    private static final String DESTINATION_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.schema";
+    private static final String DESTINATION_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.username";
+    private static final String DESTINATION_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.password";
+
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
     private static final String BASE_PUBLISHER_ID_CONFIG_KEY = CONFIG_PREFIX + ".basePublisherID";
     private static final String THREADS_CONFIG_KEY = CONFIG_PREFIX + ".threads";
     private static final String BATCH_SIZE_CONFIG_KEY = CONFIG_PREFIX + ".batchSize";
+    private static final String RUN_CONTINUOUSLY_CONFIG_KEY = CONFIG_PREFIX + ".runContinuously";
+    private static final String MAX_SLEEP_CONFIG_KEY = CONFIG_PREFIX + ".maxSleep";
+    private static final String DRYRUN_CONFIG_KEY = CONFIG_PREFIX + ".dryrun";
+
+
+
 
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
         LOGGING_CONFIG_KEY,
-        DESTINATION_SERVER_CONFIG_KEY,
-        DESTINATION_DATABASE_CONFIG_KEY,
         DESTINATION_SCHEMA_CONFIG_KEY,
-        SOURCE_RESOURCE_ID_CONFIG_KEY,
+        DESTINATION_USERNAME_CONFIG_KEY,
+        DESTINATION_PASSWORD_CONFIG_KEY,
+        DESTINATION_URL_CONFIG_KEY,
         COLLECTION_CONFIG_KEY,
         BASE_PUBLISHER_ID_CONFIG_KEY,
         THREADS_CONFIG_KEY,
-        BATCH_SIZE_CONFIG_KEY
+        BATCH_SIZE_CONFIG_KEY,
+        RUN_CONTINUOUSLY_CONFIG_KEY,
+        MAX_SLEEP_CONFIG_KEY,
+        DRYRUN_CONFIG_KEY
     };
 
     public static void main(final String[] args) {
-        Log4jInit.setLevel(CONFIG_PREFIX, Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2", Level.INFO);
 
         try {
             final PropertiesReader propertiesReader = new PropertiesReader(CONFIG_FILE_NAME);
@@ -148,31 +165,55 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", loggingLevel);
             }
 
-            final String configuredDestinationServer = props.getFirstPropertyValue(DESTINATION_SERVER_CONFIG_KEY);
-            final String configuredDestinationDatabase = props.getFirstPropertyValue(DESTINATION_DATABASE_CONFIG_KEY);
+            final String configuredDestinationUrl = props.getFirstPropertyValue(DESTINATION_URL_CONFIG_KEY);
+
+            String [] destinationServerDatabase = parseServerDatabase(configuredDestinationUrl);
+            final String destinationServer = destinationServerDatabase[0];
+            final String destinationDatabase = destinationServerDatabase[1];
+
             final String configuredDestinationSchema = props.getFirstPropertyValue(DESTINATION_SCHEMA_CONFIG_KEY);
-            final String configuredCollection = props.getFirstPropertyValue(COLLECTION_CONFIG_KEY);
+            final String configuredDestinationUsername = props.getFirstPropertyValue(DESTINATION_USERNAME_CONFIG_KEY);
+            final String configuredDestinationPassword = props.getFirstPropertyValue(DESTINATION_PASSWORD_CONFIG_KEY);
 
-            HarvestResource destinationHarvestResource = new HarvestResource(configuredDestinationServer,
-                                                                             configuredDestinationDatabase,
-                                                                             configuredDestinationSchema,
-                                                                             configuredCollection);
+            HarvesterResource destinationHarvestResource = new HarvesterResource(configuredDestinationUrl,
+                    destinationServer, destinationDatabase, configuredDestinationUsername,
+                    configuredDestinationPassword, configuredDestinationSchema);
 
-            final String configuredSourceResourceID = props.getFirstPropertyValue(SOURCE_RESOURCE_ID_CONFIG_KEY);
-            if (!StringUtil.hasText(configuredSourceResourceID)) {
-                throw new IllegalArgumentException(String.format("%s - has no value", SOURCE_RESOURCE_ID_CONFIG_KEY));
+            HarvesterResource sourceHarvestResource;
+            final String configuredSourceRepoService = props.getFirstPropertyValue(SOURCE_REPO_SERVICE_CONFIG_KEY);
+            final String configuredSourceURL = props.getFirstPropertyValue(SOURCE_URL_CONFIG_KEY);
+            if (StringUtil.hasText(configuredSourceRepoService)) {
+                try {
+                    sourceHarvestResource = new HarvesterResource(URI.create(configuredSourceRepoService));
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException(String.format("%s - invalid repository service URI: %s reason: %s",
+                            SOURCE_REPO_SERVICE_CONFIG_KEY, configuredSourceRepoService, e.getMessage()));
+                }
+            } else if (StringUtil.hasText(configuredSourceURL)) {
+                final String configuredSourceUrl = props.getFirstPropertyValue(SOURCE_URL_CONFIG_KEY);
+
+                String [] sourceServerDatabase = parseServerDatabase(configuredSourceUrl);
+                final String sourceServer = sourceServerDatabase[0];
+                final String sourceDatabase = sourceServerDatabase[1];
+
+                final String configuredSourceSchema = props.getFirstPropertyValue(SOURCE_SCHEMA_CONFIG_KEY);
+                final String configuredSourceUsername = props.getFirstPropertyValue(SOURCE_USERNAME_CONFIG_KEY);
+                final String configuredSourcePassword = props.getFirstPropertyValue(SOURCE_PASSWORD_CONFIG_KEY);
+
+                sourceHarvestResource = new HarvesterResource(configuredSourceUrl, sourceServer, sourceDatabase,
+                        configuredSourceUsername, configuredSourcePassword, configuredSourceSchema);
+            } else {
+                throw new IllegalArgumentException(String.format("one of %s or %s must be configured",
+                        SOURCE_REPO_SERVICE_CONFIG_KEY, SOURCE_URL_CONFIG_KEY));
             }
-            HarvestResource sourceHarvestResource;
-            try {
-                sourceHarvestResource = new HarvestResource(URI.create(configuredSourceResourceID),
-                                                            configuredCollection);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(String.format("%s - invalid value: %s because: %s",
-                                                                 SOURCE_RESOURCE_ID_CONFIG_KEY,
-                                                                 configuredSourceResourceID, e.getMessage()));
+
+            final List<String> configuredCollections = props.getProperty(COLLECTION_CONFIG_KEY);
+            if (configuredCollections.isEmpty()) {
+                throw new IllegalArgumentException(String.format("%s must be configured with a minimum of one collection",
+                        COLLECTION_CONFIG_KEY));
             }
 
-            URI basePublisherID = null;
+            URI basePublisherID;
             String configuredBasePublisherIDUrl = props.getFirstPropertyValue(BASE_PUBLISHER_ID_CONFIG_KEY);
             if (!StringUtil.hasText(configuredBasePublisherIDUrl)) {
                 throw new IllegalArgumentException(String.format("%s - has no value", BASE_PUBLISHER_ID_CONFIG_KEY));
@@ -201,18 +242,22 @@ public class Main {
             final String configuredThreads = props.getFirstPropertyValue(THREADS_CONFIG_KEY);
             final int threads = Integer.parseInt(configuredThreads);
 
-            CaomHarvester harvester;
-            try {
-                // full=false, skip=false: incremental harvest
-                final boolean full = false;
-                final boolean skip = false;
-                final boolean dryRun = false;
-                final boolean noChecksum = false;
-                harvester = new CaomHarvester(dryRun, noChecksum, sourceHarvestResource, destinationHarvestResource,
-                                              basePublisherID, batchSize, full, skip, threads);
-            } catch (IOException e) {
-                throw new RuntimeException(String.format("Error initializing Harvester: %s", e.getMessage()));
-            }
+            final String configuredRunContinuously = props.getFirstPropertyValue(RUN_CONTINUOUSLY_CONFIG_KEY);
+            final boolean runContinuously = Boolean.parseBoolean(configuredRunContinuously);
+
+            final String configuredMaxSleep = props.getFirstPropertyValue(MAX_SLEEP_CONFIG_KEY);
+            final long maxSleep = Long.parseLong(configuredMaxSleep);
+
+            final String configuredDryRun = props.getFirstPropertyValue(DRYRUN_CONFIG_KEY);
+            final boolean dryRun = Boolean.parseBoolean(configuredDryRun);
+
+            // full=false, skip=false: incremental harvest
+            final boolean full = false;
+            final boolean skip = false;
+            final boolean noChecksum = false;
+            CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, destinationHarvestResource,
+                    configuredCollections, basePublisherID, batchSize, threads, full, skip, noChecksum,
+                    runContinuously, maxSleep, dryRun);
 
             final Subject subject = SSLUtil.createSubject(new File(CERTIFICATE_FILE_LOCATION));
             Subject.doAs(subject, new RunnableAction(harvester));
@@ -230,6 +275,18 @@ public class Main {
     private static String[] verifyConfiguration(final MultiValuedProperties properties) {
         final Set<String> keySet = properties.keySet();
         return Arrays.stream(MANDATORY_PROPERTY_KEYS).filter(k -> !keySet.contains(k)).toArray(String[]::new);
+    }
+
+    private static String[] parseServerDatabase(final String dbUrl) {
+        try {
+            String[] parts = dbUrl.split("/+");
+            String server = parts[1].split(":")[0];
+            String database = parts[2];
+            return new String[] {server, database};
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Unable to parse server/database from url %s because %s",
+                    dbUrl, e.getMessage()));
+        }
     }
 
     private Main() {

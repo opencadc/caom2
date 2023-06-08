@@ -44,6 +44,15 @@ org.opencadc.caom2.metasync.threads={integer}
 # Number of observations to sync per batch
 org.opencadc.caom2.metasync.batchSize={integer}
 
+# Whether to process each collection only once or continuously
+org.opencadc.caom2.metasync.runContinuously={true|false}
+
+# Max sleep time in seconds when running continuously
+org.opencadc.caom2.metasync.maxSleep={integer}
+
+# Do logging but do not sync collections
+org.opencadc.caom2.metasync.dryrun={true|false}
+
 ```
 The source can be either a repository service, or a caom2 database. Only one of 
 `org.opencadc.caom2.metasync.source.repoService` or 
@@ -68,6 +77,18 @@ read observations from the source repository service.
 processed as a single batch. It's a limit on the maximum number of 
 Observations returned from a repository service query.
 
+`org.opencadc.caom2.metasync.runContinuously` when true continuously loops through 
+and syncs each collection, pausing between runs. When false each collection is 
+synced once and the application exits.
+
+`org.opencadc.caom2.metasync.maxSleep={integer}` is the maximum sleep time
+in seconds between runs when `org.opencadc.caom2.metasync.runContinuously=true`.
+The sleep time starts at 60 seconds, doubling each time when no data is found to sync, 
+until maxSleep is reached. The sleep time will reset to 60 seconds once data is found to sync.
+
+`org.opencadc.caom2.metasync.dryrun={true|false}` when true the application
+will only log, it will not sync collections. When false it will
+sync the collections.
 
 ### cadcproxy.pem
 Optional certificate in /config is used to authenticate https calls 
