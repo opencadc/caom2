@@ -58,8 +58,5 @@ jobs:
     - name: build and test caom2-artifact-download
       run: cd caom2-artifact-download && ../gradlew --info clean build javadoc checkstyleMain             
 
-    - name: build and test caom2-harvester
-      run: cd caom2-harvester && ../gradlew --info clean build javadoc checkstyleMain install
-
     - name: build and test caom2-meta-sync
       run: cd caom2-meta-sync && ../gradlew --info clean build javadoc checkstyleMain    
