@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2018.                            (c) 2018.
+ *  (c) 2023.                            (c) 2023.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.harvester;
+package org.opencadc.caom2.metasync;
 
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
