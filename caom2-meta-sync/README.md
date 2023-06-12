@@ -39,24 +39,24 @@ org.opencadc.caom2.metasync.basePublisherID={uri}
 org.opencadc.caom2.metasync.exitWhenComplete=true|false
 ```
 
-`repoService` is the resource identifier for a registered 
+_repoService_ is the resource identifier for a registered 
 caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)
 
-`collection` is the collection name used to query for Artifacts 
+_collection_ is the collection name used to query for Artifacts 
 in the repository service. For multiple collections use multiple lines, 
 one collection per line.
 
-`maxIdle={integer}` is the maximum time in seconds to pause between runs 
-when `exitWhenComplete=false`. The idle time starts at 60 seconds, 
+_maxIdle_ is the maximum time in seconds to pause between runs 
+when _exitWhenComplete_ is _false_. The idle time starts at 60 seconds, 
 doubling every time no data is found to sync, until maxIdle is reached. 
 The idle time will reset to 60 seconds when data is found to sync.
 
-`basePublisherID` is the base for generating Plane 
+_basePublisherID_ is the base for generating Plane 
 publisherID values. The base is an uri of the form ivo://<authority>[/<path>]
 publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>
 
-`exitWhenComplete` is optional and defaults to `false`. 
-When `true` each collection is processed once, and then the application exits. 
+_exitWhenComplete_ is optional and defaults to _false_. 
+When _true_ each collection is processed once, and then the application exits. 
 The default is collections are continuously processed in a loop.
 
 
