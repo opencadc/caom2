@@ -97,13 +97,13 @@ public class Main {
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
 
-    private static final String SOURCE_REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".source.repoService";
+    private static final String REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".repoService";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
-    private static final String MAX_IDLE_CONFIG_KEY = CONFIG_PREFIX + ".source.maxIdle";
-    private static final String DESTINATION_URL_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.url";
-    private static final String DESTINATION_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.schema";
-    private static final String DESTINATION_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.username";
-    private static final String DESTINATION_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".destination.db.password";
+    private static final String MAX_IDLE_CONFIG_KEY = CONFIG_PREFIX + ".maxIdle";
+    private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".db.url";
+    private static final String DB_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".db.schema";
+    private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".db.username";
+    private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".db.password";
     private static final String BASE_PUBLISHER_ID_CONFIG_KEY = CONFIG_PREFIX + ".basePublisherID";
     private static final String EXIT_WHEN_COMPLETE_CONFIG_KEY = CONFIG_PREFIX + ".exitWhenComplete";
 
@@ -113,15 +113,9 @@ public class Main {
 
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
-        LOGGING_CONFIG_KEY,
-        SOURCE_REPO_SERVICE_CONFIG_KEY,
-        COLLECTION_CONFIG_KEY,
-        DESTINATION_SCHEMA_CONFIG_KEY,
-        DESTINATION_USERNAME_CONFIG_KEY,
-        DESTINATION_PASSWORD_CONFIG_KEY,
-        DESTINATION_URL_CONFIG_KEY,
-        BASE_PUBLISHER_ID_CONFIG_KEY,
-        MAX_IDLE_CONFIG_KEY
+        LOGGING_CONFIG_KEY, REPO_SERVICE_CONFIG_KEY, COLLECTION_CONFIG_KEY, MAX_IDLE_CONFIG_KEY,
+        DB_SCHEMA_CONFIG_KEY, DB_USERNAME_CONFIG_KEY, DB_PASSWORD_CONFIG_KEY, DB_URL_CONFIG_KEY,
+        BASE_PUBLISHER_ID_CONFIG_KEY
     };
 
     public static void main(final String[] args) {
@@ -152,24 +146,24 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", loggingLevel);
             }
 
-            final String configuredSourceRepoService = props.getFirstPropertyValue(SOURCE_REPO_SERVICE_CONFIG_KEY);
+            final String configuredSourceRepoService = props.getFirstPropertyValue(REPO_SERVICE_CONFIG_KEY);
             final HarvesterResource sourceHarvestResource;
             try {
                 sourceHarvestResource = new HarvesterResource(URI.create(configuredSourceRepoService));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(
-                    String.format("%s - invalid repository service URI: %s reason: %s", SOURCE_REPO_SERVICE_CONFIG_KEY,
+                    String.format("%s - invalid repository service URI: %s reason: %s", REPO_SERVICE_CONFIG_KEY,
                                   configuredSourceRepoService, e.getMessage()));
             }
 
-            final String configuredDestinationUrl = props.getFirstPropertyValue(DESTINATION_URL_CONFIG_KEY);
+            final String configuredDestinationUrl = props.getFirstPropertyValue(DB_URL_CONFIG_KEY);
             String [] destinationServerDatabase = parseServerDatabase(configuredDestinationUrl);
             final String destinationServer = destinationServerDatabase[0];
             final String destinationDatabase = destinationServerDatabase[1];
 
-            final String configuredDestinationSchema = props.getFirstPropertyValue(DESTINATION_SCHEMA_CONFIG_KEY);
-            final String configuredDestinationUsername = props.getFirstPropertyValue(DESTINATION_USERNAME_CONFIG_KEY);
-            final String configuredDestinationPassword = props.getFirstPropertyValue(DESTINATION_PASSWORD_CONFIG_KEY);
+            final String configuredDestinationSchema = props.getFirstPropertyValue(DB_SCHEMA_CONFIG_KEY);
+            final String configuredDestinationUsername = props.getFirstPropertyValue(DB_USERNAME_CONFIG_KEY);
+            final String configuredDestinationPassword = props.getFirstPropertyValue(DB_PASSWORD_CONFIG_KEY);
 
             final HarvesterResource destinationHarvestResource = new HarvesterResource(configuredDestinationUrl,
                     destinationServer, destinationDatabase, configuredDestinationUsername,
@@ -181,7 +175,6 @@ public class Main {
                     String.format("%s must be configured with a minimum of one collection", COLLECTION_CONFIG_KEY));
             }
 
-            URI basePublisherID;
             String configuredBasePublisherIDUrl = props.getFirstPropertyValue(BASE_PUBLISHER_ID_CONFIG_KEY);
             if (!StringUtil.hasText(configuredBasePublisherIDUrl)) {
                 throw new IllegalArgumentException(String.format("%s - has no value", BASE_PUBLISHER_ID_CONFIG_KEY));
@@ -189,6 +182,7 @@ public class Main {
             if (!configuredBasePublisherIDUrl.endsWith("/")) {
                 configuredBasePublisherIDUrl += "/";
             }
+            URI basePublisherID;
             try {
                 basePublisherID = URI.create(configuredBasePublisherIDUrl);
             } catch (IllegalArgumentException e) {
@@ -218,8 +212,8 @@ public class Main {
             final boolean skip = false;
             final boolean noChecksum = false;
             CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, destinationHarvestResource,
-                    configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE/10, full, skip, noChecksum,
-                                                        exitWhenComplete, maxSleep);
+                    configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE/10,
+                                                        full, skip, noChecksum, exitWhenComplete, maxSleep);
 
             final Subject subject = SSLUtil.createSubject(new File(CERTIFICATE_FILE_LOCATION));
             Subject.doAs(subject, new RunnableAction(harvester));

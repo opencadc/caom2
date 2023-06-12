@@ -35,8 +35,8 @@ org.opencadc.caom2.metasync.db.url=jdbc:postgresql://{server}/{database}
 # Base for generating Plane publisherID values
 org.opencadc.caom2.metasync.basePublisherID={uri}
 
-# Exit after processing each collection or else continously loop
-org.opencadc.caom2.metasync.exitWhenComplete={true|false}
+# Optional - exit after processing collections once
+org.opencadc.caom2.metasync.exitWhenComplete=true|false
 ```
 
 `repoService` is the resource identifier for a registered 
@@ -55,9 +55,9 @@ The idle time will reset to 60 seconds when data is found to sync.
 publisherID values. The base is an uri of the form ivo://<authority>[/<path>]
 publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>
 
-When `exitWhenComplete` is true the collections are processed once, 
-then the application exits. When false the collections are continuously 
-processed in a loop, pausing between runs.
+`exitWhenComplete` is optional and defaults to `false`. 
+When `true` each collection is processed once, and then the application exits. 
+The default is collections are continuously processed in a loop.
 
 
 ### cadcproxy.pem
