@@ -112,11 +112,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @param dest destination server.database.schema
      * @param collection the collection to process
      * @param batchSize ignored, always full list
-     * @param dryrun true if no changed in the data base are applied during the process
      */
     public DeletionHarvester(Class<?> entityClass, HarvesterResource src, HarvesterResource dest,
-                             String collection, int batchSize, boolean dryrun) {
-        super(entityClass, src, dest, collection, batchSize, false, dryrun);
+                             String collection, int batchSize) {
+        super(entityClass, src, dest, collection, batchSize, false);
         init();
     }
 
@@ -218,9 +217,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
             }
             go = (!num.abort && !num.done);
             full = false; // do not start at min(lastModified) again
-            if (dryrun) {
-                go = false; // no state update -> infinite loop
-            }
         }
         try {
             close();
@@ -320,51 +316,46 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 log.debug("Observation read from deletion end-point: " + de.getID() + " date = "
                         + de.lastModified);
 
-                if (!dryrun) {
-                    txnManager.startTransaction();
-                }
+                txnManager.startTransaction();
                 boolean ok = false;
                 try {
+                    state.curLastModified = de.lastModified;
+                    state.curID = de.getID();
 
-                    if (!dryrun) {
-                        state.curLastModified = de.lastModified;
-                        state.curID = de.getID();
-
-                        ObservationState cur = obsDAO.getState(de.getID());
-                        if (cur != null) {
-                            log.debug("Observation: " + de.getID() + " found in DB");
-                            Date lastUpdate = cur.getMaxLastModified();
-                            Date deleted = de.lastModified;
-                            log.debug("to be deleted: " + de.getClass().getSimpleName() + " " + de.getURI() + " "
-                                    + de.getID() + "deleted date " + format(de.lastModified)
-                                    + " modified date " + format(cur.getMaxLastModified()));
-                            if (deleted.after(lastUpdate)) {
-                                log.info("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " "
-                                        + de.getID());
-                                obsDAO.delete(de.getID());
-                                ret.deleted++;
-                            } else {
-                                log.info("skip out-of-date delete: " + de.getClass().getSimpleName() + " "
-                                        + de.getURI() + " " + de.getID() + " " + format(de.lastModified));
-                                ret.skipped++;
-                            }
+                    ObservationState cur = obsDAO.getState(de.getID());
+                    if (cur != null) {
+                        log.debug("Observation: " + de.getID() + " found in DB");
+                        Date lastUpdate = cur.getMaxLastModified();
+                        Date deleted = de.lastModified;
+                        log.debug("to be deleted: " + de.getClass().getSimpleName() + " " + de.getURI() + " "
+                                + de.getID() + "deleted date " + format(de.lastModified)
+                                + " modified date " + format(cur.getMaxLastModified()));
+                        if (deleted.after(lastUpdate)) {
+                            log.info("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " "
+                                    + de.getID());
+                            obsDAO.delete(de.getID());
+                            ret.deleted++;
                         } else {
-                            log.debug("Observation: " + de.getID() + " not found in DB");
+                            log.info("skip out-of-date delete: " + de.getClass().getSimpleName() + " "
+                                    + de.getURI() + " " + de.getID() + " " + format(de.lastModified));
+                            ret.skipped++;
                         }
-
-                        // track progress
-                        harvestStateDAO.put(state);
-
-                        log.debug("committing transaction");
-                        txnManager.commitTransaction();
-                        log.debug("commit: OK");
+                    } else {
+                        log.debug("Observation: " + de.getID() + " not found in DB");
                     }
+
+                    // track progress
+                    harvestStateDAO.put(state);
+
+                    log.debug("committing transaction");
+                    txnManager.commitTransaction();
+                    log.debug("commit: OK");
                     ok = true;
 
                 } catch (Throwable t) {
                     log.error("unexpected exception", t);
                 } finally {
-                    if (!ok && !dryrun) {
+                    if (!ok) {
                         log.warn("failed to process " + de + ": trying to rollback the transaction");
                         txnManager.rollbackTransaction();
                         log.warn("rollback: OK");

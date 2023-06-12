@@ -17,78 +17,48 @@ Runtime configuration must be made available via the `/config` directory.
 # log level
 org.opencadc.caom2.metasync.logging={info|debug}
 
-# Destination caom2 database settings
-org.opencadc.caom2.metasync.destination.db.schema={schema}
-org.opencadc.caom2.metasync.destination.db.username={dbuser}
-org.opencadc.caom2.metasync.destination.db.password={dbpassword}
-org.opencadc.caom2.metasync.destination.db.url=jdbc:postgresql://{server}/{database}
-
 # Source repository service
-org.opencadc.caom2.metasync.source.repoService={uri}
+org.opencadc.caom2.metasync.repoService={uri}
 
-# Source caom2 database settings
-org.opencadc.caom2.metasync.source.db.schema={schema}
-org.opencadc.caom2.metasync.source.db.usrname={dbuser}
-org.opencadc.caom2.metasync.source.db.password={dbpassword}
-org.opencadc.caom2.metasync.source.db.url=jdbc:postgresql://{server}/{database}
-
-# The collection to sync
+# The collections to sync, one collection per line
 org.opencadc.caom2.metasync.collection={collection name}
+
+# Maximum number of seconds to pause between runs
+org.opencadc.caom2.metasync.maxIdle={integer}
+
+# Destination caom2 database settings
+org.opencadc.caom2.metasync.db.schema={schema}
+org.opencadc.caom2.metasync.db.username={dbuser}
+org.opencadc.caom2.metasync.db.password={dbpassword}
+org.opencadc.caom2.metasync.db.url=jdbc:postgresql://{server}/{database}
 
 # Base for generating Plane publisherID values
 org.opencadc.caom2.metasync.basePublisherID={uri}
 
-# Number of threads used to read from the source service
-org.opencadc.caom2.metasync.threads={integer}
-
-# Number of observations to sync per batch
-org.opencadc.caom2.metasync.batchSize={integer}
-
-# Whether to process each collection only once or continuously
-org.opencadc.caom2.metasync.runContinuously={true|false}
-
-# Max sleep time in seconds when running continuously
-org.opencadc.caom2.metasync.maxSleep={integer}
-
-# Do logging but do not sync collections
-org.opencadc.caom2.metasync.dryrun={true|false}
-
+# Exit after processing each collection or else continously loop
+org.opencadc.caom2.metasync.exitWhenComplete={true|false}
 ```
-The source can be either a repository service, or a caom2 database. Only one of 
-`org.opencadc.caom2.metasync.source.repoService` or 
-`org.opencadc.caom2.metasync.source.db.*` can be configured.
 
-`org.opencadc.caom2.metasync.source.repoService` is the resource identifier for 
-a registered caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)
+`repoService` is the resource identifier for a registered 
+caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)
 
-`org.opencadc.caom2.metasync.source.db.*` is the caom2 database connection settings.
+`collection` is the collection name used to query for Artifacts 
+in the repository service. For multiple collections use multiple lines, 
+one collection per line.
 
-`org.opencadc.caom2.metasync.collection` The collection name used to query
-for Artifacts in the repository service.
+`maxIdle={integer}` is the maximum time in seconds to pause between runs 
+when `exitWhenComplete=false`. The idle time starts at 60 seconds, 
+doubling every time no data is found to sync, until maxIdle is reached. 
+The idle time will reset to 60 seconds when data is found to sync.
 
-`org.opencadc.caom2.metasync.basePublisherID` is the base for generating Plane 
+`basePublisherID` is the base for generating Plane 
 publisherID values. The base is an uri of the form ivo://<authority>[/<path>]
 publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>
 
-`org.opencadc.caom2.metasync.source.threads` is the number of threads used to
-read observations from the source repository service.
+When `exitWhenComplete` is true the collections are processed once, 
+then the application exits. When false the collections are continuously 
+processed in a loop, pausing between runs.
 
-`org.opencadc.caom2.metasync.batchSize` is the number of Observations 
-processed as a single batch. It's a limit on the maximum number of 
-Observations returned from a repository service query.
-
-`org.opencadc.caom2.metasync.runContinuously` when true continuously loops through 
-and syncs each collection, pausing between runs. When false each collection is 
-synced once and the application exits.
-
-`org.opencadc.caom2.metasync.maxSleep={integer}` is the maximum sleep time
-in seconds between runs when `org.opencadc.caom2.metasync.runContinuously=true`.
-The sleep time starts at 60 seconds, doubling each time when no data is found to sync, 
-until maxSleep is reached. The sleep time will reset to 60 seconds once data is found to sync.
-
-`org.opencadc.caom2.metasync.dryrun={true|false}` when true the application
-will only log, it will not sync collections. When false it will
-sync the collections.
 
 ### cadcproxy.pem
 Optional certificate in /config is used to authenticate https calls 

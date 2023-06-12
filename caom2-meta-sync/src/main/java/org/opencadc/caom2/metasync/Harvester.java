@@ -91,18 +91,13 @@ public abstract class Harvester implements Runnable {
 
     public static final String POSTGRESQL = "postgresql";
 
-    protected boolean dryrun;
-
     protected String source;
     protected String cname;
-
     protected Class entityClass;
     protected int batchSize;
     protected boolean full;
-
     protected Date minDate;
     protected Date maxDate;
-
     protected String collection;
     protected HarvesterResource src;
     protected HarvesterResource dest;
@@ -112,14 +107,13 @@ public abstract class Harvester implements Runnable {
     }
 
     protected Harvester(Class entityClass, HarvesterResource src, HarvesterResource dest, String collection,
-                        Integer batchSize, boolean full, boolean dryrun) {
+                        Integer batchSize, boolean full) {
         this.entityClass = entityClass;
         this.src = src;
         this.dest = dest;
         this.collection = collection;
         this.batchSize = batchSize;
         this.full = full;
-        this.dryrun = dryrun;
     }
 
     public void setMinDate(Date d) {

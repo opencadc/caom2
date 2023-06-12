@@ -88,7 +88,7 @@ import org.apache.log4j.Logger;
  */
 public class CaomHarvester implements Runnable {
     private static final Logger log = Logger.getLogger(CaomHarvester.class);
-    private static final Long SLEEP_TIME = 6000L;
+    private static final Long DEFAULT_IDLE_TIME = 6000L;
 
     private final InitDatabase initdb;
     private final HarvesterResource src;
@@ -100,9 +100,8 @@ public class CaomHarvester implements Runnable {
     private final boolean full;
     private final boolean skip;
     private final boolean nochecksum;
-    private final boolean runContinuously;
-    private final long maxSleep;
-    private final boolean dryrun;
+    private final boolean exitWhenComplete;
+    private final long maxIdle;
     private Date minDate;
     private Date maxDate;
     private boolean computePlaneMetadata;
@@ -120,13 +119,12 @@ public class CaomHarvester implements Runnable {
      * @param full full harvest of all source entities
      * @param skip attempt retry of all skipped observations
      * @param nochecksum disable metadata checksum comparison
-     * @param runContinuously exit after processing each collection if true, else continuously loop
-     * @param maxSleep max sleep time in seconds between runs when running continuously
-     * @param dryrun true if no changed in the data base are applied during the process
+     * @param exitWhenComplete exit after processing each collection if true, else continuously loop
+     * @param maxIdle max sleep time in seconds between runs when running continuously
      */
     public CaomHarvester(HarvesterResource src, HarvesterResource dest, List<String> collections,
                          URI basePublisherID, int batchSize, int nthreads, boolean full, boolean skip,
-                         boolean nochecksum, boolean runContinuously, long maxSleep, boolean dryrun) {
+                         boolean nochecksum, boolean exitWhenComplete, long maxIdle) {
         this.src = src;
         this.dest = dest;
         this.collections = collections;
@@ -136,9 +134,8 @@ public class CaomHarvester implements Runnable {
         this.full = full;
         this.skip = skip;
         this.nochecksum = nochecksum;
-        this.runContinuously = runContinuously;
-        this.maxSleep = maxSleep;
-        this.dryrun = dryrun;
+        this.exitWhenComplete = exitWhenComplete;
+        this.maxIdle = maxIdle;
         this.minDate = null;
         this.maxDate = null;
         this.computePlaneMetadata = false;
@@ -206,7 +203,7 @@ public class CaomHarvester implements Runnable {
 
                 URI publisherID = URI.create(basePublisherID + collection);
                 ObservationHarvester obsHarvester = new ObservationHarvester(src, dest, collection, publisherID, batchSize,
-                        nthreads, full, nochecksum, dryrun);
+                        nthreads, full, nochecksum);
                 obsHarvester.setSkipped(skip);
                 obsHarvester.setComputePlaneMetadata(computePlaneMetadata);
                 if (minDate != null) {
@@ -222,7 +219,7 @@ public class CaomHarvester implements Runnable {
                 // deletions in incremental mode only
                 if (!full && !skip && !src.getIdentifier(collection).equals(dest.getIdentifier(collection))) {
                     DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest,
-                            collection, batchSize * 100, dryrun);
+                            collection, batchSize * 100);
                     if (minDate != null) {
                         obsDeleter.setMaxDate(minDate);
                     }
@@ -250,16 +247,16 @@ public class CaomHarvester implements Runnable {
                 log.info("     source: " + src.getIdentifier(collection));
                 log.info("destination: " + dest.getIdentifier(collection));
             }
-            if (!this.runContinuously) {
+            if (this.exitWhenComplete) {
                 done = true;
             } else {
                 if (ingested > 0 || sleep == 0) {
-                    sleep = SLEEP_TIME;
+                    sleep = DEFAULT_IDLE_TIME;
                 } else {
-                    sleep = Math.min(sleep * 2, maxSleep * 1000L);
+                    sleep = Math.min(sleep * 2, maxIdle * 1000L);
                 }
                 try {
-                    log.info("sleeping for " + sleep);
+                    log.debug("sleeping for " + sleep);
                     Thread.sleep(sleep);
                 } catch (InterruptedException e) {
                     throw new RuntimeException("Thread sleep interrupted", e);

@@ -133,8 +133,8 @@ public class ObservationHarvester extends Harvester {
     private int ingested = 0;
 
     public ObservationHarvester(HarvesterResource src, HarvesterResource dest, String collection, URI basePublisherID,
-                                Integer batchSize, int nthreads, boolean full, boolean nochecksum, boolean dryrun) {
-        super(Observation.class, src, dest, collection, batchSize, full, dryrun);
+                                Integer batchSize, int nthreads, boolean full, boolean nochecksum) {
+        super(Observation.class, src, dest, collection, batchSize, full);
         this.basePublisherID = basePublisherID;
         this.nochecksum = nochecksum;
         this.computePlaneMetadata = false;
@@ -286,9 +286,6 @@ public class ObservationHarvester extends Harvester {
                 go = false;
             }
             full = false; // do not start at beginning again
-            if (dryrun) {
-                go = false; // no state update -> infinite loop
-            }
         }
 
         log.info("DONE: " + entityClass.getSimpleName() + "\n");
@@ -410,13 +407,11 @@ public class ObservationHarvester extends Harvester {
 
                 String skipMsg = null;
 
-                if (!dryrun) {
-                    if (destObservationDAO.getTransactionManager().isOpen()) {
-                        throw new RuntimeException("BUG: found open transaction at start of next observation");
-                    }
-                    log.debug("starting transaction");
-                    destObservationDAO.getTransactionManager().startTransaction();
+                if (destObservationDAO.getTransactionManager().isOpen()) {
+                    throw new RuntimeException("BUG: found open transaction at start of next observation");
                 }
+                log.debug("starting transaction");
+                destObservationDAO.getTransactionManager().startTransaction();
                 boolean ok = false;
                 log.debug("skipped=" + skipped
                         + " o=" + o
@@ -433,108 +428,107 @@ public class ObservationHarvester extends Harvester {
                         log.info("put (error): Observation " + ow.entity.observationState.getURI() + " " + format(ow.entity.observationState.maxLastModified));
                     }
 
-                    if (!dryrun) {
-                        if (skipped) {
-                            startDate = hs.getTryAfter();
+                    if (skipped) {
+                        startDate = hs.getTryAfter();
+                    }
+
+                    if (o != null) {
+                        if (state != null) {
+                            state.curLastModified = o.getMaxLastModified();
+                            state.curID = o.getID();
                         }
 
-                        if (o != null) {
-                            if (state != null) {
-                                state.curLastModified = o.getMaxLastModified();
-                                state.curID = o.getID();
-                            }
+                        // try to avoid DataIntegrityViolationException due
+                        // to missed deletion followed by insert with new
+                        // UUID
+                        ObservationState cur = destObservationDAO.getState(o.getURI());
+                        if (cur != null && !cur.getID().equals(o.getID())) {
+                            // missed harvesting a deletion: trust source
+                            log.info("delete: " + o.getClass().getSimpleName() + " " + cur.getURI() + " " + cur.getID()
+                                    + " (ObservationURI conflict avoided)");
+                            destObservationDAO.delete(cur.getID());
+                        }
 
-                            // try to avoid DataIntegrityViolationException due
-                            // to missed deletion followed by insert with new
-                            // UUID
-                            ObservationState cur = destObservationDAO.getState(o.getURI());
-                            if (cur != null && !cur.getID().equals(o.getID())) {
-                                // missed harvesting a deletion: trust source
-                                log.info("delete: " + o.getClass().getSimpleName() + " " + cur.getURI() + " " + cur.getID()
-                                        + " (ObservationURI conflict avoided)");
-                                destObservationDAO.delete(cur.getID());
-                            }
+                        // verify we retrieved the observation intact
+                        if (!nochecksum) {
+                            validateChecksum(o);
+                        }
 
-                            // verify we retrieved the observation intact
-                            if (!nochecksum) {
-                                validateChecksum(o);
-                            }
-                            
-                            // extended content verification
-                            CaomValidator.validate(o);
+                        // extended content verification
+                        CaomValidator.validate(o);
 
+                        for (Plane p : o.getPlanes()) {
+                            for (Artifact a : p.getArtifacts()) {
+                                CaomWCSValidator.validate(a);
+                            }
+                        }
+
+                        // optionally augment the observation
+                        if (computePlaneMetadata) {
+                            log.debug("computePlaneMetadata: " + o.getURI());
                             for (Plane p : o.getPlanes()) {
-                                for (Artifact a : p.getArtifacts()) {
-                                    CaomWCSValidator.validate(a);
-                                }
+                                ComputeUtil.computeTransientState(o, p);
                             }
+                        }
 
-                            // optionally augment the observation
-                            if (computePlaneMetadata) {
-                                log.debug("computePlaneMetadata: " + o.getURI());
-                                for (Plane p : o.getPlanes()) {
-                                    ComputeUtil.computeTransientState(o, p);
-                                }
-                            }
-                            
-                            if (acGenerator != null) {
-                                log.debug("generateReadAccessTuples: " + o.getURI());
-                                acGenerator.generateTuples(o);
-                            }
+                        if (acGenerator != null) {
+                            log.debug("generateReadAccessTuples: " + o.getURI());
+                            acGenerator.generateTuples(o);
+                        }
 
-                            // everything is OK
-                            destObservationDAO.put(o);
+                        // everything is OK
+                        destObservationDAO.put(o);
 
-                            if (!skipped) {
-                                harvestStateDAO.put(state);
-                            }
+                        if (!skipped) {
+                            harvestStateDAO.put(state);
+                        }
 
-                            if (hs == null) {
-                                // normal harvest mode: try to cleanup skip
-                                // records immediately
-                                hs = harvestSkipDAO.get(source, cname, o.getURI().getURI());
-                            }
+                        if (hs == null) {
+                            // normal harvest mode: try to cleanup skip
+                            // records immediately
+                            hs = harvestSkipDAO.get(source, cname, o.getURI().getURI());
+                        }
 
+                        if (hs != null) {
+                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                            harvestSkipDAO.delete(hs);
+                        }
+                    } else if (skipped) {
+                        // o == null
+                        if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
+                            // observation not obtainable from source == missed deletion
+                            ObservationURI uri = new ObservationURI(hs.getSkipID());
+                            log.info("delete: " + uri);
+                            destObservationDAO.delete(uri);
+                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                            harvestSkipDAO.delete(hs);
+                        } else {
+                            // defer to the main catch for error handling
+                            throw new HarvestReadException(ow.entity.error);
+                        }
+                    } else if (ow.entity.error != null) {
+                        // o == null when harvesting from service: try to make progress on failures
+                        if (state != null && ow.entity.observationState.maxLastModified != null) {
+                            state.curLastModified = ow.entity.observationState.maxLastModified;
+                            state.curID = null; // unknown
+                        }
+                        if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
+                            ObservationURI uri = new ObservationURI(hs.getSkipID());
+                            log.info("delete: " + uri);
+                            destObservationDAO.delete(uri);
                             if (hs != null) {
                                 log.info("delete: " + hs + " " + format(hs.getLastModified()));
                                 harvestSkipDAO.delete(hs);
                             }
-                        } else if (skipped) {
-                            // o == null
-                            if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
-                                // observation not obtainable from source == missed deletion
-                                ObservationURI uri = new ObservationURI(hs.getSkipID());
-                                log.info("delete: " + uri);
-                                destObservationDAO.delete(uri);
-                                log.info("delete: " + hs + " " + format(hs.getLastModified()));
-                                harvestSkipDAO.delete(hs);
-                            } else {
-                                // defer to the main catch for error handling
-                                throw new HarvestReadException(ow.entity.error);
-                            }
-                        } else if (ow.entity.error != null) {
-                            // o == null when harvesting from service: try to make progress on failures
-                            if (state != null && ow.entity.observationState.maxLastModified != null) {
-                                state.curLastModified = ow.entity.observationState.maxLastModified;
-                                state.curID = null; // unknown
-                            }
-                            if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
-                                ObservationURI uri = new ObservationURI(hs.getSkipID());
-                                log.info("delete: " + uri);
-                                destObservationDAO.delete(uri);
-                                if (hs != null) {
-                                    log.info("delete: " + hs + " " + format(hs.getLastModified()));
-                                    harvestSkipDAO.delete(hs);
-                                }
-                            } else {
-                                throw new HarvestReadException(ow.entity.error);
-                            }
+                        } else {
+                            throw new HarvestReadException(ow.entity.error);
                         }
-
-                        log.debug("committing transaction");
-                        destObservationDAO.getTransactionManager().commitTransaction();
-                        log.debug("commit: OK");
                     }
+
+                    log.debug("committing transaction");
+                    destObservationDAO.getTransactionManager().commitTransaction();
+                    log.debug("commit: OK");
+
                     ok = true;
                     ret.ingested++;
                 } catch (Throwable oops) {
@@ -602,7 +596,7 @@ public class ObservationHarvester extends Harvester {
                     // message for HarvestSkipURI record
                     skipMsg = oops.getMessage();
                 } finally {
-                    if (!ok && !dryrun) {
+                    if (!ok) {
                         destObservationDAO.getTransactionManager().rollbackTransaction();
                         log.debug("rollback: OK");
                         timeTransaction += System.currentTimeMillis() - t;
