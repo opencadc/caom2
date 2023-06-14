@@ -212,7 +212,7 @@ public class Main {
             final boolean skip = false;
             final boolean noChecksum = false;
             CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, destinationHarvestResource,
-                    configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE/10,
+                    configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE / 10,
                                                         full, skip, noChecksum, exitWhenComplete, maxSleep);
 
             final Subject subject = SSLUtil.createSubject(new File(CERTIFICATE_FILE_LOCATION));
