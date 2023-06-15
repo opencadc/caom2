@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'application'
+    id 'checkstyle'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+sourceCompatibility = 1.8
+
+group = 'org.opencadc'
+
+description = 'OpenCADC CAOM Metadata Sync application'
+def git_url = 'https://github.com/opencadc/caom2db'
+
+mainClassName = 'org.opencadc.caom2.metasync.Main'
+
+dependencies {
+    implementation 'org.opencadc:cadc-util:[1.6,2.0)'
+    implementation 'org.opencadc:caom2:[2.4.4,2.5)'
+    implementation 'org.opencadc:caom2persistence:[2.4.14,2.5)'
+    implementation 'org.opencadc:caom2-repo:[1.4,1.5)'
+
+    // needed to run plane metadata compute plugin (--compute)
+    implementation 'org.opencadc:caom2-compute:[2.4.6,2.5)'
+
+    // needed to run access-control regen plugin (--generate-ac)
+    implementation 'org.opencadc:caom2-access-control:[2.4,2.5)'
+
+    runtimeOnly 'org.postgresql:postgresql:[42.2,43.0)'
+}
+
+apply from: '../opencadc.gradle'
