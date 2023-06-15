@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.3">
+  <RESOURCE type="results">
+    <TABLE>
+      <FIELD name="planeID" datatype="char" arraysize="36" utype="caom2:Plane.id" xtype="uuid">
+        <DESCRIPTION>unique plane identifier</DESCRIPTION>
+      </FIELD>
+      <FIELD name="planeURI" datatype="char" arraysize="128*" xtype="uri">
+        <DESCRIPTION>unique internal URI for this product</DESCRIPTION>
+      </FIELD>
+      <FIELD name="publisherID" datatype="char" arraysize="128*" xtype="uri">
+        <DESCRIPTION>unique global identifier for this product</DESCRIPTION>
+      </FIELD>
+      <FIELD name="productID" datatype="char" arraysize="32*">
+        <DESCRIPTION>name of this product</DESCRIPTION>
+      </FIELD>
+      <FIELD name="position_bounds" datatype="double" arraysize="*" unit="deg" xtype="polygon">
+        <DESCRIPTION>positional coverage of the data</DESCRIPTION>
+      </FIELD>
+      <FIELD name="position_dimension_naxis1" datatype="long">
+        <DESCRIPTION>dimensions (number of pixels) along one spatial axis</DESCRIPTION>
+      </FIELD>
+      <FIELD name="position_dimension_naxis2" datatype="long">
+        <DESCRIPTION>dimensions (number of pixels) along other spatial axis</DESCRIPTION>
+      </FIELD>
+      <FIELD name="position_resolution" datatype="double" unit="arcsec">
+        <DESCRIPTION>median spatial resolution (FWHM)</DESCRIPTION>
+      </FIELD>
+      <FIELD name="position_centroid" datatype="double" arraysize="2" xtype="point" />
+      <FIELD name="energy_bounds" datatype="double" arraysize="2" unit="m" xtype="interval">
+        <DESCRIPTION>energy coverage (barycentric wavelength)</DESCRIPTION>
+      </FIELD>
+      <FIELD name="energy_resolvingPower" datatype="double">
+        <DESCRIPTION>median spectral resolving power (R)</DESCRIPTION>
+      </FIELD>
+      <FIELD name="time_bounds" datatype="double" arraysize="2" unit="d" xtype="interval">
+        <DESCRIPTION>time coverage (Modified Julian Day)</DESCRIPTION>
+      </FIELD>
+      <FIELD name="time_exposure" datatype="double" unit="s">
+        <DESCRIPTION>median exposure time per pixel</DESCRIPTION>
+      </FIELD>
+      <FIELD name="lastModified" datatype="char" arraysize="*" xtype="timestamp">
+        <DESCRIPTION>timestamp of last modification of this row</DESCRIPTION>
+      </FIELD>
+      <DATA>
+        <TABLEDATA>
+          <TR>
+            <TD>00000000-0000-0000-68b8-013d15b71dda</TD>
+            <TD>caom:CFHT/1152698/1152698p</TD>
+            <TD>ivo://cadc.nrc.ca/CFHT?1152698/1152698p</TD>
+            <TD>1152698p</TD>
+            <TD>19.106320013280992 -33.96610618458987 19.10449774995551 -34.32457753213709 19.537821016802102 -34.324241080230195 19.537154728273975 -33.96590401548556</TD>
+            <TD>4246</TD>
+            <TD>4257</TD>
+            <TD />
+            <TD>19.321435609239053 -34.145441712357446</TD>
+            <TD>1.1740000000000001E-6 1.3320000000000001E-6</TD>
+            <TD>7.93</TD>
+            <TD>55189.2263413 55189.226457040735</TD>
+            <TD>10.0</TD>
+            <TD>2017-06-22T14:22:00.517</TD>
+          </TR>
+        </TABLEDATA>
+      </DATA>
+    </TABLE>
+    <INFO name="QUERY_STATUS" value="OK" />
+  </RESOURCE>
+</VOTABLE>

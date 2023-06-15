@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.4">
+  <RESOURCE type="results">
+    <INFO name="QUERY_STATUS" value="OK" />
+    <INFO name="QUERY_TIMESTAMP" value="2020-07-16T17:49:02.100" />
+    <INFO name="QUERY" value="select top 1 collection,observationID,observationURI,obsID&#xA;from caom2.Observation" />
+    <TABLE>
+      <FIELD name="collection" datatype="char" arraysize="32*" utype="caom2:Observation.collection">
+        <DESCRIPTION>data collection this observation belongs to</DESCRIPTION>
+      </FIELD>
+      <FIELD name="observationID" datatype="char" arraysize="128*" utype="caom2:Observation.observationID">
+        <DESCRIPTION>collection-specific unique observation identifier</DESCRIPTION>
+      </FIELD>
+      <FIELD name="observationURI" datatype="char" arraysize="*" ID="caomObservationURI" utype="caom2:Observation.uri" xtype="uri">
+        <DESCRIPTION>unique URI for this observation</DESCRIPTION>
+      </FIELD>
+      <FIELD name="obsID" datatype="char" arraysize="36" utype="caom2:Observation.id" xtype="uuid">
+        <DESCRIPTION>unique observation identifier</DESCRIPTION>
+      </FIELD>
+      <DATA>
+        <TABLEDATA>
+          <TR>
+            <TD>HST</TD>
+            <TD>n9wtg9fzq</TD>
+            <TD>caom:HST/n9wtg9fzq</TD>
+            <TD>00000000-0000-0000-a758-e4947e33ab54</TD>
+          </TR>
+        </TABLEDATA>
+      </DATA>
+    </TABLE>
+    <INFO name="QUERY_STATUS" value="OK" />
+  </RESOURCE>
+</VOTABLE>

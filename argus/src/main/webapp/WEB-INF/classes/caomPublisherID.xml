@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.3">
+
+    <!-- The only purpose this element serves is to be a valid ID reference -->
+    <INFO name="tmp" ID="caomPublisherID" value="this will be dropped..." />
+
+    <RESOURCE type="meta" utype="adhoc:service">
+        <PARAM name="resourceIdentifier" datatype="char" arraysize="*" value="ivo://cadc.nrc.ca/caom2ops" />
+        <PARAM name="standardID" datatype="char" arraysize="*" value="ivo://ivoa.net/std/DataLink#links-1.1" />
+        <!-- the accessURL PARAM is dynamically inserted by DefaultTableWriter in cadc-tap-server -->
+        <GROUP name="inputParams">
+            <PARAM name="ID" datatype="char" arraysize="*" ref="caomPublisherID" value=""/>
+            <PARAM name="RESPONSEFORMAT" datatype="char" arraysize="*" value="application/x-votable+xml;content=datalink">
+                <VALUES>
+                    <OPTION value="application/x-votable+xml;content=datalink"/>
+                    <OPTION value="application/x-download-manifest+txt"/>
+                </VALUES>
+            </PARAM>
+        </GROUP>
+    </RESOURCE>
+</VOTABLE>

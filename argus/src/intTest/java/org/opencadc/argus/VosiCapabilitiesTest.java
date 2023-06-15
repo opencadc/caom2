@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,65 +62,57 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.tap.impl;
+package org.opencadc.argus;
 
-import ca.nrc.cadc.db.version.InitDatabase;
-import java.net.URL;
-import javax.sql.DataSource;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.reg.Capabilities;
+import ca.nrc.cadc.reg.Capability;
+import ca.nrc.cadc.reg.Interface;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.vosi.CapabilitiesTest;
+import java.net.URI;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 
 /**
- * This class automates adding/updating the description of CAOM tables and views
- * in the tap_schema. This class assumes that it can re-use the tap_schema.ModelVersion
- * table (usually created by InitDatabaseTS in cadc-tap-schema library) and does
- * not try to create it.  The init includes base CAOM tables and IVOA views (ObsCore++),
- * but <em>does not include</em> aggregate (simple or materialised) views. The service
- * operator must create simple views manually or implement a mechanism to create and
- * update materialised views periodically.
- * 
+ *
  * @author pdowler
  */
-public class InitCaomTapSchemaContent extends InitDatabase {
-    private static final Logger log = Logger.getLogger(InitCaomTapSchemaContent.class);
+public class VosiCapabilitiesTest extends CapabilitiesTest {
 
-    public static final String MODEL_NAME = "caom-schema";
-    public static final String MODEL_VERSION = "1.2.8";
+    private static final Logger log = Logger.getLogger(VosiCapabilitiesTest.class);
 
-    // the SQL is tightly coupled to cadc-tap-schema table names (for TAP-1.1)
-    static String[] CREATE_SQL = new String[] {
-        "caom2.tap_schema_content11.sql",
-        "ivoa.tap_schema_content11.sql"
-    };
-
-    // upgrade is normally the same as create since SQL is idempotent
-    static String[] UPGRADE_SQL = new String[] {
-        "caom2.tap_schema_content11.sql",
-        "ivoa.tap_schema_content11.sql"
-    };
-    
-    /**
-     * Constructor. The schema argument is used to query the ModelVersion table
-     * as {schema}.ModelVersion.
-     * 
-     * @param dataSource connection with write permission to tap_schema tables
-     * @param database database name (should be null if not needed in SQL)
-     * @param schema schema name (usually tap_schema)
-     */
-    public InitCaomTapSchemaContent(DataSource dataSource, String database, String schema) {
-        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION);
-        for (String s : CREATE_SQL) {
-            createSQL.add(s);
-        }
-        for (String s : UPGRADE_SQL) {
-            upgradeSQL.add(s);
-        }
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.argus.integration", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.reg", Level.INFO);
     }
-    
+
+    public VosiCapabilitiesTest() {
+        super(URI.create("ivo://cadc.nrc.ca/argus"));
+    }
+
     @Override
-    protected URL findSQL(String fname) {
-        return InitCaomTapSchemaContent.class.getClassLoader().getResource("sql/" + fname);
+    protected void validateContent(Capabilities caps) throws Exception {
+        super.validateContent(caps);
+
+        // TAP-1.1
+        Capability tap = caps.findCapability(Standards.TAP_10);
+        Interface base = tap.findInterface(AuthMethod.ANON, Standards.INTERFACE_PARAM_HTTP);
+        Assert.assertNotNull("base", base);
+        Assert.assertTrue("anon base", base.getSecurityMethods().contains(Standards.SECURITY_METHOD_ANON));
+        Assert.assertTrue("cert base", base.getSecurityMethods().contains(Standards.SECURITY_METHOD_CERT));
+        Assert.assertTrue("cookie base", base.getSecurityMethods().contains(Standards.SECURITY_METHOD_COOKIE));
+
+        Capability tables = caps.findCapability(Standards.VOSI_TABLES_11);
+        Assert.assertNotNull("tables", tables);
+        Assert.assertNotNull("anon tables", tables.findInterface(Standards.SECURITY_METHOD_ANON, Standards.INTERFACE_PARAM_HTTP));
     }
+
 }

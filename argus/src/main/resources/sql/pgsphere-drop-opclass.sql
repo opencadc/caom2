@@ -1,0 +1,16 @@
+
+-- drop the default pgsphere operator classes
+
+DROP OPERATOR CLASS spoint USING gist CASCADE ;
+
+DROP OPERATOR CLASS scircle USING gist CASCADE ;
+
+DROP OPERATOR CLASS spoly USING gist CASCADE;
+
+DROP OPERATOR CLASS sbox USING gist CASCADE;
+
+DROP OPERATOR CLASS sellipse USING gist CASCADE;
+
+DROP OPERATOR CLASS sline USING gist CASCADE;
+
+DROP OPERATOR CLASS spath USING gist CASCADE;

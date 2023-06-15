@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2">
+  <RESOURCE type="results">
+    <INFO name="QUERY_STATUS" value="OK" />
+    <TABLE>
+      <FIELD name="collection" datatype="char" arraysize="32*">
+        <DESCRIPTION>data collection this observation belongs to</DESCRIPTION>
+      </FIELD>
+      <FIELD name="observationID" datatype="char" arraysize="128*">
+        <DESCRIPTION>collection-specific unique observation identifier</DESCRIPTION>
+      </FIELD>
+      <DATA>
+        <TABLEDATA>
+          <TR>
+            <TD>HST</TD>
+            <TD>HSTmisc-123</TD>
+          </TR>
+          <TR>
+            <TD>CGPS</TD>
+            <TD>CGPS-012345</TD>
+          </TR>
+          <TR>
+            <TD>JCMT</TD>
+            <TD>1234567890</TD>
+          </TR>
+        </TABLEDATA>
+      </DATA>
+    </TABLE>
+  </RESOURCE>
+</VOTABLE>

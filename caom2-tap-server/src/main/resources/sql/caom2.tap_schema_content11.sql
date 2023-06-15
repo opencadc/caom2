@@ -227,9 +227,6 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Artifact', 'contentRelease', 'date the data for an artifact is public (UTC) (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 20),
 ( 'caom2.Artifact', 'contentReadGroups', 'GMS groups that are authorized to retrieve the artifact (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 21),
 
--- virtual column where URL generated in TAP service
-( 'caom2.Artifact', 'accessURL',     'access URL for the complete file', NULL, NULL, NULL, 'char', '*','clob', 0,0,0, 30),
-
 ( 'caom2.Artifact', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Artifact.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 40),
 ( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 41),
 ( 'caom2.Artifact', 'maxLastModified',  'timestamp of last modification of this Artifact', 'caom2:Artifact.maxLastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 42),
