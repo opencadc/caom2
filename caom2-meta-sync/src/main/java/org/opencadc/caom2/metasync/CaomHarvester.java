@@ -88,7 +88,7 @@ import org.apache.log4j.Logger;
  */
 public class CaomHarvester implements Runnable {
     private static final Logger log = Logger.getLogger(CaomHarvester.class);
-    private static final Long DEFAULT_IDLE_TIME = 6000L;
+    private static final Long DEFAULT_IDLE_TIME = 30000L;
 
     private final InitDatabase initdb;
     private final HarvesterResource src;
@@ -102,8 +102,6 @@ public class CaomHarvester implements Runnable {
     private final boolean nochecksum;
     private final boolean exitWhenComplete;
     private final long maxIdle;
-    private Date minDate;
-    private Date maxDate;
     private boolean computePlaneMetadata;
     private File readAccessConfigFile;
 
@@ -136,8 +134,6 @@ public class CaomHarvester implements Runnable {
         this.nochecksum = nochecksum;
         this.exitWhenComplete = exitWhenComplete;
         this.maxIdle = maxIdle;
-        this.minDate = null;
-        this.maxDate = null;
         this.computePlaneMetadata = false;
         this.readAccessConfigFile = null;
 
@@ -147,14 +143,6 @@ public class CaomHarvester implements Runnable {
         this.initdb = new InitDatabase(ds, dest.getDatabase(), dest.getSchema());
     }
 
-    public void setMinDate(Date minDate) {
-        this.minDate = minDate;
-    }
-
-    public void setMaxDate(Date maxDate) {
-        this.maxDate = maxDate;
-    }
-    
     /**
      * Enable the plane metadata compute plugin.
      * 
@@ -176,22 +164,29 @@ public class CaomHarvester implements Runnable {
     @Override
     public void run() {
 
-        if (this.computePlaneMetadata) {
-            // make sure wcslib can be loaded
-            try {
-                log.info("loading ca.nrc.cadc.wcs.WCSLib");
-                Class.forName("ca.nrc.cadc.wcs.WCSLib");
-            } catch (Throwable t) {
-                throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
-            }
+        // make sure wcslib can be loaded
+        try {
+            log.info("loading ca.nrc.cadc.wcs.WCSLib");
+            Class.forName("ca.nrc.cadc.wcs.WCSLib");
+        } catch (Throwable t) {
+            throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
+        }
+        
+        // make sure erfa can be loaded
+        try {
+            log.info("loading org.opencadc.erfa.ERFALib");
+            Class.forName("org.opencadc.erfa.ERFALib");
+        } catch (Throwable t) {
+            throw new RuntimeException("FATAL - failed to load ERFALib JNI binding", t);
         }
 
         boolean init = false;
         if (initdb != null) {
             boolean created = initdb.doInit();
             if (created) {
-                init = true; // database is empty so can bypass processing old
-            } // deletions
+                init = true; // database is empty so can bypass processing old deletions
+            }
+            log.info("InitDatabase: OK");
         }
 
         long sleep = 0;
@@ -199,55 +194,36 @@ public class CaomHarvester implements Runnable {
         while (!done) {
             int ingested = 0;
             for (String collection : collections) {
-                log.info("processing collection: " + collection);
+                log.info(src.getIdentifier(collection) + " -> " + dest.getIdentifier(collection));
 
                 URI publisherID = URI.create(basePublisherID + collection);
                 ObservationHarvester obsHarvester = new ObservationHarvester(src, dest, collection, publisherID, batchSize,
                         nthreads, full, nochecksum);
                 obsHarvester.setSkipped(skip);
                 obsHarvester.setComputePlaneMetadata(computePlaneMetadata);
-                if (minDate != null) {
-                    obsHarvester.setMaxDate(minDate);
-                }
-                if (maxDate != null) {
-                    obsHarvester.setMaxDate(maxDate);
-                }
                 if (readAccessConfigFile != null) {
                     obsHarvester.setGenerateReadAccessTuples(readAccessConfigFile);
                 }
 
-                // deletions in incremental mode only
-                if (!full && !skip && !src.getIdentifier(collection).equals(dest.getIdentifier(collection))) {
-                    DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest,
-                            collection, batchSize * 100);
-                    if (minDate != null) {
-                        obsDeleter.setMaxDate(minDate);
-                    }
-                    if (maxDate != null) {
-                        obsDeleter.setMaxDate(maxDate);
-                    }
-                    boolean initDel = init;
-                    if (!init) {
-                        // check if we have ever harvested before
-                        HarvestState hs = obsHarvester.harvestStateDAO.get(obsHarvester.source, obsHarvester.cname);
-                        initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
-                    }
-
-                    // delete observations before harvest to avoid observationURI conflicts from delete+create
-                    log.info("init: " + obsDeleter.source + " " + obsDeleter.cname);
-                    obsDeleter.setInitHarvestState(initDel);
-                    log.debug("************** obsDeleter.run() ****************");
-                    obsDeleter.run();
+                DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest,
+                        collection, batchSize * 100);
+                boolean initDel = init;
+                if (!init) {
+                    // check if we have ever harvested before
+                    HarvestState hs = obsHarvester.harvestStateDAO.get(obsHarvester.source, obsHarvester.cname);
+                    initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
                 }
 
+                // delete observations before harvest to avoid observationURI conflicts from delete+create
+                obsDeleter.setInitHarvestState(initDel);
+                obsDeleter.run();
+
                 // harvest observations
-                log.debug("************** obsHarvester.run() ***************");
                 obsHarvester.run();
                 ingested += obsHarvester.getIngested();
-                log.info("     source: " + src.getIdentifier(collection));
-                log.info("destination: " + dest.getIdentifier(collection));
             }
             if (this.exitWhenComplete) {
+                log.info("exitWhenComplete=" + exitWhenComplete + ": DONE");
                 done = true;
             } else {
                 if (ingested > 0 || sleep == 0) {
@@ -256,7 +232,7 @@ public class CaomHarvester implements Runnable {
                     sleep = Math.min(sleep * 2, maxIdle * 1000L);
                 }
                 try {
-                    log.debug("sleeping for " + sleep);
+                    log.info("idle sleep: " + (sleep/1000L) + " sec");
                     Thread.sleep(sleep);
                 } catch (InterruptedException e) {
                     throw new RuntimeException("Thread sleep interrupted", e);

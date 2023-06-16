@@ -267,8 +267,6 @@ public class ObservationHarvester extends Harvester {
 
     @Override
     public void run() {
-        log.info("START: " + Observation.class.getSimpleName());
-
         boolean go = true;
         while (go) {
             Progress num = doit();
@@ -287,8 +285,6 @@ public class ObservationHarvester extends Harvester {
             }
             full = false; // do not start at beginning again
         }
-
-        log.info("DONE: " + entityClass.getSimpleName() + "\n");
     }
 
     private static class Progress {
@@ -389,7 +385,7 @@ public class ObservationHarvester extends Harvester {
             }
 
             ret.found = entityList.size();
-            log.debug("found: " + entityList.size());
+            log.info("found: " + entityList.size());
 
             timeQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
@@ -461,19 +457,6 @@ public class ObservationHarvester extends Harvester {
                             for (Artifact a : p.getArtifacts()) {
                                 CaomWCSValidator.validate(a);
                             }
-                        }
-
-                        // optionally augment the observation
-                        if (computePlaneMetadata) {
-                            log.debug("computePlaneMetadata: " + o.getURI());
-                            for (Plane p : o.getPlanes()) {
-                                ComputeUtil.computeTransientState(o, p);
-                            }
-                        }
-
-                        if (acGenerator != null) {
-                            log.debug("generateReadAccessTuples: " + o.getURI());
-                            acGenerator.generateTuples(o);
                         }
 
                         // everything is OK
