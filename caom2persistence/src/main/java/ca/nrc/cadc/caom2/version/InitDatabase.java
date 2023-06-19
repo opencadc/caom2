@@ -82,8 +82,8 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     private static final Logger log = Logger.getLogger(InitDatabase.class);
 
     public static final String MODEL_NAME = "CAOM";
-    public static final String MODEL_VERSION = "2.4.12";
-    public static final String PREV_MODEL_VERSION = "2.4.10";
+    public static final String MODEL_VERSION = "2.4.15";
+    public static final String PREV_MODEL_VERSION = "2.4.12";
     //public static final String PREV_MODEL_VERSION = "DO-NOT_UPGRADE-BY-ACCIDENT";
 
     static String[] CREATE_SQL = new String[]{
@@ -98,13 +98,12 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
         "caom2.deleted.sql",
         "caom2.extra_indices.sql",
         "caom2.ObsCore.sql",
-        "caom2.ObsCore-x.sql",
         "caom2.SIAv1.sql",
         "caom2.permissions.sql"
     };
 
     static String[] UPGRADE_SQL = new String[]{
-        "caom2.upgrade-2.4.12.sql",
+        "caom2.upgrade-2.4.15.sql",
         "caom2.ObsCore.sql",
         "caom2.permissions.sql"
     };

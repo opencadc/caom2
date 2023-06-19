@@ -48,9 +48,6 @@ create view <schema>.ObsCore
 
     o_ucd,
 
--- primary key: this should be obs_id and obsID renamed to obs_creator_did
-    core_id,
-
 -- custom columns
     lastModified,
 
@@ -111,9 +108,6 @@ AS SELECT
 
 -- observable axis
     CAST('phot.count' AS varchar),
-
--- primary key
-    p.planeID,
 
 -- custom columns
     o.maxLastModified,
