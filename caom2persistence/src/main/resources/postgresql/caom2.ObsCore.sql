@@ -106,8 +106,8 @@ AS SELECT
     p.polarization_states,
     p.polarization_dimension,
 
--- observable axis
-    CAST('phot.count' AS varchar),
+-- observable UCD: default to photon counts
+    COALESCE(p.observable_ucd, CAST('phot.count' AS varchar)),
 
 -- custom columns
     o.maxLastModified,
