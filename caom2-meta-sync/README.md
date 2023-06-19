@@ -1,8 +1,7 @@
-# CAOM2 Meta Sync process
+# CAOM Meta Sync process
 
-Process to sync Observations from a CAOM2 repository service
-to a CAOM2 database. Process runs continuously exiting only
-when source queries return no results.
+Process to sync Observations from a CAOM repository service
+to a CAOM database.
 
 ## configuration
 
@@ -11,6 +10,9 @@ image docs for general config requirements.
 
 Runtime configuration must be made available via the `/config` directory.
 
+### cadc-registry.properties
+
+See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-registry</a>.
 
 ### caom2-meta-sync.properties
 ```
@@ -35,30 +37,28 @@ org.opencadc.caom2.metasync.db.url=jdbc:postgresql://{server}/{database}
 # Base for generating Plane publisherID values
 org.opencadc.caom2.metasync.basePublisherID={uri}
 
-# Optional - exit after processing collections once
-org.opencadc.caom2.metasync.exitWhenComplete=true|false
+# (optional) exit after processing collections once
+#org.opencadc.caom2.metasync.exitWhenComplete=true
 ```
 
-_repoService_ is the resource identifier for a registered 
-caom2 repository service (e.g. ivo://cadc.nrc.ca/ams)
+The _repoService_ is the resource identifier for a registered CAOM repository service 
+(e.g. ivo://cadc.nrc.ca/ams).
 
-_collection_ is the collection name used to query for Artifacts 
-in the repository service. For multiple collections use multiple lines, 
-one collection per line.
+One or more CAOM collections can be synced by an single instance. The _collection_ 
+specifies the name (Observation.collecion) used to query for Observation(s) in the 
+repository. For multiple collections use multiple lines, one collection per line.
 
-_maxIdle_ is the maximum time in seconds to pause between runs 
-when _exitWhenComplete_ is _false_. The idle time starts at 60 seconds, 
-doubling every time no data is found to sync, until maxIdle is reached. 
-The idle time will reset to 60 seconds when data is found to sync.
+The _maxIdle_ time is the maximum time (seconds) to idle (sleep) before querying the 
+repository for new observations. The idle time defaults to 30 seconds and doubles
+every time no new observations are found until maxIdle is reached. The idle time 
+resets to the default when new content is found.
 
-_basePublisherID_ is the base for generating Plane 
-publisherID values. The base is an uri of the form ivo://<authority>[/<path>]
-publisherID values: <basePublisherID>/<collection>?<observationID>/<productID>
+The _basePublisherID_ is used to generate Plane.publisherID values. The base 
+is a URI of the form `ivo://<authority>[/<path>]` and generated publisherID values
+are `<basePublisherID>/<collection>?<observationID>/<productID>`.
 
-_exitWhenComplete_ is optional and defaults to _false_. 
-When _true_ each collection is processed once, and then the application exits. 
-The default is collections are continuously processed in a loop.
-
+`caom2-meta-sync` normally runs forever; the _exitWhenComplete_ flag (optional) can
+be set to `true` to make the sync process to exit after syncing each collection once.
 
 ### cadcproxy.pem
 Optional certificate in /config is used to authenticate https calls 
