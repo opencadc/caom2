@@ -65,10 +65,9 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus;
-
 
 import ca.nrc.cadc.vosi.AvailabilityTest;
 import java.net.URI;
@@ -78,12 +77,11 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class VosiAvailabilityTest extends AvailabilityTest
-{
+public class VosiAvailabilityTest extends AvailabilityTest {
+
     private static final Logger log = Logger.getLogger(VosiAvailabilityTest.class);
 
-    public VosiAvailabilityTest() 
-    { 
-        super(URI.create("ivo://cadc.nrc.ca/argus"));
+    public VosiAvailabilityTest() {
+        super(Constants.RESOURCE_ID);
     }
 }

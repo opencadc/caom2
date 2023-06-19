@@ -65,10 +65,9 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus;
-
 
 import ca.nrc.cadc.tap.integration.TapSyncErrorTest;
 import ca.nrc.cadc.util.FileUtil;
@@ -82,24 +81,21 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class CaomTapSyncErrorTest extends TapSyncErrorTest
-{
+public class CaomTapSyncErrorTest extends TapSyncErrorTest {
+
     private static final Logger log = Logger.getLogger(CaomTapSyncErrorTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.argus.integration", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.conformance.uws2", Level.INFO);
     }
-    
-    public CaomTapSyncErrorTest()
-    {
-        super(URI.create("ivo://cadc.nrc.ca/argus"));
-        
+
+    public CaomTapSyncErrorTest() {
+        super(Constants.RESOURCE_ID);
+
         // re-use SyncError test files
         File testFile = FileUtil.getFileFromResource("SyncErrorTest-area.properties", CaomTapSyncErrorTest.class);
-        if (testFile.exists())
-        {
+        if (testFile.exists()) {
             File testDir = testFile.getParentFile();
             super.setPropertiesDir(testDir, "SyncErrorTest");
         }

@@ -1,3 +1,4 @@
+
 package org.opencadc.argus;
 
 import ca.nrc.cadc.tap.integration.TapSyncUploadTest;
@@ -12,20 +13,18 @@ import org.apache.log4j.Logger;
  *
  * @author jburke
  */
-public class CaomTapSyncUploadTest extends TapSyncUploadTest
-{
+public class CaomTapSyncUploadTest extends TapSyncUploadTest {
+
     private static final Logger log = Logger.getLogger(CaomTapSyncUploadTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.argus.impl", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.conformance.uws2", Level.INFO);
         //Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
     }
 
-    public CaomTapSyncUploadTest()
-    {
-        super(URI.create("ivo://cadc.nrc.ca/argus"));
+    public CaomTapSyncUploadTest() {
+        super(Constants.RESOURCE_ID);
         File f = FileUtil.getFileFromResource("TAPUploadTest-1.xml", CaomTapSyncUploadTest.class);
         setTestFile(f);
         setTestURL(CaomTapAsyncUploadTest.getVOTableURL(f));

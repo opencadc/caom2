@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2022.                            (c) 2022.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,52 +62,30 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
- */
+*/
 
 package org.opencadc.argus;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.reg.Capabilities;
-import ca.nrc.cadc.reg.Capability;
-import ca.nrc.cadc.reg.Interface;
-import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.vosi.CapabilitiesTest;
 import java.net.URI;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
 
 /**
  *
  * @author pdowler
  */
-public class VosiCapabilitiesTest extends CapabilitiesTest {
+public class Constants {
+    private static final Logger log = Logger.getLogger(Constants.class);
 
-    private static final Logger log = Logger.getLogger(VosiCapabilitiesTest.class);
-
-    public VosiCapabilitiesTest() {
-        super(Constants.RESOURCE_ID);
+    public static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/argus");
+    
+    static {
+        Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.reg", Level.INFO);
     }
-
-    @Override
-    protected void validateContent(Capabilities caps) throws Exception {
-        super.validateContent(caps);
-
-        // TAP-1.1
-        Capability tap = caps.findCapability(Standards.TAP_10);
-        Interface base = tap.findInterface(AuthMethod.ANON, Standards.INTERFACE_PARAM_HTTP);
-        Assert.assertNotNull("base", base);
-        Assert.assertTrue("anon base", base.getSecurityMethods().contains(Standards.SECURITY_METHOD_ANON));
-        Assert.assertTrue("cert base", base.getSecurityMethods().contains(Standards.SECURITY_METHOD_CERT));
-        Assert.assertTrue("cookie base", base.getSecurityMethods().contains(Standards.SECURITY_METHOD_COOKIE));
-
-        Capability tables = caps.findCapability(Standards.VOSI_TABLES_11);
-        Assert.assertNotNull("tables", tables);
-        Assert.assertNotNull("anon tables", tables.findInterface(Standards.SECURITY_METHOD_ANON, Standards.INTERFACE_PARAM_HTTP));
+    
+    private Constants() { 
     }
-
 }

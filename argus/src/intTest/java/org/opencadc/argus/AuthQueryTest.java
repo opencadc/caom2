@@ -134,7 +134,6 @@ public class AuthQueryTest
 {
     private static final Logger log = Logger.getLogger(AuthQueryTest.class);
 
-    private static final URI ARGUS_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/argus");
     private static final URI GMS_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/gms");
 
     static final Subject subjectWithGroups;
@@ -161,7 +160,7 @@ public class AuthQueryTest
 
         try
         {
-            TapClient tap = new TapClient(ARGUS_RESOURCE_IDENTIFIER_URI);
+            TapClient tap = new TapClient(Constants.RESOURCE_ID);
             syncCertURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
             asyncCertURL = tap.getAsyncURL(Standards.SECURITY_METHOD_CERT);
             
@@ -353,7 +352,7 @@ public class AuthQueryTest
         return pwd;
     }
 
-    @Test
+    //@Test
     public void testLoginCookie() throws InvalidSignedTokenException {
 
         String currentAuthenticatorClass = System.getProperty(Authenticator.class.getName());

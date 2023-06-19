@@ -37,7 +37,7 @@ public class CaomTapAsyncUploadTest extends TapAsyncUploadTest {
     }
 
     public CaomTapAsyncUploadTest() {
-        super(URI.create("ivo://cadc.nrc.ca/argus"));
+        super(Constants.RESOURCE_ID);
         File f = FileUtil.getFileFromResource("TAPUploadTest-1.xml", CaomTapSyncUploadTest.class);
         setTestFile(f);
         setTestURL(getVOTableURL(f));

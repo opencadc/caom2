@@ -65,10 +65,9 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus;
-
 
 import ca.nrc.cadc.tap.integration.TapAsyncQueryTest;
 import ca.nrc.cadc.util.FileUtil;
@@ -82,25 +81,22 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class CaomTapAsyncQueryTest extends TapAsyncQueryTest
-{
+public class CaomTapAsyncQueryTest extends TapAsyncQueryTest {
+
     private static final Logger log = Logger.getLogger(CaomTapAsyncQueryTest.class);
 
-    private static final long TIMEOUT = 60*1000L;
-    
-    static
-    {
+    private static final long TIMEOUT = 60 * 1000L;
+
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.argus.integration", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.conformance.uws2", Level.INFO);
     }
-    
-    public CaomTapAsyncQueryTest() 
-    { 
-        super(URI.create("ivo://cadc.nrc.ca/argus"));
+
+    public CaomTapAsyncQueryTest() {
+        super(Constants.RESOURCE_ID);
 
         File testFile = FileUtil.getFileFromResource("AsyncResultTest-caom2.observation.properties", CaomTapAsyncQueryTest.class);
-        if (testFile.exists())
-        {
+        if (testFile.exists()) {
             File testDir = testFile.getParentFile();
             super.setPropertiesDir(testDir, "AsyncResultTest");
         }

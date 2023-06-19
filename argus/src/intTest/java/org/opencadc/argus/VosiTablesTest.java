@@ -25,57 +25,45 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class VosiTablesTest
-{
+public class VosiTablesTest {
+
     private static final Logger log = Logger.getLogger(VosiTablesTest.class);
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.argus.integration", Level.INFO);
-    }
-    
     URL tablesURL;
-    
-    public VosiTablesTest()
-    {
+
+    public VosiTablesTest() {
         RegistryClient rc = new RegistryClient();
-        this.tablesURL = rc.getServiceURL(URI.create("ivo://cadc.nrc.ca/argus"), Standards.VOSI_TABLES_11, AuthMethod.ANON);
+        this.tablesURL = rc.getServiceURL(Constants.RESOURCE_ID, Standards.VOSI_TABLES_11, AuthMethod.ANON);
     }
 
     @Test
-    public void testValidateTablesetDoc()
-    {
-        try
-        {
+    public void testValidateTablesetDoc() {
+        try {
             TableSetReader tsr = new TableSetReader(true);
-            log.info("testValidateTablesetDoc: " + tablesURL.toExternalForm()); 
-            
+            log.info("testValidateTablesetDoc: " + tablesURL.toExternalForm());
+
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(tablesURL, bos);
             get.run();
             Assert.assertEquals(200, get.getResponseCode());
             ContentType ct = new ContentType(get.getContentType());
             Assert.assertEquals("text/xml", ct.getBaseType());
-            
+
             TapSchema ts = tsr.read(new ByteArrayInputStream(bos.toByteArray()));
             Assert.assertNotNull(ts);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testValidateTableDoc()
-    {
-        try
-        {
+    public void testValidateTableDoc() {
+        try {
             TableReader tr = new TableReader(true);
             String s = tablesURL.toExternalForm() + "/tap_schema.tables";
             log.info("testValidateTableDoc: " + s);
-            
+
             URL url = new URL(s);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             HttpDownload get = new HttpDownload(url, bos);
@@ -83,23 +71,19 @@ public class VosiTablesTest
             Assert.assertEquals(200, get.getResponseCode());
             ContentType ct = new ContentType(get.getContentType());
             Assert.assertEquals("text/xml", ct.getBaseType());
-            
+
             TableDesc td = tr.read(new ByteArrayInputStream(bos.toByteArray()));
             Assert.assertNotNull(td);
             Assert.assertEquals("tap_schema.tables", td.getTableName());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testTableNotFound()
-    {
-        try
-        {
+    public void testTableNotFound() {
+        try {
             String s = tablesURL.toExternalForm() + "/no_such_table";
             log.info("testTableNotFound: " + s);
 
@@ -108,19 +92,15 @@ public class VosiTablesTest
             HttpDownload get = new HttpDownload(url, bos);
             get.run();
             Assert.assertEquals(404, get.getResponseCode());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testDetailMin()
-    {
-        try
-        {
+    public void testDetailMin() {
+        try {
             TableSetReader tsr = new TableSetReader(true);
             String s = tablesURL.toExternalForm() + "?detail=min";
             log.info("testDetailMin: " + s);
@@ -129,18 +109,14 @@ public class VosiTablesTest
             TapSchema ts = tsr.read(url.openStream());
             Assert.assertNotNull(ts);
             Assert.assertFalse(ts.getSchemaDescs().isEmpty());
-            for (SchemaDesc sd : ts.getSchemaDescs())
-            {
+            for (SchemaDesc sd : ts.getSchemaDescs()) {
                 log.debug("testDetailMin: " + sd.getSchemaName());
                 Assert.assertFalse(sd.getTableDescs().isEmpty());
-                for (TableDesc td : sd.getTableDescs())
-                {
+                for (TableDesc td : sd.getTableDescs()) {
                     Assert.assertTrue("no columns:" + td.getTableName(), td.getColumnDescs().isEmpty());
                 }
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

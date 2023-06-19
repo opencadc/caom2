@@ -96,7 +96,7 @@ public class CaomTapAsyncErrorTest extends TapAsyncErrorTest
     
     public CaomTapAsyncErrorTest() 
     { 
-        super(URI.create("ivo://cadc.nrc.ca/argus"));
+        super(Constants.RESOURCE_ID);
 
         File testFile = FileUtil.getFileFromResource("AsyncErrorTest-NO-LANG.properties", CaomTapAsyncErrorTest.class);
         if (testFile.exists())
