@@ -32,12 +32,10 @@ insert into tap_schema.schemas11 (schema_name,description) values
 ('ivoa', 'tables and views defined by the IVOA, including prototypes!')
 ;
 
--- ivoa.ObsCore view
+-- ivoa
 -- index start at 10
 insert into tap_schema.tables11 (schema_name,table_name,table_type,description,table_index) values
-( 'ivoa', 'ivoa.ObsCore', 'view', 'ObsCore-1.1 observation table', 10 ),
-( 'ivoa', 'ivoa.ObsFile', 'view', 'ObsCore-1.x file table', 11 ),
-( 'ivoa', 'ivoa.ObsPart', 'view', 'ObsCore-1.x part table', 12 )
+( 'ivoa', 'ivoa.ObsCore', 'view', 'ObsCore-1.1 observation table', 10 )
 ;
 
 insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
