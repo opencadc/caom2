@@ -196,8 +196,7 @@ public class CaomHarvester implements Runnable {
             for (String collection : collections) {
                 log.info(src.getIdentifier(collection) + " -> " + dest.getIdentifier(collection));
 
-                URI publisherID = URI.create(basePublisherID + collection);
-                ObservationHarvester obsHarvester = new ObservationHarvester(src, dest, collection, publisherID, batchSize,
+                ObservationHarvester obsHarvester = new ObservationHarvester(src, dest, collection, basePublisherID, batchSize,
                         nthreads, full, nochecksum);
                 obsHarvester.setSkipped(skip);
                 obsHarvester.setComputePlaneMetadata(computePlaneMetadata);
