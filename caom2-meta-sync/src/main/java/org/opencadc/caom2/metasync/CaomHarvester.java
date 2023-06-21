@@ -231,7 +231,7 @@ public class CaomHarvester implements Runnable {
                     sleep = Math.min(sleep * 2, maxIdle * 1000L);
                 }
                 try {
-                    log.info("idle sleep: " + (sleep/1000L) + " sec");
+                    log.info("idle sleep: " + (sleep / 1000L) + " sec");
                     Thread.sleep(sleep);
                 } catch (InterruptedException e) {
                     throw new RuntimeException("Thread sleep interrupted", e);
