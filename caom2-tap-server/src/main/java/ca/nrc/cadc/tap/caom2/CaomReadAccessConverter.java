@@ -93,7 +93,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import org.apache.log4j.Logger;
-import org.opencadc.gms.GroupClient;
+import org.opencadc.gms.IvoaGroupClient;
 
 /**
  * Query converter that injects meta-read-access constraints.
@@ -146,18 +146,14 @@ public class CaomReadAccessConverter extends SelectNavigator
 
     private transient DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
-    private GroupClient gmsClient;
+    private IvoaGroupClient gmsClient;
 
     public CaomReadAccessConverter()
     {
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
     }
 
-    /**
-     * Used for testing support.
-     * @param gmsClient
-     */
-    public void setGMSClient(GroupClient gmsClient)
+    void setGMSClient(IvoaGroupClient gmsClient)
     {
         this.gmsClient = gmsClient;
     }
