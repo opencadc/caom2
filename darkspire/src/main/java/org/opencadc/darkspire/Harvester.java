@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.darkspire;
 
 import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
 import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;

@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.darkspire;
 
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
@@ -136,24 +136,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
      */
     private void init() {
         // source
-        if (src.getResourceType() == HarvesterResource.SOURCE_DB) {
-            Map<String, Object> srcConfig = getConfigDAO(src);
-            ConnectionConfig srcConnectionConfig = new ConnectionConfig(null, null,
-                    src.getUsername(), src.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, src.getJdbcUrl());
-            final String srcDS = "jdbc/srcDelHarvest";
-            try {
-                DBUtil.createJNDIDataSource(srcDS, srcConnectionConfig);
-            } catch (NamingException e) {
-                throw new IllegalStateException(String.format("Error creating source JNDI datasource for %s reason: %s",
-                        src, e.getMessage()));
-            }
-            srcConfig.put("jndiDataSourceName", srcDS);
-            this.deletedDAO = new DeletedEntityDAO();
-            deletedDAO.setConfig(srcConfig);
-            ready = true;
-        } else {
-            this.repoClient = new RepoClient(src.getResourceID(), 1);
-        }
+        this.repoClient = new RepoClient(src.getResourceID(), 1);
 
         // destination
         Map<String, Object> destConfig = getConfigDAO(dest);
@@ -172,12 +155,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
         this.txnManager = obsDAO.getTransactionManager();
         initHarvestState(obsDAO.getDataSource(), entityClass);
 
-        if (repoClient != null) {
-            if (repoClient.isDelAvailable()) {
-                ready = true;
-            } else {
-                log.warn("Not available deletion endpoint in " + repoClient.toString());
-            }
+        if (repoClient.isDelAvailable()) {
+            ready = true;
+        } else {
+            log.warn("Not available deletion endpoint in " + repoClient.toString());
         }
     }
 

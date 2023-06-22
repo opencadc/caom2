@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.darkspire;
 
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
@@ -92,7 +92,7 @@ import org.apache.log4j.Logger;
 public class Main {
     private static final Logger log = Logger.getLogger(Main.class);
 
-    private static final String CONFIG_FILE_NAME = "caom2-meta-sync.properties";
+    private static final String CONFIG_FILE_NAME = "darkspire.properties";
     private static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";

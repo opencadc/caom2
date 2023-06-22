@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.darkspire;
 
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
@@ -102,8 +102,6 @@ public class CaomHarvester implements Runnable {
     private final boolean nochecksum;
     private final boolean exitWhenComplete;
     private final long maxIdle;
-    private boolean computePlaneMetadata;
-    private File readAccessConfigFile;
 
     /**
      * Harvest everything.
@@ -134,31 +132,11 @@ public class CaomHarvester implements Runnable {
         this.nochecksum = nochecksum;
         this.exitWhenComplete = exitWhenComplete;
         this.maxIdle = maxIdle;
-        this.computePlaneMetadata = false;
-        this.readAccessConfigFile = null;
 
         ConnectionConfig cc = new ConnectionConfig(null, null, dest.getUsername(), dest.getPassword(),
                 HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
         DataSource ds = DBUtil.getDataSource(cc);
         this.initdb = new InitDatabase(ds, dest.getDatabase(), dest.getSchema());
-    }
-
-    /**
-     * Enable the plane metadata compute plugin.
-     * 
-     * @param compute enable Plane metadata computation if true
-     */
-    public void setCompute(boolean compute) {
-        this.computePlaneMetadata = compute;
-    }
-    
-    /**
-     * Enable the generate read access grants plugin with the specified config.
-     * 
-     * @param config enable read access generation from the specified config file
-     */
-    public void setGenerateReadAccess(String config) {
-        this.readAccessConfigFile = new File(config);
     }
 
     @Override
@@ -199,10 +177,6 @@ public class CaomHarvester implements Runnable {
                 ObservationHarvester obsHarvester = new ObservationHarvester(src, dest, collection, basePublisherID, batchSize,
                         nthreads, full, nochecksum);
                 obsHarvester.setSkipped(skip);
-                obsHarvester.setComputePlaneMetadata(computePlaneMetadata);
-                if (readAccessConfigFile != null) {
-                    obsHarvester.setGenerateReadAccessTuples(readAccessConfigFile);
-                }
 
                 DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest,
                         collection, batchSize * 100);

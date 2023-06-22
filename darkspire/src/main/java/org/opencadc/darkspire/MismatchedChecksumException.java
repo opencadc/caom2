@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.darkspire;
 
 public class MismatchedChecksumException extends Exception {
 
