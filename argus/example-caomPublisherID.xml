@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.3" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.4">
+
+    <!-- template service descriptor to go with the caom2:Plane.publisherID column
+    
+    This column has id=caomPublisherID in the tap_schema and thus the VOTable field gets 
+    an XML ID attribute ID="caomPublisherID" when the column is selected; that also
+    triggers finding caomPublisherID.xml file in the config dir and injecting it at
+    the end of a query result that includes the column in the output -->
+    
+    <!-- need a valid ID in the template for the ref="caomPublisherID" below -->
+    <INFO name="tmp" ID="caomPublisherID" value="this will be dropped..." />
+
+    <!-- service descriptor for the associated DataLink#links service -->
+    <RESOURCE type="meta" utype="adhoc:service">
+        <!-- for a datalink service in the registry, include resourceIdentifier and standardID -->
+        <PARAM name="resourceIdentifier" datatype="char" arraysize="*" value="{ivo://opencadc.org/links" />
+        <PARAM name="standardID" datatype="char" arraysize="*" value="ivo://ivoa.net/std/DataLink#links-1.1" />
+        <!-- the accessURL PARAM is dynamically inserted by cadc-tap-server lib -->
+        
+        <!-- for an unregistered datalink service, include the standardID and accessURL -->
+        
+        <GROUP name="inputParams">
+            <PARAM name="ID" datatype="char" arraysize="*" ref="caomPublisherID" value=""/>
+            <PARAM name="RESPONSEFORMAT" datatype="char" arraysize="*" value="application/x-votable+xml;content=datalink">
+                <VALUES>
+                    <OPTION value="application/x-votable+xml;content=datalink"/>
+                    <OPTION value="application/x-download-manifest+txt"/>
+                </VALUES>
+            </PARAM>
+        </GROUP>
+    </RESOURCE>
+    
+    <!-- example custom packaging service that outputs tar or zip with all files (artifacts) in a
+    caom2 Plane -->
+    <RESOURCE type="meta" utype="adhoc:service">
+        <!-- for a custom service not in the registry, include the accessURL directly -->
+        
+        <!-- the accessURL PARAM is dynamically inserted by DefaultTableWriter in cadc-tap-server -->
+        <PARAM name="accessURL" datatype="char" arraysize="*" value="https://opencadc.org/custom/pkg" />
+        <GROUP name="inputParams">
+            <PARAM name="ID" datatype="char" arraysize="*" ref="caomPublisherID" value=""/>
+            <PARAM name="RESPONSEFORMAT" datatype="char" arraysize="*" value="application/tar">
+                <VALUES>
+                    <OPTION value="application/tar"/>
+                    <OPTION value="application/zip"/>
+                </VALUES>
+            </PARAM>
+        </GROUP>
+    </RESOURCE>
+</VOTABLE>

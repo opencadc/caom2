@@ -104,7 +104,7 @@ public class RegistryClientLookupTest {
         Log4jInit.setLevel("ca.nrc.cadc.tap.integration", Level.INFO);
     }
 
-    static final URI ARGUS_RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/argus");
+    static final URI ARGUS_RESOURCE_ID = Constants.RESOURCE_ID;
 
     private final TapClient tapClient;
     private final RegistryClient regClient = new RegistryClient();
@@ -223,42 +223,6 @@ public class RegistryClientLookupTest {
             
             // TODO: get job and check ownerID 
             
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    // username-password endpoints exist by convention but are not described in the VOSI-capabilities
-    @Test
-    public void testAuthAsync() {
-        try {
-            URL url = tapClient.getAsyncURL(Standards.SECURITY_METHOD_ANON);
-            url = new URL(url.toExternalForm().replace("async", "auth-async"));
-
-            Assert.assertNotNull(url);
-            HttpPost post = new HttpPost(url, queryParams, false);
-            post.run();
-            Assert.assertNotNull(post.getThrowable());
-            Assert.assertEquals(401, post.getResponseCode());
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testAuthSync() {
-        try {
-            URL url = tapClient.getSyncURL(Standards.SECURITY_METHOD_ANON);
-            url = new URL(url.toExternalForm().replace("sync", "auth-sync"));
-
-            Assert.assertNotNull(url);
-            log.info("url: " + url.toString());
-            HttpPost post = new HttpPost(url, queryParams, false);
-            post.run();
-            Assert.assertNotNull(post.getThrowable());
-            Assert.assertEquals(401, post.getResponseCode());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

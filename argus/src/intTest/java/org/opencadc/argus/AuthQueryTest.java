@@ -71,13 +71,13 @@ package org.opencadc.argus;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.SignedToken;
 import ca.nrc.cadc.auth.InvalidSignedTokenException;
 import ca.nrc.cadc.auth.PrincipalExtractor;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.auth.SSOCookieCredential;
 import ca.nrc.cadc.auth.SSOCookieManager;
+import ca.nrc.cadc.auth.SignedToken;
 import ca.nrc.cadc.auth.X509CertificateChain;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;

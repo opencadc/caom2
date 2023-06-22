@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -63,46 +63,48 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus;
 
-
-import ca.nrc.cadc.conformance.uws2.JobResultWrapper;
-import ca.nrc.cadc.tap.integration.TapSyncUploadTest;
-import ca.nrc.cadc.util.FileUtil;
-import ca.nrc.cadc.util.Log4jInit;
-import java.io.File;
-import java.net.URI;
-import org.apache.log4j.Level;
+import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.rest.InitAction;
+import ca.nrc.cadc.tap.impl.InitCaomTapSchemaContent;
+import ca.nrc.cadc.tap.schema.InitDatabaseTS;
+import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
+import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
+ * Init uws schema, tap_schema schema, and tap_schema content.
  *
  * @author pdowler
  */
-public class UploadTable11 extends TapSyncUploadTest
-{
-    private static final Logger log = Logger.getLogger(UploadTable11.class);
+public class ArgusInitAction extends InitAction {
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.argus.impl", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.conformance.uws2", Level.INFO);
-        //Log4jInit.setLevel("ca.nrc.cadc.net", Level.DEBUG);
-    }
+    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
     
-    public UploadTable11() 
-    { 
-        super(Constants.RESOURCE_ID);
-        File f = FileUtil.getFileFromResource("UploadTest-TAP-1.1.xml", CaomTapSyncUploadTest.class);
-        setTestFile(f);
-        setTestURL(CaomTapAsyncUploadTest.getVOTableURL(f));
+    public ArgusInitAction() {
     }
 
     @Override
-    protected void validateResponse(JobResultWrapper result)
-    {
-        super.validateResponse(result);
+    public void doInit() {
+        try {
+            // tap_schema
+            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
+            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
+            tsi.doInit();
+
+            // uws schema
+            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
+            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
+            uwsi.doInit();
+
+            // caom2 tap_schema content
+            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema");
+            lsc.doInit();
+        } catch (Exception ex) {
+            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
+        }
     }
 }

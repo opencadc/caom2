@@ -30,16 +30,30 @@
                 ca.nrc.cadc.vosi
             </param-value>
         </init-param>
+        <init-param>
+        <param-name>logControlProperties</param-name>
+        <param-value>argus-logControl.properties</param-value>
+    </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
     <servlet>
-        <servlet-name>SyncQueryServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.uws.server.JobServlet</servlet-class>
+        <servlet-name>TableServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
         <init-param>
             <param-name>init</param-name>
-            <param-value>org.opencadc.argus.InitDatabaseAction</param-value>
+            <param-value>org.opencadc.argus.ArgusInitAction</param-value>
         </init-param>
+        <init-param>
+            <param-name>get</param-name>
+            <param-value>ca.nrc.cadc.vosi.actions.GetAction</param-value>
+        </init-param>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>SyncQueryServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.uws.server.JobServlet</servlet-class>
         <init-param>
             <param-name>get</param-name>
             <param-value>ca.nrc.cadc.uws.web.SyncGetAction</param-value>
@@ -55,11 +69,10 @@
         </init-param>
         <init-param>
             <param-name>ca.nrc.cadc.rest.InlineContentHandler</param-name>
-            <param-value>org.opencadc.tap.tmp.TempStorageManager</param-value>
-            <!-- <param-value>org.opencadc.tap.tmp.HttpStorageManager</param-value> -->
+            <param-value>org.opencadc.tap.tmp.DelegatingStorageManager</param-value>
         </init-param>
 
-        <load-on-startup>2</load-on-startup>
+        <load-on-startup>3</load-on-startup>
     </servlet>
     
     <servlet>
@@ -84,10 +97,9 @@
         </init-param>
         <init-param>
             <param-name>ca.nrc.cadc.rest.InlineContentHandler</param-name>
-            <param-value>org.opencadc.tap.tmp.TempStorageManager</param-value>
-            <!-- <param-value>org.opencadc.tap.tmp.HttpStorageManager</param-value> -->
+            <param-value>org.opencadc.tap.tmp.DelegatingStorageManager</param-value>
         </init-param>
-        <load-on-startup>2</load-on-startup>
+        <load-on-startup>3</load-on-startup>
     </servlet>
     
     <servlet>
@@ -125,20 +137,8 @@
     </servlet>
 
     <servlet>
-        <servlet-name>TableServlet</servlet-name>
-        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
-        <init-param>
-            <param-name>get</param-name>
-            <param-value>ca.nrc.cadc.vosi.actions.GetAction</param-value>
-        </init-param>
-        <load-on-startup>3</load-on-startup>
-    </servlet>
-
-    <servlet>
         <servlet-name>TempStorageServlet</servlet-name>
         <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
-    
-        <!-- Optional init parameter to validate configuration. -->
         <init-param>
             <param-name>init</param-name>
             <param-value>org.opencadc.tap.tmp.TempStorageInitAction</param-value>

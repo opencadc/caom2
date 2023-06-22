@@ -94,7 +94,7 @@ public class UploadTable10 extends TapSyncUploadTest
     
     public UploadTable10() 
     { 
-        super(URI.create("ivo://cadc.nrc.ca/argus"));
+        super(Constants.RESOURCE_ID);
         File f = FileUtil.getFileFromResource("UploadTest-TAP-1.0.xml", CaomTapSyncUploadTest.class);
         setTestFile(f);
         setTestURL(CaomTapAsyncUploadTest.getVOTableURL(f));
