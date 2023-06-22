@@ -75,7 +75,8 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 /**
- * Format position_bounds_samples as a xtype="multipolygon".
+ * Format position_bounds_samples as a xtype="caom2:multipolygon".
+ * 
  * @author pdowler
  */
 public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
