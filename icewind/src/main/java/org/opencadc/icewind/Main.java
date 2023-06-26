@@ -100,10 +100,10 @@ public class Main {
     private static final String REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".repoService";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
     private static final String MAX_IDLE_CONFIG_KEY = CONFIG_PREFIX + ".maxIdle";
-    private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".db.url";
-    private static final String DB_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".db.schema";
-    private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".db.username";
-    private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".db.password";
+    private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".caom.url";
+    private static final String DB_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".caom.schema";
+    private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".caom.username";
+    private static final String DB_PASSWORD_CONFIG_KEY = CONFIG_PREFIX + ".caom.password";
     private static final String BASE_PUBLISHER_ID_CONFIG_KEY = CONFIG_PREFIX + ".basePublisherID";
     private static final String EXIT_WHEN_COMPLETE_CONFIG_KEY = CONFIG_PREFIX + ".exitWhenComplete";
 
