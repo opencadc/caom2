@@ -55,13 +55,13 @@ org.opencadc.argus.query.password={database password for jobs pool}
 org.opencadc.argus.query.url=jdbc:postgresql://{server}/{database}
 ```
 
-The `uws` pool manages (create, alter, drop) uws tables and manages the uws content 
+The _uws_ pool manages (create, alter, drop) uws tables and manages the uws content 
 (creates and modifies jobs in the uws schema when jobs are created and executed by users).
 
-The `tapadm` pool manages (create, alter, drop) tap_schema tables and manages the tap_schema content
-for `tap_schema`, `caom2`, and `ivoa` schemas.
+The _tapadm_ pool manages (create, alter, drop) tap_schema tables and manages the tap_schema content
+for the `tap_schema`, `caom2`, and `ivoa` schemas.
 
-The `tapuser` pool is used to run TAP queries, including creating tables in the tap_upload schema. 
+The _tapuser_ pool is used to run TAP queries, including creating tables in the tap_upload schema. 
 
 All three pools must have the same JDBC URL (e.g. use the same database) with PostgreSQL.
 
@@ -72,25 +72,14 @@ named `caom2` holds the content.
 See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-registry</a>.
 
 ### argus.properties
-```
-# configure temporary storage manager implementation
-org.opencadc.argus.storageManager = {implementation class name}
 
-## option 1: configure file system storage manager
-#org.opencadc.argus.storageManager = org.opencadc.tap.tmp.TempStorageManager
-
-## option 2: configure http storage manager
-#org.opencadc.argus.storageManager = org.opencadc.tap.tmp.HttpStorageManager
-```
-
-The _storageManager_ property picks one of the two available implementation classses to handle 
-async query results and inline tap_upload files. See `cadc-tap-tmp.properties` below for additional
-configuration.
+This file may be needed in the future but is not currently used.
 
 ### cadc-tap-tmp.properties
 `argus` uses the [cadc-tap-tmp](https://github.com/opencadc/tap/tree/master/cadc-tap-tmp) library to
-manage temporary storage. If configured to use the _TempStorageManager_ implementation, the base URL 
-must include "/results" as the last path component (e.g. `https://example.net/argus/results`).
+manage temporary storage. If configured to use the _DelegatingStorageManager_ implementation. If
+using the _TempStorageManager_, the base URL must include "/results" as the last path component 
+(e.g. `https://example.net/argus/results`).
 
 ## building it
 ```
