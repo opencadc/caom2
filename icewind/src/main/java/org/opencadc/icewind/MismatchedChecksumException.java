@@ -67,24 +67,17 @@
  ************************************************************************
  */
 
-package org.opencadc.darkspire;
+package org.opencadc.icewind;
 
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
-import org.apache.log4j.Logger;
+public class MismatchedChecksumException extends Exception {
 
-/**
- *
- * @author pdowler
- */
-public class SkippedWrapperURI<T> {
-
-    private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
-
-    public T entity;
-    public HarvestSkipURI skip;
-
-    public SkippedWrapperURI(T entity, HarvestSkipURI skip) {
-        this.entity = entity;
-        this.skip = skip;
+    public MismatchedChecksumException(String string) {
+        super(string);
     }
+
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
+
 }

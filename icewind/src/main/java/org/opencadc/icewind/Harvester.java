@@ -62,119 +62,105 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 5 $
+ *
  ************************************************************************
  */
 
-package org.opencadc.darkspire;
+package org.opencadc.icewind;
 
-import java.net.URI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
+import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.date.DateUtil;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
- * Encapsulate the information about a source or destination for harvesting
- * instances.
  *
  * @author pdowler
  */
-public class HarvesterResource {
+public abstract class Harvester implements Runnable {
 
-    private static final Logger log = Logger.getLogger(HarvesterResource.class);
+    private static final Logger log = Logger.getLogger(Harvester.class);
 
-    private String databaseServer;
-    private String database;
-    private String schema;
-    private String username;
-    private String password;
-    private URI resourceID;
-    private String jdbcUrl;
-    private final int resourceType;
+    public static final String POSTGRESQL = "postgresql";
 
-    public static final int SOURCE_DB = 0;
-    public static final int SOURCE_URI = 1;
-    public static final int SOURCE_UNKNOWN = -1;
-    public static final String POSTGRESQL_DRIVER = "org.postgresql.Driver";
+    protected String source;
+    protected String cname;
+    protected Class entityClass;
+    protected int batchSize;
+    protected boolean full;
+    protected Date minDate;
+    protected Date maxDate;
+    protected String collection;
+    protected HarvesterResource src;
+    protected HarvesterResource dest;
+    protected HarvestStateDAO harvestStateDAO;
+
+    protected Harvester() {
+    }
+
+    protected Harvester(Class entityClass, HarvesterResource src, HarvesterResource dest, String collection,
+                        Integer batchSize, boolean full) {
+        this.entityClass = entityClass;
+        this.src = src;
+        this.dest = dest;
+        this.collection = collection;
+        this.batchSize = batchSize;
+        this.full = full;
+    }
+
+    public void setMinDate(Date d) {
+        this.minDate = d;
+    }
+    
+    public void setMaxDate(Date d) {
+        this.maxDate = d;
+    }
+
+    protected Map<String, Object> getConfigDAO(HarvesterResource harvestResource) {
+        Map<String, Object> ret = new HashMap<>();
+        if (harvestResource.getJdbcUrl().contains(POSTGRESQL)) {
+            ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+            ret.put("disableHashJoin", Boolean.TRUE);
+        } else {
+            throw new IllegalArgumentException("unknown SQL dialect: " + harvestResource.getDatabaseServer());
+        }
+        ret.put("server", harvestResource.getDatabaseServer());
+        ret.put("database", harvestResource.getDatabase());
+        ret.put("schema", harvestResource.getSchema());
+        return ret;
+    }
 
     /**
-     * Constructor for a JDBC url.
-     *
-     * @param jdbcUrl JDBC database url
-     * @param server database server
-     * @param database database name
-     * @param username database username
-     * @param password database password
-     * @param schema schema name
+     * @param ds
+     * DataSource from the destination DAO class
+     * @param c
+     * class being persisted via the destination DAO class
      */
-    public HarvesterResource(String jdbcUrl, String server, String database, String username, String password,
-                             String schema) {
-        if (jdbcUrl == null || server == null || database == null || username == null || password == null
-                || schema == null) {
-            throw new IllegalArgumentException("args cannot be null");
+    protected void initHarvestState(DataSource ds, Class c) {
+        this.cname = c.getSimpleName();
+
+        log.debug("creating HarvestState tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(ds, dest.getDatabase(), dest.getSchema());
+
+        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
+
+        this.source = src.getIdentifier(collection);
+    }
+
+    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+
+    protected String format(Date d) {
+        if (d == null) {
+            return "null";
         }
-        this.jdbcUrl = jdbcUrl;
-        this.databaseServer = server;
-        this.database = database;
-        this.username = username;
-        this.password = password;
-        this.schema = schema;
-        this.resourceType = SOURCE_DB;
+        return df.format(d);
     }
-
-    public HarvesterResource(URI resourceID) {
-        if (resourceID == null) {
-            throw new IllegalArgumentException("resourceID arg cannot be null");
-        }
-        this.resourceID = resourceID;
-        this.resourceType = SOURCE_URI;
-    }
-
-    public String getIdentifier(String collection) {
-        if (resourceID != null) {
-            return resourceID.toASCIIString() + "?" + collection;
-        }
-        return databaseServer + "." + database + "." + schema + "?" + collection;
-    }
-
-    public String getJdbcUrl() {
-        return jdbcUrl;
-    }
-
-    public URI getResourceID() {
-        return resourceID;
-    }
-
-    public String getDatabaseServer() {
-        return databaseServer;
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public String getSchema() {
-        return schema;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public int getResourceType() {
-        return resourceType;
-    }
-
-    @Override
-    public String toString() {
-        if (resourceType == SOURCE_URI) {
-            return this.resourceID.toASCIIString();
-        } else if (resourceType == SOURCE_DB) {
-            return this.databaseServer;
-        } else {
-            return "UNKNOWN";
-        }
-    }
-
 }

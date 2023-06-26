@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.darkspire;
+package org.opencadc.icewind;
 
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
