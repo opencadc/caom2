@@ -62,22 +62,119 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 5 $
- *
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.icewind;
 
-public class MismatchedChecksumException extends Exception {
+import java.net.URI;
+import org.apache.log4j.Logger;
 
-    public MismatchedChecksumException(String string) {
-        super(string);
-    }
+/**
+ * Encapsulate the information about a source or destination for harvesting
+ * instances.
+ *
+ * @author pdowler
+ */
+public class HarvesterResource {
+
+    private static final Logger log = Logger.getLogger(HarvesterResource.class);
+
+    private String databaseServer;
+    private String database;
+    private String schema;
+    private String username;
+    private String password;
+    private URI resourceID;
+    private String jdbcUrl;
+    private final int resourceType;
+
+    public static final int SOURCE_DB = 0;
+    public static final int SOURCE_URI = 1;
+    public static final int SOURCE_UNKNOWN = -1;
+    public static final String POSTGRESQL_DRIVER = "org.postgresql.Driver";
 
     /**
+     * Constructor for a JDBC url.
      *
+     * @param jdbcUrl JDBC database url
+     * @param server database server
+     * @param database database name
+     * @param username database username
+     * @param password database password
+     * @param schema schema name
      */
-    private static final long serialVersionUID = 1L;
+    public HarvesterResource(String jdbcUrl, String server, String database, String username, String password,
+                             String schema) {
+        if (jdbcUrl == null || server == null || database == null || username == null || password == null
+                || schema == null) {
+            throw new IllegalArgumentException("args cannot be null");
+        }
+        this.jdbcUrl = jdbcUrl;
+        this.databaseServer = server;
+        this.database = database;
+        this.username = username;
+        this.password = password;
+        this.schema = schema;
+        this.resourceType = SOURCE_DB;
+    }
+
+    public HarvesterResource(URI resourceID) {
+        if (resourceID == null) {
+            throw new IllegalArgumentException("resourceID arg cannot be null");
+        }
+        this.resourceID = resourceID;
+        this.resourceType = SOURCE_URI;
+    }
+
+    public String getIdentifier(String collection) {
+        if (resourceID != null) {
+            return resourceID.toASCIIString() + "?" + collection;
+        }
+        return databaseServer + "." + database + "." + schema + "?" + collection;
+    }
+
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    public URI getResourceID() {
+        return resourceID;
+    }
+
+    public String getDatabaseServer() {
+        return databaseServer;
+    }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public String getSchema() {
+        return schema;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public int getResourceType() {
+        return resourceType;
+    }
+
+    @Override
+    public String toString() {
+        if (resourceType == SOURCE_URI) {
+            return this.resourceID.toASCIIString();
+        } else if (resourceType == SOURCE_DB) {
+            return this.databaseServer;
+        } else {
+            return "UNKNOWN";
+        }
+    }
 
 }

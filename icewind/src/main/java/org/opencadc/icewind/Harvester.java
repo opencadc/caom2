@@ -67,24 +67,100 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.icewind;
 
-import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
+import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
+import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.date.DateUtil;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class SkippedWrapperURI<T> {
+public abstract class Harvester implements Runnable {
 
-    private static final Logger log = Logger.getLogger(SkippedWrapperURI.class);
+    private static final Logger log = Logger.getLogger(Harvester.class);
 
-    public T entity;
-    public HarvestSkipURI skip;
+    public static final String POSTGRESQL = "postgresql";
 
-    public SkippedWrapperURI(T entity, HarvestSkipURI skip) {
-        this.entity = entity;
-        this.skip = skip;
+    protected String source;
+    protected String cname;
+    protected Class entityClass;
+    protected int batchSize;
+    protected boolean full;
+    protected Date minDate;
+    protected Date maxDate;
+    protected String collection;
+    protected HarvesterResource src;
+    protected HarvesterResource dest;
+    protected HarvestStateDAO harvestStateDAO;
+
+    protected Harvester() {
+    }
+
+    protected Harvester(Class entityClass, HarvesterResource src, HarvesterResource dest, String collection,
+                        Integer batchSize, boolean full) {
+        this.entityClass = entityClass;
+        this.src = src;
+        this.dest = dest;
+        this.collection = collection;
+        this.batchSize = batchSize;
+        this.full = full;
+    }
+
+    public void setMinDate(Date d) {
+        this.minDate = d;
+    }
+    
+    public void setMaxDate(Date d) {
+        this.maxDate = d;
+    }
+
+    protected Map<String, Object> getConfigDAO(HarvesterResource harvestResource) {
+        Map<String, Object> ret = new HashMap<>();
+        if (harvestResource.getJdbcUrl().contains(POSTGRESQL)) {
+            ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+            ret.put("disableHashJoin", Boolean.TRUE);
+        } else {
+            throw new IllegalArgumentException("unknown SQL dialect: " + harvestResource.getDatabaseServer());
+        }
+        ret.put("server", harvestResource.getDatabaseServer());
+        ret.put("database", harvestResource.getDatabase());
+        ret.put("schema", harvestResource.getSchema());
+        return ret;
+    }
+
+    /**
+     * @param ds
+     * DataSource from the destination DAO class
+     * @param c
+     * class being persisted via the destination DAO class
+     */
+    protected void initHarvestState(DataSource ds, Class c) {
+        this.cname = c.getSimpleName();
+
+        log.debug("creating HarvestState tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
+        this.harvestStateDAO = new PostgresqlHarvestStateDAO(ds, dest.getDatabase(), dest.getSchema());
+
+        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getDatabase() + "." + dest.getSchema());
+
+        this.source = src.getIdentifier(collection);
+    }
+
+    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+
+    protected String format(Date d) {
+        if (d == null) {
+            return "null";
+        }
+        return df.format(d);
     }
 }

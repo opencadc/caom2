@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.icewind;
 
 import ca.nrc.cadc.caom2.DeletedEntity;
 import ca.nrc.cadc.caom2.DeletedObservation;
@@ -136,24 +136,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
      */
     private void init() {
         // source
-        if (src.getResourceType() == HarvesterResource.SOURCE_DB) {
-            Map<String, Object> srcConfig = getConfigDAO(src);
-            ConnectionConfig srcConnectionConfig = new ConnectionConfig(null, null,
-                    src.getUsername(), src.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, src.getJdbcUrl());
-            final String srcDS = "jdbc/srcDelHarvest";
-            try {
-                DBUtil.createJNDIDataSource(srcDS, srcConnectionConfig);
-            } catch (NamingException e) {
-                throw new IllegalStateException(String.format("Error creating source JNDI datasource for %s reason: %s",
-                        src, e.getMessage()));
-            }
-            srcConfig.put("jndiDataSourceName", srcDS);
-            this.deletedDAO = new DeletedEntityDAO();
-            deletedDAO.setConfig(srcConfig);
-            ready = true;
-        } else {
-            this.repoClient = new RepoClient(src.getResourceID(), 1);
-        }
+        this.repoClient = new RepoClient(src.getResourceID(), 1);
 
         // destination
         Map<String, Object> destConfig = getConfigDAO(dest);
@@ -172,12 +155,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
         this.txnManager = obsDAO.getTransactionManager();
         initHarvestState(obsDAO.getDataSource(), entityClass);
 
-        if (repoClient != null) {
-            if (repoClient.isDelAvailable()) {
-                ready = true;
-            } else {
-                log.warn("Not available deletion endpoint in " + repoClient.toString());
-            }
+        if (repoClient.isDelAvailable()) {
+            ready = true;
+        } else {
+            log.warn("Not available deletion endpoint in " + repoClient.toString());
         }
     }
 
@@ -195,12 +176,9 @@ public class DeletionHarvester extends Harvester implements Runnable {
      */
     @Override
     public void run() {
-
         if (!ready) {
             return;
         }
-
-        log.info("START: " + entityClass.getSimpleName());
 
         boolean go = true;
         while (go) {
@@ -224,7 +202,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
             log.error("failed to cleanup connections and state", oops);
             return;
         }
-        log.info("DONE: " + entityClass.getSimpleName() + "\n");
     }
 
     /**
@@ -256,20 +233,17 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @return progress status
      */
     private Progress doit() {
-        log.info("batch: " + entityClass.getSimpleName());
         Progress ret = new Progress();
         int expectedNum = batchSize;
         boolean correct = true;
 
         try {
             HarvestState state = harvestStateDAO.get(source, cname);
-            log.info("last harvest: " + format(state.curLastModified));
-
             if (initHarvestState && state.curLastModified == null) {
                 state.curLastModified = initDate;
                 harvestStateDAO.put(state);
                 state = harvestStateDAO.get(source, cname);
-                log.info("harvest state initialised to: " + df.format(state.curLastModified));
+                log.debug("harvest state: " + state);
             }
 
             startDate = state.curLastModified;
@@ -288,7 +262,8 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 }
             }
             firstIteration = false;
-
+            log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
+            
             List<DeletedObservation> entityList = null;
             String source = null;
             if (deletedDAO != null) {
