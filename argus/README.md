@@ -1,26 +1,18 @@
-# sc2tap
+# argus
 
-CAOM TAP service for the Multiple Archive Query (MAQ) 
+`argus` is a TAP [https://www.ivoa.net/documents/TAP/](Table Access Protocol) service 
+for CAOM [https://www.opencadc.org/caom2/](Common Archive Observation Model).
 
-This service allows queries to CAOM metadata using
-IVOA <a href="http://www.ivoa.net/documents/TAP/20190927/">TAP-1.1</a> web service API.
+## deployment
+The `argus` war file can be renamed at deployment time in order to support an alternate service 
+name, including introducing additional path elements using the 
+[https://github.com/opencadc/docker-base/tree/master/cadc-tomcat](war-rename.conf) feature.
 
-### deployment
-The `argus` war file can be renamed at deployment time in order to support an alternate
-service name, including introducing additional path elements (see war-rename.conf).
-
-This service instance is expected to have a database backend to store the TAP metadata and which
-also includes the CAOM tables.
+This service instance is expected to have a PostgreSQL database backend to store the TAP metadata and which
+also includes the CAOM tables. The `pgsphere` extension is used for spherical geometry columns and queries.
 
 ## configuration
 The following configuration files must be available in the `/config` directory.
-
-See the [cadc-tomcat](https://github.com/opencadc/docker-base/tree/master/cadc-tomcat) image
-docs for expected deployment and common config requirements. The `sc2tap` war file can be renamed
-at deployment time in order to support an alternate service name, including introducing
-additional path elements (see war-rename.conf).
-
-Runtime configuration must be made available via the `/config` directory.
 
 ### catalina.properties
 This file contains java system properties to configure the tomcat server and some of the java 
@@ -61,7 +53,7 @@ The _uws_ pool manages (create, alter, drop) uws tables and manages the uws cont
 The _tapadm_ pool manages (create, alter, drop) tap_schema tables and manages the tap_schema content
 for the `tap_schema`, `caom2`, and `ivoa` schemas.
 
-The _tapuser_ pool is used to run TAP queries, including creating tables in the tap_upload schema. 
+The _query_ pool is used to run TAP queries, including creating tables in the tap_upload schema. 
 
 All three pools must have the same JDBC URL (e.g. use the same database) with PostgreSQL.
 
@@ -71,15 +63,14 @@ named `caom2` holds the content.
 ### cadc-registry.properties
 See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-registry</a>.
 
-### argus.properties
-
-This file may be needed in the future but is not currently used.
-
 ### cadc-tap-tmp.properties
 `argus` uses the [cadc-tap-tmp](https://github.com/opencadc/tap/tree/master/cadc-tap-tmp) library to
-manage temporary storage. If configured to use the _DelegatingStorageManager_ implementation. If
+manage temporary storage and configured to use the _DelegatingStorageManager_ implementation. If
 using the _TempStorageManager_, the base URL must include "/results" as the last path component 
 (e.g. `https://example.net/argus/results`).
+
+### argus.properties
+This file may be needed in the future but is not currently used.
 
 ## building it
 ```
