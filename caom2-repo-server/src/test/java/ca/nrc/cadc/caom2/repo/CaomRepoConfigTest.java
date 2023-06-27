@@ -112,10 +112,6 @@ public class CaomRepoConfigTest {
                 "dsname database schema caom2obs ivo://cadc.nrc.ca/gms?group1 ivo://cadc.nrc.ca/gms?group2 "
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
                 + "proposalGroup=true operatorGroup=" + OPERATOR_GROUP + " staffGroup=" + STAFF_GROUP);
-            props.setProperty("group-frag",
-                "dsname database schema caom2obs ivo://cadc.nrc.ca/gms#group1 ivo://cadc.nrc.ca/gms#group2 "
-                + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
-                + "proposalGroup=false operatorGroup=" + OPERATOR_GROUP + " staffGroup=" + STAFF_GROUP);
             props.setProperty("spaces",
                 "dsname  database  schema  caom2obs  ivo://cadc.nrc.ca/gms?group1  ivo://cadc.nrc.ca/gms?group2  "
                 + "ca.nrc.cadc.caom2.repo.DummySQLGeneratorImpl basePublisherID=ivo://opencadc.org "
@@ -144,21 +140,6 @@ public class CaomRepoConfigTest {
             Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms?group2"), it.getReadWriteGroup());
             Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
             Assert.assertEquals(true, it.getProposalGroup());
-            Assert.assertEquals(new GroupURI(OPERATOR_GROUP), it.getOperatorGroup());
-            Assert.assertEquals(new GroupURI(STAFF_GROUP), it.getStaffGroup());
-
-            it = CaomRepoConfig.getItem("group-frag", props);
-            Assert.assertNotNull(it);
-            log.debug("found: " + it);
-            Assert.assertEquals("group-frag", it.getCollection());
-            Assert.assertEquals("dsname", it.getDataSourceName());
-            Assert.assertEquals("database", it.getDatabase());
-            Assert.assertEquals("schema", it.getSchema());
-            Assert.assertEquals("database.schema.Observation", it.getTestTable());
-            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms#group1"), it.getReadOnlyGroup());
-            Assert.assertEquals(new GroupURI("ivo://cadc.nrc.ca/gms#group2"), it.getReadWriteGroup());
-            Assert.assertEquals(DummySQLGeneratorImpl.class, it.getSqlGenerator());
-            Assert.assertEquals(false, it.getProposalGroup());
             Assert.assertEquals(new GroupURI(OPERATOR_GROUP), it.getOperatorGroup());
             Assert.assertEquals(new GroupURI(STAFF_GROUP), it.getStaffGroup());
 

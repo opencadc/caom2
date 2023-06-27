@@ -48,9 +48,6 @@ create view <schema>.ObsCore
 
     o_ucd,
 
--- primary key: this should be obs_id and obsID renamed to obs_creator_did
-    core_id,
-
 -- custom columns
     lastModified,
 
@@ -109,11 +106,8 @@ AS SELECT
     p.polarization_states,
     p.polarization_dimension,
 
--- observable axis
-    CAST('phot.count' AS varchar),
-
--- primary key
-    p.planeID,
+-- observable UCD: default to photon counts
+    COALESCE(p.observable_ucd, CAST('phot.count' AS varchar)),
 
 -- custom columns
     o.maxLastModified,

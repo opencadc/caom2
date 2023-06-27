@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.metasync;
+package org.opencadc.icewind;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
@@ -75,9 +75,7 @@ import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
-import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
 import ca.nrc.cadc.caom2.harvester.state.HarvestState;
@@ -128,7 +126,6 @@ public class ObservationHarvester extends Harvester {
     private HarvestSkipURIDAO harvestSkipDAO;
     private boolean skipped;
     private boolean computePlaneMetadata;
-    private ReadAccessGenerator acGenerator;
     private boolean ready = false;
     private int ingested = 0;
 
@@ -145,88 +142,14 @@ public class ObservationHarvester extends Harvester {
         this.skipped = skipped;
     }
 
-    public boolean getComputePlaneMetadata() {
-        return this.computePlaneMetadata;
-    }
-    
-    public void setComputePlaneMetadata(boolean computePlaneMetadata) {
-        this.computePlaneMetadata = computePlaneMetadata;
-    }
-
-    public void setGenerateReadAccessTuples(File config) {
-        try {
-            Properties props = new Properties();
-            props.load(new FileReader(config));
-            String line = props.getProperty(collection);
-            if (line == null) {
-                throw new IllegalArgumentException("CONFIG: collection not found: " + collection);
-            }
-            
-            Map<String,Object> groupConfig = new HashMap<>();
-            String[] parts = line.split("[ \t]+"); // one or more spaces and tabs
-            for (int i = 0; i < parts.length; i++) {
-                String option = parts[i]; // key=value pair
-                String[] kv = option.split("=");
-                if (kv.length != 2) {
-                    throw new IllegalArgumentException("invalid key=value pair: " + option);
-                }
-                if (ReadAccessGenerator.PROPOSAL_GROUP_KEY.equals(kv[0])) {
-                    boolean proposalGroup = "true".equals(kv[1]);
-                    if (proposalGroup) {
-                        groupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, proposalGroup);
-                    }
-                } else if (ReadAccessGenerator.OPERATOR_GROUP_KEY.equals(kv[0])) {
-                    String og = kv[1];
-                    if (og != null) {
-                        URI ouri = new URI(og);
-                        groupConfig.put(ReadAccessGenerator.OPERATOR_GROUP_KEY, ouri);
-                    }
-                } else if (ReadAccessGenerator.STAFF_GROUP_KEY.equals(kv[0])) {
-                    String sg = kv[1];
-                    if (sg != null) {
-                        URI suri = new URI(sg);
-                        groupConfig.put(ReadAccessGenerator.STAFF_GROUP_KEY, suri);
-                    }
-                }
-            }
-            for (Map.Entry<String,Object> me : groupConfig.entrySet()) {
-                log.debug("generate config for " + collection + ": " + me.getKey() + " = " + me.getValue());
-            }
-            this.acGenerator = new ReadAccessGenerator(collection, groupConfig);
-        } catch (IOException ex) {
-            throw new RuntimeException("failed to read config from " + config, ex);
-        } catch (Exception ex) {
-            throw new RuntimeException("CONFIG: invalid config " + config, ex);
-        } 
-    }
-
     public int getIngested() {
         return this.ingested;
     }
 
     private void init(int nthreads) {
-        if (src.getResourceType() == HarvesterResource.SOURCE_DB) {
-            Map<String, Object> srcConfig = getConfigDAO(src);
-            ConnectionConfig srcConnectionConfig = new ConnectionConfig(null, null,
-                    src.getUsername(), src.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, src.getJdbcUrl());
-            final String srcDS = "jdbc/obsHarvestSrc";
-            try {
-                DBUtil.createJNDIDataSource(srcDS, srcConnectionConfig);
-            } catch (NamingException e) {
-                throw new IllegalStateException(String.format("Error creating source JNDI datasource for %s reason: %s",
-                        src, e.getMessage()));
-            }
-            srcConfig.put("jndiDataSourceName", srcDS);
-            this.srcObservationDAO = new ObservationDAO();
-            srcObservationDAO.setConfig(srcConfig);
-            ready = true;
-        } else if (src.getResourceType() == HarvesterResource.SOURCE_URI) {
-            this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
-        } else {
-            throw new IllegalStateException("BUG: unexpected HarvestResource resource type: " + src);
-        }
+        this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
 
-        // for now, dest is always a database
+        // dest is always a database
         Map<String, Object> destConfig = getConfigDAO(dest);
         ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
                 dest.getUsername(), dest.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
@@ -249,12 +172,10 @@ public class ObservationHarvester extends Harvester {
         }
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
         
-        if (srcObservationService != null) {
-            if (srcObservationService.isObsAvailable()) {
-                ready = true;
-            } else {
-                log.error("Not available obs endpoint in " + srcObservationService.toString());
-            }
+        if (srcObservationService.isObsAvailable()) {
+            ready = true;
+        } else {
+            log.error("Not available: obs endpoint in " + srcObservationService.toString());
         }
     }
 
@@ -267,8 +188,6 @@ public class ObservationHarvester extends Harvester {
 
     @Override
     public void run() {
-        log.info("START: " + Observation.class.getSimpleName());
-
         boolean go = true;
         while (go) {
             Progress num = doit();
@@ -287,8 +206,6 @@ public class ObservationHarvester extends Harvester {
             }
             full = false; // do not start at beginning again
         }
-
-        log.info("DONE: " + entityClass.getSimpleName() + "\n");
     }
 
     private static class Progress {
@@ -389,7 +306,7 @@ public class ObservationHarvester extends Harvester {
             }
 
             ret.found = entityList.size();
-            log.debug("found: " + entityList.size());
+            log.info("found: " + entityList.size());
 
             timeQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
@@ -461,19 +378,6 @@ public class ObservationHarvester extends Harvester {
                             for (Artifact a : p.getArtifacts()) {
                                 CaomWCSValidator.validate(a);
                             }
-                        }
-
-                        // optionally augment the observation
-                        if (computePlaneMetadata) {
-                            log.debug("computePlaneMetadata: " + o.getURI());
-                            for (Plane p : o.getPlanes()) {
-                                ComputeUtil.computeTransientState(o, p);
-                            }
-                        }
-
-                        if (acGenerator != null) {
-                            log.debug("generateReadAccessTuples: " + o.getURI());
-                            acGenerator.generateTuples(o);
                         }
 
                         // everything is OK
