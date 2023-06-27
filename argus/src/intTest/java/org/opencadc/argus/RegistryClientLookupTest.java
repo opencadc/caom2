@@ -113,7 +113,7 @@ public class RegistryClientLookupTest {
 
     public RegistryClientLookupTest() throws Exception {
         queryParams.put("RUNID", "RegistryClientLookupTest");
-        File cf = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", RegistryClientLookupTest.class);
+        File cf = FileUtil.getFileFromResource(Constants.PEM_FILE, RegistryClientLookupTest.class);
         subject = SSLUtil.createSubject(cf);
         this.tapClient = new TapClient(ARGUS_RESOURCE_ID);
     }

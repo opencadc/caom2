@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus;
 
@@ -130,8 +130,8 @@ import org.opencadc.tap.TapClient;
  *
  * @author pdowler
  */
-public class AuthQueryTest
-{
+public class AuthQueryTest {
+
     private static final Logger log = Logger.getLogger(AuthQueryTest.class);
 
     private static final URI GMS_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/gms");
@@ -143,56 +143,46 @@ public class AuthQueryTest
     static URL syncCookieURL;
     static URL asyncCookieURL;
 
-    private static final String USERNAME = "cadcregtest1";
-    private static final String PASSWORD_FILE = USERNAME + ".pass";
-
     Map<String, Object> params;
     Subject authSubject;
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.argus.integration", Level.INFO);
 
-        File cf = FileUtil.getFileFromResource("x509_CADCAuthtest1.pem", AuthQueryTest.class);
+        File cf = FileUtil.getFileFromResource(Constants.PEM_FILE, AuthQueryTest.class);
         subjectWithGroups = SSLUtil.createSubject(cf);
         userWithGroups = subjectWithGroups.getPrincipals(X500Principal.class).iterator().next();
         log.debug("created subjectWithGroups: " + subjectWithGroups);
 
-        try
-        {
+        try {
             TapClient tap = new TapClient(Constants.RESOURCE_ID);
             syncCertURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
             asyncCertURL = tap.getAsyncURL(Standards.SECURITY_METHOD_CERT);
-            
+
             syncCookieURL = tap.getSyncURL(Standards.SECURITY_METHOD_COOKIE);
             asyncCookieURL = tap.getAsyncURL(Standards.SECURITY_METHOD_COOKIE);
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             log.error("TEST SETUP BUG: failed to find TAP URL", ex);
         }
     }
 
-    private class SyncQueryAction implements PrivilegedExceptionAction<String>
-    {
-        private URL url;
-        private Map<String,Object> params;
+    private class SyncQueryAction implements PrivilegedExceptionAction<String> {
 
-        public SyncQueryAction(URL url, Map<String,Object> params)
-        {
+        private URL url;
+        private Map<String, Object> params;
+
+        public SyncQueryAction(URL url, Map<String, Object> params) {
             this.url = url;
             this.params = params;
         }
 
         @Override
         public String run()
-            throws Exception
-        {
+                throws Exception {
             HttpPost doit = new HttpPost(url, params, true);
             doit.run();
 
-            if (doit.getThrowable() != null)
-            {
+            if (doit.getThrowable() != null) {
                 log.error("Post failed", doit.getThrowable());
                 Assert.fail("exception on post: " + doit.getThrowable());
             }
@@ -213,26 +203,23 @@ public class AuthQueryTest
 
     }
 
-    private class AsyncQueryAction implements PrivilegedExceptionAction<Job>
-    {
-        private URL url;
-        private Map<String,Object> params;
+    private class AsyncQueryAction implements PrivilegedExceptionAction<Job> {
 
-        public AsyncQueryAction(URL url, Map<String,Object> params)
-        {
+        private URL url;
+        private Map<String, Object> params;
+
+        public AsyncQueryAction(URL url, Map<String, Object> params) {
             this.url = url;
             this.params = params;
         }
 
         @Override
         public Job run()
-            throws Exception
-        {
+                throws Exception {
             HttpPost doit = new HttpPost(url, params, false);
             doit.run();
 
-            if (doit.getThrowable() != null)
-            {
+            if (doit.getThrowable() != null) {
                 log.error("Post failed", doit.getThrowable());
                 Assert.fail("exception on post: " + doit.getThrowable());
             }
@@ -241,16 +228,15 @@ public class AuthQueryTest
             Assert.assertEquals(303, code);
 
             URL jobURL = doit.getRedirectURL();
-            
+
             // exec the job
             URL phaseURL = new URL(jobURL.toString() + "/phase");
-            Map<String,Object> nextParams = new HashMap<String,Object>();
+            Map<String, Object> nextParams = new HashMap<String, Object>();
             nextParams.put("PHASE", "RUN");
             doit = new HttpPost(phaseURL, nextParams, false);
             doit.run();
 
-            if (doit.getThrowable() != null)
-            {
+            if (doit.getThrowable() != null) {
                 log.error("Post failed", doit.getThrowable());
                 Assert.fail("exception on post: " + doit.getThrowable());
             }
@@ -259,8 +245,7 @@ public class AuthQueryTest
             Job job = null;
             URL waitURL = new URL(jobURL.toExternalForm() + "?WAIT=30");
             boolean done = false;
-            while (!done)
-            {
+            while (!done) {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 HttpDownload w = new HttpDownload(waitURL, out);
                 w.run();
@@ -269,23 +254,21 @@ public class AuthQueryTest
                 done = !ep.isActive();
             }
             Assert.assertNotNull("job", job);
-            
+
             return job;
         }
 
     }
 
     @Test
-    public void testAuthQuery()
-    {
-        try
-        {
-            Date d = new Date(System.currentTimeMillis() + 365*86400*1000); // one year in future
+    public void testAuthQuery() {
+        try {
+            Date d = new Date(System.currentTimeMillis() + 365 * 86400 * 1000); // one year in future
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             String future = df.format(d);
-            String adql = "SELECT top 1 * from caom2.Observation where metaRelease IS NULL OR metaRelease > '"+future+"'";
+            String adql = "SELECT top 1 * from caom2.Observation where metaRelease IS NULL OR metaRelease > '" + future + "'";
 
-            Map<String,Object> params = new TreeMap<String,Object>();
+            Map<String, Object> params = new TreeMap<String, Object>();
             params.put("LANG", "ADQL");
             params.put("QUERY", adql);
 
@@ -302,25 +285,26 @@ public class AuthQueryTest
             // any groups that can access proprietary metadata so we expect no rows
             Iterator<List<Object>> iter = td.iterator();
             Assert.assertFalse("no result rows", iter.hasNext());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
+    // this test requires write permission to a working VOSpace
+    // currently hard-coded to the CADC vault service
+    // vault
     @Test
-    public void testVOSAuthQuery()
-    {
-        try
-        {
+    public void testVOSAuthQuery() {
+        String username = System.getProperty("user.name");
+        String dest = "vos://cadc.nrc.ca~vault/" + username + "/test/argus-testVOSAuthQuery";
+        try {
             String adql = "SELECT top 1 * from tap_schema.tables";
 
-            Map<String,Object> params = new TreeMap<String,Object>();
+            Map<String, Object> params = new TreeMap<String, Object>();
             params.put("LANG", "ADQL");
             params.put("QUERY", adql);
-            params.put("DEST", "vos://cadc.nrc.ca~vault/CADCAuthtest1/test/argus-testVOSAuthQuery");
+            params.put("DEST", dest);
 
             Job job = Subject.doAs(subjectWithGroups, new AsyncQueryAction(asyncCertURL, params));
             log.info("job: " + job);
@@ -331,158 +315,10 @@ public class AuthQueryTest
                     Assert.assertTrue("result stored in vault", r.getURI().toASCIIString().contains("vault"));
                 }
             }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-
-
-    private String getTestPassword() {
-        String pwd = null;
-        try {
-            BufferedReader bufferReader = new BufferedReader(new FileReader(System.getenv("A") + "/etc/" + PASSWORD_FILE));
-            pwd = bufferReader.readLine();
-        } catch (IOException ex) {
-            log.error("Password file not located in $A/etc. Using default");
-        }
-        return pwd;
-    }
-
-    //@Test
-    public void testLoginCookie() throws InvalidSignedTokenException {
-
-        String currentAuthenticatorClass = System.getProperty(Authenticator.class.getName());
-        System.setProperty(Authenticator.class.getName(), TestAuthenticatorImpl.class.getName());
-        log.debug("current authenticator class: " + currentAuthenticatorClass + ". Using class: " + TestAuthenticatorImpl.class.getName());
-
-        try {
-            String pwd = getTestPassword();
-            params = new HashMap<String, Object>();
-            params.put("username", USERNAME);
-            params.put("password", pwd);
-            log.debug("pwd: " + pwd);
-            log.debug("username: " + USERNAME);
-
-            authSubject = AuthenticationUtil.getSubject(new PrincipalExtractor()
-            {
-                public Set<Principal> cookiePrincipals = null;
-                private SignedToken cookieToken;
-                private String loginToken;
-                public X509CertificateChain getCertificateChain() { return null; }
-                private String domain = "";
-
-                protected void getCookieTokens() {
-                    Map<String,Object> callparams = new TreeMap<String,Object>();
-
-                    String pwd = getTestPassword();
-                    callparams = new HashMap<String, Object>();
-                    callparams.put("username", USERNAME);
-                    callparams.put("password", pwd);
-
-                    log.debug("pwd: " + pwd);
-                    log.debug("username: " + USERNAME);
-
-                    try {
-                        URL loginServiceUrl = new RegistryClient().getServiceURL(GMS_RESOURCE_IDENTIFIER_URI, 
-                            Standards.UMS_LOGIN_01, AuthMethod.ANON);
-
-                        log.debug("login service url: " + loginServiceUrl);
-                        Assert.assertNotNull(loginServiceUrl);
-
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        HttpPost post = new HttpPost(loginServiceUrl, callparams, out);
-                        post.run();
-
-                        Assert.assertNull(post.getThrowable());
-                        log.debug("login post response code: " + post.getResponseCode());
-                        Assert.assertEquals(200, post.getResponseCode());
-
-                        if (post.getThrowable() != null)
-                            throw new RuntimeException("login failed: " + post.getResponseCode(), post.getThrowable());
-                        loginToken = out.toString();
-                        log.debug("token: " + loginToken);
-
-                        SSOCookieManager ssoCookieManager = new SSOCookieManager();
-                        cookieToken = ssoCookieManager.parse(loginToken);
-                        cookiePrincipals = cookieToken.getIdentityPrincipals();
-                        domain = loginServiceUrl.getHost();
-                    } catch (InvalidSignedTokenException ex) {
-                        log.error("can't log in for  for test.", ex);
-                    }
-                }
-
-                public Date getExpirationDate()
-                {
-                    final Calendar cal = Calendar.getInstance(DateUtil.UTC);
-                    cal.add(Calendar.HOUR, SSO_COOKIE_LIFETIME_HOURS);
-                    return cal.getTime();
-                }
-
-                public static final int SSO_COOKIE_LIFETIME_HOURS = 2 * 24; // in hours
-
-                public List<SSOCookieCredential> getSSOCookieCredentials()  {
-                    List<SSOCookieCredential> cookieList = new ArrayList<>();
-                    SSOCookieCredential ret = new SSOCookieCredential(loginToken, domain, getExpirationDate() );
-                    cookieList.add(ret);
-                    log.debug("login cookie credential: " + ret);
-                    return cookieList;
-                }
-
-                public Set<Principal> getPrincipals()
-                {
-                    if (cookiePrincipals == null) {
-                        getCookieTokens();
-                    }
-                    return cookiePrincipals;
-                }
-
-            });
-
-            System.clearProperty(Authenticator.class.getName());
-
-            log.debug("tap sync cookie service url: " + syncCookieURL.toExternalForm());
-
-            Date d = new Date(System.currentTimeMillis() + 365*86400*1000); // one year in future
-            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-            String future = df.format(d);
-            String adql = "SELECT top 1 * from caom2.Observation where metaRelease IS NULL OR metaRelease > '"+future+"'";
-
-            Map<String,Object> params = new TreeMap<String,Object>();
-            params.put("LANG", "ADQL");
-            params.put("QUERY", adql);
-
-            String queryStr = "?LANG=ADQL&QUERY=" + NetUtil.encode(adql);
-
-
-            URL nextUrl = new URL(syncCookieURL.toExternalForm() + queryStr);
-
-            ByteArrayOutputStream whoamiout = new ByteArrayOutputStream(1024);
-
-            // HttpPost will not forward the cookie correctly on the redirect, so use
-            // HttpDownload (get) for this test.
-            HttpDownload httpGet = new HttpDownload(nextUrl, whoamiout);
-            httpGet.setFollowRedirects(true);
-            Subject.doAs(authSubject, new RunnableAction(httpGet));
-            String contentType = httpGet.getContentType();
-            Assert.assertNull("GET returned errors", httpGet.getThrowable());
-            Assert.assertEquals("Wrong response code", 200, httpGet.getResponseCode());
-
-            log.debug("contentType: " + contentType);
-
-            Assert.assertEquals("application/x-votable+xml", contentType);
-
-
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
-        } finally  {
-            System.clearProperty(Authenticator.class.getName());
         }
     }
-
 
 }

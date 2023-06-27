@@ -81,6 +81,8 @@ public class Constants {
 
     public static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/argus");
     
+    public static final String PEM_FILE = "argus.pem";
+    
     static {
         Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.reg", Level.INFO);
