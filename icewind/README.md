@@ -65,7 +65,7 @@ allows for the whole "data collection" to be registered in an IVOA registry usin
 `<basePublisherID>/<collection>` as the resource identifier (optional, TBD).
 
 `icewind` normally runs forever; the _exitWhenComplete_ flag (optional) can
-be set to `true` to make the sync process to exit after syncing each collection once.
+be set to `true` to cause the process to exit after syncing each collection once.
 
 ### cadcproxy.pem
 Optional certificate in /config is used to authenticate to the _repoService_ if 
