@@ -79,12 +79,13 @@ import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.tap.schema.TapSchemaDAO;
 import ca.nrc.cadc.uws.Job;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
-import org.opencadc.gms.GroupClient;
 import org.opencadc.gms.GroupURI;
+import org.opencadc.gms.IvoaGroupClient;
 
 /**
  * Utility class for testings in CAOM
@@ -147,7 +148,7 @@ public class TestUtil {
         }
     };
 
-    static class TestGMSClient implements GroupClient {
+    static class TestGMSClient extends IvoaGroupClient {
 
         private Subject subjectWithGroups;
 
@@ -161,10 +162,9 @@ public class TestUtil {
         }
 
         @Override
-        public List<GroupURI> getMemberships() {
+        public Set<GroupURI> getMemberships(URI resourceID) {
             Subject cur = AuthenticationUtil.getCurrentSubject();
-            List<GroupURI> memberships = new ArrayList<GroupURI>();
-            URI resourceID = URI.create("ivo://example.org/gms");
+            Set<GroupURI> memberships = new TreeSet<>();
             if (cur == subjectWithGroups) {
                 memberships.add(new GroupURI(resourceID, "666"));
                 memberships.add(new GroupURI(resourceID, "777"));

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -132,8 +132,6 @@ public class CaomAdqlQuery extends AdqlQuery
         // after CaomRegionConverter: triggering off the same column names and converting some uses
         TableNameConverter tnc = new TableNameConverter(true);
         tnc.put("ivoa.ObsCore", "caom2.ObsCore");
-        tnc.put("ivoa.ObsFile", "caom2.ObsFile");
-        tnc.put("ivoa.ObsPart", "caom2.ObsPart");
         // TAP-1.1 version of tap_schema
         tnc.put("tap_schema.schemas", "tap_schema.schemas11");
         tnc.put("tap_schema.tables", "tap_schema.tables11");

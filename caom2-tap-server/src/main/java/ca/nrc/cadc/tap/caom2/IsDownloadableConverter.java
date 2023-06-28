@@ -95,6 +95,7 @@ import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupClient;
+import org.opencadc.gms.IvoaGroupClient;
 
 /**
  * Convert a call to isDownloadable(someColumn) to something that makes the value
@@ -118,10 +119,10 @@ public class IsDownloadableConverter extends SelectNavigator
 
     private transient DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
 
-    private GroupClient gmsClient;
+    private IvoaGroupClient gmsClient;
     
     // testing support
-    public void setGMSClient(GroupClient gmsClient) 
+    void setGMSClient(IvoaGroupClient gmsClient) 
     { 
         this.gmsClient = gmsClient;
     }

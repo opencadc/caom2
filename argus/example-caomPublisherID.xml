@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.3" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.4">
+
+    <!-- template service descriptor to go with the caom2:Plane.publisherID column -->
+    
+    <!-- need a valid ID in the template for the ref="caomPublisherID" below -->
+    <INFO name="tmp" ID="caomPublisherID" value="this will be dropped..." />
+    
+    <!-- service descriptor for the associated DataLink#links service -->
+    <RESOURCE type="meta" utype="adhoc:service">
+        <!-- tell clients this is a standard links-1.1 service -->
+        <PARAM name="standardID" datatype="char" arraysize="*" value="ivo://ivoa.net/std/DataLink#links-1.1" />
+
+        <!-- option: include the accessURL directly (suitable for unregistered links service) -->
+        <PARAM name="accessURL" datatype="char" arraysize="*" value="https://example.net/datalink/links" />
+        
+        <!-- for a datalink service in the registry, include resourceIdentifier -->
+        <PARAM name="resourceIdentifier" datatype="char" arraysize="*" value="ivo://example/links" />
+        <!-- option: the accessURL PARAM is dynamically inserted by resolving the resourceIdentifier,
+            but will not replace an existing accessURL param such as below -->
+            
+        <GROUP name="inputParams">
+            <PARAM name="ID" datatype="char" arraysize="*" ref="caomPublisherID" value=""/>
+        </GROUP>
+    </RESOURCE>
+</VOTABLE>

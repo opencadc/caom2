@@ -70,6 +70,7 @@
 package ca.nrc.cadc.tap.caom2;
 
 import ca.nrc.cadc.cred.client.CredUtil;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.tap.parser.ParserUtil;
@@ -77,11 +78,14 @@ import ca.nrc.cadc.tap.schema.ColumnDesc;
 import ca.nrc.cadc.tap.schema.SchemaDesc;
 import ca.nrc.cadc.tap.schema.TableDesc;
 import ca.nrc.cadc.tap.schema.TapSchema;
+import java.io.IOException;
 import java.net.URI;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
@@ -90,9 +94,8 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import org.apache.log4j.Logger;
-import org.opencadc.gms.GroupClient;
 import org.opencadc.gms.GroupURI;
-import org.opencadc.gms.GroupUtil;
+import org.opencadc.gms.IvoaGroupClient;
 
 /**
  *
@@ -171,33 +174,30 @@ public class Util
         return rtn;
     }
     
-    public static List<String> getGroupIDs(GroupClient gmsClient)
-        throws AccessControlException
-    {
-        List<String> groupIDs = new ArrayList<String>();
+    public static List<String> getGroupIDs(IvoaGroupClient gmsClient) throws AccessControlException {
+        List<String> groupIDs = new ArrayList<>();
             
-        try
-        {
-            if (CredUtil.checkCredentials())
-            {
-                GroupClient gms = gmsClient;
-                if (gms == null)
-                {
-                    LocalAuthority loc = new LocalAuthority();
-                    URI gmsURI = loc.getServiceURI(Standards.GMS_GROUPS_01.toString());
-                    gms = GroupUtil.getGroupClient(gmsURI);
-                }
-                List<GroupURI> groups = gms.getMemberships();
-                for (GroupURI g : groups)
-                {
+        IvoaGroupClient gms = gmsClient;
+        if (gms == null) {
+            gms = new IvoaGroupClient();
+        }
+        try {
+            if (CredUtil.checkCredentials()) {
+                LocalAuthority loc = new LocalAuthority();
+                URI gmsURI = loc.getServiceURI(Standards.GMS_SEARCH_10.toString());
+                Set<GroupURI> groups = gms.getMemberships(gmsURI);
+                for (GroupURI g : groups) {
                     groupIDs.add(g.getName());
                 }
             }
+        } catch (NoSuchElementException ex) {
+            log.debug("trusted GMS client not configured - return no groups");
+        } catch (CertificateException ex) {
+            throw new AccessControlException("failed to find group memberships (invalid proxy certficate)");
+        } catch (InterruptedException | IOException | ResourceNotFoundException ex) {
+            throw new RuntimeException("failed to find group memberships", ex);
         }
-        catch (CertificateException ex)
-        {
-            throw new RuntimeException("failed to find group memberships (invalid proxy certficate)", ex);
-        }
+
         return groupIDs;
     }
 
