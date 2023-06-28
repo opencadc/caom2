@@ -72,6 +72,53 @@ using the _TempStorageManager_, the base URL must include "/results" as the last
 ### argus.properties
 This file may be needed in the future but is not currently used.
 
+### injecting VOTable resources into query results
+Some columns in the CAOM metadata have _ID_ values that are asssigned to the VOTable FIELD in the output.
+These columns can be referred to using the standard XML IDREF mechanism. The primary purpose is to inject
+a DataLink service descriptor resource that tells clients about a service they can call using values from
+the column.
+
+The following _ID_ values are available in CAOM, with the suggested use:
+|ID|column|intended usage|
+|--|:----:|:------------:|
+|caomPublisherID|caom2.Plane.publisherID|inject DataLink "links" descriptor|
+|caomArtifactID|caom2.Artifact.uri|experimental: link to direct data access service|
+|caomObservationURI|caom2.Observation.observationURI|experimental: link to complete observation metadata|
+
+To enable injection of resources, a VOTable xml file named `{ID}.xml` is added to the config
+directory. It must be a valid VOTable with one or more resources of `type="meta"`.
+
+Example _links_ descritor in a file named `caomPublisherID.xml`:
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.3" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.4">
+
+    <!-- template service descriptor to go with the caom2:Plane.publisherID column -->
+    
+    <!-- need a valid ID in the template for the ref="caomPublisherID" below -->
+    <INFO name="tmp" ID="caomPublisherID" value="this will be dropped..." />
+    
+    <!-- service descriptor for the associated DataLink#links service -->
+    <RESOURCE type="meta" utype="adhoc:service">
+        <!-- tell clients this is a standard links-1.1 service -->
+        <PARAM name="standardID" datatype="char" arraysize="*" value="ivo://ivoa.net/std/DataLink#links-1.1" />
+
+        <!-- option: include the accessURL directly (suitable for unregistered links service) -->
+        <PARAM name="accessURL" datatype="char" arraysize="*" value="https://example.net/datalink/links" />
+        
+        <!-- for a datalink service in the registry, include resourceIdentifier -->
+        <PARAM name="resourceIdentifier" datatype="char" arraysize="*" value="ivo://example/links" />
+        <!-- option: the accessURL PARAM is dynamically inserted by resolving the resourceIdentifier,
+            but will not replace an existing accessURL param such as below -->
+            
+        <GROUP name="inputParams">
+            <PARAM name="ID" datatype="char" arraysize="*" ref="caomPublisherID" value=""/>
+        </GROUP>
+    </RESOURCE>
+```
+Whenever the column is selected, the resource(s) in the file will be injected into the VOTable query result.
+
 ## building it
 ```
 gradle clean build
