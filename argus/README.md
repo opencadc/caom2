@@ -1,6 +1,6 @@
 # argus
 
-`argus` is a TAP [https://www.ivoa.net/documents/TAP/](Table Access Protocol) service 
+`argus` is a TAP [https://www.ivoa.net/documents/TAP/](Table Access Protocol) service
 for CAOM [https://www.opencadc.org/caom2/](Common Archive Observation Model).
 
 ## deployment
