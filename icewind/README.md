@@ -73,11 +73,11 @@ allows for the whole "data collection" to be registered in an IVOA registry usin
 `icewind` normally runs forever; the _exitWhenComplete_ flag (optional) can
 be set to `true` to cause the process to exit after syncing each collection once.
 
-### cadcproxy.pem
-Optional certificate in /config is used to authenticate to the _repoService_ if 
-challenged for a client certificate. If cadcproxy.pem is not present, queries to 
+### cadcproxy.pem (optional)
+This client certificate can be provided in /config directory. If present, it is used to 
+authenticate to the _repoService_ if the service requests a client certificate. If 
+the certificate is not present or the service does not request it, queries to 
 the repository service are made anonymously.
-
 
 ## building it
 ```
