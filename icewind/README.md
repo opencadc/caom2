@@ -1,6 +1,6 @@
 # CAOM metadata-sync process (icewind)
 
-`icewind` is an application that synchronizes [https://www.opencadc.org/caom2/](Common Archive Observation Model) 
+`icewind` is an application that synchronizes [Common Archive Observation Model](https://www.opencadc.org/caom2/)
 (CAOM) metadata from a remote CAOM repository service to a local CAOM database.
 
 ## deployment
