@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+    <JarScanner scanClassPath="false" />
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+    <Resource name="jdbc/sandbox-repo"
+        auth="Container"
+        type="javax.sql.DataSource"
+        factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" closeMethod="close"
+        minEvictableIdleTimeMillis="60000" timeBetweenEvictionRunsMillis="30000"
+        maxWait="20000"
+        initialSize="0" minIdle="0" maxIdle="${sc2repo.sandbox.maxActive}" maxActive="${sc2repo.sandbox.maxActive}"
+        username="${sc2repo.sandbox.username}" password="${sc2repo.sandbox.password}"
+        driverClassName="org.postgresql.Driver" url="${sc2repo.sandbox.url}"
+        removeAbandoned="false"
+        testOnBorrow="true" validationQuery="select 123" />       
+
+    <Resource name="jdbc/sandboxtest-repo"
+        auth="Container"
+        type="javax.sql.DataSource"
+        factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" closeMethod="close"
+        minEvictableIdleTimeMillis="60000" timeBetweenEvictionRunsMillis="30000"
+        maxWait="20000"
+        initialSize="0" minIdle="0" maxIdle="${sc2repo.test.maxActive}" maxActive="${sc2repo.test.maxActive}"
+        username="${sc2repo.test.username}" password="${sc2repo.test.password}"
+        driverClassName="org.postgresql.Driver" url="${sc2repo.test.url}"
+        removeAbandoned="false"
+        testOnBorrow="true" validationQuery="select 123" />     
+</Context>

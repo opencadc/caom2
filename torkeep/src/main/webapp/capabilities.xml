@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vosi:capabilities
+    xmlns:vosi="http://www.ivoa.net/xml/VOSICapabilities/v1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:vs="http://www.ivoa.net/xml/VODataService/v1.1">
+
+  <capability standardID="ivo://ivoa.net/std/VOSI#capabilities">
+    <interface xsi:type="vs:ParamHTTP" role="std">
+      <accessURL use="full">https://replace.me.com/sc2repo/capabilities</accessURL>
+    </interface>
+  </capability>
+
+  <capability standardID="ivo://ivoa.net/std/VOSI#availability">
+    <interface xsi:type="vs:ParamHTTP" role="std">
+      <accessURL use="full">https://replace.me.com/sc2repo/availability</accessURL>
+    </interface>
+  </capability>
+  
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/LOGGING#logControl-1.0">
+    <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
+      <accessURL use="full">https://replace.me.com/sc2repo/logControl</accessURL>     
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+    </interface> 
+  </capability>
+
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2Repository#obs-1.2">
+    <interface xsi:type="vs:ParamHTTP" role="std">
+      <accessURL use="base">https://replace.me.com/sc2repo/observations</accessURL>
+      <securityMethod />
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+    </interface>
+  </capability>
+
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2Repository#del-1.0">
+    <interface xsi:type="vs:ParamHTTP" role="std">
+      <accessURL use="base">https://replace.me.com/sc2repo/deletions</accessURL>
+      <securityMethod />
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+    </interface>
+  </capability>
+</vosi:capabilities>
+
