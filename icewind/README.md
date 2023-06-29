@@ -1,6 +1,12 @@
 # CAOM metadata-sync process (icewind)
 
-Process to sync Observations from a remote CAOM repository service to a local CAOM database.
+`icewind` is an application that synchronizes [https://www.opencadc.org/caom2/](Common Archive Observation Model) 
+(CAOM) metadata from a remote CAOM repository service to a local CAOM database.
+
+## deployment
+This application requies a PostgreSQL database backend to store the CAOM content. 
+The `citext` extension is used for several _keywords_ columns; the `pgsphere` extension
+is used for spherical geometry columns and spatial queries.
 
 ## configuration
 
