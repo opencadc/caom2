@@ -1,6 +1,12 @@
 # CAOM metadata-sync process (icewind)
 
-Process to sync Observations from a remote CAOM repository service to a local CAOM database.
+`icewind` is an application that synchronizes [https://www.opencadc.org/caom2/](Common Archive Observation Model) 
+(CAOM) metadata from a remote CAOM repository service to a local CAOM database.
+
+## deployment
+This application requies a PostgreSQL database backend to store the CAOM content. 
+The `citext` extension is used for several _keywords_ columns; the `pgsphere` extension
+is used for spherical geometry columns and spatial queries.
 
 ## configuration
 
@@ -67,11 +73,11 @@ allows for the whole "data collection" to be registered in an IVOA registry usin
 `icewind` normally runs forever; the _exitWhenComplete_ flag (optional) can
 be set to `true` to cause the process to exit after syncing each collection once.
 
-### cadcproxy.pem
-Optional certificate in /config is used to authenticate to the _repoService_ if 
-challenged for a client certificate. If cadcproxy.pem is not present, queries to 
+### cadcproxy.pem (optional)
+This client certificate can be provided in /config directory. If present, it is used to 
+authenticate to the _repoService_ if the service requests a client certificate. If 
+the certificate is not present or the service does not request it, queries to 
 the repository service are made anonymously.
-
 
 ## building it
 ```
