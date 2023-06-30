@@ -69,6 +69,7 @@
 
 package org.opencadc.icewind;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.util.Log4jInit;
@@ -215,7 +216,11 @@ public class Main {
                     configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE / 10,
                                                         full, skip, noChecksum, exitWhenComplete, maxSleep);
 
-            final Subject subject = SSLUtil.createSubject(new File(CERTIFICATE_FILE_LOCATION));
+            Subject subject = AuthenticationUtil.getAnonSubject();
+            File cert = new File(CERTIFICATE_FILE_LOCATION);
+            if (cert.exists()) {
+                subject = SSLUtil.createSubject(cert);
+            }
             Subject.doAs(subject, new RunnableAction(harvester));
         } catch (Throwable unexpected) {
             log.fatal("Unexpected failure", unexpected);
