@@ -39,34 +39,34 @@ Each entry in the properties file configures a collection. Each entry has a name
 
 ```
 # required properties
-org.opencadc.torkeep.entry = {entry name}
-{entry name}.schema = {schema}
-{entry name}.basePublisherID = {URI}
+org.opencadc.torkeep.collection = {CAOM collection name}
+{collection name}.basePublisherID = {URI}
 
 # optional properties
-{entry name}.readOnlyGroup = {group URI}
-{entry name}.readWriteGroup = {group URI}
-{entry name}.computeMetadata = {true | false}
-{entry name}.proposalGroup = {true | false}
+{collection name}.readOnlyGroup = {group URI}
+{collection name}.readWriteGroup = {group URI}
+{collection name}.anon = {true | false}
+{collection name}.computeMetadata = {true | false}
+{collection name}.proposalGroup = {true | false}
 ```
 
-_org.opencadc.torkeep.entry_ creates a new rule with the specified entry name.
+_org.opencadc.torkeep.collection_ specifies the CAOM collection name.
 
-_{entry name}.schema_ is the CAOM schema name for the entry.
-
-_{entry name}.bashPublisherID_  is the base for generating Plane publisherID values.
+_{collection name}.bashPublisherID_  is the base for generating Plane publisherID values.
 The base is an uri of the form `ivo://<authority>[/<path>]`
 publisherID values: `<basePublisherID>/<collection>?<observationID>/<productID>`
 
-_{entry name}.readOnlyGroup_ specifies a group (one per line) that can read (get) matching assets (default: empty list).
+_{collection name}.readOnlyGroup_ specifies a group (one per line) that can read (get) matching assets (default: empty list).
 
-_{entry name}.readWriteGroup_ entry specifies a group (one per line) that can read and write (get/put/update/delete)
+_{collection name}.readWriteGroup_ specifies a group (one per line) that can read and write (get/put/update/delete)
 matching assets (default: empty list).
 
-_{entry name}.computeMetadata_ enables computation and persistence of computed metadata(generally, Plane metadata
+_{collection name}.anon_  specifies that all users (including anonymous) can read matching assets (default: false).
+
+_{collection name}.computeMetadata_ enables computation and persistence of computed metadata(generally, Plane metadata
 aggregated from the artifacts). (default: false)
 
-_{entry name}.proposalGroup_ is a boolean flag which indicates whether a proposal group is to be generated
+_{collection name}.proposalGroup_ is a boolean flag which indicates whether a proposal group is to be generated
 in the observation for the collection. (default: false)
 
 
