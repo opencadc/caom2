@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2017.                            (c) 2017.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,18 +62,13 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package org.opencadc.torkeep.action;
+package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.caom2.DeletedObservation;
+import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -90,23 +85,16 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class GetAction extends RepoAction {
+public class GetDeletedAction extends RepoAction {
+    private static final Logger log = Logger.getLogger(GetDeletedAction.class);
 
-    private static final Logger log = Logger.getLogger(GetAction.class);
-
-    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
-
-    public GetAction() {
+    public GetDeletedAction() { 
     }
 
     @Override
     public void doAction() throws Exception {
-        log.debug("GET ACTION");
-        ObservationURI uri = getURI();
-        if (uri != null) {
-            doGetObservation(uri);
-            return;
-        } else if (getCollection() != null) {
+        // lazy: this currently does not check if extra path elements were included
+        if (getCollection() != null) {
             InputParams ip = getInputParams();
             doList(ip.maxrec, ip.start, ip.end, ip.ascending);
         } else {
@@ -116,58 +104,26 @@ public class GetAction extends RepoAction {
         }
     }
 
-    protected void doGetObservation(ObservationURI uri) throws Exception {
-        log.debug("START: " + uri);
-
-        checkReadPermission();
-
-        ObservationDAO dao = getDAO();
-        ObservationResponse resp = dao.getObservationResponse(uri);
-
-        if (resp.error != null) {
-            throw resp.error;
-        }
-        if (resp.observation == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-
-        ObservationWriter ow = getObservationWriter();
-        
-        syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
-        syncOutput.setHeader("ETag", resp.observation.getAccMetaChecksum());
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ow.write(resp.observation, bc);
-        logInfo.setBytes(bc.getByteCount());
-
-        log.debug("DONE: " + uri);
-    }
-
     protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
         log.debug("START: " + getCollection());
 
         checkReadPermission();
 
-        ObservationDAO dao = getDAO();
+        DeletedEntityDAO dao = getDeletedDAO();
 
-        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec,
-                isAscending);
+        List<DeletedObservation> dels = dao.getList(getCollection(), start, end, maxRec);
 
-        if (states == null) {
+        if (dels == null) {
             throw new ResourceNotFoundException("Collection not found: " + getCollection());
         }
 
-        long byteCount = writeObservationList(states);
+        long byteCount = writeDeleted(dels);
         logInfo.setBytes(byteCount);
 
         log.debug("DONE: " + getCollection());
     }
-
-    protected ObservationWriter getObservationWriter() {
-        return new ObservationWriter();
-    }
-
-    protected long writeObservationList(List<ObservationState> states) throws IOException {
+    
+    private long writeDeleted(List<DeletedObservation> dels) throws IOException {
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         
@@ -175,16 +131,12 @@ public class GetAction extends RepoAction {
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
         CsvWriter writer = new CsvWriter(out, '\t');
-        for (ObservationState state : states) {
-            writer.write(state.getURI().getCollection());
-            writer.write(state.getURI().getObservationID());
-            if (state.maxLastModified != null) {
-                writer.write(df.format(state.maxLastModified));
-            } else {
-                writer.write("");
-            }
-            if (state.accMetaChecksum != null) {
-                writer.write(state.accMetaChecksum.toASCIIString());
+        for (DeletedObservation ddo : dels) {
+            writer.write(ddo.getID().toString());
+            writer.write(ddo.getURI().getCollection());
+            writer.write(ddo.getURI().getObservationID());
+            if (ddo.lastModified != null) {
+                writer.write(df.format(ddo.lastModified));
             } else {
                 writer.write("");
             }
@@ -193,4 +145,5 @@ public class GetAction extends RepoAction {
         writer.flush();
         return bc.getByteCount();
     }
+    
 }

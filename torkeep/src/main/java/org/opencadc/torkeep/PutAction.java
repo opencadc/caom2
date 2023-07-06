@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package org.opencadc.torkeep.action;
+package org.opencadc.torkeep;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;

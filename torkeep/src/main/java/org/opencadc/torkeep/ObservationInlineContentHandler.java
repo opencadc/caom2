@@ -67,13 +67,12 @@
  ************************************************************************
  */
 
-package org.opencadc.torkeep.action;
+package org.opencadc.torkeep;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.io.ByteCountInputStream;
-import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 

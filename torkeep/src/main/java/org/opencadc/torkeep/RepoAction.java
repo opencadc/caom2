@@ -67,7 +67,7 @@
 ************************************************************************
 */
 
-package org.opencadc.torkeep.action;
+package org.opencadc.torkeep;
 
 import ca.nrc.cadc.ac.UserNotFoundException;
 import ca.nrc.cadc.ac.client.GMSClient;
