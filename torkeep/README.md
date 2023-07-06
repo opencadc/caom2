@@ -24,7 +24,7 @@ org.opencadc.torkeep.caom2.password={password for caom2 pool}
 org.opencadc.torkeep.caom2.url=jdbc:postgresql://{server}/{database}
 ```
 
-The `admin` account owns and manages (create, alter, drop) caom2 database objects and manages all the content (insert, update, delete).
+This user account owns and manages (create, alter, drop) caom2 database objects and manages all the content (insert, update, delete).
 In addition, the TAP service does not currently support a configurable schema name: it assumes a schema named `caom2` holds the content.
 
 
