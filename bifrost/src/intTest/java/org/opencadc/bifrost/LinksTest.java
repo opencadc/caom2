@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.bifrost;
 
@@ -74,7 +74,6 @@ import ca.nrc.cadc.auth.SSLUtil;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableField;
-import ca.nrc.cadc.dali.tables.votable.VOTableInfo;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.reg.Standards;
@@ -97,71 +96,63 @@ import org.opencadc.datalink.server.ManifestWriter;
 
 /**
  *
- *  scope: we can only test scenarios where we have existing content
- *  In addition to the different content scenarios, we also need tests of single
- *  and multiple uri params being posted to test correct merging of results.
- *  A few IRIS uris would suffice to make this simple. Despite listing the GET
- *  with query string tests in the scenarios, a single test to prove the
- *  equivalence of GET and POST (single and multiple IRIS uris) should suffice.
- *  So, one test class for basic GET and POST, single and multiple URIs
- *  and then one test class per scenario should work.
+ * scope: we can only test scenarios where we have existing content
+ * In addition to the different content scenarios, we also need tests of single
+ * and multiple uri params being posted to test correct merging of results.
+ * A few IRIS uris would suffice to make this simple. Despite listing the GET
+ * with query string tests in the scenarios, a single test to prove the
+ * equivalence of GET and POST (single and multiple IRIS uris) should suffice.
+ * So, one test class for basic GET and POST, single and multiple URIs
+ * and then one test class per scenario should work.
  *
  * @author jburke
  */
-public class LinksTest
-{
+public class LinksTest {
+
     private static Logger log = Logger.getLogger(LinksTest.class);
 
-    protected static final String QUERY_URI1 = "caom:IRIS/f212h000/IRAS-25um";
-    protected static final String QUERY_URI2 = "caom:IRIS/f097h000/IRAS-60um";
-    
-    protected static final String QUERY_PUB1 = "ivo://cadc.nrc.ca/test/IRIS?f212h000/IRAS-25um";
+    protected static final String QUERY_PUB1 = "ivo://opencadc.org/IRIS?f212h000/IRAS-25um";
+    protected static final String QUERY_PUB2 = "ivo://opencadc.org/IRIS?f212h000/IRAS-60um";
     
     protected static final String INVALID_URI = "foo:bar";
-    protected static final String NOTFOUND_URI = "caom:FOO/notSuchObservation/noSuchPlane";
+    protected static final String NOTFOUND_URI = "ivo://opencadc.org/DO?not/found";
 
     protected static URL anonURL;
     protected static URL certURL;
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.sc2links", Level.INFO);
+    static {
+        Log4jInit.setLevel("org.opencadc.bifrost", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.datalink", Level.INFO);
     }
 
-    public LinksTest() { }
+    public LinksTest() {
+    }
 
     @BeforeClass
-    public static void before() throws Exception
-    {
-        try
-        {
-            File crt = FileUtil.getFileFromResource("x509_CADCRegtest1.pem", LinksTest.class);
+    public static void before() throws Exception {
+        try {
+            File crt = FileUtil.getFileFromResource("bifrost.pem", LinksTest.class);
             SSLUtil.initSSL(crt);
             log.debug("initSSL: " + crt);
-        }
-        catch(Throwable t)
-        {
+        } catch (Throwable t) {
             throw new RuntimeException("failed to init SSL", t);
         }
 
-        URI serviceID = new URI(TestUtil.DATALINK_SERVCIE_ID);
+        URI serviceID = TestUtil.RESOURCE_ID;
         RegistryClient rc = new RegistryClient();
-        anonURL = rc.getServiceURL(serviceID, Standards.DATALINK_LINKS_10, AuthMethod.ANON);
-        certURL = rc.getServiceURL(serviceID, Standards.DATALINK_LINKS_10, AuthMethod.CERT);
+        anonURL = rc.getServiceURL(serviceID, Standards.DATALINK_LINKS_11, AuthMethod.ANON);
+        certURL = rc.getServiceURL(serviceID, Standards.DATALINK_LINKS_11, AuthMethod.CERT);
         log.info("anon URL: " + anonURL);
         log.info("cert URL: " + certURL);
     }
 
     @Test
-    public void testSingleUriManifestFormat() throws Exception
-    {
+    public void testSingleUriManifestFormat() throws Exception {
         log.info("testSingleUriManifestFormat");
-        try
-        {
+        try {
             // POST the parameters.
             Map<String, Object> parameters = new HashMap<String, Object>();
-            parameters.put("id", QUERY_URI1);
+            parameters.put("id", QUERY_PUB1);
             String resp = TestUtil.post(anonURL, parameters, ManifestWriter.CONTENT_TYPE);
             log.debug("response:\n" + resp);
             Assert.assertNotNull("non-null response", resp);
@@ -172,50 +163,30 @@ public class LinksTest
             Assert.assertEquals("OK", parts[0]);
             URL url = new URL(parts[1]);
             log.info("result url: " + url);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testSinglePlaneURI_Anon() throws Exception
-    {
-        log.info("testSinglePlaneURI_Anon");
-        doSingleURI(anonURL, QUERY_URI1, "https");
-    }
-
-    @Test
-    public void testSinglePlaneURI_Auth() throws Exception
-    {
-        log.info("testSinglePlaneURI_Auth");
-        doSingleURI(certURL, QUERY_URI1, "https");
-    }
-    
-    @Test
-    public void testSinglePublisherID_Anon() throws Exception
-    {
+    public void testSinglePublisherID_Anon() throws Exception {
         log.info("testSinglePublisherID_Anon");
         doSingleURI(anonURL, QUERY_PUB1, "https");
     }
 
     @Test
-    public void testSinglePublisherID_Auth() throws Exception
-    {
+    public void testSinglePublisherID_Auth() throws Exception {
         log.info("testSinglePublisherID_Auth");
         doSingleURI(certURL, QUERY_PUB1, "https");
     }
 
-    private void doSingleURI(URL resourceURL, String uri, String expectedProtocol)
-    {
-        try
-        {
+    private void doSingleURI(URL resourceURL, String uri, String expectedProtocol) {
+        try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(resourceURL, new String[] { "id="+uri });
+            VOTableDocument getVotable = TestUtil.get(resourceURL, new String[]{"id=" + uri});
             VOTableResource gvr = getVotable.getResourceByType("results");
-            
+
             VOTableTable gvtab = gvr.getTable();
 
             // Check the VOTable FIELD's.
@@ -257,24 +228,20 @@ public class LinksTest
             TestUtil.checkContent(gvtab, expectedProtocol, false);
 
             log.debug("testSingleUri passed");
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testMultipleUri() throws Exception
-    {
+    public void testMultipleUri() throws Exception {
         log.info("testMultipleUri");
-        try
-        {
+        try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[] { "id="+QUERY_URI1, "id="+QUERY_URI2 });
+            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{"id=" + QUERY_PUB1, "id=" + QUERY_PUB2});
             VOTableResource gvr = getVotable.getResourceByType("results");
-            
+
             VOTableTable gvtab = gvr.getTable();
 
             // Check the VOTable FIELD's.
@@ -289,8 +256,8 @@ public class LinksTest
             // POST the parameters.
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("REQUEST", "getLinks");
-            parameters.put("id", QUERY_URI1);
-            parameters.put("id", QUERY_URI2);
+            parameters.put("id", QUERY_PUB1);
+            parameters.put("id", QUERY_PUB2);
             VOTableDocument postVotable = TestUtil.post(anonURL, parameters);
             VOTableResource pvr = postVotable.getResourceByType("results");
             VOTableTable pvtab = pvr.getTable();
@@ -311,46 +278,37 @@ public class LinksTest
             // may be handled in any order so we can't verify the tables are the same
             //int urlCol = getFieldIndexes(getFields)[1];
             //TestUtil.compareTableData(getTableData, postTableData, urlCol);
-
             log.debug("testMultipleUri passed");
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testUsageFault_noID() throws Exception
-    {
+    public void testUsageFault_noID() throws Exception {
         log.info("testUsageFault_noID");
-        try
-        {
+        try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[] { }, 200);
+            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{}, 200);
             VOTableResource gvr = getVotable.getResourceByType("results");
 
             // no rows
             Assert.assertFalse("no rows", gvr.getTable().getTableData().iterator().hasNext());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testUsageFault_badID() throws Exception
-    {
+    public void testUsageFault_badID() throws Exception {
         log.info("testUsageFault_badID");
-        try
-        {
+        try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[] { "ID="+INVALID_URI }, 200);
+            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{"ID=" + INVALID_URI}, 200);
             VOTableResource gvr = getVotable.getResourceByType("results");
-            
+
             VOTableTable gvtab = gvr.getTable();
 
             // Check the VOTable FIELD's.
@@ -361,7 +319,7 @@ public class LinksTest
             // Get the TABLEDATA.
             TableData getTableData = gvtab.getTableData();
             Assert.assertNotNull("VOTable TableData should not be null", getTableData);
-            
+
             Iterator<List<Object>> rows = getTableData.iterator();
             Assert.assertTrue(rows.hasNext()); // one row
             List<Object> row1 = rows.next();
@@ -372,26 +330,22 @@ public class LinksTest
             String emsg = (String) row1.get(index[7]);
             Assert.assertEquals(INVALID_URI, id);
             Assert.assertTrue(emsg.startsWith("UsageFault"));
-            Assert.assertNull( row1.get(index[1])); // access_url
-            Assert.assertNull( row1.get(index[2])); // service_def
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertNull(row1.get(index[1])); // access_url
+            Assert.assertNull(row1.get(index[2])); // service_def
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testNotFoundFault() throws Exception
-    {
+    public void testNotFoundFault() throws Exception {
         log.info("testNotFoundFault");
-        try
-        {
+        try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[] { "ID="+NOTFOUND_URI }, 200);
+            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{"ID=" + NOTFOUND_URI}, 200);
             VOTableResource gvr = getVotable.getResourceByType("results");
-            
+
             VOTableTable gvtab = gvr.getTable();
 
             // Check the VOTable FIELD's.
@@ -402,7 +356,7 @@ public class LinksTest
             // Get the TABLEDATA.
             TableData getTableData = gvtab.getTableData();
             Assert.assertNotNull("VOTable TableData should not be null", getTableData);
-            
+
             Iterator<List<Object>> rows = getTableData.iterator();
             Assert.assertTrue(rows.hasNext()); // one row
             List<Object> row1 = rows.next();
@@ -413,11 +367,9 @@ public class LinksTest
             String emsg = (String) row1.get(index[7]);
             Assert.assertEquals(NOTFOUND_URI, id);
             Assert.assertTrue(emsg.startsWith("NotFoundFault"));
-            Assert.assertNull( row1.get(index[1])); // access_url
-            Assert.assertNull( row1.get(index[2])); // service_def
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertNull(row1.get(index[1])); // access_url
+            Assert.assertNull(row1.get(index[2])); // service_def
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

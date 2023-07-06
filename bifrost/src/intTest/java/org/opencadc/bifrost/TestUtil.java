@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.bifrost;
 
@@ -93,11 +93,11 @@ import org.opencadc.datalink.DataLink;
  *
  * @author pdowler
  */
-public class TestUtil 
-{
+public class TestUtil {
+
     private static final Logger log = Logger.getLogger(TestUtil.class);
-    
-    static final String DATALINK_SERVCIE_ID = "ivo://cadc.nrc.ca/sc2links";
+
+    static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/bifrost");
 
     /**
      * Compare the GET and POST FIELD.
@@ -105,8 +105,7 @@ public class TestUtil
      * @param getFields GET FIELD's.
      * @param postFields POST FIELD's.
      */
-    public static void compareFields(List<VOTableField> getFields, List<VOTableField> postFields)
-    {
+    public static void compareFields(List<VOTableField> getFields, List<VOTableField> postFields) {
         Assert.assertEquals("GET and POST have different number of FIELD's", getFields.size(), postFields.size());
         Integer[] getIndexes = getFieldIndexes(getFields);
         Integer[] postIndexes = getFieldIndexes(postFields);
@@ -122,57 +121,34 @@ public class TestUtil
      * @param fields List of VOTableField
      * @return Integer array of indexes to values in the VOTableField.
      */
-    public static Integer[] getFieldIndexes(List<VOTableField> fields)
-    {
+    public static Integer[] getFieldIndexes(List<VOTableField> fields) {
         Assert.assertNotNull("VOTable FIELD: should not be null", fields);
         Assert.assertTrue("GET VOTable FIELD: should have 12+", fields.size() >= 12);
         Integer[] indexes = new Integer[]{null, null, null, null, null, null, null, null, null, null, null, null};
         Integer index = 0;
-        for (VOTableField field : fields)
-        {
+        for (VOTableField field : fields) {
             log.debug(field);
-            if (field.getName().equals("ID"))
-            {
+            if (field.getName().equals("ID")) {
                 indexes[0] = index;
-            }
-            else if (field.getName().equals("access_url"))
-            {
+            } else if (field.getName().equals("access_url")) {
                 indexes[1] = index;
-            }
-            else if (field.getName().equals("service_def"))
-            {
+            } else if (field.getName().equals("service_def")) {
                 indexes[2] = index;
-            }
-            else if (field.getName().equals("description"))
-            {
+            } else if (field.getName().equals("description")) {
                 indexes[3] = index;
-            }
-            else if (field.getName().equals("semantics"))
-            {
+            } else if (field.getName().equals("semantics")) {
                 indexes[4] = index;
-            }
-            else if (field.getName().equals("content_type"))
-            {
+            } else if (field.getName().equals("content_type")) {
                 indexes[5] = index;
-            }
-            else if (field.getName().equals("content_length"))
-            {
+            } else if (field.getName().equals("content_length")) {
                 indexes[6] = index;
-            }
-            else if (field.getName().equals("error_message"))
-            {
+            } else if (field.getName().equals("error_message")) {
                 indexes[7] = index;
-            }
-            else if (field.getName().equals("content_qualifier"))
-            {
+            } else if (field.getName().equals("content_qualifier")) {
                 indexes[8] = index;
-            }
-            else if (field.getName().equals("link_auth"))
-            {
+            } else if (field.getName().equals("link_auth")) {
                 indexes[9] = index;
-            }
-            else if (field.getName().equals("link_authorized"))
-            {
+            } else if (field.getName().equals("link_authorized")) {
                 indexes[10] = index;
             }
             index++;
@@ -191,18 +167,16 @@ public class TestUtil
         return indexes;
     }
 
-    public static void checkContent(VOTableTable tab, String expectedProto, boolean expectError) throws Exception
-    {
+    public static void checkContent(VOTableTable tab, String expectedProto, boolean expectError) throws Exception {
         Integer[] indices = TestUtil.getFieldIndexes(tab.getFields());
         int uriCol = indices[0];
         int urlCol = indices[1];
         int srvCol = indices[2];
         int semCol = indices[4];
         int errCol = indices[7];
-        
+
         Iterator<List<Object>> iter = tab.getTableData().iterator();
-        while (iter.hasNext())
-        {
+        while (iter.hasNext()) {
             List<Object> row = iter.next();
             Object uriO = row.get(uriCol);
             Object urlO = row.get(urlCol);
@@ -211,9 +185,9 @@ public class TestUtil
             Object semO = row.get(semCol);
             Assert.assertNotNull("ID value", uriO);
             Assert.assertNotNull("semantics value", semO);
-            
+
             URI uri = new URI((String) uriO);
-            
+
             if (expectError) {
                 Assert.assertNotNull(errO);
                 Assert.assertNull(urlO);
@@ -241,35 +215,28 @@ public class TestUtil
      * @param getTableData
      * @param postTableData
      */
-    public static void compareTableData(TableData getTableData, TableData postTableData, int urlCol, int sdfCol) 
-        throws Exception
-    {
+    public static void compareTableData(TableData getTableData, TableData postTableData, int urlCol, int sdfCol)
+            throws Exception {
         Iterator<List<Object>> getIterator = getTableData.iterator();
         Iterator<List<Object>> postIterator = postTableData.iterator();
         Assert.assertNotNull("Iterator to GET TableData should not be null", getIterator);
         Assert.assertNotNull("Iterator to POST TableData should not be null", postIterator);
-        while (getIterator.hasNext())
-        {
+        while (getIterator.hasNext()) {
             Assert.assertTrue("Expected POST TABLEDATA row, but found none", postIterator.hasNext());
             List<Object> getRow = getIterator.next();
             List<Object> postRow = postIterator.next();
             Assert.assertNotNull("GET TABLEDATA row is null", getRow);
             Assert.assertNotNull("POST TABLEDATA row is null", postRow);
             Assert.assertEquals("GET and POST row column count is different", getRow.size(), postRow.size());
-            for (int i = 0; i < getRow.size(); i++)
-            {
+            for (int i = 0; i < getRow.size(); i++) {
                 Object getObject = getRow.get(i);
                 Object postObject = postRow.get(i);
                 log.debug("column[" + i + "] GET=" + getObject + ", POST=" + postObject);
-                if (getObject == null)
-                {
+                if (getObject == null) {
                     Assert.assertNull("POST TABLEDATA row value is null", postObject);
-                }
-                else
-                {
+                } else {
                     Assert.assertNotNull("POST TABLEDATA row value is null", postObject);
-                    if (i == urlCol)
-                    {
+                    if (i == urlCol) {
                         String gs = (String) getObject;
                         URL gurl = new URL(gs);
                         String ps = (String) postObject;
@@ -277,36 +244,25 @@ public class TestUtil
                         Assert.assertEquals(gurl.getProtocol(), purl.getProtocol());
                         Assert.assertEquals(gurl.getHost(), purl.getHost());
                         Assert.assertEquals(gurl.getPath(), purl.getPath());
-                        if (gurl.getQuery() == null)
-                        {
+                        if (gurl.getQuery() == null) {
                             Assert.assertNull(purl.getQuery());
-                        }
-                        else
-                        {
+                        } else {
                             String[] gp = gurl.getQuery().split("&");
                             String[] pp = purl.getQuery().split("&");
                             Assert.assertEquals(gp.length, pp.length);
-                            for (int ii = 0; ii < gp.length; ii++)
-                            {
+                            for (int ii = 0; ii < gp.length; ii++) {
                                 String s1 = gp[ii].toLowerCase();
                                 String s2 = pp[ii].toLowerCase();
-                                if (s1.startsWith("runid"))
-                                {
+                                if (s1.startsWith("runid")) {
                                     Assert.assertTrue(s2.startsWith("runid"));
-                                }
-                                else
-                                {
+                                } else {
                                     Assert.assertEquals(s1, s2);
                                 }
                             }
                         }
-                    }
-                    else if (i == sdfCol)
-                    {
+                    } else if (i == sdfCol) {
                         // dynamic: cannot compare
-                    }
-                    else
-                    {
+                    } else {
                         Assert.assertEquals("GET and POST row values are different", getObject, postObject);
                     }
                 }
@@ -324,12 +280,11 @@ public class TestUtil
      * @throws UnsupportedEncodingException
      * @throws MalformedURLException
      */
-    public static VOTableDocument get(URL endpoint, String[] parameters) throws UnsupportedEncodingException, MalformedURLException, IOException
-    {
+    public static VOTableDocument get(URL endpoint, String[] parameters) throws UnsupportedEncodingException, MalformedURLException, IOException {
         return get(endpoint, parameters, 200);
     }
-    public static VOTableDocument get(URL endpoint, String[] parameters, int expectedCode) throws UnsupportedEncodingException, MalformedURLException, IOException
-    {
+
+    public static VOTableDocument get(URL endpoint, String[] parameters, int expectedCode) throws UnsupportedEncodingException, MalformedURLException, IOException {
         URL url = getQueryURL(endpoint, parameters);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         log.debug("GET " + url);
@@ -337,8 +292,7 @@ public class TestUtil
         get.run();
         log.debug("throwable", get.getThrowable());
         Assert.assertEquals("HTTP status code", expectedCode, get.getResponseCode());
-        if (expectedCode < 400 && get.getThrowable() != null)
-        {
+        if (expectedCode < 400 && get.getThrowable() != null) {
             Assert.fail("GET of " + url.toString() + " failed because " + get.getThrowable().getMessage());
         }
         String str = out.toString();
@@ -348,8 +302,6 @@ public class TestUtil
         Assert.assertNotNull("GET VOTable should not be null", votable);
         return votable;
     }
-    
-    
 
     /**
      * POST the given parameters and return the defaulty format: VOTable.
@@ -361,8 +313,7 @@ public class TestUtil
      * @throws MalformedURLException
      * @throws IOException
      */
-    public static VOTableDocument post(URL endpoint, Map<String, Object> parameters) throws UnsupportedEncodingException, MalformedURLException, IOException
-    {
+    public static VOTableDocument post(URL endpoint, Map<String, Object> parameters) throws UnsupportedEncodingException, MalformedURLException, IOException {
         String response = post(endpoint, parameters, null);
         VOTableReader reader = new VOTableReader();
         VOTableDocument votable = reader.read(response);
@@ -370,8 +321,8 @@ public class TestUtil
         return votable;
     }
 
-      /**
-     * POST the given parameters plus an optional  RESPONSEFORMAT=responseFormat and return
+    /**
+     * POST the given parameters plus an optional RESPONSEFORMAT=responseFormat and return
      * the raw response in the specified format.
      *
      * @param endpoint
@@ -383,20 +334,19 @@ public class TestUtil
      * @throws IOException
      */
     public static String post(URL endpoint, Map<String, Object> parameters, String responseFormat)
-        throws UnsupportedEncodingException, MalformedURLException, IOException
-    {
+            throws UnsupportedEncodingException, MalformedURLException, IOException {
         // POST parameters.
         URL url = getQueryURL(endpoint, null);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         // POST the query.
         log.debug("POST " + url);
-        if (responseFormat != null)
+        if (responseFormat != null) {
             parameters.put("RESPONSEFORMAT", responseFormat);
+        }
         HttpPost post = new HttpPost(url, parameters, out);
         post.run();
-        if (post.getThrowable() != null)
-        {
+        if (post.getThrowable() != null) {
             Assert.fail("POST of " + url.toString() + " failed because " + post.getThrowable().getMessage());
         }
 
@@ -415,14 +365,11 @@ public class TestUtil
      * @throws MalformedURLException
      */
     public static URL getQueryURL(URL baseUrl, String[] parameters)
-        throws UnsupportedEncodingException, MalformedURLException
-    {
+            throws UnsupportedEncodingException, MalformedURLException {
         StringBuilder sb = new StringBuilder();
-        if (parameters != null)
-        {
+        if (parameters != null) {
             sb.append("?");
-            for (String s : parameters)
-            {
+            for (String s : parameters) {
                 sb.append(s);
                 sb.append("&");
             }

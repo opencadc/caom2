@@ -65,10 +65,9 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.bifrost;
-
 
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.vosi.AvailabilityTest;
@@ -80,16 +79,13 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class VosiAvailabilityTest extends AvailabilityTest
-{
-    private static final Logger log = Logger.getLogger(VosiAvailabilityTest.class);
-    static
-    {
+public class VosiAvailabilityTest extends AvailabilityTest {
+
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.vosi", Level.INFO);
     }
-    
-    public VosiAvailabilityTest()
-    { 
-        super(URI.create("ivo://cadc.nrc.ca/sc2links"));
+
+    public VosiAvailabilityTest() {
+        super(TestUtil.RESOURCE_ID);
     }
 }

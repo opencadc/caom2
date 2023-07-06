@@ -65,10 +65,9 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.bifrost;
-
 
 import ca.nrc.cadc.reg.Capabilities;
 import ca.nrc.cadc.util.Log4jInit;
@@ -81,23 +80,13 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class VosiCapabilitiesTest extends CapabilitiesTest
-{
-    private static final Logger log = Logger.getLogger(VosiCapabilitiesTest.class);
-    static
-    {
+public class VosiCapabilitiesTest extends CapabilitiesTest {
+
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.vosi", Level.INFO);
     }
-    
-    public VosiCapabilitiesTest()
-    { 
-        super(URI.create("ivo://cadc.nrc.ca/sc2links"));
-    }
 
-    @Override
-    protected void validateContent(Capabilities caps) 
-        throws Exception
-    {
-        // TODO
+    public VosiCapabilitiesTest() {
+        super(TestUtil.RESOURCE_ID);
     }
 }
