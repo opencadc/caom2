@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2022.                            (c) 2022.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -97,6 +97,7 @@ import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.util.InvalidConfigException;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -124,12 +125,14 @@ public class ArtifactProcessor {
     private static final String PKG_CONTENT_TYPE_TAR = "application/x-tar";
 
     private final RegistryClient registryClient;
-    private final CaomArtifactResolver artifactResolver;
+    //private final CaomArtifactResolver artifactResolver;
+    private final URI locatorService;
     private boolean downloadOnly;
 
-    public ArtifactProcessor() {
+    public ArtifactProcessor(URI locatorService) {
         this.registryClient = new RegistryClient();
-        this.artifactResolver = new CaomArtifactResolver();
+        //this.artifactResolver = new CaomArtifactResolver();
+        this.locatorService = locatorService;
     }
 
     /**
@@ -187,7 +190,7 @@ public class ArtifactProcessor {
                 dl.linkAuthorized = readable;
                 dl.description = "download " + a.getURI().toASCIIString();
                 ret.add(dl);
-            } catch (MalformedURLException ex) {
+            } catch (MalformedURLException | RuntimeException ex) {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.errorMessage = "FatalFault: failed to generate download URL: " + ex.toString();
                 ret.add(dl);
@@ -267,6 +270,12 @@ public class ArtifactProcessor {
         public String customMax;
     }
 
+    // temporary
+    private boolean canCutout(Artifact a) {
+        return false;
+    }
+    
+    /*
     private boolean canCutout(Artifact a) {
         StorageResolver sr = artifactResolver.getStorageResolver(a.getURI());
         if (!(sr instanceof CutoutGenerator)) {
@@ -288,6 +297,7 @@ public class ArtifactProcessor {
         // file type check moved into CutoutGenerator.canCutout(Artifact)
         return true;
     }
+    */
 
     private ArtifactBounds generateBounds(Artifact a)
             throws NoSuchKeywordException {
@@ -448,9 +458,21 @@ public class ArtifactProcessor {
      */
     protected URL getDownloadURL(Artifact a)
             throws MalformedURLException {
-        URL url = artifactResolver.getURL(a.getURI());
-
-        return url;
+        //URL url = artifactResolver.getURL(a.getURI());
+        try {
+            Subject caller = AuthenticationUtil.getCurrentSubject();
+            AuthMethod am = AuthenticationUtil.getAuthMethodFromCredentials(caller);
+            URL baseURL = registryClient.getServiceURL(locatorService, Standards.SI_FILES, am);
+            if (baseURL == null) {
+                throw new RuntimeException("unable to generator URL for " + locatorService);
+            }
+            StringBuilder sb = new StringBuilder(baseURL.toExternalForm());
+            sb.append("/").append(a.getURI().toASCIIString());
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate valid URL for " + locatorService
+                    + " and artifact " + a.getURI());
+        }
     }
 
     /**

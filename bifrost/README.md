@@ -55,13 +55,22 @@ See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-reg
 `bifrost` must be configured to use a single CAOM TAP service (`argus`) to execute queries.
 ```
 # CAOM TAP service
-org.opencadc.bifrost.tapResourceID = {argus resourceID}
+org.opencadc.bifrost.queryService = {argus resourceID}
+
+# artifact locator service
+org.opencadc.bifrost.locatorService = {resourceID of global transfer negotiation service}
 ```
-The _tapResourceID_ is resolved by a registry lookup and that service is used to query
+The _queryService_ is resolved by a registry lookup and that service is used to query
 for CAOM content. It is assumed that this service is deployed "locally" since there can
 be many calls to `bifrost` and low latency is very desireable.
 
-`bifost` will attempt to use the caller's identity to query so that CAOM proprietary metadata
+The _locatorService_ is a data storage service that allows `bifrost` to resolve a CAOM 
+Artifact URI into a URL. Current hack: `bifrost` assumes the _locatorService_ also supports
+the simpler [https://github.com/opencadc/storage-inventory](storage-inventory) "files" API 
+and constructs URLs to the global `raven` service (which in turn will redirect the caller to
+one of the copies of the specified file).
+
+`bifrost` will attempt to use the caller's identity to query so that CAOM proprietary metadata
 protections are enforced, but the details of this depend on the configured IdentityManager 
 and local A&A service configuration.
 

@@ -119,7 +119,7 @@ public class DynamicTableDataTest {
         try {
             Job job = new Job();
 
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -142,7 +142,7 @@ public class DynamicTableDataTest {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -169,7 +169,7 @@ public class DynamicTableDataTest {
         try {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -194,7 +194,7 @@ public class DynamicTableDataTest {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -222,7 +222,7 @@ public class DynamicTableDataTest {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 2);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);

@@ -95,9 +95,6 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
 
     private static final Logger log = Logger.getLogger(ServiceAvailabilityImpl.class);
 
-    // TODO: from config
-    private static final URI TAP_URI = URI.create("ivo://opencadc.org/argus");
-
     private String UWSDS_TEST = "select jobID from uws.Job limit 1";
 
     public ServiceAvailabilityImpl() {
@@ -194,16 +191,20 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
                 log.debug("not found: " + Standards.UMS_USERS_01.toASCIIString());
             }
 
-            try {
-                url = reg.getServiceURL(TAP_URI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                if (url != null) {
-                    checkResource = new CheckWebService(url);
-                    checkResource.check();
-                } else {
-                    throw new ResourceNotFoundException("registry lookup - not found: " + TAP_URI.toASCIIString());
-                }
-            } catch (NoSuchElementException ex) { // old LocalAuthority behaviour, subject to change
-                log.debug("not found: " + TAP_URI.toASCIIString());
+            BifrostConfig conf = new BifrostConfig();
+            url = reg.getServiceURL(conf.getQueryService(), Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            if (url != null) {
+                checkResource = new CheckWebService(url);
+                checkResource.check();
+            } else {
+                throw new ResourceNotFoundException("registry lookup - not found: " + conf.getQueryService());
+            }
+            url = reg.getServiceURL(conf.getLocatorService(), Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            if (url != null) {
+                checkResource = new CheckWebService(url);
+                checkResource.check();
+            } else {
+                throw new ResourceNotFoundException("registry lookup - not found: " + conf.getLocatorService());
             }
 
         } catch (CheckException ce) {

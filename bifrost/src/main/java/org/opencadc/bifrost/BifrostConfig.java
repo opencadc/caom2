@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2022.                            (c) 2022.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,44 +67,80 @@
 
 package org.opencadc.bifrost;
 
-import ca.nrc.cadc.caom2ops.CaomTapQuery;
+import ca.nrc.cadc.util.InvalidConfigException;
+import ca.nrc.cadc.util.MultiValuedProperties;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.log4j.Logger;
-import org.opencadc.datalink.server.DataLinkSource;
-import org.opencadc.datalink.server.LinkQueryRunner;
 
 /**
- * Main entry point for this service that provides a source of links for
- * the base library.
- * 
+ *
  * @author pdowler
  */
-public class CaomLinkQueryRunner extends LinkQueryRunner {
-    private static final Logger log = Logger.getLogger(CaomLinkQueryRunner.class);
+public class BifrostConfig {
+    private static final Logger log = Logger.getLogger(BifrostConfig.class);
+
+    private static final String CONFIG = "bifrost.properties";
     
+    private static final String BASE_KEY = "org.opencadc.bifrost";
+    private static final String QUERY_KEY = BASE_KEY + ".queryService";
+    private static final String LOCATOR_KEY = BASE_KEY + ".locatorService";
     
+    private final URI queryService;
+    private final URI locatorService;
     
-    private final BifrostConfig conf;
+    public BifrostConfig() {
+        StringBuilder sb = new StringBuilder();
+        try {
+            PropertiesReader r = new PropertiesReader(CONFIG);
+            MultiValuedProperties props = r.getAllProperties();
+            
+            String qs = props.getFirstPropertyValue(QUERY_KEY);
+            URI qsURI = null;
+            sb.append("\n\t").append(QUERY_KEY).append(" - ");
+            if (qs == null) {
+                sb.append("MISSING");
+            } else {
+                try {
+                    qsURI = new URI(qs);
+                    sb.append("OK");
+                } catch (URISyntaxException ex) {
+                    sb.append("ERROR invalid URI: " + qs);
+                }
+            }
+            
+            String loc = props.getFirstPropertyValue(LOCATOR_KEY);
+            URI locURI = null;
+            sb.append("\n\t").append(QUERY_KEY).append(" - ");
+            if (loc == null) {
+                sb.append("MISSING");
+            } else {
+                try {
+                    locURI = new URI(loc);
+                    sb.append("OK");
+                } catch (URISyntaxException ex) {
+                    sb.append("ERROR invalid URI: " + loc);
+                }
+            }
+            
+            if (qsURI == null && locURI == null) {
+                throw new InvalidConfigException("invalid config: " + sb.toString());
+            }
+            this.queryService = qsURI;
+            this.locatorService = locURI;
+        } catch (InvalidConfigException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new InvalidConfigException("invalid config: " + ex.getMessage(), ex);
+        }
+    }
     
-    public CaomLinkQueryRunner() {
-        super();
-        this.conf = new BifrostConfig();
-        
+    public URI getQueryService() {
+        return queryService;
     }
 
-    @Override
-    protected DataLinkSource getDataLinkSource() {
-        String runID = job.getID();
-        if (job.getRunID() != null) {
-            runID = job.getRunID();
-        }
-        // TODO: get these from config
-        URI queryService = conf.getQueryService();
-        URI locatorService = conf.getLocatorService();
-                
-        // TODO: get real value from config
-        CaomTapQuery query = new CaomTapQuery(queryService, runID);
-        ArtifactProcessor ap = new ArtifactProcessor(locatorService);
-        return new DynamicTableData(job, query, ap);
+    public URI getLocatorService() {
+        return locatorService;
     }
 }
