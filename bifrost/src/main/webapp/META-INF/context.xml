@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+    <Resource name="jdbc/uws"
+        auth="Container"
+        type="javax.sql.DataSource"
+        factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" closeMethod="close"
+        minEvictableIdleTimeMillis="60000" timeBetweenEvictionRunsMillis="30000"
+        maxWait="20000"
+        initialSize="0" minIdle="0" maxIdle="${org.opencadc.bifrost.uws.maxActive}" maxActive="${org.opencadc.bifrost.uws.maxActive}"
+        username="${org.opencadc.bifrost.uws.username}" password="${org.opencadc.bifrost.uws.password}"
+        driverClassName="org.postgresql.Driver" url="${org.opencadc.bifrost.uws.url}"
+        removeAbandoned="false"
+        testOnBorrow="true" validationQuery="select 123" />
+
+</Context>
