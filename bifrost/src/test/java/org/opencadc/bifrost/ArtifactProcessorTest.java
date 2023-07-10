@@ -117,7 +117,7 @@ public class ArtifactProcessorTest {
         log.debug("testEmptyList START");
         try {
             URI uri = PUB_ID.getURI();
-            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
 
             ArtifactQueryResult artifacts = new ArtifactQueryResult(PUB_ID);
             List<DataLink> links = ap.process(uri, artifacts);
@@ -138,7 +138,7 @@ public class ArtifactProcessorTest {
             artifacts.getArtifacts().addAll(getTestArtifacts(1, 0));
             Assert.assertEquals("test setup", 1, artifacts.getArtifacts().size());
 
-            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
 
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);
@@ -169,7 +169,7 @@ public class ArtifactProcessorTest {
             artifacts.getArtifacts().addAll(getTestArtifacts(3, 2));
             Assert.assertEquals("test setup", 5, artifacts.getArtifacts().size());
 
-            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"));
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
 
             List<DataLink> links = ap.process(uri, artifacts);
             Assert.assertNotNull(links);

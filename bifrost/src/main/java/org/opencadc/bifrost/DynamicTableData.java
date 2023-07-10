@@ -192,7 +192,7 @@ public class DynamicTableData implements DataLinkSource {
                     if (pubID != null) {
                         try {
                             ArtifactQueryResult ar;
-                            log.debug("getBatchIterator: " + pubID);
+                            log.debug("getBatchIterator: " + uri);
                             ar = query.performQuery(pubID, downloadOnly);
                             if (ar == null || ar.getArtifacts().isEmpty()) {
                                 links = new ArrayList<>(1);

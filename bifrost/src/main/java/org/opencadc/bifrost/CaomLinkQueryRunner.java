@@ -69,6 +69,7 @@ package org.opencadc.bifrost;
 
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import java.net.URI;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.opencadc.datalink.server.DataLinkSource;
 import org.opencadc.datalink.server.LinkQueryRunner;
@@ -98,13 +99,15 @@ public class CaomLinkQueryRunner extends LinkQueryRunner {
         if (job.getRunID() != null) {
             runID = job.getRunID();
         }
-        // TODO: get these from config
+
         URI queryService = conf.getQueryService();
         URI locatorService = conf.getLocatorService();
-                
+        List<URI> readGrantProviders = conf.getReadGrantProviders();
+        
         // TODO: get real value from config
         CaomTapQuery query = new CaomTapQuery(queryService, runID);
-        ArtifactProcessor ap = new ArtifactProcessor(locatorService);
+        ArtifactProcessor ap = new ArtifactProcessor(locatorService, readGrantProviders);
+        
         return new DynamicTableData(job, query, ap);
     }
 }

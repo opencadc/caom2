@@ -72,6 +72,8 @@ import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
@@ -86,9 +88,11 @@ public class BifrostConfig {
     private static final String BASE_KEY = "org.opencadc.bifrost";
     private static final String QUERY_KEY = BASE_KEY + ".queryService";
     private static final String LOCATOR_KEY = BASE_KEY + ".locatorService";
+    private static final String READ_KEY = BASE_KEY + ".readGrantProvider";
     
     private final URI queryService;
     private final URI locatorService;
+    private final List<URI> readGrantProviders = new ArrayList<>();
     
     public BifrostConfig() {
         StringBuilder sb = new StringBuilder();
@@ -112,7 +116,7 @@ public class BifrostConfig {
             
             String loc = props.getFirstPropertyValue(LOCATOR_KEY);
             URI locURI = null;
-            sb.append("\n\t").append(QUERY_KEY).append(" - ");
+            sb.append("\n\t").append(LOCATOR_KEY).append(" - ");
             if (loc == null) {
                 sb.append("MISSING");
             } else {
@@ -124,11 +128,30 @@ public class BifrostConfig {
                 }
             }
             
+            // optional
+            List<String> srgp = props.getProperty(READ_KEY);
+            sb.append("\n\t").append(READ_KEY).append(" - ");
+            if (srgp == null || srgp.isEmpty()) {
+                sb.append("NONE");
+            } else {
+                for (String s : srgp) {
+                    try {
+                        URI u = new URI(s);
+                        readGrantProviders.add(u);
+                        sb.append(" ").append(s);
+                    } catch (URISyntaxException ex) {
+                        sb.append("ERROR invalid URI: " + s);
+                    }
+                }
+            }
+            
             if (qsURI == null && locURI == null) {
                 throw new InvalidConfigException("invalid config: " + sb.toString());
             }
             this.queryService = qsURI;
             this.locatorService = locURI;
+            // log would be OK if this method was called once in an init action, but is is per request
+            //log.info(sb.toString());
         } catch (InvalidConfigException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -142,5 +165,9 @@ public class BifrostConfig {
 
     public URI getLocatorService() {
         return locatorService;
+    }
+
+    public List<URI> getReadGrantProviders() {
+        return readGrantProviders;
     }
 }
