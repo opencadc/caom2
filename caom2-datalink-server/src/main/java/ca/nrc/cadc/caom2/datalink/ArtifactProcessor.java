@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.datalink;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.NotAuthenticatedException;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.Energy;
@@ -81,6 +82,8 @@ import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
+import ca.nrc.cadc.caom2.access.AccessUtil;
+import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
 import ca.nrc.cadc.caom2.compute.CustomAxisUtil;
 import ca.nrc.cadc.caom2.compute.CutoutUtil;
@@ -92,15 +95,19 @@ import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CutoutGenerator;
+import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.dali.util.DoubleArrayFormat;
 import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -111,6 +118,8 @@ import org.apache.log4j.Logger;
 import org.opencadc.datalink.DataLink;
 import org.opencadc.datalink.ServiceDescriptor;
 import org.opencadc.datalink.ServiceParameter;
+import org.opencadc.gms.GroupURI;
+import org.opencadc.gms.IvoaGroupClient;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -165,13 +174,7 @@ public class ArtifactProcessor {
                 sem = DataLink.Term.AUXILIARY;
             }
 
-            Boolean readable = null;
-            if (ReleaseType.DATA.equals(a.getReleaseType())) {
-                readable = ar.dataReadable;
-            } else if (ReleaseType.META.equals(a.getReleaseType())) {
-                readable = ar.metaReadable;
-            }
-            // else: new releaseType is not likely without major caom design change
+            Boolean readable = predictReadable(ar, a);
 
             if (readable != null) {
                 pkgReadable = pkgReadable && readable;
@@ -251,6 +254,58 @@ public class ArtifactProcessor {
             }
         }
         return ret;
+    }
+    
+    private Set<GroupURI> membershipCache = new TreeSet<>();
+    
+    private Boolean predictReadable(ArtifactQueryResult ar, Artifact a) {
+        // get access info from caom metadata already in hand
+        ArtifactAccess aa = AccessUtil.getArtifactAccess(a, ar.metaRelease, ar.getMetaReadGroups(), 
+                ar.dataRelease, ar.getDataReadGroups());
+        if (aa.isPublic) {
+            return true;
+        }
+        
+        if (aa.getReadGroups().isEmpty()) {
+            log.debug("no group grants: done");
+            return false;
+        }
+        
+        try {
+            // ugh: URI -> GroupURI
+            Set<GroupURI> allowed = new TreeSet<>();
+            for (URI u : aa.getReadGroups()) {
+                allowed.add(new GroupURI(u));
+            }
+            // check membership cache
+            for (GroupURI mem : membershipCache) {
+                if (allowed.contains(mem)) {
+                    return true;
+                }
+            }
+            
+            // check group membership
+            try {
+                if (!CredUtil.checkCredentials()) { // maybe COST
+                    log.debug("no credentials and not public");
+                    return false;
+                }
+            } catch (CertificateException ex) {
+                // TODO: respond false (probably won't be allowed) or null (don't know)?
+                throw new NotAuthenticatedException("delegated proxy certificate invalid", ex);
+            }
+            
+            IvoaGroupClient gms = new IvoaGroupClient();
+            Set<GroupURI> mem = gms.getMemberships(allowed); // COST
+            membershipCache.addAll(mem);
+            return !mem.isEmpty();
+        } catch (IOException | InterruptedException ex) {
+            // TODO: respond false (probably won't be allowed) or null (don't know)?
+            throw new RuntimeException("failed to verify group membership(s)", ex);
+        } catch (ResourceNotFoundException ex) {
+            log.debug("unable to verify membership: gms service not found", ex);
+            return null; // unknown but not fail
+        }
     }
 
     private class ArtifactBounds {

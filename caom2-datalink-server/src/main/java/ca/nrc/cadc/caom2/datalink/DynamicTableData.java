@@ -80,6 +80,7 @@ import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -177,33 +178,22 @@ public class DynamicTableData implements DataLinkSource {
             while (argIter.hasNext() && curIter == null) {
                 String s = argIter.next();
                 URI uri = null;
-                PlaneURI planeURI = null;
                 PublisherID pubID = null;
                 try {
                     List<DataLink> links = null;
                     try {
                         uri = new URI(s);
-                        if (PublisherID.SCHEME.equals(uri.getScheme())) {
-                            pubID = new PublisherID(uri);
-                        } else {
-                            planeURI = new PlaneURI(uri);
-                        }
-                    } catch (Exception ex) {
+                        pubID = new PublisherID(uri);
+                    } catch (URISyntaxException | IllegalArgumentException ex) {
                         links = new ArrayList<>(1);
                         DataLink usage = new DataLink(s, DataLink.Term.THIS);
                         usage.errorMessage = "UsageFault: invalid ID: " + s;
                         links.add(usage);
                     }
-                    if (pubID != null || planeURI != null) {
+                    if (pubID != null) {
                         try {
-                            ArtifactQueryResult ar;
-                            if (pubID != null) {
-                                log.debug("getBatchIterator: " + pubID);
-                                ar = query.performQuery(pubID, downloadOnly);
-                            } else {
-                                log.debug("getBatchIterator: " + planeURI);
-                                ar = query.performQuery(planeURI, downloadOnly);
-                            }
+                            log.debug("getBatchIterator: " + uri);
+                            ArtifactQueryResult ar = query.performQuery(pubID, downloadOnly);
                             if (ar == null || ar.getArtifacts().isEmpty()) {
                                 links = new ArrayList<>(1);
                                 DataLink notFound = new DataLink(s, DataLink.Term.THIS);

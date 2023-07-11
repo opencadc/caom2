@@ -319,34 +319,5 @@ public class DynamicTableDataTest
             log.debug("TestCaomTapQuery.getArtifacts: " + ret.getArtifacts().size());
             return  ret;
         }
-        
-        @Override
-        public ArtifactQueryResult performQuery(PlaneURI id, boolean artifactOnly)
-        {
-            PublisherID pid = new PublisherID(URI.create("ivo://cadc.nrc.ca/" 
-                    + id.getParent().getCollection() + "?" 
-                    + id.getParent().getObservationID() + "/"
-                    + id.getProductID()));
-                    
-            ArtifactQueryResult ret = new ArtifactQueryResult(pid);
-            try
-            {
-                for (int i=0; i<num; i++)
-                {
-                    Artifact a = new Artifact(
-                        URI.create("ad:IRIS/bar_baz_" + i),
-                        ProductType.SCIENCE, ReleaseType.DATA);
-                    a.contentLength = 123L;
-                    a.contentType = "text/plain";
-                    ret.getArtifacts().add(a);
-                }
-            }
-            catch(Exception ex)
-            {
-                throw new RuntimeException("test setup failed", ex);
-            }
-            log.debug("TestCaomTapQuery.getArtifacts: " + ret.getArtifacts().size());
-            return  ret;
-        }
     }
 }
