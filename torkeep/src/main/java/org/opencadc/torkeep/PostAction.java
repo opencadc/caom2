@@ -91,7 +91,7 @@ public class PostAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        ObservationURI uri = getURI();
+        ObservationURI uri = getObservationURI();
         log.debug("START: " + uri);
 
         checkWritePermission();
@@ -131,4 +131,5 @@ public class PostAction extends RepoAction {
     protected InlineContentHandler getInlineContentHandler() {
         return new ObservationInlineContentHandler();
     }
+
 }

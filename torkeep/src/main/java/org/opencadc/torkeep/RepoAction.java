@@ -75,12 +75,10 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ac.ReadAccessGenerator;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.cred.client.CredUtil;
@@ -91,22 +89,23 @@ import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import com.csvreader.CsvWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
+import org.opencadc.permissions.ReadGrant;
+import org.opencadc.permissions.WriteGrant;
+import org.opencadc.permissions.client.PermissionsClient;
 
 /**
  * @author pdowler
@@ -114,34 +113,32 @@ import org.opencadc.gms.GroupURI;
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
-    public static final String ERROR_MIMETYPE = "text/plain";
-
     public static final int MAX_LIST_SIZE = 100000;
 
-    private static final GroupURI CADC_GROUP_URI = new GroupURI(URI.create("ivo://cadc.nrc.ca/gms?CADC"));
-
-    private String collection;
-    protected ObservationURI uri;
+    protected ObservationURI observationURI;
     protected boolean computeMetadata;
-    protected Map<String, Object> raGroupConfig = new HashMap<String, Object>(); 
-
-    private transient CaomRepoConfig repoConfig;
-    private transient ObservationDAO dao;
-    private transient DeletedEntityDAO deletedDAO;
+    private String collection;
+    private transient CollectionsConfig collectionsConfig;
+    private transient ObservationDAO observationDAO;
+    private transient DeletedEntityDAO deletedEntityDAO;
 
     protected RepoAction() {
     }
 
     private void initTarget() {
-        if (collection == null) {
+        log.debug("initTarget collection: " + this.collection);
+        if (this.collection == null) {
             String path = syncInput.getPath();
+            log.debug("syncInput path: " + path);
             if (path != null) {
                 String[] parts = path.split("/");
                 this.collection = parts[0];
+                log.debug("path collection: " + parts[0]);
                 if (parts.length > 1) {
                     String suri = "caom:" + path;
+                    log.debug("path uri: " + suri);
                     try {
-                        this.uri = new ObservationURI(new URI(suri));
+                        this.observationURI = new ObservationURI(new URI(suri));
                     } catch (URISyntaxException | IllegalArgumentException ex) {
                         throw new IllegalArgumentException("invalid input: " + suri, ex);
                     }
@@ -153,21 +150,17 @@ public abstract class RepoAction extends RestAction {
     // used by GetAction and GetDeletedAction
     protected void doGetCollectionList() throws Exception {
         log.debug("START: (collection list)");
-        initConfig();
-        Iterator<String> collectionListIterator = repoConfig.collectionIterator();
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");
-        
+
+        // Write out a single column as one entry per row
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        OutputStreamWriter out = new OutputStreamWriter(bc, StandardCharsets.US_ASCII);
         CsvWriter writer = new CsvWriter(out, '\t');
-        while (collectionListIterator.hasNext()) {
-            String collectionName = collectionListIterator.next();
-            // Write out a single column as one entry per row
-            if (!collectionName.isEmpty()) {
-                writer.write(collectionName);
-                writer.endRecord();
-            }
+        CollectionsConfig cc = getConfigs();
+        for (CollectionEntry entry : cc.getConfigs()) {
+            writer.write(entry.getCollection());
+            writer.endRecord();
         }
         writer.flush();
         logInfo.setBytes(bc.getByteCount());
@@ -194,7 +187,7 @@ public abstract class RepoAction extends RestAction {
         try {
             str = syncInput.getParameter("maxrec");
             if (str != null) {
-                int m = Integer.valueOf(str);
+                int m = Integer.parseInt(str);
                 if (m <= 0) {
                     throw new IllegalArgumentException("invalid maxrec value: " + m + ", maxrec must be > 0");
                 }
@@ -233,44 +226,40 @@ public abstract class RepoAction extends RestAction {
     }
     
     // return uri for get-observation, null for get-list, and throw for invalid
-    protected ObservationURI getURI() {
+    protected ObservationURI getObservationURI() {
         initTarget();
-        return uri;
+        return this.observationURI;
     }
 
     // return the specified collection or throw for invalid
     protected String getCollection() {
         initTarget();
-        return collection;
+        return this.collection;
     }
 
     private Map<String, Object> getDAOConfig(String collection) throws IOException {
-        initConfig();
-        Map<String,Object> ret = repoConfig.getDAOConfig(collection); // might throw
-        CaomRepoConfig.Item i = repoConfig.getConfig(collection);
-        if (i != null) {
-            this.computeMetadata = i.getComputeMetadata();
-            this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, i.getProposalGroup());
-            this.raGroupConfig.put(ReadAccessGenerator.OPERATOR_GROUP_KEY, i.getOperatorGroup());
-            this.raGroupConfig.put(ReadAccessGenerator.STAFF_GROUP_KEY, i.getStaffGroup());
+        CollectionsConfig collectionsConfig = getConfigs();
+        CollectionEntry collectionEntry = collectionsConfig.getConfig(collection);
+        if (collectionEntry != null) {
+            this.computeMetadata = collectionEntry.isComputeMetadata();
         }
-        return ret;
+        return TorkeepInitAction.getDAOConfig();
     }
     
     protected ObservationDAO getDAO() throws IOException {
-        if (dao == null) {
-            this.dao = new ObservationDAO();
-            dao.setConfig(getDAOConfig(collection));
+        if (this.observationDAO == null) {
+            this.observationDAO = new ObservationDAO();
+            this.observationDAO.setConfig(getDAOConfig(getCollection()));
         }
-        return dao;
+        return this.observationDAO;
     }
 
-    protected DeletedEntityDAO getDeletedDAO() throws IOException {
-        if (deletedDAO == null) {
-            this.deletedDAO = new DeletedEntityDAO();
-            deletedDAO.setConfig(getDAOConfig(collection));
+    protected DeletedEntityDAO getDeletedEntityDAO() throws IOException {
+        if (this.deletedEntityDAO == null) {
+            this.deletedEntityDAO = new DeletedEntityDAO();
+            this.deletedEntityDAO.setConfig(getDAOConfig(getCollection()));
         }
-        return deletedDAO;
+        return this.deletedEntityDAO;
     }
     
     // read the input stream (POST and PUT) and extract the observation from the XML
@@ -279,7 +268,8 @@ public abstract class RepoAction extends RestAction {
         Object o = syncInput.getContent(ObservationInlineContentHandler.ERROR_KEY);
         if (o != null) {
             ObservationParsingException ex = (ObservationParsingException) o;
-            throw new IllegalArgumentException("invalid input: " + uri + " reason: " + ex.getMessage(), ex);
+            throw new IllegalArgumentException("invalid input: " + getObservationURI() +
+                    " reason: " + ex.getMessage(), ex);
         }
         Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
         if (obs != null) {
@@ -305,48 +295,67 @@ public abstract class RepoAction extends RestAction {
             throw new IllegalStateException(STATE_READ_ONLY_MSG);
         }
 
-        initConfig();
-        CaomRepoConfig.Item i = repoConfig.getConfig(collection);
-        if (i == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
+        // config for the collection
+        CollectionsConfig collectionsConfig = getConfigs();
+        CollectionEntry collectionEntry = collectionsConfig.getConfig(getCollection());
+        if (collectionEntry == null) {
+            throw new ResourceNotFoundException("not found: " + getObservationURI());
         }
-        
-        if (i.getPublicRead()) {
-            return;
+
+        URI grantURI;
+        if (getObservationURI() != null) {
+            grantURI = getObservationURI().getURI();
+        } else {
+            grantURI = URI.create("caom://" + getCollection());
+        }
+
+        for (URI grantProvider : collectionsConfig.getGrantProviders()) {
+            log.debug("checking grant provider: " + grantProvider);
+            PermissionsClient permissionsClient = new PermissionsClient(grantProvider);
+            ReadGrant readGrant = permissionsClient.getReadGrant(grantURI);
+            if (readGrant != null) {
+                if (readGrant.isAnonymousAccess()) {
+                    return;
+                }
+            }
         }
 
         try {
             if (CredUtil.checkCredentials()) {
-                GroupURI grw = i.getReadWriteGroup();
-                GMSClient gms = new GMSClient(grw.getServiceID());
-                if (gms.isMember(grw.getName())) {
-                    return;
+                for (URI grantProvider : collectionsConfig.getGrantProviders()) {
+                    PermissionsClient pc = new PermissionsClient(grantProvider);
+                    WriteGrant writeGrant = pc.getWriteGrant(getObservationURI().getURI());
+                    if (writeGrant != null) {
+                        for (GroupURI groupURI : writeGrant.getGroups()) {
+                            GMSClient gmsClient = new GMSClient(groupURI.getServiceID());
+                            if (gmsClient.isMember(groupURI.getName())) {
+                                return;
+                            }
+                        }
+                    }
                 }
 
-                GroupURI gro = i.getReadOnlyGroup();
-                if (!grw.getServiceID().equals(gro.getServiceID())) {
-                    gms = new GMSClient(gro.getServiceID());
-                }
-
-                if (gms.isMember(gro.getName())) {
-                    return;
-                }
-
-                if (!gro.getServiceID().equals(CADC_GROUP_URI.getServiceID())) {
-                    gms = new GMSClient(CADC_GROUP_URI.getServiceID());
-                }
-                if (gms.isMember(CADC_GROUP_URI.getName())) {
-                    return;
+                for (URI grantProvider : collectionsConfig.getGrantProviders()) {
+                    PermissionsClient pc = new PermissionsClient(grantProvider);
+                    ReadGrant readGrant = pc.getReadGrant(getObservationURI().getURI());
+                    if (readGrant != null) {
+                        for (GroupURI groupURI : readGrant.getGroups()) {
+                            GMSClient gmsClient = new GMSClient(groupURI.getServiceID());
+                            if (gmsClient.isMember(groupURI.getName())) {
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "permission denied (credentials not found): " + collection);
+                "permission denied (credentials not found): " + getCollection());
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "permission denied (user not found): " + collection);
+                "permission denied (user not found): " + getCollection());
         }
-        throw new AccessControlException("permission denied: " + collection);
+        throw new AccessControlException("permission denied: " + getCollection());
     }
 
     /**
@@ -366,36 +375,49 @@ public abstract class RepoAction extends RestAction {
             throw new IllegalStateException(STATE_OFFLINE_MSG);
         }
 
-        initConfig();
-        CaomRepoConfig.Item i = repoConfig.getConfig(collection);
-        if (i == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
+        CollectionsConfig cc = getConfigs();
+        CollectionEntry entry = cc.getConfig(getCollection());
+        if (entry == null) {
+            throw new ResourceNotFoundException("not found: " + getObservationURI());
+        }
+
+        URI grantURI;
+        if (getObservationURI() != null) {
+            grantURI = getObservationURI().getURI();
+        } else {
+            grantURI = URI.create("caom://" + getCollection());
         }
 
         try {
             if (CredUtil.checkCredentials()) {
-                GroupURI guri = i.getReadWriteGroup();
-                URI gmsUri = guri.getServiceID();
-                GMSClient gms = new GMSClient(gmsUri);
-                if (gms.isMember(guri.getName())) {
-                    return;
+                for (URI grantProvider : cc.getGrantProviders()) {
+                    PermissionsClient pc = new PermissionsClient(grantProvider);
+                    WriteGrant writeGrant = pc.getWriteGrant(grantURI);
+                    if (writeGrant != null) {
+                        for (GroupURI groupURI : writeGrant.getGroups()) {
+                            GMSClient gms = new GMSClient(groupURI.getServiceID());
+                            if (gms.isMember(groupURI.getName())) {
+                                return;
+                            }
+                        }
+                    }
                 }
             }
         } catch (AccessControlException ex) {
             throw new AccessControlException(
-                "permission denied (credentials not found): " + collection);
+                "permission denied (credentials not found): " + getCollection());
         } catch (UserNotFoundException ex) {
             throw new AccessControlException(
-                "permission denied (user not found): " + collection);
+                "permission denied (user not found): " + getCollection());
         }
 
-        throw new AccessControlException("permission denied: " + collection);
+        throw new AccessControlException("permission denied: " + getCollection());
     }
 
     protected void validate(Observation obs) 
         throws AccessControlException, IOException, TransientException {
         try {
-            if (computeMetadata) {
+            if (this.computeMetadata) {
                 for (Plane p : obs.getPlanes()) {
                     ComputeUtil.clearTransientState(p);
                 }
@@ -408,7 +430,7 @@ public abstract class RepoAction extends RestAction {
                 }
             }
 
-            if (computeMetadata) {
+            if (this.computeMetadata) {
                 String ostr = obs.getCollection() + "/" + obs.getObservationID();
                 String cur = ostr;
                 try {
@@ -424,10 +446,10 @@ public abstract class RepoAction extends RestAction {
                 }
             }
             
-            ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), raGroupConfig);
-            if (ratGenerator != null) {
-                ratGenerator.generateTuples(obs);
-            }
+//            ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), raGroupConfig);
+//            if (ratGenerator != null) {
+//                ratGenerator.generateTuples(obs);
+//            }
         } catch (IllegalArgumentException ex) {
             log.debug(ex.getMessage(), ex);
             // build complete error cause message because rest api only outputs the message,
@@ -438,7 +460,7 @@ public abstract class RepoAction extends RestAction {
                 sb.append("|").append("cause: ").append(cause.getMessage());
                 cause = cause.getCause();
             }
-            throw new IllegalArgumentException("invalid input: " + uri + " " + sb.toString(), ex);
+            throw new IllegalArgumentException("invalid input: " + getObservationURI() + " " + sb.toString(), ex);
         }
     }
 
@@ -447,36 +469,38 @@ public abstract class RepoAction extends RestAction {
         return null;
     }
 
-    private void initConfig() throws IOException {
-        if (this.repoConfig == null) {
-            String serviceName = syncInput.getContextPath();
-            File config = new File(System.getProperty("user.home") + "/config",
-                serviceName + ".properties");
-            this.repoConfig = new CaomRepoConfig(config);
+//    /**
+//     * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured.
+//     * Returns null otherwise.
+//     *
+//     * @param collection
+//     * @param raGroupConfig read access group data from configuration file
+//     * @return read access generator plugin or null if not configured
+//     */
+//    protected ReadAccessGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
+//        ReadAccessGenerator ratGenerator = null;
+//
+//        if (raGroupConfig.get(ReadAccessGenerator.STAFF_GROUP_KEY) != null
+//                || raGroupConfig.get(ReadAccessGenerator.OPERATOR_GROUP_KEY) != null) {
+//            ratGenerator = new ReadAccessGenerator(collection, raGroupConfig);
+//        }
+//
+//        return ratGenerator;
+//    }
 
-            if (this.repoConfig.isEmpty()) {
-                throw new IllegalStateException("no RepoConfig.Item(s)found");
+    protected CollectionsConfig getConfigs() {
+        if (this.collectionsConfig == null) {
+            String jndiKey = TorkeepInitAction.JNDI_CONFIG_KEY;
+            log.debug("jndiKey: " + jndiKey);
+            try {
+                log.debug("retrieving config via JNDI: " + jndiKey);
+                javax.naming.Context initContext = new javax.naming.InitialContext();
+                this.collectionsConfig =  (CollectionsConfig) initContext.lookup(jndiKey);
+            } catch (Exception ex) {
+                throw new IllegalStateException("failed to find config via JNDI: lookup failed", ex);
             }
         }
-    }
-    
-    /**
-     * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured. 
-     * Returns null otherwise.
-     *
-     * @param collection
-     * @param raGroupConfig read access group data from configuration file
-     * @return read access generator plugin or null if not configured
-     */
-    protected ReadAccessGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
-        ReadAccessGenerator ratGenerator = null;
-        
-        if (raGroupConfig.get(ReadAccessGenerator.STAFF_GROUP_KEY) != null 
-                || raGroupConfig.get(ReadAccessGenerator.OPERATOR_GROUP_KEY) != null) {
-            ratGenerator = new ReadAccessGenerator(collection, raGroupConfig);
-        }
-        
-        return ratGenerator;
+        return this.collectionsConfig;
     }
     
 }

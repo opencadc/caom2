@@ -89,7 +89,7 @@ public class PutAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        ObservationURI uri = getURI();
+        ObservationURI uri = getObservationURI();
         log.debug("START: " + uri);
 
         checkWritePermission();

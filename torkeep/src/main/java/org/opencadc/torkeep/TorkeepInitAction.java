@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2016.                            (c) 2016.
+ *  (c) 2023.                            (c) 2023.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,60 +62,104 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 5 $
+ *  : 5 $
  *
  ************************************************************************
  */
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
-import ca.nrc.cadc.caom2.xml.ObservationReader;
-import ca.nrc.cadc.io.ByteCountInputStream;
-import ca.nrc.cadc.rest.InlineContentException;
-import ca.nrc.cadc.rest.InlineContentHandler;
-
-import java.io.IOException;
-import java.io.InputStream;
-
+import ca.nrc.cadc.caom2.persistence.SQLGenerator;
+import ca.nrc.cadc.caom2.version.InitDatabase;
+import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.rest.InitAction;
+import java.util.Map;
+import java.util.TreeMap;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
-public class ObservationInlineContentHandler implements InlineContentHandler {
-    private static Logger log = Logger.getLogger(ObservationInlineContentHandler.class);
+public class TorkeepInitAction extends InitAction {
 
-    // 20MB XML Doc size limit
-    private static final long DOCUMENT_SIZE_MAX = 20971520L;
-
-    public static final String CONTENT_KEY = "observation";
-    public static final String ERROR_KEY = "fail";
-
-    public ObservationInlineContentHandler() {
+    public TorkeepInitAction() {
+        super();
     }
 
+    private static final Logger log = Logger.getLogger(TorkeepInitAction.class);
+
+    // datasource name from the context.xml
+    static final String JNDI_DATASOURCE = "jdbc/torkeep-caom2";
+    static final String JNDI_CONFIG_KEY = "torkeep.TorkeepInitServlet.torkeep-runtime-config";
+    static final String SCHEMA = "caom2";
+    static final String SQL_GENERATOR_CLASS = "ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator";
+
+    private CollectionsConfig collectionsConfig;
+
     @Override
-    public Content accept(String name, String contentType, InputStream inputStream)
-            throws InlineContentException, IOException {
-        if (inputStream == null) {
-            throw new IOException("The InputStream is closed");
-        }
+    public void doInit() {
+        initConfig();
+        initDatabase();
+        initJNDI();
+    }
 
-        // wrap the input stream in a byte counter to limit bytes read
-        ByteCountInputStream sizeLimitInputStream = new ByteCountInputStream(inputStream, DOCUMENT_SIZE_MAX);
-
-        ObservationReader obsReader = new ObservationReader();
+    static Map<String, Object> getDAOConfig() {
         try {
-            Observation observation = obsReader.read(sizeLimitInputStream);
-            InlineContentHandler.Content content = new InlineContentHandler.Content();
-            content.name = CONTENT_KEY;
-            content.value = observation;
-            return content;
-        } catch (ObservationParsingException ex) {
-            InlineContentHandler.Content content = new InlineContentHandler.Content();
-            content.name = ERROR_KEY;
-            content.value = ex;
-            return content;
+            Map<String,Object> ret = new TreeMap<>();
+            Class clz = Class.forName(SQL_GENERATOR_CLASS);
+            ret.put(SQLGenerator.class.getName(), clz);
+            ret.put("jndiDataSourceName", JNDI_DATASOURCE);
+            ret.put("schema", SCHEMA);
+            return ret;
+        } catch (ClassNotFoundException ex) {
+            throw new IllegalStateException("failed to load SQLGenerator: " + SQL_GENERATOR_CLASS);
         }
+    }
+
+    private void initConfig() {
+        log.info("initConfig: START");
+        this.collectionsConfig = new CollectionsConfig();
+        log.info("initConfig: OK");
+    }
+
+    private void initDatabase() {
+        try {
+            log.info("initDatabase: START");
+            DataSource ds = DBUtil.findJNDIDataSource(JNDI_DATASOURCE);
+            // in PG we do not need to specify database name as it is set in DataSource JDBC URL
+            //InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
+            InitDatabase init = new InitDatabase(ds, null, SCHEMA);
+            init.doInit();
+            log.info("initDatabase: OK");
+        } catch (NamingException ex) {
+            throw new RuntimeException("CONFIG: failed to connect to database", ex);
+        }
+    }
+
+    private void initJNDI() {
+        log.info("initJNDI: START");
+        final Context initContext;
+        try {
+            initContext = new InitialContext();
+        } catch (NamingException e) {
+            throw new IllegalStateException("failed to find JNDI InitialContext", e);
+        }
+        String jndiKey = JNDI_CONFIG_KEY;
+        log.debug("jndiKey: " + jndiKey);
+        try {
+            log.debug("unbinding possible existing " + jndiKey);
+            initContext.unbind(jndiKey);
+        } catch (NamingException e) {
+            log.debug("no previously bound " + jndiKey + ", continuing");
+        }
+        try {
+            initContext.bind(jndiKey, this.collectionsConfig);
+            log.warn("doInit: collectionsConfig stored via JNDI: " + jndiKey);
+        } catch (NamingException e) {
+            throw new IllegalStateException("CONFIG: failed to bind collectionsConfig", e);
+        }
+        log.info("initJNDI: OK");
     }
 
 }

@@ -76,6 +76,7 @@ import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
@@ -109,7 +110,7 @@ public class GetDeletedAction extends RepoAction {
 
         checkReadPermission();
 
-        DeletedEntityDAO dao = getDeletedDAO();
+        DeletedEntityDAO dao = getDeletedEntityDAO();
 
         List<DeletedObservation> dels = dao.getList(getCollection(), start, end, maxRec);
 
@@ -129,7 +130,7 @@ public class GetDeletedAction extends RepoAction {
         
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        OutputStreamWriter out = new OutputStreamWriter(bc, StandardCharsets.US_ASCII);
         CsvWriter writer = new CsvWriter(out, '\t');
         for (DeletedObservation ddo : dels) {
             writer.write(ddo.getID().toString());

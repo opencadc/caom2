@@ -88,19 +88,19 @@ public class DeleteAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        ObservationURI uri = getURI();
+        ObservationURI uri = getObservationURI();
         log.debug("START: " + uri);
 
         checkWritePermission();
 
         ObservationDAO dao = getDAO();
-        ObservationState s = dao.getState(uri);
+        ObservationState state = dao.getState(uri);
 
-        if (s == null) {
+        if (state == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
-        dao.delete(s.getID());
+        dao.delete(state.getID());
 
         log.debug("DONE: " + uri);
     }

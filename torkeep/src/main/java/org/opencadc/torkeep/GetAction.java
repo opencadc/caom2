@@ -102,7 +102,7 @@ public class GetAction extends RepoAction {
     @Override
     public void doAction() throws Exception {
         log.debug("GET ACTION");
-        ObservationURI uri = getURI();
+        ObservationURI uri = getObservationURI();
         if (uri != null) {
             doGetObservation(uri);
             return;

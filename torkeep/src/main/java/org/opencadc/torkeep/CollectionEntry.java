@@ -69,90 +69,43 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
-import ca.nrc.cadc.caom2.version.InitDatabase;
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Properties;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
-import org.apache.log4j.Logger;
+import java.net.URI;
 
-public class Sc2repoInitAction extends InitAction {
+public class CollectionEntry {
+    private final String collection;
+    private final URI basePublisherID;
+    private final boolean computeMetadata;
+    private final boolean proposalGroup;
 
-    public Sc2repoInitAction() {
-        super();
+    public CollectionEntry(String collection, URI basePublisherID, boolean computeMetadata, boolean proposalGroup) {
+
+        this.collection = collection;
+        this.basePublisherID = basePublisherID;
+        this.computeMetadata = computeMetadata;
+        this.proposalGroup = proposalGroup;
     }
 
-    private static final Logger log = Logger.getLogger(Sc2repoInitAction.class);
+    public String getCollection() {
+        return this.collection;
+    }
+
+    public URI getBasePublisherID() {
+        return this.basePublisherID;
+    }
+
+    public boolean isComputeMetadata() {
+        return this.computeMetadata;
+    }
+
+    public boolean isProposalGroup() {
+        return this.proposalGroup;
+    }
 
     @Override
-    public void doInit() {
-        initConfig();
-        initDatabase();
-        initJNDI();
-    }
-
-    private void initConfig() {
-        String configPath = String.format("%s/config/%s.properties",
-                System.getProperty("user.home"), appName);
-        long start = System.currentTimeMillis();
-
-        Properties properties = new Properties();
-        try {
-            properties.load(new FileReader(configPath));
-        } catch (IOException e) {
-            throw new IllegalStateException("", e);
-        }
-
-        String prefix = "org.opencadc.sc2repo";
-        ConfigParser parser = new ConfigParser();
-        this.caomRepoConfig = parser.parse(properties, prefix);
-
-        long dur = System.currentTimeMillis() - start;
-        log.debug("load time: " + dur + "ms");
-    }
-
-    private void initDatabase() {
-        for (CollectionConfig cc : caomRepoConfig.getConfigs()) {
-            if (PostgreSQLGenerator.class.equals(cc.getSqlGenerator())) {
-                try {
-                    DataSource ds = DBUtil.findJNDIDataSource(cc.getDataSourceName());
-                    // in PG we do not need to specify database name as it is set in DataSource JDBC URL
-                    //InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
-                    InitDatabase init = new InitDatabase(ds, null, cc.getSchema());
-                    init.doInit();
-                } catch (NamingException ex) {
-                    throw new RuntimeException("CONFIG: failed to connect to database", ex);
-                }
-            }
-        }
-    }
-
-    private void initJNDI() {
-        final Context initContext;
-        try {
-            initContext = new InitialContext();
-        } catch (NamingException e) {
-            throw new IllegalStateException("failed to find JNDI InitialContext", e);
-        }
-        String jndiKey = componentID + ".sc2repo-runtime-config";
-        try {
-            log.debug("unbinding possible existing " + jndiKey);
-            initContext.unbind(jndiKey);
-        } catch (NamingException e) {
-            log.debug("no previously bound " + jndiKey + ", continuing");
-        }
-        try {
-            initContext.bind(jndiKey, this.caomRepoConfig);
-            log.warn("doInit: repoConfig stored via JNDI: " + jndiKey);
-        } catch (NamingException e) {
-            throw new IllegalStateException("CONFIG: failed to bind repoConfig", e);
-        }
+    public String toString() {
+        return String.format("CollectionEntry=[collection=[%s], bashPublisherID=[%s], " +
+                        "computeMetadata=[%s], proposalGroup=[%s]]",
+                collection, basePublisherID, computeMetadata, proposalGroup);
     }
 
 }
