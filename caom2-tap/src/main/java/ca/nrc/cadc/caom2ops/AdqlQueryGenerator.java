@@ -84,7 +84,7 @@ public class AdqlQueryGenerator {
 
     // use the obsID FK column and an alias because FK columns don't have a utype 
     // and thus we won't accidentally effect result parsing
-    private static final String SELECT_READABLE = "Plane.obsID AS metaReadable, isDownloadable(Plane.obsID) AS dataReadable";
+    private static final String SELECT_READABLE = "Plane.metaRelease, Plane.metaReadGroups, Plane.dataRelease, Plane.dataReadGroups";
     
     private static final String SELECT_ARTIFACT = "Plane.publisherID, Artifact.*";
     private static final String SELECT_ARTIFACT2CHUNK = SELECT_ARTIFACT + ", Part.*, Chunk.*";
@@ -150,32 +150,6 @@ public class AdqlQueryGenerator {
         return ret;
     }
     
-    // used by datalink
-    public String getADQL(final PlaneURI uri, boolean artifactOnly) {
-        StringBuilder sb = new StringBuilder("SELECT ");
-        sb.append(SELECT_READABLE).append(",");
-        if (artifactOnly) {
-            sb.append(SELECT_ARTIFACT);
-            sb.append(" FROM ");
-            sb.append(PLANE2ARTIFACT);
-        } else {
-            sb.append(SELECT_ARTIFACT2CHUNK);
-            sb.append(" FROM ");
-            sb.append(PLANE2CHUNK);
-        }
-        
-        sb.append(" WHERE Plane.planeURI = '");
-        sb.append(uri.getURI().toASCIIString());
-        sb.append("'");
-        if (!artifactOnly) {
-            sb.append(" ORDER BY Artifact.artifactID, Part.partID");
-        }
-        
-        String ret = sb.toString();
-        log.debug(ret);
-        return ret;
-    }
-
     // used by cutout
     public String getArtifactADQL(final URI uri) {
         StringBuilder sb = new StringBuilder();

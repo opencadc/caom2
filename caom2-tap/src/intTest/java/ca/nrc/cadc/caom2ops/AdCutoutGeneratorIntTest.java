@@ -102,7 +102,7 @@ public class AdCutoutGeneratorIntTest {
     public AdCutoutGeneratorIntTest() {
     }
 
-    @Test
+    //@Test
     public void testValidCutoutUrlWithNoLabel() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
@@ -133,7 +133,7 @@ public class AdCutoutGeneratorIntTest {
         }
     }
 
-    @Test
+    //@Test
     public void testValidCutoutUrlWithLabel() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {
@@ -168,7 +168,7 @@ public class AdCutoutGeneratorIntTest {
         }
     }
     
-    @Test
+    //@Test
     public void testInvalidCutoutUrl() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {

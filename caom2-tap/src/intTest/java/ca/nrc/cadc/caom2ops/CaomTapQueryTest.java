@@ -186,32 +186,6 @@ public class CaomTapQueryTest
     }
     
     @Test
-    public void testPlaneURIShallow()
-    {
-        try
-        {
-            PlaneURI uri = new PlaneURI(PLANE_URI);
-            CaomTapQuery query = new CaomTapQuery(URI.create(TAP_URI), "CaomTapQueryTest");
-            ArtifactQueryResult ar = query.performQuery(uri, true);
-            Assert.assertNotNull(ar);
-            log.info("found: " + ar.getPublisherID().getURI());
-            Assert.assertNotNull(ar.getArtifacts());
-            Assert.assertFalse(ar.getArtifacts().isEmpty());
-            for (Artifact a : ar.getArtifacts())
-            {
-                Assert.assertTrue(a.getParts().isEmpty());
-                URI metaChecksum = a.computeMetaChecksum(MessageDigest.getInstance("MD5"));
-                Assert.assertEquals("Artifact.metaChecksum", a.getMetaChecksum(), metaChecksum);
-            }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
     public void testPublisherIDShallow()
     {
         try
@@ -228,36 +202,6 @@ public class CaomTapQueryTest
                 Assert.assertTrue(a.getParts().isEmpty());
                 URI metaChecksum = a.computeMetaChecksum(MessageDigest.getInstance("MD5"));
                 Assert.assertEquals("Artifact.metaChecksum", a.getMetaChecksum(), metaChecksum);
-            }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testPlaneURIDeep()
-    {
-        try
-        {
-            PlaneURI uri = new PlaneURI(PLANE_URI);
-            CaomTapQuery query = new CaomTapQuery(URI.create(TAP_URI), "CaomTapQueryTest");
-            ArtifactQueryResult ar = query.performQuery(uri, false);
-            Assert.assertNotNull(ar);
-            log.info("found: " + ar.getPublisherID().getURI());
-            Assert.assertNotNull(ar.getArtifacts());
-            Assert.assertFalse(ar.getArtifacts().isEmpty());
-            for (Artifact a : ar.getArtifacts())
-            {
-                if (ProductType.SCIENCE.equals(a.getProductType()))
-                    Assert.assertFalse(a.getParts().isEmpty());
-                else // preview
-                    Assert.assertTrue(a.getParts().isEmpty());
-                
-                URI accMetaChecksum = a.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
-                Assert.assertEquals("Artifact.accMetaChecksum", a.getAccMetaChecksum(), accMetaChecksum);
             }
         }
         catch(Exception unexpected)

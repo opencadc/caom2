@@ -127,34 +127,6 @@ public class AdqlQueryGeneratorTest {
     }
 
     @Test
-    public void testArtifactListQueryPlaneURI() {
-        try {
-            PlaneURI uri = new PlaneURI(new URI("caom:FOO/bar123/bar456"));
-            AdqlQueryGenerator gen = new AdqlQueryGenerator();
-            String adql = gen.getADQL(uri, false);
-            log.info("testArtifactListQueryPlaneURI:\n" + adql);
-
-            adql = adql.toLowerCase();
-
-            // TODO: assert something
-            Assert.assertTrue(adql.contains("from caom2.plane"));
-            Assert.assertTrue(adql.contains("left outer join caom2.artifact"));
-            Assert.assertTrue(adql.contains("left outer join caom2.part"));
-            Assert.assertTrue(adql.contains("left outer join caom2.chunk"));
-
-            Assert.assertTrue(adql.contains("plane.obsid"));
-            Assert.assertTrue(adql.contains("isdownloadable(plane.obsid)"));
-
-            Assert.assertTrue(adql.contains("plane.planeuri = "));
-
-            Assert.assertTrue(adql.contains("order by"));
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
     public void testArtifactListQueryPublisherID() {
         try {
             PublisherID uri = new PublisherID(new URI("ivo://cadc.nrc.ca/FOO?bar123/bar456"));
@@ -170,8 +142,10 @@ public class AdqlQueryGeneratorTest {
             Assert.assertTrue(adql.contains("left outer join caom2.part"));
             Assert.assertTrue(adql.contains("left outer join caom2.chunk"));
 
-            Assert.assertTrue(adql.contains("plane.obsid as metareadable"));
-            Assert.assertTrue(adql.contains("isdownloadable(plane.obsid) as datareadable"));
+            Assert.assertTrue(adql.contains("plane.metarelease"));
+            Assert.assertTrue(adql.contains("plane.datarelease"));
+            Assert.assertTrue(adql.contains("plane.metareadgroups"));
+            Assert.assertTrue(adql.contains("plane.datareadgroups"));
 
             Assert.assertTrue(adql.contains("plane.publisherid = "));
 

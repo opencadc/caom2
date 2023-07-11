@@ -69,8 +69,12 @@ package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.PublisherID;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -83,9 +87,13 @@ public class ArtifactQueryResult {
 
     private final PublisherID publisherID;
     private final List<Artifact> artifacts = new ArrayList<>();
-    public Boolean metaReadable;
-    public Boolean dataReadable;
-
+    
+    // permission info for the plane
+    public Date metaRelease;
+    public Date dataRelease;
+    private final Set<URI> metaReadGroups = new TreeSet<>();
+    private final Set<URI> dataReadGroups = new TreeSet<>();
+    
     public ArtifactQueryResult(PublisherID publisherID) {
         this.publisherID = publisherID;
     }
@@ -97,6 +105,16 @@ public class ArtifactQueryResult {
     public List<Artifact> getArtifacts() {
         return artifacts;
     }
+
+    public Set<URI> getMetaReadGroups() {
+        return metaReadGroups;
+    }
+
+    public Set<URI> getDataReadGroups() {
+        return dataReadGroups;
+    }
+    
+    
 
     @Override
     public String toString() {
