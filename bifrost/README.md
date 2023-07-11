@@ -28,7 +28,7 @@ for system properties related to the deployment environment.
 See <a href="https://github.com/opencadc/core/tree/master/cadc-util">cadc-util</a>
 for common system properties.
 
-`argus` includes multiple IdentityManager implementations to support authenticated access:
+`bifrost` includes multiple IdentityManager implementations to support authenticated access:
  - See <a href="https://github.com/opencadc/ac/tree/master/cadc-access-control-identity">cadc-access-control-identity</a> for CADC access-control system support.
  - See <a href="https://github.com/opencadc/ac/tree/master/cadc-gms">cadc-gms</a> for OIDC token support.
  
@@ -65,7 +65,7 @@ org.opencadc.bifrost.readGrantProvider = {resourceID of a grant provider}
 ```
 The _queryService_ is resolved by a registry lookup and that service is used to query
 for CAOM content. It is assumed that this service is deployed "locally" since there can
-be many calls to `bifrost` and low latency is very desireable.
+be many calls and low latency is very desireable.
 
 The _locatorService_ is a data storage service that allows `bifrost` to resolve a CAOM 
 Artifact URI into a URL. Current hack: `bifrost` assumes the _locatorService_ also supports
@@ -73,8 +73,8 @@ the simpler [https://github.com/opencadc/storage-inventory](storage-inventory) "
 and constructs URLs to the global `raven` service (which in turn will redirect the caller to
 one of the copies of the specified file).
 
-The optional _readGrantProvider_ configures `bifrost` use the grant provider(s) (multiple can be
-specified) to predict that the caller will be authorized when using generated links. In adddition
+The optional _readGrantProvider_ configures `bifrost` to use the grant provider(s) (multiple
+allowed) to predict that the caller will be authorized when using generated links. In adddition
 to CAOM metadata that grants access, this will be used to determine a value for the DataLink
 _linkAuthorized_ field.
 
