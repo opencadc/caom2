@@ -26,20 +26,24 @@ war {
 dependencies {
     providedCompile 'javax.servlet:javax.servlet-api:[3.1.0,)'
 
-    compile 'org.opencadc:cadc-util:[1.6,2.0)'
-    compile 'org.opencadc:caom2:[2.4.1,2.5)'
-    compile 'org.opencadc:caom2-compute:[2.4.10,2.5)'
-    compile 'org.opencadc:caom2persistence:[2.4.14,2.5)'
-    compile 'org.opencadc:cadc-vosi:[1.4.1,2.0)'
-    
-    runtime 'org.opencadc:cadc-log:[1.0,)'
-    runtime 'org.opencadc:cadc-gms:[1.0.4,)'
-    runtime 'org.opencadc:cadc-access-control-identity:[1.2,)'
+    implementation 'net.sourceforge.javacsv:javacsv:2.0'
 
-    testCompile 'junit:junit:[4.0,)'
+    implementation 'org.opencadc:cadc-permissions-client:[0.3,1.0)'
+    implementation 'org.opencadc:cadc-util:[1.6,2.0)'
+    implementation 'org.opencadc:caom2:[2.4.1,2.5)'
+    implementation 'org.opencadc:cadc-access-control:[1.1,2.0)'
+    implementation 'org.opencadc:caom2-compute:[2.4.10,2.5)'
+    implementation 'org.opencadc:caom2persistence:[2.4.14,2.5)'
+    implementation 'org.opencadc:cadc-vosi:[1.4.1,2.0)'
 
-    intTestCompile 'org.opencadc:cadc-test-vosi:[1.0.1,)'
-    intTestCompile 'org.opencadc:caom2-test-repo:[1.1.0,)'
+    implementation 'org.opencadc:cadc-log:[1.0,)'
+    implementation 'org.opencadc:cadc-gms:[1.0.4,)'
+    implementation 'org.opencadc:cadc-access-control-identity:[1.2,)'
+
+    testImplementation 'junit:junit:[4.0,)'
+
+    intTestImplementation 'org.opencadc:cadc-test-vosi:[1.0.1,)'
+    intTestImplementation 'org.opencadc:caom2-test-repo:[1.1.0,)'
 }
 
 configurations {

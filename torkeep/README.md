@@ -34,34 +34,28 @@ See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-reg
 
 
 ### torkeep.properties
-The torkeep.properties configures a collection with the desired proposal group, operator group and staff group.
-Each entry in the properties file configures a collection. Each entry has a name, followed by entry-specific properties.
+The torkeep.properties configures the services that provide grants to access collections, and collection specific properties.
+Each collection in the properties file configures a collection name, followed by collection-specific properties.
 
 ```
-# required properties
+# permission services (one per line) that provide read and write grants
+org.opencadc.torkeep.grantProvider = {URI}
+
+# collection name and one or more collection properties
 org.opencadc.torkeep.collection = {CAOM collection name}
 {collection name}.basePublisherID = {URI}
-
-# optional properties
-{collection name}.readOnlyGroup = {group URI}
-{collection name}.readWriteGroup = {group URI}
-{collection name}.anon = {true | false}
 {collection name}.computeMetadata = {true | false}
 {collection name}.proposalGroup = {true | false}
 ```
+_org.opencadc.torkeep.grantProvider_ is URI to a permissions service that provides grants to read and write CAOM collections.
+The URI is a resourceID (e.g. ivo://opencadc.org/baldur) to a permissions service defined in a registry service, 
+one line per permissions service.
 
 _org.opencadc.torkeep.collection_ specifies the CAOM collection name.
 
-_{collection name}.bashPublisherID_  is the base for generating Plane publisherID values.
+_{collection name}.bashPublisherID_ is the base for generating Plane publisherID values.
 The base is an uri of the form `ivo://<authority>[/<path>]`
 publisherID values: `<basePublisherID>/<collection>?<observationID>/<productID>`
-
-_{collection name}.readOnlyGroup_ specifies a group (one per line) that can read (get) matching assets (default: empty list).
-
-_{collection name}.readWriteGroup_ specifies a group (one per line) that can read and write (get/put/update/delete)
-matching assets (default: empty list).
-
-_{collection name}.anon_  specifies that all users (including anonymous) can read matching assets (default: false).
 
 _{collection name}.computeMetadata_ enables computation and persistence of computed metadata(generally, Plane metadata
 aggregated from the artifacts). (default: false)
