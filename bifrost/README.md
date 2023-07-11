@@ -59,6 +59,9 @@ org.opencadc.bifrost.queryService = {argus resourceID}
 
 # artifact locator service
 org.opencadc.bifrost.locatorService = {resourceID of global transfer negotiation service}
+
+# read grant providers (optional)
+org.opencadc.bifrost.readGrantProvider = {resourceID of a grant provider}
 ```
 The _queryService_ is resolved by a registry lookup and that service is used to query
 for CAOM content. It is assumed that this service is deployed "locally" since there can
@@ -70,6 +73,11 @@ the simpler [https://github.com/opencadc/storage-inventory](storage-inventory) "
 and constructs URLs to the global `raven` service (which in turn will redirect the caller to
 one of the copies of the specified file).
 
+The optional _readGrantProvider_ configures `bifrost` use the grant provider(s) (multiple can be
+specified) to predict that the caller will be authorized when using generated links. In adddition
+to CAOM metadata that grants access, this will be used to determine a value for the DataLink
+_linkAuthorized_ field.
+
 `bifrost` will attempt to use the caller's identity to query so that CAOM proprietary metadata
 protections are enforced, but the details of this depend on the configured IdentityManager 
 and local A&A service configuration.
@@ -78,15 +86,15 @@ and local A&A service configuration.
 ## building it
 ```
 gradle clean build
-docker build -t sc2links -f Dockerfile .
+docker build -t bifrost -f Dockerfile .
 ```
 
 ## checking it
 ```
-docker run --rm -it sc2links:latest /bin/bash
+docker run --rm -it bifrost:latest /bin/bash
 ```
 
 ## running it
 ```
-docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name sc2links sc2links:latest
+docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name bifrost bifrost:latest
 ```
