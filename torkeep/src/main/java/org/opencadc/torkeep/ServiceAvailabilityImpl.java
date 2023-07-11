@@ -70,8 +70,7 @@
 package org.opencadc.torkeep;
 
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.caom2.repo.CaomRepoConfig;
+import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -79,20 +78,17 @@ import ca.nrc.cadc.rest.RestAction;
 import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
-import ca.nrc.cadc.vosi.avail.CheckDataSource;
 import ca.nrc.cadc.vosi.avail.CheckException;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
+import ca.nrc.cadc.wcs.VerifyWCS;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Principal;
-import java.util.Iterator;
-import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import org.apache.log4j.Logger;
+import org.opencadc.erfa.ERFALib;
 
 /**
  * VOSI-Availability plugin.
@@ -102,9 +98,7 @@ import org.apache.log4j.Logger;
 public class ServiceAvailabilityImpl implements AvailabilityPlugin {
 
     private static final Logger log = Logger.getLogger(ServiceAvailabilityImpl.class);
-
-    // TODO: this should be configured someplace
-    private static final Principal TRUSTED = new X500Principal("cn=servops_4a2,ou=cadc,o=hia,c=ca");
+    private static final File AAI_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
 
     private String appName;
 
@@ -134,60 +128,89 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
                 return new Availability(false, RestAction.STATE_READ_ONLY_MSG);
             }
 
-            File config = new File(System.getProperty("user.home") + "/config/" + appName + ".properties");
-            CaomRepoConfig rc = new CaomRepoConfig(config);
-            if (rc.isEmpty()) {
-                throw new IllegalStateException("no CaomRepoConfig.Item(s) found in " + config);
+            CollectionsConfig collectionsConfig = new CollectionsConfig();
+            if (collectionsConfig.getConfigs().isEmpty()) {
+                throw new IllegalStateException("CONFIG: no configured collections found in - " +
+                        CollectionsConfig.TORKEEP_PROPERTIES);
             }
 
-            Iterator<CaomRepoConfig.Item> i = rc.iterator();
-            while (i.hasNext()) {
-                CaomRepoConfig.Item rci = i.next();
-                String sql = "SELECT obsID FROM " + rci.getTestTable() + " LIMIT 1";
-                CheckDataSource checkDataSource = new CheckDataSource(rci.getDataSourceName(), sql);
-                checkDataSource.check();
-            }
+            Map<String,Object> config = TorkeepInitAction.getDAOConfig();
+            ObservationDAO dao = new ObservationDAO();
+            dao.setConfig(config); // connectivity tested
 
-            // load this dynamically so that missing wcs won't break this class
+            // check the WCS JNI library
             try {
-                Class c = Class.forName("ca.nrc.cadc.caom2.repo.CheckWcsLib");
-                CheckResource wcs = (CheckResource) c.newInstance();
-                wcs.check();
-            } catch (RuntimeException ex) {
-                throw new CheckException("wcslib not available", ex);
-            } catch (Error er) {
-                throw new CheckException("wcslib not available", er);
+                VerifyWCS ver = new VerifyWCS();
+                ver.run();
+            } catch (Throwable t) {
+                throw new CheckException("wcslib not available", t);
             }
-            
-            // certificate for A&A
-            File cert = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
-            CheckCertificate checkCert = new CheckCertificate(cert);
-            checkCert.check();
-            
+
+            // check the ERFA JNI library
+            try {
+                ERFALib.tai2tt(2453750.5, 0.892482639);
+            } catch (Throwable t) {
+                throw new CheckException("erfalib not available", t);
+            }
+
             // check other services we depend on
             RegistryClient reg = new RegistryClient();
-            URL url;
-            CheckResource checkResource;
-
             LocalAuthority localAuthority = new LocalAuthority();
 
-            URI credURI = localAuthority.getServiceURI(Standards.CRED_PROXY_10.toString());
-            url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-            checkResource = new CheckWebService(url);
-            checkResource.check();
-
-            URI usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_01.toString());
-            url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-            checkResource = new CheckWebService(url);
-            checkResource.check();
-
-            URI groupsURI = localAuthority.getServiceURI(Standards.GMS_SEARCH_01.toString());
-            if (!groupsURI.equals(usersURI)) {
-                url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                checkResource = new CheckWebService(url);
-                checkResource.check();
+            URI credURI = null;
+            try {
+                credURI = localAuthority.getServiceURI(Standards.CRED_PROXY_10.toString());
+                URL url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                if (url != null) {
+                    CheckResource checkResource = new CheckWebService(url);
+                    checkResource.check();
+                } else {
+                    log.debug("check skipped: " + credURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                }
+            } catch (NoSuchElementException ex) {
+                log.debug("not configured: " + Standards.CRED_PROXY_10);
             }
-            
+
+            URI usersURI = null;
+            try {
+                usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_10.toString());
+                URL url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                if (url != null) {
+                    CheckResource checkResource = new CheckWebService(url);
+                    checkResource.check();
+                } else {
+                    log.debug("check skipped: " + usersURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                }
+            } catch (NoSuchElementException ex) {
+                log.debug("not configured: " + Standards.UMS_USERS_10);
+            }
+
+            URI groupsURI = null;
+            try {
+                groupsURI = localAuthority.getServiceURI(Standards.GMS_SEARCH_10.toString());
+                if (!groupsURI.equals(usersURI)) {
+                    URL url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                    if (url != null) {
+                        CheckResource checkResource = new CheckWebService(url);
+                        checkResource.check();
+                    } else {
+                        log.debug("check skipped: " + groupsURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                    }
+                }
+            } catch (NoSuchElementException ex) {
+                log.debug("not configured: " + Standards.GMS_SEARCH_10);
+            }
+
+            if (credURI != null || usersURI != null) {
+                if (AAI_PEM_FILE.exists() && AAI_PEM_FILE.canRead()) {
+                    // check for a certificate needed to perform network A&A ops
+                    CheckCertificate checkCert = new CheckCertificate(AAI_PEM_FILE);
+                    checkCert.check();
+                } else {
+                    log.debug("AAI cert not found or unreadable");
+                }
+            }
+
         } catch (CheckException ce) {
             // tests determined that the resource is not working
             isGood = false;
@@ -200,29 +223,24 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
         return new Availability(isGood, note);
     }
 
+    /**
+     * Sets the state of the service.
+     */
     @Override
     public void setState(String state) {
-        AccessControlContext acContext = AccessController.getContext();
-        Subject subject = Subject.getSubject(acContext);
-
-        if (subject == null) {
-            return;
-        }
-
-        Principal caller = AuthenticationUtil.getX500Principal(subject);
-        if (AuthenticationUtil.equals(TRUSTED, caller)) {
-            String key = appName + RestAction.STATE_MODE_KEY;
-            if (RestAction.STATE_OFFLINE.equals(state)) {
-                System.setProperty(key, RestAction.STATE_OFFLINE);
-            } else if (RestAction.STATE_READ_ONLY.equals(state)) {
-                System.setProperty(key, RestAction.STATE_READ_ONLY);
-            } else if (RestAction.STATE_READ_WRITE.equals(state)) {
-                System.setProperty(key, RestAction.STATE_READ_WRITE);
-            }
-            log.info("WebService state changed: " + key + "=" + state + " by " + caller + " [OK]");
+        String key = appName + RestAction.STATE_MODE_KEY;
+        if (RestAction.STATE_OFFLINE.equalsIgnoreCase(state)) {
+            System.setProperty(key, RestAction.STATE_OFFLINE);
+        } else if (RestAction.STATE_READ_ONLY.equalsIgnoreCase(state)) {
+            System.setProperty(key, RestAction.STATE_READ_ONLY);
+        } else if (RestAction.STATE_READ_WRITE.equalsIgnoreCase(state)) {
+            System.setProperty(key, RestAction.STATE_READ_WRITE);
         } else {
-            log.warn("WebService state change by " + caller + " [DENIED]");
+            throw new IllegalArgumentException("invalid state: " + state
+                    + " expected: " + RestAction.STATE_READ_WRITE + "|"
+                    + RestAction.STATE_OFFLINE + "|" + RestAction.STATE_READ_ONLY);
         }
+        log.info("WebService state changed: " + key + "=" + state + " [OK]");
     }
 
     private String getState() {
@@ -233,4 +251,5 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
         }
         return ret;
     }
+
 }

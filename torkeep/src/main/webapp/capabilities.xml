@@ -6,26 +6,28 @@
 
   <capability standardID="ivo://ivoa.net/std/VOSI#capabilities">
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="full">https://replace.me.com/sc2repo/capabilities</accessURL>
+      <accessURL use="full">https://replace.me.com/torkeep/capabilities</accessURL>
     </interface>
   </capability>
 
   <capability standardID="ivo://ivoa.net/std/VOSI#availability">
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="full">https://replace.me.com/sc2repo/availability</accessURL>
+      <accessURL use="full">https://replace.me.com/torkeep/availability</accessURL>
+      <securityMethod />
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
     </interface>
   </capability>
   
   <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/LOGGING#logControl-1.0">
     <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
-      <accessURL use="full">https://replace.me.com/sc2repo/logControl</accessURL>     
+      <accessURL use="full">https://replace.me.com/torkeep/logControl</accessURL>
       <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
     </interface> 
   </capability>
 
   <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2Repository#obs-1.2">
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">https://replace.me.com/sc2repo/observations</accessURL>
+      <accessURL use="base">https://replace.me.com/torkeep/observations</accessURL>
       <securityMethod />
       <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
       <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
@@ -35,7 +37,7 @@
 
   <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/CAOM2Repository#del-1.0">
     <interface xsi:type="vs:ParamHTTP" role="std">
-      <accessURL use="base">https://replace.me.com/sc2repo/deletions</accessURL>
+      <accessURL use="base">https://replace.me.com/torkeep/deletions</accessURL>
       <securityMethod />
       <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
       <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
@@ -43,4 +45,3 @@
     </interface>
   </capability>
 </vosi:capabilities>
-

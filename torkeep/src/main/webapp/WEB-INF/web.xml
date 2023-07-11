@@ -29,25 +29,35 @@
     </servlet>
 
     <servlet>
+        <servlet-name>TorkeepInitServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
+        <init-param>
+            <param-name>init</param-name>
+            <param-value>org.opencadc.torkeep.TorkeepInitAction</param-value>
+        </init-param>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <servlet>
         <servlet-name>RepoServlet</servlet-name>
         <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
         <init-param>
             <param-name>get</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.GetAction</param-value>
+            <param-value>org.opencadc.torkeep.GetAction</param-value>
         </init-param>
         <init-param>
             <param-name>post</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.PostAction</param-value>
+            <param-value>org.opencadc.torkeep.PostAction</param-value>
         </init-param>
         <init-param>
             <param-name>put</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.PutAction</param-value>
+            <param-value>org.opencadc.torkeep.PutAction</param-value>
         </init-param>
         <init-param>
             <param-name>delete</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.DeleteAction</param-value>
+            <param-value>org.opencadc.torkeep.DeleteAction</param-value>
         </init-param>
-        <load-on-startup>2</load-on-startup>
+        <load-on-startup>3</load-on-startup>
     </servlet>
     
     <servlet>
@@ -55,9 +65,9 @@
         <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
         <init-param>
             <param-name>get</param-name>
-            <param-value>ca.nrc.cadc.caom2.repo.action.GetDeletedAction</param-value>
+            <param-value>org.opencadc.torkeep.GetDeletedAction</param-value>
         </init-param>
-        <load-on-startup>2</load-on-startup>
+        <load-on-startup>3</load-on-startup>
     </servlet>
     
     <servlet>
@@ -67,7 +77,7 @@
             <param-name>ca.nrc.cadc.vosi.AvailabilityPlugin</param-name>
             <param-value>org.opencadc.torkeep.ServiceAvailabilityImpl</param-value>
         </init-param>
-        <load-on-startup>3</load-on-startup>
+        <load-on-startup>4</load-on-startup>
     </servlet>
 
     <servlet>
@@ -89,7 +99,7 @@
             <param-name>input</param-name>
             <param-value>/capabilities.xml</param-value>
         </init-param>
-        <load-on-startup>3</load-on-startup>
+        <load-on-startup>4</load-on-startup>
     </servlet>
 
     <!-- URL-to-servlet mapping -->
