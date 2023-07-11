@@ -1,14 +1,14 @@
 # bifrost
 
-`bifrost` is a [https://www.ivoa.net/documents/DataLink/](DataLink) service
-for CAOM [https://www.opencadc.org/caom2/](Common Archive Observation Model). It is 
-designed to work with [ttps://github.com/opencadc/caom2service/argus](argus) 
+`bifrost` is a [DataLink](https://www.ivoa.net/documents/DataLink/) service
+for CAOM [Common Archive Observation Model](https://www.opencadc.org/caom2/). It is 
+designed to work with [argus](https://github.com/opencadc/caom2service/argus) 
 (the CAOM TAP service).
 
 ## deployment
 The `bifrost` war file can be renamed at deployment time in order to support an 
 alternate service name, including introducing additional path elements using the
-[https://github.com/opencadc/docker-base/tree/master/cadc-tomcat](war-rename.conf) 
+[war-rename.conf](https://github.com/opencadc/docker-base/tree/master/cadc-tomcat) 
 feature.
 
 This service instance is expected to have a PostgreSQL database backend to store UWS
