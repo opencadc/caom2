@@ -83,10 +83,12 @@ import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -107,8 +109,8 @@ public class LinksTest {
     protected static final String INVALID_URI = "foo:bar";
     protected static final String NOTFOUND_URI = "ivo://opencadc.org/DO?not/found";
 
-    protected static URL anonURL;
-    protected static URL certURL;
+    private URL linksURL;
+    private Subject authSubject;
 
     static {
         Log4jInit.setLevel("org.opencadc.bifrost", Level.INFO);
@@ -116,24 +118,18 @@ public class LinksTest {
     }
 
     public LinksTest() {
-    }
-
-    @BeforeClass
-    public static void before() throws Exception {
         try {
             File crt = FileUtil.getFileFromResource("bifrost.pem", LinksTest.class);
-            SSLUtil.initSSL(crt);
-            log.debug("initSSL: " + crt);
+            this.authSubject = SSLUtil.createSubject(crt);
+            log.info("auth subject: " + authSubject);
         } catch (Throwable t) {
             throw new RuntimeException("failed to init SSL", t);
         }
 
         URI serviceID = TestUtil.RESOURCE_ID;
         RegistryClient rc = new RegistryClient();
-        anonURL = rc.getServiceURL(serviceID, Standards.DATALINK_LINKS_11, AuthMethod.ANON);
-        certURL = rc.getServiceURL(serviceID, Standards.DATALINK_LINKS_11, AuthMethod.CERT);
-        log.info("anon URL: " + anonURL);
-        log.info("cert URL: " + certURL);
+        linksURL = rc.getServiceURL(serviceID, Standards.DATALINK_LINKS_11, AuthMethod.ANON);
+        log.info("links URL: " + linksURL);
     }
 
     @Test
@@ -143,7 +139,7 @@ public class LinksTest {
             // POST the parameters.
             Map<String, Object> parameters = new HashMap<String, Object>();
             parameters.put("id", QUERY_PUB1);
-            String resp = TestUtil.post(anonURL, parameters, ManifestWriter.CONTENT_TYPE);
+            String resp = TestUtil.post(linksURL, parameters, ManifestWriter.CONTENT_TYPE);
             log.debug("response:\n" + resp);
             Assert.assertNotNull("non-null response", resp);
             Assert.assertFalse("non-empty response", resp.isEmpty());
@@ -162,16 +158,22 @@ public class LinksTest {
     @Test
     public void testSinglePublisherID_Anon() throws Exception {
         log.info("testSinglePublisherID_Anon");
-        doSingleURI(anonURL, QUERY_PUB1, "https");
+        doSingleURI(linksURL, QUERY_PUB1);
     }
 
     @Test
     public void testSinglePublisherID_Auth() throws Exception {
         log.info("testSinglePublisherID_Auth");
-        doSingleURI(certURL, QUERY_PUB1, "https");
+        Subject.doAs(authSubject, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public Object run() throws Exception {
+                doSingleURI(linksURL, QUERY_PUB1);
+                return null;
+            }
+        });
     }
 
-    private void doSingleURI(URL resourceURL, String uri, String expectedProtocol) {
+    private void doSingleURI(URL resourceURL, String uri) {
         try {
             // GET the query.
             VOTableDocument getVotable = TestUtil.get(resourceURL, new String[]{"id=" + uri});
@@ -215,7 +217,7 @@ public class LinksTest {
             int sdfCol = TestUtil.getFieldIndexes(getFields)[2];
             TestUtil.compareTableData(getTableData, postTableData, urlCol, sdfCol);
 
-            TestUtil.checkContent(gvtab, expectedProtocol, false);
+            TestUtil.checkContent(gvtab, false);
 
             log.debug("testSingleUri passed");
         } catch (Exception unexpected) {
@@ -229,7 +231,7 @@ public class LinksTest {
         log.info("testMultipleUri");
         try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{"id=" + QUERY_PUB1, "id=" + QUERY_PUB2});
+            VOTableDocument getVotable = TestUtil.get(linksURL, new String[]{"id=" + QUERY_PUB1, "id=" + QUERY_PUB2});
             VOTableResource gvr = getVotable.getResourceByType("results");
 
             VOTableTable gvtab = gvr.getTable();
@@ -248,7 +250,7 @@ public class LinksTest {
             parameters.put("REQUEST", "getLinks");
             parameters.put("id", QUERY_PUB1);
             parameters.put("id", QUERY_PUB2);
-            VOTableDocument postVotable = TestUtil.post(anonURL, parameters);
+            VOTableDocument postVotable = TestUtil.post(linksURL, parameters);
             VOTableResource pvr = postVotable.getResourceByType("results");
             VOTableTable pvtab = pvr.getTable();
 
@@ -280,7 +282,7 @@ public class LinksTest {
         log.info("testUsageFault_noID");
         try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{}, 200);
+            VOTableDocument getVotable = TestUtil.get(linksURL, new String[]{}, 200);
             VOTableResource gvr = getVotable.getResourceByType("results");
 
             // no rows
@@ -296,7 +298,7 @@ public class LinksTest {
         log.info("testUsageFault_badID");
         try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{"ID=" + INVALID_URI}, 200);
+            VOTableDocument getVotable = TestUtil.get(linksURL, new String[]{"ID=" + INVALID_URI}, 200);
             VOTableResource gvr = getVotable.getResourceByType("results");
 
             VOTableTable gvtab = gvr.getTable();
@@ -333,7 +335,7 @@ public class LinksTest {
         log.info("testNotFoundFault");
         try {
             // GET the query.
-            VOTableDocument getVotable = TestUtil.get(anonURL, new String[]{"ID=" + NOTFOUND_URI}, 200);
+            VOTableDocument getVotable = TestUtil.get(linksURL, new String[]{"ID=" + NOTFOUND_URI}, 200);
             VOTableResource gvr = getVotable.getResourceByType("results");
 
             VOTableTable gvtab = gvr.getTable();

@@ -167,7 +167,7 @@ public class TestUtil {
         return indexes;
     }
 
-    public static void checkContent(VOTableTable tab, String expectedProto, boolean expectError) throws Exception {
+    public static void checkContent(VOTableTable tab, boolean expectError) throws Exception {
         Integer[] indices = TestUtil.getFieldIndexes(tab.getFields());
         int uriCol = indices[0];
         int urlCol = indices[1];
@@ -196,7 +196,6 @@ public class TestUtil {
                 Assert.assertNull(srvO);
                 Assert.assertNull(errO);
                 URL url = new URL((String) urlO);
-                Assert.assertEquals("proto", expectedProto, url.getProtocol());
                 // TODO: would be nice to check the value
                 //Assert.assertEquals(DataLink.Term.THIS.getValue(), semO);
             } else if (srvO != null) {

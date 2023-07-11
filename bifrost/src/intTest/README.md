@@ -8,5 +8,5 @@ certificate named `$A/test-certificates/bifrost.pem`.
 ## content
 The tests expect a few IRIS observations in the CAOM database. These can be obtained
 by running `icewind` (was caom2harvester) with basePublisherID=ivo://opencadc.org/
-to guive them the expected "developer" publisherID.
+to give them the expected "developer" publisherID.
 
