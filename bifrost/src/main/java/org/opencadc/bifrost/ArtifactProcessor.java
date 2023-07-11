@@ -341,12 +341,6 @@ public class ArtifactProcessor {
             IvoaGroupClient gms = new IvoaGroupClient();
             Set<GroupURI> mem = gms.getMemberships(allowed); // COST
             membershipCache.addAll(mem);
-            for (GroupURI g : allowed) {
-                log.debug("allowed: " + g);
-            }
-            for (GroupURI g : mem) {
-                log.debug("member: " + g);
-            }
             return !mem.isEmpty();
         } catch (IOException | InterruptedException ex) {
             // TODO: respond false (probably won't be allowed) or null (don't know)?
