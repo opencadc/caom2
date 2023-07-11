@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -95,17 +95,7 @@ import org.junit.Test;
 import org.opencadc.datalink.server.ManifestWriter;
 
 /**
- *
- * scope: we can only test scenarios where we have existing content
- * In addition to the different content scenarios, we also need tests of single
- * and multiple uri params being posted to test correct merging of results.
- * A few IRIS uris would suffice to make this simple. Despite listing the GET
- * with query string tests in the scenarios, a single test to prove the
- * equivalence of GET and POST (single and multiple IRIS uris) should suffice.
- * So, one test class for basic GET and POST, single and multiple URIs
- * and then one test class per scenario should work.
- *
- * @author jburke
+ * Simple tests of the links endpoint.
  */
 public class LinksTest {
 
@@ -122,7 +112,7 @@ public class LinksTest {
 
     static {
         Log4jInit.setLevel("org.opencadc.bifrost", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.datalink", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
     }
 
     public LinksTest() {
