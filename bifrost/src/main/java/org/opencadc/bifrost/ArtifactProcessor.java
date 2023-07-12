@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2022.                            (c) 2022.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,7 +67,7 @@
 ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.datalink;
+package org.opencadc.bifrost;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
@@ -80,7 +80,6 @@ import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.PublisherID;
-import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.access.AccessUtil;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
@@ -109,6 +108,7 @@ import java.net.URI;
 import java.net.URL;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -120,6 +120,9 @@ import org.opencadc.datalink.ServiceDescriptor;
 import org.opencadc.datalink.ServiceParameter;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.gms.IvoaGroupClient;
+import org.opencadc.permissions.ReadGrant;
+import org.opencadc.permissions.client.PermissionsCheck;
+import org.opencadc.permissions.client.PermissionsClient;
 
 /**
  * Convert Artifacts to DataLinks.
@@ -133,12 +136,20 @@ public class ArtifactProcessor {
     private static final String PKG_CONTENT_TYPE_TAR = "application/x-tar";
 
     private final RegistryClient registryClient;
-    private final CaomArtifactResolver artifactResolver;
+    private final URI locatorService;
+    private final List<URI> readGrantProviders;
+    
+    // reusable permission checker
+    private PermissionsCheck permCheck;
+
+    private CaomArtifactResolver artifactResolver;    
     private boolean downloadOnly;
 
-    public ArtifactProcessor() {
+    public ArtifactProcessor(URI locatorService, List<URI> readGrantProviders) {
         this.registryClient = new RegistryClient();
-        this.artifactResolver = new CaomArtifactResolver();
+        //this.artifactResolver = new CaomArtifactResolver();
+        this.locatorService = locatorService;
+        this.readGrantProviders = readGrantProviders;
     }
 
     /**
@@ -156,7 +167,10 @@ public class ArtifactProcessor {
         log.debug("process: " + uri + " " + ar);
         List<DataLink> ret = new ArrayList<>(ar.getArtifacts().size());
         int numFiles = ar.getArtifacts().size();
-        boolean pkgReadable = true;
+        
+        // TODO: detect or make configurable
+        DataLink.LinkAuthTerm linkAuthPrediction = DataLink.LinkAuthTerm.OPTIONAL;
+        boolean pkgAuthorized = true;
         for (Artifact a : ar.getArtifacts()) {
             DataLink.Term sem = DataLink.Term.THIS;
             if (ProductType.PREVIEW.equals(a.getProductType())) {
@@ -174,10 +188,9 @@ public class ArtifactProcessor {
                 sem = DataLink.Term.AUXILIARY;
             }
 
-            Boolean readable = predictReadable(ar, a);
-
-            if (readable != null) {
-                pkgReadable = pkgReadable && readable;
+            Boolean linkAuthorizedPrediction = predictReadable(ar, a);
+            if (linkAuthorizedPrediction != null) {
+                pkgAuthorized = pkgAuthorized && linkAuthorizedPrediction;
             }
             // direct download links
             try {
@@ -186,11 +199,11 @@ public class ArtifactProcessor {
                 dl.contentType = a.contentType;
                 dl.contentLength = a.contentLength;
                 dl.contentQualifier = null; // TODO: get plane.datatProductType?
-                dl.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
-                dl.linkAuthorized = readable;
+                dl.linkAuth = linkAuthPrediction;
+                dl.linkAuthorized = linkAuthorizedPrediction;
                 dl.description = "download " + a.getURI().toASCIIString();
                 ret.add(dl);
-            } catch (MalformedURLException ex) {
+            } catch (MalformedURLException | RuntimeException ex) {
                 DataLink dl = new DataLink(uri.toASCIIString(), sem);
                 dl.errorMessage = "FatalFault: failed to generate download URL: " + ex.toString();
                 ret.add(dl);
@@ -205,8 +218,8 @@ public class ArtifactProcessor {
                     syncLink.contentType = a.contentType; // unchanged
                     syncLink.contentLength = null; // unknown
                     syncLink.contentQualifier = null; // unknown or still plane.datatProductType?
-                    syncLink.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
-                    syncLink.linkAuthorized = readable;
+                    syncLink.linkAuth = linkAuthPrediction;
+                    syncLink.linkAuthorized = linkAuthorizedPrediction;
                     syncLink.description = "SODA-sync cutout of " + a.getURI().toASCIIString();
                     ServiceDescriptor sds = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_SYNC_10, syncLink.serviceDef, a, ab);
                     log.debug("SODA-sync: " + sds);
@@ -220,8 +233,8 @@ public class ArtifactProcessor {
                     asyncLink.contentType = a.contentType; // unchanged
                     asyncLink.contentLength = null; // unknown
                     asyncLink.contentQualifier = null; // unknown or still plane.datatProductType?
-                    asyncLink.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
-                    asyncLink.linkAuthorized = readable;
+                    asyncLink.linkAuth = linkAuthPrediction;
+                    asyncLink.linkAuthorized = linkAuthorizedPrediction;
                     asyncLink.description = "SODA-async cutout of " + a.getURI().toASCIIString();
                     ServiceDescriptor sda = generateServiceDescriptor(ar.getPublisherID(), Standards.SODA_ASYNC_10, asyncLink.serviceDef, a, ab);
                     log.debug("SODA-async: " + sda);
@@ -244,8 +257,8 @@ public class ArtifactProcessor {
                 try {
                     link.accessURL = getPackageURL(pkg, ar.getPublisherID());
                     link.contentType = PKG_CONTENT_TYPE_TAR;
-                    link.linkAuth = DataLink.LinkAuthTerm.OPTIONAL; // TODO: make configurable
-                    link.linkAuthorized = pkgReadable;
+                    link.linkAuth = linkAuthPrediction;
+                    link.linkAuthorized = pkgAuthorized;
                     link.description = "single download containing all files (previews and thumbnails excluded)";
                 } catch (MalformedURLException ex) {
                     link.errorMessage = "failed to create package link: " + ex;
@@ -255,10 +268,33 @@ public class ArtifactProcessor {
         }
         return ret;
     }
-    
+
     private Set<GroupURI> membershipCache = new TreeSet<>();
     
+    // get grants from configured grant providers and merge
+    private ReadGrant getGrants(ArtifactQueryResult ar, Artifact a) {
+        if (permCheck == null) {
+            this.permCheck = new PermissionsCheck();
+        }
+        List<ReadGrant> grants = permCheck.getReadGrants(a.getURI(), readGrantProviders);
+        log.debug("found: " + grants.size() + " grants");
+        // merge
+        boolean anon = false;
+        Date expiryDate = new Date();
+        for (ReadGrant g : grants) {
+            anon = anon || g.isAnonymousAccess();
+        }
+        ReadGrant ret = new ReadGrant(a.getURI(), expiryDate, anon);
+        for (ReadGrant g : grants) {
+            ret.getGroups().addAll(g.getGroups());
+            log.debug("getGrants: add " + g + " now: " + ret.getGroups().size());
+        }
+        return ret;
+    }
+    
     private Boolean predictReadable(ArtifactQueryResult ar, Artifact a) {
+        // perform checks in the cheapest possible order to reduce latency
+        
         // get access info from caom metadata already in hand
         ArtifactAccess aa = AccessUtil.getArtifactAccess(a, ar.metaRelease, ar.getMetaReadGroups(), 
                 ar.dataRelease, ar.getDataReadGroups());
@@ -266,14 +302,21 @@ public class ArtifactProcessor {
             return true;
         }
         
-        if (aa.getReadGroups().isEmpty()) {
+        // call external grant provider(s)
+        ReadGrant rg = getGrants(ar, a); // COST
+        if (rg.isAnonymousAccess()) {
+            return true;
+        }
+        
+        if (aa.getReadGroups().isEmpty() && rg.getGroups().isEmpty()) {
             log.debug("no group grants: done");
             return false;
         }
         
         try {
-            // ugh: URI -> GroupURI
+            // collect allowed groups
             Set<GroupURI> allowed = new TreeSet<>();
+            allowed.addAll(rg.getGroups());
             for (URI u : aa.getReadGroups()) {
                 allowed.add(new GroupURI(u));
             }
@@ -307,7 +350,7 @@ public class ArtifactProcessor {
             return null; // unknown but not fail
         }
     }
-
+    
     private class ArtifactBounds {
 
         public String circle;
@@ -323,6 +366,10 @@ public class ArtifactProcessor {
     }
 
     private boolean canCutout(Artifact a) {
+        if (artifactResolver == null) {
+            return false;
+        }
+        
         StorageResolver sr = artifactResolver.getStorageResolver(a.getURI());
         if (!(sr instanceof CutoutGenerator)) {
             log.debug("canCutout: no code to generate cutout for " + a.getURI());
@@ -494,27 +541,29 @@ public class ArtifactProcessor {
 
     }
 
-    /**
-     * Convert a URI to a URL.
-     *
-     * @param a
-     * @return u
-     * @throws MalformedURLException
-     */
-    protected URL getDownloadURL(Artifact a)
+    // generate URL to locator using SI_FILES API
+    private URL getDownloadURL(Artifact a)
             throws MalformedURLException {
-        URL url = artifactResolver.getURL(a.getURI());
-
-        return url;
+        //URL url = artifactResolver.getURL(a.getURI());
+        try {
+            Subject caller = AuthenticationUtil.getCurrentSubject();
+            AuthMethod am = AuthenticationUtil.getAuthMethodFromCredentials(caller);
+            URL baseURL = registryClient.getServiceURL(locatorService, Standards.SI_FILES, am);
+            if (baseURL == null) {
+                throw new RuntimeException("unable to generator URL for " + locatorService);
+            }
+            StringBuilder sb = new StringBuilder(baseURL.toExternalForm());
+            // API: append ID to path
+            sb.append("/").append(a.getURI().toASCIIString());
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate valid URL for " + locatorService
+                    + " and artifact " + a.getURI());
+        }
     }
 
-    /**
-     * Find the package service associated with a publisherID.
-     *
-     * @param id
-     * @return base package service url for current auth method or null if no such service
-     */
-    protected URL getBasePackageURL(PublisherID id) {
+    // find data collection #aux capability PKG_10 API endpoint if it exists
+    private URL getBasePackageURL(PublisherID id) {
         Subject caller = AuthenticationUtil.getCurrentSubject();
         AuthMethod authMethod = AuthenticationUtil.getAuthMethod(caller);
         if (authMethod == null) {
@@ -529,6 +578,7 @@ public class ArtifactProcessor {
         return ret;
     }
 
+    // generate URL to data collection #aux capability using PKG_10 API
     private URL getPackageURL(URL pkg, PublisherID id) throws MalformedURLException {
         StringBuilder sb = new StringBuilder();
         sb.append(pkg.toExternalForm());

@@ -67,100 +67,55 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops;
+package org.opencadc.bifrost;
 
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.PlaneURI;
-import ca.nrc.cadc.caom2.PublisherID;
-import java.net.URI;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.caom2.types.Point;
+import java.util.Iterator;
 
 /**
- * Generates an ADQL query to select necessary metadata for all artifacts planes.
+ *
  * @author pdowler
  */
-public class AdqlQueryGenerator {
-    private static final Logger log = Logger.getLogger(AdqlQueryGenerator.class);
+public class CoordIterator implements Iterator<Double>
+{
+    private Iterator<Point> iter;
+    private Point cur;
+    private boolean cval1 = true;
 
-    // use the obsID FK column and an alias because FK columns don't have a utype 
-    // and thus we won't accidentally effect result parsing
-    private static final String SELECT_READABLE = "Plane.metaRelease, Plane.metaReadGroups, Plane.dataRelease, Plane.dataReadGroups";
-    
-    private static final String SELECT_ARTIFACT = "Plane.publisherID, Artifact.*";
-    private static final String SELECT_ARTIFACT2CHUNK = SELECT_ARTIFACT + ", Part.*, Chunk.*";
-    private static final String SELECT_OBS2CHUNK = "Observation.*, Plane.*, Artifact.*, Part.*, Chunk.*";
-    
-    private static final String ARTIFACT2CHUNK =
-        "caom2.Artifact AS Artifact"
-        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
-        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
-    
-    private static final String PLANE2CHUNK =
-        "caom2.Plane AS Plane"
-        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
-        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
-        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
-    
-    private static final String OBS2CHUNK = 
-        "caom2.Observation AS Observation"
-        + " LEFT OUTER JOIN caom2.Plane AS Plane ON Observation.obsID = Plane.obsID"
-        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
-        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
-        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
-    
-    private static final String PLANE2ARTIFACT =
-        "caom2.Plane AS Plane"
-        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID";
-    
-    // used by meta
-    public String getADQL(final ObservationURI uri) {
-        StringBuilder sb = new StringBuilder("SELECT ");
-        sb.append(SELECT_OBS2CHUNK);
-        sb.append(" FROM ");
-        sb.append(OBS2CHUNK);
-        sb.append(" WHERE Observation.collection = '").append(uri.getCollection()).append("'");
-        sb.append(" AND Observation.observationID = '").append(uri.getObservationID()).append("'");
-        sb.append(" ORDER BY Plane.planeID, Artifact.artifactID, Part.PartID");
-        return sb.toString();
+    public CoordIterator(Iterator<Point> vi)
+    {
+        this.iter = vi;
     }
-    
-    // used by datalink
-    public String getADQL(final PublisherID uri, boolean artifactOnly) {
-        StringBuilder sb = new StringBuilder("SELECT ");
-        sb.append(SELECT_READABLE).append(",");
-        if (artifactOnly) {
-            sb.append(SELECT_ARTIFACT);
-            sb.append(" FROM ");
-            sb.append(PLANE2ARTIFACT);
-        } else {
-            sb.append(SELECT_ARTIFACT2CHUNK);
-            sb.append(" FROM ");
-            sb.append(PLANE2CHUNK);
+
+    @Override
+    public boolean hasNext()
+    {
+        if ( cur == null && iter.hasNext())
+        {
+            cur = iter.next();
         }
-        
-        sb.append(" WHERE Plane.publisherID = '");
-        sb.append(uri.getURI().toASCIIString());
-        sb.append("'");
-        if (!artifactOnly) {
-            sb.append(" ORDER BY Artifact.artifactID, Part.partID");
-        }
-        
-        String ret = sb.toString();
-        log.debug(ret);
+        if (cur == null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public Double next()
+    {
+        double ret = cur.cval2;
+        if (cval1)
+            ret = cur.cval1;
+        this.cval1 = !cval1;
+        if (cval1)
+            cur = null;
         return ret;
     }
-    
-    // used by cutout
-    public String getArtifactADQL(final URI uri) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("SELECT ");
-        sb.append(SELECT_ARTIFACT2CHUNK);
-        sb.append(" FROM ");
-        sb.append(PLANE2CHUNK); // need Plane.publisherID
-        sb.append(" WHERE Artifact.uri = '");
-        sb.append(uri.toString());
-        sb.append("'");
-        sb.append(" ORDER BY Artifact.artifactID, Part.partID");
-        return sb.toString();
+
+    // compile compat with older java versions
+    @Override
+    public void remove()
+    {
+        throw new UnsupportedOperationException();
     }
 }

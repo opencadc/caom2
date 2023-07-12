@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,64 +62,44 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
- */
+*/
 
-package ca.nrc.cadc.caom2ops;
+package org.opencadc.bifrost;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.PublisherID;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.uws.server.JobExecutor;
+import ca.nrc.cadc.uws.server.SimpleJobManager;
+import ca.nrc.cadc.uws.server.SyncJobExecutor;
+import ca.nrc.cadc.uws.server.impl.PostgresJobPersistence;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class ArtifactQueryResult {
+public class LinkQueryJobManager extends SimpleJobManager
+{
+    private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
 
-    private static final Logger log = Logger.getLogger(ArtifactQueryResult.class);
+    private static final Long MAX_EXEC_DURATION = 120L; // 2 minutes
+    private static final Long MAX_DESTRUCTION = 3600L;
+    private static final Long MAX_QUOTE = 120L;
 
-    private final PublisherID publisherID;
-    private final List<Artifact> artifacts = new ArrayList<>();
-    
-    // permission info for the plane
-    public Date metaRelease;
-    public Date dataRelease;
-    private final Set<URI> metaReadGroups = new TreeSet<>();
-    private final Set<URI> dataReadGroups = new TreeSet<>();
-    
-    public ArtifactQueryResult(PublisherID publisherID) {
-        this.publisherID = publisherID;
-    }
+    public LinkQueryJobManager()
+    {
+        super();
+        
+        PostgresJobPersistence jobPersist = new PostgresJobPersistence(AuthenticationUtil.getIdentityManager());
+        
+        JobExecutor jobExec = new SyncJobExecutor(jobPersist, CaomLinkQueryRunner.class);
 
-    public PublisherID getPublisherID() {
-        return publisherID;
-    }
-
-    public List<Artifact> getArtifacts() {
-        return artifacts;
-    }
-
-    public Set<URI> getMetaReadGroups() {
-        return metaReadGroups;
-    }
-
-    public Set<URI> getDataReadGroups() {
-        return dataReadGroups;
-    }
-    
-    
-
-    @Override
-    public String toString() {
-        return "ArtifactQueryResult["
-                + publisherID
-                + "," + artifacts.size() + "]";
+        super.setJobPersistence(jobPersist);
+        super.setJobExecutor(jobExec);
+        super.setMaxExecDuration(MAX_EXEC_DURATION);
+        super.setMaxDestruction(MAX_DESTRUCTION);
+        super.setMaxQuote(MAX_QUOTE);
     }
 }

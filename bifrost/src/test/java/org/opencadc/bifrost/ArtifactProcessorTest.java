@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2020.                            (c) 2020.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,28 +67,39 @@
 ************************************************************************
  */
 
-package ca.nrc.cadc.caom2ops;
+package org.opencadc.bifrost;
 
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.PlaneURI;
+import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.PublisherID;
+import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.datalink.DataLink;
 
 /**
  *
  * @author pdowler
  */
-public class AdqlQueryGeneratorTest {
+public class ArtifactProcessorTest {
 
-    private static final Logger log = Logger.getLogger(AdqlQueryGeneratorTest.class);
+    private static final Logger log = Logger.getLogger(ArtifactProcessorTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.bifrost", Level.DEBUG);
+    }
+
+    static PublisherID PUB_ID = new PublisherID(URI.create("ivo://opencadc.org/BAR?bar/baz"));
+    static String BASE_ARTIFACT_URI = "foo:BAR/bar_baz_";
+
+    public ArtifactProcessorTest() {
     }
 
     //@Test
@@ -102,24 +113,16 @@ public class AdqlQueryGeneratorTest {
     }
 
     @Test
-    public void testArtifactQuery() {
+    public void testNoArtifacts() {
+        log.debug("testEmptyList START");
         try {
-            URI uri = new URI("ad:FOO/bar.fits");
-            AdqlQueryGenerator gen = new AdqlQueryGenerator();
-            String adql = gen.getArtifactADQL(uri);
-            log.info("testArtifactQuery:\n" + adql);
+            URI uri = PUB_ID.getURI();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
 
-            adql = adql.toLowerCase();
-
-            // TODO: assert something
-            Assert.assertTrue(adql.contains("from caom2.plane"));
-            Assert.assertTrue(adql.contains("left outer join caom2.artifact"));
-            Assert.assertTrue(adql.contains("left outer join caom2.part"));
-            Assert.assertTrue(adql.contains("left outer join caom2.chunk"));
-
-            Assert.assertTrue(adql.contains("artifact.uri ="));
-
-            Assert.assertTrue(adql.contains("order by"));
+            ArtifactQueryResult artifacts = new ArtifactQueryResult(PUB_ID);
+            List<DataLink> links = ap.process(uri, artifacts);
+            Assert.assertNotNull(links);
+            Assert.assertTrue(links.isEmpty());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -127,59 +130,85 @@ public class AdqlQueryGeneratorTest {
     }
 
     @Test
-    public void testArtifactListQueryPublisherID() {
+    public void testSimple() {
         try {
-            PublisherID uri = new PublisherID(new URI("ivo://cadc.nrc.ca/FOO?bar123/bar456"));
-            AdqlQueryGenerator gen = new AdqlQueryGenerator();
-            String adql = gen.getADQL(uri, false);
-            log.info("testArtifactListQueryPublisherID:\n" + adql);
+            URI uri = PUB_ID.getURI();
 
-            adql = adql.toLowerCase();
+            ArtifactQueryResult artifacts = new ArtifactQueryResult(PUB_ID);
+            artifacts.getArtifacts().addAll(getTestArtifacts(1, 0));
+            Assert.assertEquals("test setup", 1, artifacts.getArtifacts().size());
 
-            // TODO: assert something
-            Assert.assertTrue(adql.contains("from caom2.plane"));
-            Assert.assertTrue(adql.contains("left outer join caom2.artifact"));
-            Assert.assertTrue(adql.contains("left outer join caom2.part"));
-            Assert.assertTrue(adql.contains("left outer join caom2.chunk"));
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
 
-            Assert.assertTrue(adql.contains("plane.metarelease"));
-            Assert.assertTrue(adql.contains("plane.datarelease"));
-            Assert.assertTrue(adql.contains("plane.metareadgroups"));
-            Assert.assertTrue(adql.contains("plane.datareadgroups"));
+            List<DataLink> links = ap.process(uri, artifacts);
+            Assert.assertNotNull(links);
+            Assert.assertEquals("num links", 1, links.size());
 
-            Assert.assertTrue(adql.contains("plane.publisherid = "));
-
-            Assert.assertTrue(adql.contains("order by"));
+            for (DataLink dl : links) {
+                log.info("testSimple link: " + dl);
+                Assert.assertNotNull(dl);
+                Assert.assertEquals(uri.toASCIIString(), dl.getID());
+                Assert.assertNotNull(dl.errorMessage);
+                //Assert.assertNotNull(dl.accessURL);
+                //String query = dl.accessURL.getQuery();
+                //Assert.assertNull(query); // no runid
+            }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    @Test
-    public void testObservationQuery() {
+    //@Test
+    public void testPackageLink() {
+        log.debug("testPackageLink START");
         try {
-            ObservationURI uri = new ObservationURI("FOO", "bar123");
-            AdqlQueryGenerator gen = new AdqlQueryGenerator();
-            String adql = gen.getADQL(uri);
-            log.info("testObservationQuery:\n" + adql);
+            URI uri = PUB_ID.getURI();
 
-            adql = adql.toLowerCase();
+            ArtifactQueryResult artifacts = new ArtifactQueryResult(PUB_ID);
+            artifacts.getArtifacts().addAll(getTestArtifacts(3, 2));
+            Assert.assertEquals("test setup", 5, artifacts.getArtifacts().size());
 
-            // TODO: assert something
-            Assert.assertTrue(adql.contains("from caom2.observation"));
-            Assert.assertTrue(adql.contains("left outer join caom2.plane"));
-            Assert.assertTrue(adql.contains("left outer join caom2.artifact"));
-            Assert.assertTrue(adql.contains("left outer join caom2.part"));
-            Assert.assertTrue(adql.contains("left outer join caom2.chunk"));
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
 
-            Assert.assertTrue(adql.contains("observation.collection = "));
-            Assert.assertTrue(adql.contains("observation.observationid = "));
+            List<DataLink> links = ap.process(uri, artifacts);
+            Assert.assertNotNull(links);
+            //Assert.assertEquals("num links", 6, links.size());
 
-            Assert.assertTrue(adql.contains("order by"));
+            boolean foundPkg = false;
+            for (DataLink dl : links) {
+                log.info("testPackageLink: " + dl);
+                Assert.assertNotNull(dl);
+                Assert.assertEquals(uri.toASCIIString(), dl.getID());
+                Assert.assertNotNull(dl.accessURL);
+                String query = dl.accessURL.getQuery();
+                if (dl.getSemantics().equals(DataLink.Term.PACKAGE)) {
+                    Assert.assertNotNull(query);
+                    foundPkg = true;
+                }
+            }
+            Assert.assertTrue("found package link", foundPkg);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
+    }
+
+    private List<Artifact> getTestArtifacts(int numA, int numP)
+            throws Exception {
+        List<Artifact> ret = new ArrayList<>();
+        for (int i = 0; i < numA; i++) {
+            Artifact a = new Artifact(new URI(BASE_ARTIFACT_URI + i), ProductType.SCIENCE, ReleaseType.DATA);
+            ret.add(a);
+        }
+
+        if (numP > 0) {
+            ret.add(new Artifact(new URI(BASE_ARTIFACT_URI + numA + 1), ProductType.PREVIEW, ReleaseType.DATA));
+        }
+        if (numP == 2) {
+            ret.add(new Artifact(new URI(BASE_ARTIFACT_URI + numA + 2), ProductType.THUMBNAIL, ReleaseType.DATA));
+        }
+
+        return ret;
     }
 }

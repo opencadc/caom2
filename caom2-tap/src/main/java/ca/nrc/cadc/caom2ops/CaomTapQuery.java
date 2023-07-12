@@ -77,7 +77,6 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2ops.mapper.ArtifactMapper;
 import ca.nrc.cadc.caom2ops.mapper.ChunkMapper;
@@ -104,6 +103,7 @@ import ca.nrc.cadc.reg.Standards;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.cert.CertificateException;
@@ -197,34 +197,6 @@ public class CaomTapQuery {
         return ret;
     }
     
-    /**
-     * Get all artifacts for a plane.
-     * 
-     * @param uri
-     * @param artifactOnly
-     * @return artifact query result
-     * @throws IOException
-     * @throws ResourceNotFoundException if a suitable TAP endpoint cannot be found
-     * @throws UnexpectedContentException
-     * @throws AccessControlException
-     * @throws CertificateException 
-     */
-    // used by caom2-datalink-server
-    public ArtifactQueryResult performQuery(final PlaneURI uri, boolean artifactOnly)
-        throws IOException,  ResourceNotFoundException, UnexpectedContentException, 
-            AccessControlException, CertificateException {
-        log.debug("performing query on plane URI = " + uri.toString() + ", artifactOnly=" + artifactOnly);
-    
-        // generate query, do not follow redirect
-        AdqlQueryGenerator gen = new AdqlQueryGenerator();
-        String adql = gen.getADQL(uri, artifactOnly);
-        log.debug("link query: " + adql);
-
-        VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
-        return buildArtifacts(doc);
-    }
-    
-
     /**
      *  Get a single artifact.
      * 
@@ -460,7 +432,6 @@ public class CaomTapQuery {
         PartMapper pm = new PartMapper(utypeMap);
         ChunkMapper cm = new ChunkMapper(utypeMap);
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-    
         
         ArtifactQueryResult ret = null;
         while (rowIterator.hasNext()) {
@@ -472,20 +443,25 @@ public class CaomTapQuery {
                 ret = new ArtifactQueryResult(new PublisherID(pubID));
             }
             
-            Integer mrCol = utypeMap.get("column-name:metaReadable");
-            Integer drCol = utypeMap.get("column-name:dataReadable");
-            if (mrCol != null) {
-                Object o = row.get(mrCol);
-                ret.metaReadable = (o != null);
+            ret.metaRelease = Util.getDate(row, utypeMap.get("caom2:Plane.metaRelease"));
+            ret.dataRelease = Util.getDate(row, utypeMap.get("caom2:Plane.dataRelease"));
+            try {
+                List<URI> mrg = Util.getURIList(row, utypeMap.get("caom2:Plane.metaReadGroups"));
+                if (mrg != null) {
+                    ret.getMetaReadGroups().addAll(mrg);
+                }
+            } catch (URISyntaxException ex) {
+                throw new RuntimeException("invalid URI(s) in caom2:Plane.metaReadGroups", ex);
             }
-            
-            if (drCol != null) {
-                Object o = row.get(drCol);
-                ret.dataReadable = (o != null);
+            try {
+                List<URI> drg = Util.getURIList(row, utypeMap.get("caom2:Plane.dataReadGroups"));
+                if (drg != null) {
+                    ret.getDataReadGroups().addAll(drg);
+                }
+            } catch (URISyntaxException ex) {
+                throw new RuntimeException("invalid URI(s) in caom2:Plane.dataReadGroups", ex);
             }
-            
-            log.debug("found metaReadable: " + ret.metaReadable + " dataReadable: " + ret.dataReadable);
-            
+
             Artifact a = am.mapRow(row, df);
             if (a != null) {
                 if (curArtifact == null || !curArtifact.getID().equals(a.getID())) {

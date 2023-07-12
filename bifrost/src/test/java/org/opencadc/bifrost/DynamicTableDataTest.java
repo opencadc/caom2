@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,23 +65,22 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.caom2.datalink;
+package org.opencadc.bifrost;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.caom2ops.CaomTapQuery;
-import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.Parameter;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Iterator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -92,75 +91,59 @@ import org.opencadc.datalink.DataLink;
 /**
  * @author pdowler
  */
-public class DynamicTableDataTest 
-{
+public class DynamicTableDataTest {
+
     private static final Logger log = Logger.getLogger(DynamicTableDataTest.class);
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.datalink", Level.INFO);
+    static {
+        Log4jInit.setLevel("org.opencadc.bifrost", Level.INFO);
     }
-    
+
     static String RUNID = "abc123";
 
-    static URI SODA_ID = URI.create("ivo://cadc.nrc.ca/caom2ops");
-    
-    ServiceConfig conf = new ServiceConfig();
-    
-    public DynamicTableDataTest() { }
+    public DynamicTableDataTest() {
+    }
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
+    public void testTemplate() {
+        try {
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testNoInputURI()
-    {
+    public void testNoInputURI() {
         log.debug("testNoInputURI - START");
-        try
-        {
+        try {
             Job job = new Job();
-            
-            ArtifactProcessor ap = new ArtifactProcessor();
+
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
             dtd.setMaxrec(10);
             Iterator<DataLink> iter = dtd.links();
-            
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(UsageFault expected)
-        {
+
+            Assert.assertFalse(iter.hasNext());
+        } catch (UsageFault expected) {
             log.debug("caught expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testNoResults()
-    {
+    public void testNoResults() {
         log.debug("testNoResults - START");
-        try
-        {
+        try {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz1"));
             job.getParameterList().add(new Parameter("id", "caom:FOO/bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 0);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -173,25 +156,21 @@ public class DynamicTableDataTest
             Assert.assertTrue(iter.hasNext());
             DataLink row2 = iter.next();
             Assert.assertNotNull(row2.errorMessage); // see DataLinkerror message 
-            
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(Exception unexpected)
-        {
+
+            Assert.assertFalse(iter.hasNext());
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testSingleInputURI()
-    {
+    public void testSingleInputURI() {
         log.debug("testSingleInputURI - START");
-        try
-        {
+        try {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -199,28 +178,24 @@ public class DynamicTableDataTest
             Iterator<DataLink> iter = dtd.links();
 
             // 1 results
-            Assert.assertTrue( iter.hasNext() );
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
 
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertFalse(iter.hasNext());
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testMultipleInputURI()
-    {
+    public void testMultipleInputURI() {
         log.debug("testMultipleInputURI - START");
-        try
-        {
+        try {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 1);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -228,31 +203,27 @@ public class DynamicTableDataTest
             Iterator<DataLink> iter = dtd.links();
 
             // 2x2 results
-            Assert.assertTrue( iter.hasNext() );
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
 
-            Assert.assertTrue( iter.hasNext() );
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
 
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertFalse(iter.hasNext());
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testNestedIteration()
-    {
+    public void testNestedIteration() {
         log.debug("testNestedIteration - START");
-        try
-        {
+        try {
             Job job = new Job();
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz1"));
             job.getParameterList().add(new Parameter("id", "ivo://cadc.nrc.ca/IRIS?bar/baz2"));
-            ArtifactProcessor ap = new ArtifactProcessor();
+            ArtifactProcessor ap = new ArtifactProcessor(URI.create("ivo://unused/locator"), new ArrayList<URI>());
             CaomTapQuery query = new TestCaomTapQuery("123456", new URI("ivo://cadc.nrc.ca/unused"), 2);
             DynamicTableData dtd = new DynamicTableData(job, query, ap);
             dtd.setDownloadOnly(false);
@@ -260,64 +231,57 @@ public class DynamicTableDataTest
             Iterator<DataLink> iter = dtd.links();
 
             // 2 ID x2 artifacts + 1 pkg each = 6
-            Assert.assertTrue( iter.hasNext() );
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
 
-            Assert.assertTrue( iter.hasNext() );
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
 
-            Assert.assertTrue( iter.hasNext() );
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
-            
-            Assert.assertTrue( iter.hasNext() );
+
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
-            
-            Assert.assertTrue( iter.hasNext() );
+
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
-            
-            Assert.assertTrue( iter.hasNext() );
+
+            Assert.assertTrue(iter.hasNext());
             Assert.assertNotNull(iter.next());
-            
-            Assert.assertFalse( iter.hasNext() );
-        }
-        catch(Exception unexpected)
-        {
+
+            Assert.assertFalse(iter.hasNext());
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
-    class TestCaomTapQuery extends CaomTapQuery
-    {
+    class TestCaomTapQuery extends CaomTapQuery {
+
         int num;
-        TestCaomTapQuery(String jobID, URI tapURI, int num)
-        {
+
+        TestCaomTapQuery(String jobID, URI tapURI, int num) {
             super(tapURI, jobID);
             this.num = num;
         }
 
         @Override
-        public ArtifactQueryResult performQuery(PublisherID id, boolean artifactOnly)
-        {
+        public ArtifactQueryResult performQuery(PublisherID id, boolean artifactOnly) {
             ArtifactQueryResult ret = new ArtifactQueryResult(id);
-            try
-            {
-                for (int i=0; i<num; i++)
-                {
+            try {
+                for (int i = 0; i < num; i++) {
                     Artifact a = new Artifact(
-                        URI.create("ad:IRIS/bar_baz_" + i),
-                        ProductType.SCIENCE, ReleaseType.DATA);
+                            URI.create("foo:BAR/bar_baz_" + i),
+                            ProductType.SCIENCE, ReleaseType.DATA);
                     a.contentLength = 123L;
                     a.contentType = "text/plain";
                     ret.getArtifacts().add(a);
                 }
-            }
-            catch(Exception ex)
-            {
+            } catch (Exception ex) {
                 throw new RuntimeException("test setup failed", ex);
             }
             log.debug("TestCaomTapQuery.getArtifacts: " + ret.getArtifacts().size());
-            return  ret;
+            return ret;
         }
     }
 }

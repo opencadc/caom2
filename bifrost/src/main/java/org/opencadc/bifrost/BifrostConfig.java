@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2022.                            (c) 2022.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,105 +62,112 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2ops;
+package org.opencadc.bifrost;
 
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.PlaneURI;
-import ca.nrc.cadc.caom2.PublisherID;
+import ca.nrc.cadc.util.InvalidConfigException;
+import ca.nrc.cadc.util.MultiValuedProperties;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
- * Generates an ADQL query to select necessary metadata for all artifacts planes.
+ *
  * @author pdowler
  */
-public class AdqlQueryGenerator {
-    private static final Logger log = Logger.getLogger(AdqlQueryGenerator.class);
+public class BifrostConfig {
+    private static final Logger log = Logger.getLogger(BifrostConfig.class);
 
-    // use the obsID FK column and an alias because FK columns don't have a utype 
-    // and thus we won't accidentally effect result parsing
-    private static final String SELECT_READABLE = "Plane.metaRelease, Plane.metaReadGroups, Plane.dataRelease, Plane.dataReadGroups";
+    private static final String CONFIG = "bifrost.properties";
     
-    private static final String SELECT_ARTIFACT = "Plane.publisherID, Artifact.*";
-    private static final String SELECT_ARTIFACT2CHUNK = SELECT_ARTIFACT + ", Part.*, Chunk.*";
-    private static final String SELECT_OBS2CHUNK = "Observation.*, Plane.*, Artifact.*, Part.*, Chunk.*";
+    private static final String BASE_KEY = "org.opencadc.bifrost";
+    private static final String QUERY_KEY = BASE_KEY + ".queryService";
+    private static final String LOCATOR_KEY = BASE_KEY + ".locatorService";
+    private static final String READ_KEY = BASE_KEY + ".readGrantProvider";
     
-    private static final String ARTIFACT2CHUNK =
-        "caom2.Artifact AS Artifact"
-        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
-        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
+    private final URI queryService;
+    private final URI locatorService;
+    private final List<URI> readGrantProviders = new ArrayList<>();
     
-    private static final String PLANE2CHUNK =
-        "caom2.Plane AS Plane"
-        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
-        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
-        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
-    
-    private static final String OBS2CHUNK = 
-        "caom2.Observation AS Observation"
-        + " LEFT OUTER JOIN caom2.Plane AS Plane ON Observation.obsID = Plane.obsID"
-        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID"
-        + " LEFT OUTER JOIN caom2.Part AS Part ON Part.artifactID = Artifact.artifactID"
-        + " LEFT OUTER JOIN caom2.Chunk AS Chunk ON Part.partID = Chunk.partID";
-    
-    private static final String PLANE2ARTIFACT =
-        "caom2.Plane AS Plane"
-        + " LEFT OUTER JOIN caom2.Artifact AS Artifact ON Plane.planeID = Artifact.planeID";
-    
-    // used by meta
-    public String getADQL(final ObservationURI uri) {
-        StringBuilder sb = new StringBuilder("SELECT ");
-        sb.append(SELECT_OBS2CHUNK);
-        sb.append(" FROM ");
-        sb.append(OBS2CHUNK);
-        sb.append(" WHERE Observation.collection = '").append(uri.getCollection()).append("'");
-        sb.append(" AND Observation.observationID = '").append(uri.getObservationID()).append("'");
-        sb.append(" ORDER BY Plane.planeID, Artifact.artifactID, Part.PartID");
-        return sb.toString();
-    }
-    
-    // used by datalink
-    public String getADQL(final PublisherID uri, boolean artifactOnly) {
-        StringBuilder sb = new StringBuilder("SELECT ");
-        sb.append(SELECT_READABLE).append(",");
-        if (artifactOnly) {
-            sb.append(SELECT_ARTIFACT);
-            sb.append(" FROM ");
-            sb.append(PLANE2ARTIFACT);
-        } else {
-            sb.append(SELECT_ARTIFACT2CHUNK);
-            sb.append(" FROM ");
-            sb.append(PLANE2CHUNK);
-        }
-        
-        sb.append(" WHERE Plane.publisherID = '");
-        sb.append(uri.getURI().toASCIIString());
-        sb.append("'");
-        if (!artifactOnly) {
-            sb.append(" ORDER BY Artifact.artifactID, Part.partID");
-        }
-        
-        String ret = sb.toString();
-        log.debug(ret);
-        return ret;
-    }
-    
-    // used by cutout
-    public String getArtifactADQL(final URI uri) {
+    public BifrostConfig() {
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT ");
-        sb.append(SELECT_ARTIFACT2CHUNK);
-        sb.append(" FROM ");
-        sb.append(PLANE2CHUNK); // need Plane.publisherID
-        sb.append(" WHERE Artifact.uri = '");
-        sb.append(uri.toString());
-        sb.append("'");
-        sb.append(" ORDER BY Artifact.artifactID, Part.partID");
-        return sb.toString();
+        try {
+            PropertiesReader r = new PropertiesReader(CONFIG);
+            MultiValuedProperties props = r.getAllProperties();
+            
+            String qs = props.getFirstPropertyValue(QUERY_KEY);
+            URI qsURI = null;
+            sb.append("\n\t").append(QUERY_KEY).append(" - ");
+            if (qs == null) {
+                sb.append("MISSING");
+            } else {
+                try {
+                    qsURI = new URI(qs);
+                    sb.append("OK");
+                } catch (URISyntaxException ex) {
+                    sb.append("ERROR invalid URI: " + qs);
+                }
+            }
+            
+            String loc = props.getFirstPropertyValue(LOCATOR_KEY);
+            URI locURI = null;
+            sb.append("\n\t").append(LOCATOR_KEY).append(" - ");
+            if (loc == null) {
+                sb.append("MISSING");
+            } else {
+                try {
+                    locURI = new URI(loc);
+                    sb.append("OK");
+                } catch (URISyntaxException ex) {
+                    sb.append("ERROR invalid URI: " + loc);
+                }
+            }
+            
+            // optional
+            List<String> srgp = props.getProperty(READ_KEY);
+            sb.append("\n\t").append(READ_KEY).append(" - ");
+            if (srgp == null || srgp.isEmpty()) {
+                sb.append("NONE");
+            } else {
+                for (String s : srgp) {
+                    try {
+                        URI u = new URI(s);
+                        readGrantProviders.add(u);
+                        sb.append(" ").append(s);
+                    } catch (URISyntaxException ex) {
+                        sb.append("ERROR invalid URI: " + s);
+                    }
+                }
+            }
+            
+            if (qsURI == null && locURI == null) {
+                throw new InvalidConfigException("invalid config: " + sb.toString());
+            }
+            this.queryService = qsURI;
+            this.locatorService = locURI;
+            // log would be OK if this method was called once in an init action, but is is per request
+            //log.info(sb.toString());
+        } catch (InvalidConfigException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new InvalidConfigException("invalid config: " + ex.getMessage(), ex);
+        }
+    }
+    
+    public URI getQueryService() {
+        return queryService;
+    }
+
+    public URI getLocatorService() {
+        return locatorService;
+    }
+
+    public List<URI> getReadGrantProviders() {
+        return readGrantProviders;
     }
 }

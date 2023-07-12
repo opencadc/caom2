@@ -67,7 +67,7 @@
 ************************************************************************
  */
 
-package ca.nrc.cadc.caom2.datalink;
+package org.opencadc.bifrost;
 
 import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PublisherID;
@@ -80,7 +80,6 @@ import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.ParameterUtil;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -184,7 +183,7 @@ public class DynamicTableData implements DataLinkSource {
                     try {
                         uri = new URI(s);
                         pubID = new PublisherID(uri);
-                    } catch (URISyntaxException | IllegalArgumentException ex) {
+                    } catch (Exception ex) {
                         links = new ArrayList<>(1);
                         DataLink usage = new DataLink(s, DataLink.Term.THIS);
                         usage.errorMessage = "UsageFault: invalid ID: " + s;
@@ -192,8 +191,9 @@ public class DynamicTableData implements DataLinkSource {
                     }
                     if (pubID != null) {
                         try {
+                            ArtifactQueryResult ar;
                             log.debug("getBatchIterator: " + uri);
-                            ArtifactQueryResult ar = query.performQuery(pubID, downloadOnly);
+                            ar = query.performQuery(pubID, downloadOnly);
                             if (ar == null || ar.getArtifacts().isEmpty()) {
                                 links = new ArrayList<>(1);
                                 DataLink notFound = new DataLink(s, DataLink.Term.THIS);
