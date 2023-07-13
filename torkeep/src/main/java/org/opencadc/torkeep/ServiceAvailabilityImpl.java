@@ -128,15 +128,15 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
                 return new Availability(false, RestAction.STATE_READ_ONLY_MSG);
             }
 
-            CollectionsConfig collectionsConfig = new CollectionsConfig();
-            if (collectionsConfig.getConfigs().isEmpty()) {
+            TorkeepConfig torkeepConfig = new TorkeepConfig();
+            if (torkeepConfig.getConfigs().isEmpty()) {
                 throw new IllegalStateException("CONFIG: no configured collections found in - " +
-                        CollectionsConfig.TORKEEP_PROPERTIES);
+                        TorkeepConfig.TORKEEP_PROPERTIES);
             }
 
-            Map<String,Object> config = TorkeepInitAction.getDAOConfig();
+            Map<String,Object> daoConfig = TorkeepInitAction.getDAOConfig();
             ObservationDAO dao = new ObservationDAO();
-            dao.setConfig(config); // connectivity tested
+            dao.setConfig(daoConfig); // connectivity tested
 
             // check the WCS JNI library
             try {

@@ -69,6 +69,7 @@
 
 package org.opencadc.torkeep;
 
+import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.DBUtil;
@@ -95,7 +96,7 @@ public class TorkeepInitAction extends InitAction {
     static final String SCHEMA = "caom2";
     static final String SQL_GENERATOR_CLASS = "ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator";
 
-    private CollectionsConfig collectionsConfig;
+    private TorkeepConfig torkeepConfig;
 
     @Override
     public void doInit() {
@@ -105,21 +106,17 @@ public class TorkeepInitAction extends InitAction {
     }
 
     static Map<String, Object> getDAOConfig() {
-        try {
-            Map<String,Object> ret = new TreeMap<>();
-            Class clz = Class.forName(SQL_GENERATOR_CLASS);
-            ret.put(SQLGenerator.class.getName(), clz);
-            ret.put("jndiDataSourceName", JNDI_DATASOURCE);
-            ret.put("schema", SCHEMA);
-            return ret;
-        } catch (ClassNotFoundException ex) {
-            throw new IllegalStateException("failed to load SQLGenerator: " + SQL_GENERATOR_CLASS);
-        }
+        Map<String,Object> ret = new TreeMap<>();
+        ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+        ret.put("jndiDataSourceName", JNDI_DATASOURCE);
+        ret.put("schema", SCHEMA);
+
+        return ret;
     }
 
     private void initConfig() {
         log.info("initConfig: START");
-        this.collectionsConfig = new CollectionsConfig();
+        this.torkeepConfig = new TorkeepConfig();
         log.info("initConfig: OK");
     }
 
@@ -128,7 +125,6 @@ public class TorkeepInitAction extends InitAction {
             log.info("initDatabase: START");
             DataSource ds = DBUtil.findJNDIDataSource(JNDI_DATASOURCE);
             // in PG we do not need to specify database name as it is set in DataSource JDBC URL
-            //InitDatabase init = new InitDatabase(ds, i.getDatabase(), i.getSchema());
             InitDatabase init = new InitDatabase(ds, null, SCHEMA);
             init.doInit();
             log.info("initDatabase: OK");
@@ -154,7 +150,7 @@ public class TorkeepInitAction extends InitAction {
             log.debug("no previously bound " + jndiKey + ", continuing");
         }
         try {
-            initContext.bind(jndiKey, this.collectionsConfig);
+            initContext.bind(jndiKey, this.torkeepConfig);
             log.warn("doInit: collectionsConfig stored via JNDI: " + jndiKey);
         } catch (NamingException e) {
             throw new IllegalStateException("CONFIG: failed to bind collectionsConfig", e);

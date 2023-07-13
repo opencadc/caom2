@@ -39,7 +39,7 @@
     </servlet>
 
     <servlet>
-        <servlet-name>RepoServlet</servlet-name>
+        <servlet-name>ObservationsServlet</servlet-name>
         <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
         <init-param>
             <param-name>get</param-name>
@@ -124,7 +124,7 @@
 
     <!--  Current caom2 version endpoint (2.4) -->
     <servlet-mapping>
-        <servlet-name>RepoServlet</servlet-name>
+        <servlet-name>ObservationsServlet</servlet-name>
         <url-pattern>/observations/*</url-pattern>
     </servlet-mapping>
 

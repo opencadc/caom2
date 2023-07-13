@@ -118,7 +118,7 @@ public abstract class RepoAction extends RestAction {
     protected ObservationURI observationURI;
     protected boolean computeMetadata;
     private String collection;
-    private transient CollectionsConfig collectionsConfig;
+    private transient TorkeepConfig torkeepConfig;
     private transient ObservationDAO observationDAO;
     private transient DeletedEntityDAO deletedEntityDAO;
 
@@ -157,8 +157,8 @@ public abstract class RepoAction extends RestAction {
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         OutputStreamWriter out = new OutputStreamWriter(bc, StandardCharsets.US_ASCII);
         CsvWriter writer = new CsvWriter(out, '\t');
-        CollectionsConfig cc = getConfigs();
-        for (CollectionEntry entry : cc.getConfigs()) {
+        TorkeepConfig tc = getTorkeepConfig();
+        for (CollectionEntry entry : tc.getConfigs()) {
             writer.write(entry.getCollection());
             writer.endRecord();
         }
@@ -238,12 +238,14 @@ public abstract class RepoAction extends RestAction {
     }
 
     private Map<String, Object> getDAOConfig(String collection) throws IOException {
-        CollectionsConfig collectionsConfig = getConfigs();
-        CollectionEntry collectionEntry = collectionsConfig.getConfig(collection);
+        Map<String, Object> daoConfig = TorkeepInitAction.getDAOConfig();
+        TorkeepConfig tc = getTorkeepConfig();
+        CollectionEntry collectionEntry = tc.getConfig(collection);
         if (collectionEntry != null) {
+            daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID());
             this.computeMetadata = collectionEntry.isComputeMetadata();
         }
-        return TorkeepInitAction.getDAOConfig();
+        return daoConfig;
     }
     
     protected ObservationDAO getDAO() throws IOException {
@@ -296,8 +298,8 @@ public abstract class RepoAction extends RestAction {
         }
 
         // config for the collection
-        CollectionsConfig collectionsConfig = getConfigs();
-        CollectionEntry collectionEntry = collectionsConfig.getConfig(getCollection());
+        TorkeepConfig tc = getTorkeepConfig();
+        CollectionEntry collectionEntry = tc.getConfig(getCollection());
         if (collectionEntry == null) {
             throw new ResourceNotFoundException("not found: " + getObservationURI());
         }
@@ -309,7 +311,7 @@ public abstract class RepoAction extends RestAction {
             grantURI = URI.create("caom://" + getCollection());
         }
 
-        for (URI grantProvider : collectionsConfig.getGrantProviders()) {
+        for (URI grantProvider : tc.getGrantProviders()) {
             log.debug("checking grant provider: " + grantProvider);
             PermissionsClient permissionsClient = new PermissionsClient(grantProvider);
             ReadGrant readGrant = permissionsClient.getReadGrant(grantURI);
@@ -322,7 +324,7 @@ public abstract class RepoAction extends RestAction {
 
         try {
             if (CredUtil.checkCredentials()) {
-                for (URI grantProvider : collectionsConfig.getGrantProviders()) {
+                for (URI grantProvider : tc.getGrantProviders()) {
                     PermissionsClient pc = new PermissionsClient(grantProvider);
                     WriteGrant writeGrant = pc.getWriteGrant(getObservationURI().getURI());
                     if (writeGrant != null) {
@@ -335,7 +337,7 @@ public abstract class RepoAction extends RestAction {
                     }
                 }
 
-                for (URI grantProvider : collectionsConfig.getGrantProviders()) {
+                for (URI grantProvider : tc.getGrantProviders()) {
                     PermissionsClient pc = new PermissionsClient(grantProvider);
                     ReadGrant readGrant = pc.getReadGrant(getObservationURI().getURI());
                     if (readGrant != null) {
@@ -375,8 +377,8 @@ public abstract class RepoAction extends RestAction {
             throw new IllegalStateException(STATE_OFFLINE_MSG);
         }
 
-        CollectionsConfig cc = getConfigs();
-        CollectionEntry entry = cc.getConfig(getCollection());
+        TorkeepConfig tc = getTorkeepConfig();
+        CollectionEntry entry = tc.getConfig(getCollection());
         if (entry == null) {
             throw new ResourceNotFoundException("not found: " + getObservationURI());
         }
@@ -390,7 +392,7 @@ public abstract class RepoAction extends RestAction {
 
         try {
             if (CredUtil.checkCredentials()) {
-                for (URI grantProvider : cc.getGrantProviders()) {
+                for (URI grantProvider : tc.getGrantProviders()) {
                     PermissionsClient pc = new PermissionsClient(grantProvider);
                     WriteGrant writeGrant = pc.getWriteGrant(grantURI);
                     if (writeGrant != null) {
@@ -488,19 +490,19 @@ public abstract class RepoAction extends RestAction {
 //        return ratGenerator;
 //    }
 
-    protected CollectionsConfig getConfigs() {
-        if (this.collectionsConfig == null) {
+    protected TorkeepConfig getTorkeepConfig() {
+        if (this.torkeepConfig == null) {
             String jndiKey = TorkeepInitAction.JNDI_CONFIG_KEY;
             log.debug("jndiKey: " + jndiKey);
             try {
                 log.debug("retrieving config via JNDI: " + jndiKey);
                 javax.naming.Context initContext = new javax.naming.InitialContext();
-                this.collectionsConfig =  (CollectionsConfig) initContext.lookup(jndiKey);
+                this.torkeepConfig =  (TorkeepConfig) initContext.lookup(jndiKey);
             } catch (Exception ex) {
                 throw new IllegalStateException("failed to find config via JNDI: lookup failed", ex);
             }
         }
-        return this.collectionsConfig;
+        return this.torkeepConfig;
     }
     
 }

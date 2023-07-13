@@ -1,27 +1,25 @@
 swagger: '2.0'
 info:
   version: '1.0'
-  title: Sandbox CAOM Repository
+  title: torkeep CAOM Metadata Repository
   description: >
-    The Sandbox CAOM Repsitory is a CAOM metadata repository for use by developers
+    The torkeep CAOM Metadata Repsitory is a CAOM metadata repository for use by developers
     in developing and testing data metadata pipelines. Ths service is not intended 
     for general use.
 
     ### Authentication
 
     The observations and deletions endpoints of this service support cookie and
-    client-certificate authentication. To authenticate with username and
-    password (HTTP Basic Auth), users must prepend "auth-" to endpoint name
-    (e.g. /sc2repo/auth-observations/{collection} for list observations in a collection).
+    client-certificate authentication. 
     
 schemes:
   - https
-basePath: '/sc2repo,'
+basePath: '/torkeep'
 paths:
   /observations:
     get:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       summary: List collections
       description: |
         GET will produce a list of CAOM collections managed by this service.
@@ -37,7 +35,7 @@ paths:
   '/observations/{collection}':
     get:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       description: >
         GET will produce a unique list of caom2 observations for a particular
         collection ordered by maxLastModified. The output is TSV (currently
@@ -86,7 +84,7 @@ paths:
   '/observations/{collection}/{observationID}':
     get:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       description: |
         GET retrieves the observation as a CAOM xml document. The current {Observation.accMetaChecksum} 
         value is returned in the ETag response header (see If-Match header with updates).
@@ -127,7 +125,7 @@ paths:
           description: Unexpeced error
     delete:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       description: >
         DELETE removes an existing observation from the repository and will fail
         (with a 404 "not found") if it does not exist.
@@ -158,7 +156,7 @@ paths:
           description: Unexpeced error
     post:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       description: >
         POST updates (replaces) an existing observation and will fail (with a
         404 "not found") if it does not exist. The delivered content must be a
@@ -214,7 +212,7 @@ paths:
           description: Unexpected error
     put:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       description: >
         PUT stores a new observation and will fail if it already exists. The
         delivered content must be a CAOM xml document.
@@ -266,7 +264,7 @@ paths:
   /deletions:
     get:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       summary: List collections
       description: |
         GET will produce a list of CAOM collections managed by this service.
@@ -282,7 +280,7 @@ paths:
   '/deletions/{collection}':
     get:
       tags:
-        - 'Sandbox CAOM Repository (ivo://cadc.nrc.ca/sc2repo)'
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
       description: >
         GET will produce a summary listing of caom2 observations that have been
         deleted from a particular collection. The output is TSV (currently

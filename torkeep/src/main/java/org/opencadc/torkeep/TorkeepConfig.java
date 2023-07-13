@@ -82,9 +82,9 @@ import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
 
-public class CollectionsConfig {
+public class TorkeepConfig {
 
-    private static final Logger log = Logger.getLogger(CollectionsConfig.class);
+    private static final Logger log = Logger.getLogger(TorkeepConfig.class);
 
     public static final String TORKEEP_PROPERTIES = "torkeep.properties";
 
@@ -96,7 +96,7 @@ public class CollectionsConfig {
     private final List<URI> grantProviders = new ArrayList<>();
     private final List<CollectionEntry> configs = new ArrayList<>();
 
-    public CollectionsConfig() {
+    public TorkeepConfig() {
         init();
     }
 
@@ -174,7 +174,7 @@ public class CollectionsConfig {
         for (String value : values) {
             try {
                 providers.add(new URI(value));
-                log.debug("found grant provider " + value);
+                log.debug("grant provider - " + value);
             } catch (URISyntaxException e) {
                 errors.append(String.format("%s: invalid URI %s - %s\n", GRANT_PROVIDER_KEY, value, e.getMessage()));
             }
