@@ -130,8 +130,8 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
 
             TorkeepConfig torkeepConfig = new TorkeepConfig();
             if (torkeepConfig.getConfigs().isEmpty()) {
-                throw new IllegalStateException("CONFIG: no configured collections found in - " +
-                        TorkeepConfig.TORKEEP_PROPERTIES);
+                throw new IllegalStateException("CONFIG: no configured collections found in - "
+                        + TorkeepConfig.TORKEEP_PROPERTIES);
             }
 
             Map<String,Object> daoConfig = TorkeepInitAction.getDAOConfig();

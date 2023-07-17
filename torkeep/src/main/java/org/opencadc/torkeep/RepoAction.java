@@ -118,7 +118,7 @@ public abstract class RepoAction extends RestAction {
 
     protected ObservationURI observationURI;
     protected boolean computeMetadata;
-//    protected Map<String, Object> raGroupConfig = new HashMap<String, Object>();
+    // protected Map<String, Object> raGroupConfig = new HashMap<String, Object>();
     private String collection;
     private transient TorkeepConfig torkeepConfig;
     private transient ObservationDAO observationDAO;
@@ -244,7 +244,7 @@ public abstract class RepoAction extends RestAction {
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry collectionEntry = tc.getConfig(collection);
         if (collectionEntry != null) {
-//            this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, collectionEntry.isProposalGroup());
+            // this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, collectionEntry.isProposalGroup());
             daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID().toASCIIString());
             this.computeMetadata = collectionEntry.isComputeMetadata();
         }
@@ -273,8 +273,8 @@ public abstract class RepoAction extends RestAction {
         Object o = syncInput.getContent(ObservationInlineContentHandler.ERROR_KEY);
         if (o != null) {
             ObservationParsingException ex = (ObservationParsingException) o;
-            throw new IllegalArgumentException("invalid input: " + getObservationURI() +
-                    " reason: " + ex.getMessage(), ex);
+            throw new IllegalArgumentException("invalid input: " + getObservationURI()
+                    + " reason: " + ex.getMessage(), ex);
         }
         Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
         if (obs != null) {
@@ -475,10 +475,10 @@ public abstract class RepoAction extends RestAction {
             }
 
             // TODO generate tuples for a proposal group?
-//            ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), raGroupConfig);
-//            if (ratGenerator != null) {
-//                ratGenerator.generateTuples(obs);
-//            }
+            // ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), raGroupConfig);
+            // if (ratGenerator != null) {
+            //     ratGenerator.generateTuples(obs);
+            // }
         } catch (IllegalArgumentException ex) {
             log.debug(ex.getMessage(), ex);
             // build complete error cause message because rest api only outputs the message,
@@ -498,24 +498,24 @@ public abstract class RepoAction extends RestAction {
         return null;
     }
 
-//    /**
-//     * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured.
-//     * Returns null otherwise.
-//     *
-//     * @param collection
-//     * @param raGroupConfig read access group data from configuration file
-//     * @return read access generator plugin or null if not configured
-//     */
-//    protected ReadAccessGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
-//        ReadAccessGenerator ratGenerator = null;
-//
-//        if (raGroupConfig.get(ReadAccessGenerator.STAFF_GROUP_KEY) != null
-//                || raGroupConfig.get(ReadAccessGenerator.OPERATOR_GROUP_KEY) != null) {
-//            ratGenerator = new ReadAccessGenerator(collection, raGroupConfig);
-//        }
-//
-//        return ratGenerator;
-//    }
+    //    /**
+    //     * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured.
+    //     * Returns null otherwise.
+    //     *
+    //     * @param collection
+    //     * @param raGroupConfig read access group data from configuration file
+    //     * @return read access generator plugin or null if not configured
+    //     */
+    //    protected ReadAccessGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
+    //        ReadAccessGenerator ratGenerator = null;
+    //
+    //        if (raGroupConfig.get(ReadAccessGenerator.STAFF_GROUP_KEY) != null
+    //                || raGroupConfig.get(ReadAccessGenerator.OPERATOR_GROUP_KEY) != null) {
+    //            ratGenerator = new ReadAccessGenerator(collection, raGroupConfig);
+    //        }
+    //
+    //        return ratGenerator;
+    //    }
 
     protected TorkeepConfig getTorkeepConfig() {
         if (this.torkeepConfig == null) {

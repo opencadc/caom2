@@ -104,6 +104,23 @@ public class TorkeepConfig {
         return this.grantProviders;
     }
 
+    private List<URI> getGrantProviders(MultiValuedProperties properties, StringBuilder errors) {
+        List<String> values = properties.getProperty(GRANT_PROVIDER_KEY);
+        if (values.isEmpty()) {
+            throw new InvalidConfigException(String.format("CONFIG: configured %s not found", GRANT_PROVIDER_KEY));
+        }
+        List<URI> providers = new ArrayList<>();
+        for (String value : values) {
+            try {
+                providers.add(new URI(value));
+                log.debug("grant provider - " + value);
+            } catch (URISyntaxException e) {
+                errors.append(String.format("%s: invalid URI %s - %s\n", GRANT_PROVIDER_KEY, value, e.getMessage()));
+            }
+        }
+        return providers;
+    }
+
     public List<CollectionEntry> getConfigs() {
         return this.configs;
     }
@@ -113,7 +130,7 @@ public class TorkeepConfig {
             throw new IllegalArgumentException("collection can not be null");
         }
         for (CollectionEntry entry : configs) {
-            if (collection.equals(entry.getCollection())){
+            if (collection.equals(entry.getCollection())) {
                 return entry;
             }
         }
@@ -163,23 +180,6 @@ public class TorkeepConfig {
             throw new InvalidConfigException(String.format("\nCONFIG: configuration contains errors\n\n%s",
                     errors));
         }
-    }
-
-    private List<URI> getGrantProviders(MultiValuedProperties properties, StringBuilder errors) {
-        List<String> values = properties.getProperty(GRANT_PROVIDER_KEY);
-        if (values.isEmpty()) {
-            throw new InvalidConfigException(String.format("CONFIG: configured %s not found", GRANT_PROVIDER_KEY));
-        }
-        List<URI> providers = new ArrayList<>();
-        for (String value : values) {
-            try {
-                providers.add(new URI(value));
-                log.debug("grant provider - " + value);
-            } catch (URISyntaxException e) {
-                errors.append(String.format("%s: invalid URI %s - %s\n", GRANT_PROVIDER_KEY, value, e.getMessage()));
-            }
-        }
-        return providers;
     }
 
     private List<String> getCollections(MultiValuedProperties properties, StringBuilder errors) {

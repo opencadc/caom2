@@ -103,8 +103,8 @@ public class CollectionEntry {
 
     @Override
     public String toString() {
-        return String.format("CollectionEntry=[collection=[%s], bashPublisherID=[%s], " +
-                        "computeMetadata=[%s], proposalGroup=[%s]]",
+        return String.format("CollectionEntry=[collection=[%s], bashPublisherID=[%s], "
+                        + "computeMetadata=[%s], proposalGroup=[%s]]",
                 collection, basePublisherID, computeMetadata, proposalGroup);
     }
 
