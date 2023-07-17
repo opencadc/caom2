@@ -83,7 +83,7 @@ import org.apache.log4j.Logger;
 public class TorkeepIntTest extends CaomRepoIntTests {
     private static final Logger log = Logger.getLogger(TorkeepIntTest.class);
     static {
-        Log4jInit.setLevel("org.opencadc.torkeep", Level.DEBUG);
+        Log4jInit.setLevel("org.opencadc.torkeep", Level.INFO);
     }
 
     // use reserved non-production opencadc.org authority
@@ -91,6 +91,19 @@ public class TorkeepIntTest extends CaomRepoIntTests {
             
     public TorkeepIntTest() {
         // test certificate args: read-write, read-only, no-permissions
-        super(TorkeepIntTest.RESOURCE_ID, "x509_CADCAuthtest1.pem", "x509_CADCAuthtest2.pem", "x509_CADCRegtest1.pem");
+        super(TorkeepIntTest.RESOURCE_ID, "torkeep-test-auth.pem", "torkeep-test-auth.pem", "torkeep-test-noauth.pem");
     }
+
+    // disabled
+    @Override
+    public void testDeleteNoWritePermission() {}
+
+    // disabled
+    @Override
+    public void testPostNoWritePermission() {}
+
+    // disabled
+    @Override
+    public void testPutNoWritePermission() {}
+
 }

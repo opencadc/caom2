@@ -242,7 +242,7 @@ public abstract class RepoAction extends RestAction {
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry collectionEntry = tc.getConfig(collection);
         if (collectionEntry != null) {
-            daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID());
+            daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID().toASCIIString());
             this.computeMetadata = collectionEntry.isComputeMetadata();
         }
         return daoConfig;
@@ -290,6 +290,7 @@ public abstract class RepoAction extends RestAction {
      */
     protected void checkReadPermission() throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
+        log.debug("check READ permission for collection: " + getCollection());
         if (!readable) {
             if (!writable) {
                 throw new IllegalStateException(STATE_OFFLINE_MSG);
@@ -308,15 +309,18 @@ public abstract class RepoAction extends RestAction {
         if (getObservationURI() != null) {
             grantURI = getObservationURI().getURI();
         } else {
-            grantURI = URI.create("caom://" + getCollection());
+            grantURI = URI.create("caom:" + getCollection() + "/");
         }
+        log.debug("authorizing: " + grantURI);
 
         for (URI grantProvider : tc.getGrantProviders()) {
-            log.debug("checking grant provider: " + grantProvider);
+            log.debug("grant provider: " + grantProvider);
             PermissionsClient permissionsClient = new PermissionsClient(grantProvider);
             ReadGrant readGrant = permissionsClient.getReadGrant(grantURI);
             if (readGrant != null) {
+                log.debug("read grant found");
                 if (readGrant.isAnonymousAccess()) {
+                    log.debug("anon grant found, authorized");
                     return;
                 }
             }
@@ -324,32 +328,43 @@ public abstract class RepoAction extends RestAction {
 
         try {
             if (CredUtil.checkCredentials()) {
+                log.debug("checking write access");
                 for (URI grantProvider : tc.getGrantProviders()) {
+                    log.debug("grant provider: " + grantProvider);
                     PermissionsClient pc = new PermissionsClient(grantProvider);
-                    WriteGrant writeGrant = pc.getWriteGrant(getObservationURI().getURI());
+                    WriteGrant writeGrant = pc.getWriteGrant(grantURI);
                     if (writeGrant != null) {
+                        log.debug("write grant found");
                         for (GroupURI groupURI : writeGrant.getGroups()) {
+                            log.debug("write grant groupURI: " + groupURI);
                             GMSClient gmsClient = new GMSClient(groupURI.getServiceID());
                             if (gmsClient.isMember(groupURI.getName())) {
+                                log.debug("membership found, authorized");
                                 return;
                             }
                         }
                     }
                 }
 
+                log.debug("checking read access");
                 for (URI grantProvider : tc.getGrantProviders()) {
+                    log.debug("grant provider: " + grantProvider);
                     PermissionsClient pc = new PermissionsClient(grantProvider);
-                    ReadGrant readGrant = pc.getReadGrant(getObservationURI().getURI());
+                    ReadGrant readGrant = pc.getReadGrant(grantURI);
                     if (readGrant != null) {
+                        log.debug("read grant found");
                         for (GroupURI groupURI : readGrant.getGroups()) {
+                            log.debug("read grant groupURI: " + groupURI);
                             GMSClient gmsClient = new GMSClient(groupURI.getServiceID());
                             if (gmsClient.isMember(groupURI.getName())) {
+                                log.debug("membership found, authorized");
                                 return;
                             }
                         }
                     }
                 }
             }
+            log.debug("READ permission denied");
         } catch (AccessControlException ex) {
             throw new AccessControlException(
                 "permission denied (credentials not found): " + getCollection());
@@ -370,6 +385,7 @@ public abstract class RepoAction extends RestAction {
      */
     protected void checkWritePermission() throws AccessControlException,
         CertificateException, ResourceNotFoundException, IOException {
+        log.debug("check WRITE permission for collection: " + getCollection());
         if (!writable) {
             if (readable) {
                 throw new IllegalStateException(STATE_READ_ONLY_MSG);
@@ -387,24 +403,31 @@ public abstract class RepoAction extends RestAction {
         if (getObservationURI() != null) {
             grantURI = getObservationURI().getURI();
         } else {
-            grantURI = URI.create("caom://" + getCollection());
+            grantURI = URI.create("caom:" + getCollection() + "/");
         }
+        log.debug("authorizing: " + grantURI);
 
         try {
             if (CredUtil.checkCredentials()) {
+                log.debug("checking write access");
                 for (URI grantProvider : tc.getGrantProviders()) {
+                    log.debug("grant provider: " + grantProvider);
                     PermissionsClient pc = new PermissionsClient(grantProvider);
                     WriteGrant writeGrant = pc.getWriteGrant(grantURI);
                     if (writeGrant != null) {
+                        log.debug("write grant found");
                         for (GroupURI groupURI : writeGrant.getGroups()) {
+                            log.debug("write grant groupURI: " + groupURI);
                             GMSClient gms = new GMSClient(groupURI.getServiceID());
                             if (gms.isMember(groupURI.getName())) {
+                                log.debug("membership found, authorized");
                                 return;
                             }
                         }
                     }
                 }
             }
+            log.debug("WRITE permission denied");
         } catch (AccessControlException ex) {
             throw new AccessControlException(
                 "permission denied (credentials not found): " + getCollection());

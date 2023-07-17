@@ -59,4 +59,7 @@ jobs:
       run: cd caom2-artifact-download && ../gradlew --info clean build javadoc checkstyleMain             
 
     - name: build and test icewind 
-      run: cd icewind && ../gradlew --info clean build javadoc checkstyleMain    
+      run: cd icewind && ../gradlew --info clean build javadoc checkstyleMain
+
+    - name: build and test torkeep 
+      run: cd torkeep && ../gradlew --info clean build javadoc checkstyleMain   

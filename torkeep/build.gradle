@@ -51,3 +51,8 @@ configurations {
   runtime.exclude group: 'net.sourceforge.jtds'
   runtime.exclude group: 'org.postgresql'
 }
+
+// for TorkeepIntTest.testPostByteLimitExceeded
+intTest {
+    maxHeapSize = "1024m"
+}

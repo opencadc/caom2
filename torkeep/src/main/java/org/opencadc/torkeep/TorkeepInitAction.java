@@ -94,7 +94,6 @@ public class TorkeepInitAction extends InitAction {
     static final String JNDI_DATASOURCE = "jdbc/torkeep-caom2";
     static final String JNDI_CONFIG_KEY = "torkeep.TorkeepInitServlet.torkeep-runtime-config";
     static final String SCHEMA = "caom2";
-    static final String SQL_GENERATOR_CLASS = "ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator";
 
     private TorkeepConfig torkeepConfig;
 
@@ -110,7 +109,6 @@ public class TorkeepInitAction extends InitAction {
         ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
         ret.put("jndiDataSourceName", JNDI_DATASOURCE);
         ret.put("schema", SCHEMA);
-
         return ret;
     }
 

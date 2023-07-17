@@ -70,8 +70,9 @@
 package org.opencadc.torkeep;
 
 
+import ca.nrc.cadc.reg.Capabilities;
 import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.vosi.AvailabilityTest;
+import ca.nrc.cadc.vosi.CapabilitiesTest;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -79,14 +80,20 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class VosiAvailTest extends AvailabilityTest {
-    private static final Logger log = Logger.getLogger(VosiAvailTest.class);
+public class VosiCapabilitiesTest extends CapabilitiesTest {
+    private static final Logger log = Logger.getLogger(VosiCapabilitiesTest.class);
     static {
-        Log4jInit.setLevel("org.opencadc.torkeep", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.vosi", Level.INFO);
     }
     
-    public VosiAvailTest() {
+    public VosiCapabilitiesTest() {
         super(TorkeepIntTest.RESOURCE_ID);
+    }
+
+    @Override
+    protected void validateContent(Capabilities caps) 
+        throws Exception {
+        // TODO
     }
 
 }

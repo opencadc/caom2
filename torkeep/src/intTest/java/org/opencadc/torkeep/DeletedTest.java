@@ -72,7 +72,6 @@ import ca.nrc.cadc.caom2.repo.integration.CaomRepoDeletedTest;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Test;
 
 /**
  *
@@ -82,23 +81,11 @@ public class DeletedTest extends CaomRepoDeletedTest {
     private static final Logger log = Logger.getLogger(DeletedTest.class);
     
     static {
-        Log4jInit.setLevel("org.opencadc.torkeep", Level.DEBUG);
+        Log4jInit.setLevel("org.opencadc.torkeep", Level.INFO);
     }
     
     public DeletedTest() {
-        super(TorkeepIntTest.RESOURCE_ID, "x509_CADCAuthtest1.pem", "x509_CADCAuthtest2.pem", "x509_CADCRegtest1.pem");
+        super(TorkeepIntTest.RESOURCE_ID, "torkeep-test-auth.pem", "torkeep-test-auth.pem", "torkeep-test-noauth.pem");
     }
-
-    @Override
-    public void testListCollections() {
-    }
-
-    @Override
-    public void testListDeletedDenied() {
-    }
-
-//    @Override
-//    public void testListDeletedSuccess() {
-//    }
 
 }
