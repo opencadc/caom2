@@ -100,6 +100,7 @@ import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
@@ -117,6 +118,7 @@ public abstract class RepoAction extends RestAction {
 
     protected ObservationURI observationURI;
     protected boolean computeMetadata;
+//    protected Map<String, Object> raGroupConfig = new HashMap<String, Object>();
     private String collection;
     private transient TorkeepConfig torkeepConfig;
     private transient ObservationDAO observationDAO;
@@ -242,6 +244,7 @@ public abstract class RepoAction extends RestAction {
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry collectionEntry = tc.getConfig(collection);
         if (collectionEntry != null) {
+//            this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, collectionEntry.isProposalGroup());
             daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID().toASCIIString());
             this.computeMetadata = collectionEntry.isComputeMetadata();
         }
@@ -470,7 +473,8 @@ public abstract class RepoAction extends RestAction {
                         "failed to compute metadata for plane " + cur, ex);
                 }
             }
-            
+
+            // TODO generate tuples for a proposal group?
 //            ReadAccessGenerator ratGenerator = getReadAccessTuplesGenerator(getCollection(), raGroupConfig);
 //            if (ratGenerator != null) {
 //                ratGenerator.generateTuples(obs);

@@ -21,6 +21,10 @@ for system properties related to the deployment environment.
 
 See <a href="https://github.com/opencadc/core/tree/master/cadc-util">cadc-util</a> for common system properties.
 
+`torkeep` includes multiple IdentityManager implementations to support authenticated access:
+- See <a href="https://github.com/opencadc/ac/tree/master/cadc-access-control-identity">cadc-access-control-identity</a> for CADC access-control system support.
+- See <a href="https://github.com/opencadc/ac/tree/master/cadc-gms">cadc-gms</a> for OIDC token support.
+
 `torkeep` uses a database connection pool:
 ```
 # caom2 database connection pool
@@ -69,6 +73,13 @@ aggregated from the artifacts). (default: false)
 _proposalGroup_ is a boolean flag which indicates whether a grant is generated to allow the proposal group 
 to access CAOM metadata and/or data (if needed because it is not public).
 
+## integration testing
+Client certificates named `torkeep-test-auth.pem` and `torkeep-test-noauth.pem` must exist in the directory $A/test-certificates.
+The integration tests assume the collection name is `TEST`.
+The `torkeep-test-auth.pem` must belong to a user identity that is a member of a configured read-write group 
+for the `TEST` collection in a permissions granting service. 
+The `torkeep-test-noauth.pem` must belong to a user who is not a member of a configured read-write group or 
+read-only group, and does not have permissions to access the TEST collection.
 
 ## building it
 ```
@@ -84,4 +95,14 @@ docker run --rm -it torkeep:latest /bin/bash
 ## running it
 ```
 docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name torkeep torkeep:latest
+```
+
+## apply version tags
+```bash
+. VERSION && echo "tags: $TAGS" 
+for t in $TAGS; do
+   docker image tag torkeep:latest torkeep:$t
+done
+unset TAGS
+docker image list torkeep
 ```
