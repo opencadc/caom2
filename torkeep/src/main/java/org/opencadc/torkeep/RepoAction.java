@@ -100,12 +100,12 @@ import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import org.apache.log4j.Logger;
 import org.opencadc.gms.GroupURI;
 import org.opencadc.permissions.ReadGrant;
 import org.opencadc.permissions.WriteGrant;
+import org.opencadc.permissions.client.PermissionsCheck;
 import org.opencadc.permissions.client.PermissionsClient;
 
 /**
@@ -316,6 +316,14 @@ public abstract class RepoAction extends RestAction {
         }
         log.debug("authorizing: " + grantURI);
 
+        try {
+            PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
+            cp.checkReadPermission(tc.getGrantProviders());
+        } catch (InterruptedException ex) {
+            throw new RuntimeException("interrupted", ex);
+        }
+        
+        /*
         for (URI grantProvider : tc.getGrantProviders()) {
             log.debug("grant provider: " + grantProvider);
             PermissionsClient permissionsClient = new PermissionsClient(grantProvider);
@@ -376,6 +384,7 @@ public abstract class RepoAction extends RestAction {
                 "permission denied (user not found): " + getCollection());
         }
         throw new AccessControlException("permission denied: " + getCollection());
+        */
     }
 
     /**
@@ -411,6 +420,13 @@ public abstract class RepoAction extends RestAction {
         log.debug("authorizing: " + grantURI);
 
         try {
+            PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
+            cp.checkWritePermission(tc.getGrantProviders());
+        } catch (InterruptedException ex) {
+            throw new RuntimeException("interrupted", ex);
+        }
+        /*
+        try {
             if (CredUtil.checkCredentials()) {
                 log.debug("checking write access");
                 for (URI grantProvider : tc.getGrantProviders()) {
@@ -440,6 +456,7 @@ public abstract class RepoAction extends RestAction {
         }
 
         throw new AccessControlException("permission denied: " + getCollection());
+        */
     }
 
     protected void validate(Observation obs) 

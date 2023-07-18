@@ -86,12 +86,15 @@ public class TorkeepIntTest extends CaomRepoIntTests {
         Log4jInit.setLevel("org.opencadc.torkeep", Level.INFO);
     }
 
+    static final String CERT_AUTH = "torkeep-test.pem";
+    static final String CERT_NO_AUTH = "torkeep-test-noauth.pem";
+    
     // use reserved non-production opencadc.org authority
     public static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/torkeep");
             
     public TorkeepIntTest() {
         // test certificate args: read-write, read-only, no-permissions
-        super(TorkeepIntTest.RESOURCE_ID, "torkeep-test-auth.pem", "torkeep-test-auth.pem", "torkeep-test-noauth.pem");
+        super(TorkeepIntTest.RESOURCE_ID, CERT_AUTH, CERT_AUTH, CERT_NO_AUTH);
     }
 
     // disabled
