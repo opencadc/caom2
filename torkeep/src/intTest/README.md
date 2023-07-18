@@ -13,6 +13,15 @@ for the `TEST` collection in a permissions granting service.
 The `torkeep-test-noauth.pem` must belong to a user who is not a member of a configured read-write group or 
 read-only group, and does not have permissions to access the TEST collection.
 
+## CADC specific test setup
+
+This will work for CADC developers:
+```
+test-certificates>ll torkeep-test*
+lrwxrwxrwx. 1 pdowler pdowler 21 Jul 18 11:10 torkeep-test-noauth.pem -> x509_CADCRegtest1.pem
+lrwxrwxrwx. 1 pdowler pdowler 22 Jul 18 15:13 torkeep-test.pem -> x509_CADCAuthtest1.pem
+```
+
 ### baldur config
 ```
 # permissions for caom:TEST/
