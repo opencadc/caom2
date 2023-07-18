@@ -158,7 +158,7 @@ public class TorkeepConfig {
         for (String collection : collections) {
             log.debug("reading collection: " + collection);
 
-            URI basePublisherID = getBasePublisherID(properties, collection + BASE_PUBLISHER_ID_KEY, errors);
+            final URI basePublisherID = getBasePublisherID(properties, collection + BASE_PUBLISHER_ID_KEY, errors);
 
             String computeMetadataValue = getProperty(properties, collection + COMPUTE_METADATA_KEY, errors, false);
             boolean computeMetadata = false;
