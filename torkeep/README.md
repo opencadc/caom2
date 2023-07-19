@@ -58,8 +58,11 @@ org.opencadc.torkeep.collection = {CAOM collection name}
 {collection name}.proposalGroup = {true | false}
 ```
 _grantProvider_ is URI to a permissions service that provides grants to read and write CAOM collections.
-The URI is a resourceID (e.g. ivo://opencadc.org/baldur) to a permissions service defined in a registry service, 
-one line per permissions service.
+The URI is a resourceID (e.g. ivo://opencadc.org/baldur) to a permissions service defined in the registry, 
+one line per permissions service. `torkeep` will requerst grant information for CAOM metadata objects 
+(observations) in the form `caom:{collection}/{observationID}` so for baldur rules that grant read-only and/or
+read-write access to identifier patterns that start with `caom:{collection}/` are necessary to match the
+requests that `torkeep` will make.
 
 _collection_ specifies the CAOM collection name and defines a new set of config keys for that collection.
 
@@ -67,19 +70,16 @@ _bashPublisherID_ is the base for generating Plane publisherID values.
 The base is an uri of the form `ivo://<authority>[/<path>]`
 publisherID values: `<basePublisherID>/<collection>?<observationID>/<productID>`
 
-_computeMetadata_ enables computation and persistence of computed metadata(generally, Plane metadata
-aggregated from the artifacts). (default: false)
+_computeMetadata_ (optional, default: false) enables computation and persistence of computed metadata
+(generally, Plane metadata aggregated from the artifacts).
 
-_proposalGroup_ is a boolean flag which indicates whether a grant is generated to allow the proposal group 
-to access CAOM metadata and/or data (if needed because it is not public).
-
-## integration testing
-Client certificates named `torkeep-test-auth.pem` and `torkeep-test-noauth.pem` must exist in the directory $A/test-certificates.
-The integration tests assume the collection name is `TEST`.
-The `torkeep-test-auth.pem` must belong to a user identity that is a member of a configured read-write group 
-for the `TEST` collection in a permissions granting service. 
-The `torkeep-test-noauth.pem` must belong to a user who is not a member of a configured read-write group or 
-read-only group, and does not have permissions to access the TEST collection.
+_proposalGroup_ (optional, default: false) is a boolean flag which indicates whether CAOM read access grant(s)
+are generated to allow the proposal group to access CAOM metadata and/or data (if needed because it is not 
+currently public). A proposal group is always of the form 
+`{GMS service resourceID}?{Observation.collection}-{Observation.proposal.id}` 
+where the GMS resourceID is the one configured as the local GMS service (see `cadc-registry` above) and the 
+group name is generated from the CAOM collection and proposal ID as shown. NOTE: not yet enabled in this code 
+pending code re-org. `torkeep` *does not* check if the group exists or attempt to create it.
 
 ## building it
 ```
@@ -95,14 +95,4 @@ docker run --rm -it torkeep:latest /bin/bash
 ## running it
 ```
 docker run --rm --user tomcat:tomcat --volume=/path/to/external/config:/config:ro --name torkeep torkeep:latest
-```
-
-## apply version tags
-```bash
-. VERSION && echo "tags: $TAGS" 
-for t in $TAGS; do
-   docker image tag torkeep:latest torkeep:$t
-done
-unset TAGS
-docker image list torkeep
 ```

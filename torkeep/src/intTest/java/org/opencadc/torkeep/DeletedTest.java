@@ -85,7 +85,7 @@ public class DeletedTest extends CaomRepoDeletedTest {
     }
     
     public DeletedTest() {
-        super(TorkeepIntTest.RESOURCE_ID, "torkeep-test-auth.pem", "torkeep-test-auth.pem", "torkeep-test-noauth.pem");
+        super(TorkeepIntTest.RESOURCE_ID, TorkeepIntTest.CERT_AUTH, TorkeepIntTest.CERT_AUTH, TorkeepIntTest.CERT_NO_AUTH);
     }
 
 }

@@ -158,13 +158,19 @@ public class TorkeepConfig {
         for (String collection : collections) {
             log.debug("reading collection: " + collection);
 
-            URI basePublisherID = getBasePublisherID(properties, collection + BASE_PUBLISHER_ID_KEY, errors);
+            final URI basePublisherID = getBasePublisherID(properties, collection + BASE_PUBLISHER_ID_KEY, errors);
 
-            String computeMetadataValue = getProperty(properties, collection + COMPUTE_METADATA_KEY, errors);
-            boolean computeMetadata = Boolean.parseBoolean(computeMetadataValue);
+            String computeMetadataValue = getProperty(properties, collection + COMPUTE_METADATA_KEY, errors, false);
+            boolean computeMetadata = false;
+            if (computeMetadataValue != null) {
+                computeMetadata = Boolean.parseBoolean(computeMetadataValue);
+            }
 
-            String proposalGroupValue = getProperty(properties, collection + PROPOSAL_GROUP_KEY, errors);
-            boolean proposalGroup = Boolean.parseBoolean(proposalGroupValue);
+            String proposalGroupValue = getProperty(properties, collection + PROPOSAL_GROUP_KEY, errors, false);
+            boolean proposalGroup = false;
+            if (proposalGroupValue != null) { 
+                proposalGroup = Boolean.parseBoolean(proposalGroupValue);
+            }
 
             // if a config errors found, read and check the rest of the properties
             if (errors.length() > 0) {
@@ -204,9 +210,12 @@ public class TorkeepConfig {
         return collections;
     }
 
-    private String getProperty(MultiValuedProperties properties, String key, StringBuilder errors) {
+    private String getProperty(MultiValuedProperties properties, String key, StringBuilder errors, boolean required) {
         String value = null;
         List<String> values = properties.getProperty(key);
+        if (!required && values.isEmpty()) {
+            return null;
+        }
         if (values.isEmpty()) {
             errors.append(String.format("%s: missing required property\n", key));
         } else if (values.size() > 1) {
@@ -222,7 +231,7 @@ public class TorkeepConfig {
 
     private URI getBasePublisherID(MultiValuedProperties properties, String key, StringBuilder errors) {
         URI basePublisherID = null;
-        String basePublisherIDValue = getProperty(properties, key, errors);
+        String basePublisherIDValue = getProperty(properties, key, errors, true);
         if (basePublisherIDValue != null) {
             try {
                 basePublisherID = new URI(basePublisherIDValue);
