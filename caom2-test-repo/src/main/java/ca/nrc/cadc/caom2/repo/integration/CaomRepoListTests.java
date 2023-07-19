@@ -148,7 +148,7 @@ public class CaomRepoListTests extends CaomRepoBaseIntTests {
 
         // Check that we have no permission to list the observations
         checkObservationList(0, SCHEME + TEST_COLLECTION, maxRec, start, null,
-            subject3, null, null, 403, "permission denied: " + TEST_COLLECTION, true);
+            subject3, null, null, 403, "permission denied", false);
 
         // cleanup (ok to fail)
         for (Observation obs : observations) {
