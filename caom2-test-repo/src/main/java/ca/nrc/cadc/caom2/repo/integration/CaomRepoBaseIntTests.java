@@ -315,11 +315,9 @@ class CaomRepoBaseIntTests {
             Assert.assertNotNull(message);
             message = message.trim();
             if (exactMatch) {
-                Assert.assertEquals("Wrong response message", expectedMessage, message);
+                Assert.assertEquals("response message", expectedMessage, message);
             } else {
-                Assert.assertTrue("message long enough", (message.length() >= expectedMessage.length()));
-                String cmpPart = message.substring(0, expectedMessage.length());
-                Assert.assertEquals("Wrong response message (startsWith)", expectedMessage, cmpPart);
+                Assert.assertTrue("response message prefix", message.startsWith(expectedMessage));
             }
         }
 
