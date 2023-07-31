@@ -28,7 +28,7 @@ dependencies {
     compile 'org.opencadc:caom2:[2.4.0, 2.5)'
     compile 'org.opencadc:cadc-gms:[1.0.2,2.0)'
     compile 'org.opencadc:cadc-access-control:[1.1.4,1.2)'
-    compile 'org.opencadc:cadc-registry:[1.5,1.6)'
+    compile 'org.opencadc:cadc-registry:[1.5,2.0)'
     
     testCompile 'junit:junit:4.10'
 }

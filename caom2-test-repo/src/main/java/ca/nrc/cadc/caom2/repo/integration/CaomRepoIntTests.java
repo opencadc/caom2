@@ -181,7 +181,7 @@ public class CaomRepoIntTests extends CaomRepoBaseIntTests {
         putObservation(observation, subject1, 200, "OK", null);
 
         // get the observation using subject3
-        getObservation(uri, subject3, 403, "permission denied: " + TEST_COLLECTION, EXPECTED_CAOM_VERSION);
+        getObservation(uri, subject3, 403, "permission denied", false, EXPECTED_CAOM_VERSION);
 
         // cleanup (ok to fail)
         deleteObservation(uri, subject1, null, null);
