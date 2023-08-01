@@ -124,8 +124,10 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
             
             // certificate for A&A
             File cert = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
-            CheckCertificate checkCert = new CheckCertificate(cert);
-            checkCert.check();
+            if (cert.exists()) {
+                CheckCertificate checkCert = new CheckCertificate(cert);
+                checkCert.check();
+            }
             
             // check other services we depend on
             RegistryClient reg = new RegistryClient();
@@ -160,8 +162,7 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
                         checkResource = new CheckWebService(url);
                         checkResource.check();
                     } else {
-                        throw new ResourceNotFoundException("registry lookup - not found: " + groupsURI
-                                + " " + Standards.VOSI_AVAILABILITY);
+                        log.warn("registry lookup - not found: " + groupsURI + " does not implement " + Standards.VOSI_AVAILABILITY);
                     }
                 }  else {
                     log.debug("not configured: " + Standards.GMS_SEARCH_10.toASCIIString());
