@@ -1,7 +1,9 @@
 # caom2-repo-server
 
-## OBSOLETE: this library is obsolete; all functionality has been forked into `torkeep` (complete service build for container
-depoyment).
+## OBSOLETE: this library is obsolete
+All functionality from this library has been forked into `torkeep` (complete service build for container deployment).
+
+## config
 
 The CaomRepoConfig.properties file provides a simple example that could be used for testing. For real deployment, this library will look for a file named <service name>.properties in ${user.home}/config of the user running the application server (e.g. tomcat). The <service name> is the first path element in URLs and typically matches the name of the deployed war file. For example, The CADC deploys this service as caom2repo.war so the config file is called ${user.home}/config/caom2repo.properties. Note that this config file is read from the filesystem for each request so changes are "immediately live".
 
