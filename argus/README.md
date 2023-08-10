@@ -117,7 +117,7 @@ Example _links_ descritor in a file named `caomPublisherID.xml`:
             <PARAM name="ID" datatype="char" arraysize="*" ref="caomPublisherID" value=""/>
         </GROUP>
     </RESOURCE>
-<VOTABLE>
+</VOTABLE>
 ```
 Whenever the column is selected, the resource(s) in the file will be injected into the VOTable query result.
 
