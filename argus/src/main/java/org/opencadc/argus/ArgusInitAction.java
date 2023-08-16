@@ -91,18 +91,24 @@ public class ArgusInitAction extends InitAction {
     public void doInit() {
         try {
             // tap_schema
+            log.info("InitDatabaseTS: START");
             DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
             InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
             tsi.doInit();
-
+            log.info("InitDatabaseTS: OK");
+            
             // uws schema
+            log.info("InitDatabaseUWS: START");
             DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
             InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
             uwsi.doInit();
+            log.info("InitDatabaseUWS: OK");
 
             // caom2 tap_schema content
+            log.info("InitCaomTapSchemaContent: START");
             InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema");
             lsc.doInit();
+            log.info("InitCaomTapSchemaContent: OK");
         } catch (Exception ex) {
             throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
         }
