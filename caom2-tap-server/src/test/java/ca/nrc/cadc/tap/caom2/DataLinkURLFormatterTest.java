@@ -65,13 +65,15 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.caom2;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import static ca.nrc.cadc.uws.JobAttribute.JOB_ID;
+import java.net.URI;
 import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
@@ -84,74 +86,62 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class DataLinkURLFormatterTest 
-{
+public class DataLinkURLFormatterTest {
+
     private static Logger log = Logger.getLogger(DataLinkURLFormatterTest.class);
-    
-    static
-    {
+
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.tap.caom2", Level.INFO);
     }
 
-    private static final String JOB_ID = "123";
-    String URI = "caom:FOO/bar/baz";
-    
+    String columnID = "pubid";
+    URI uri = URI.create("ivo://opencadc.org/collection?product");
+
     @Test
-    public final void testNull()
-    {
+    public final void testNull() {
         log.debug("testNull");
-        
-        try
-        {
-        	Subject s = new Subject();
-        	s.getPublicCredentials().add(AuthMethod.ANON);
+
+        try {
+            Subject s = new Subject();
+            s.getPublicCredentials().add(AuthMethod.ANON);
             String surl = Subject.doAs(s, new FormatAction(null));
+            log.info("datalink URL: " + surl);
+            Assert.assertNotNull(surl);
             Assert.assertEquals("", surl);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception: ", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public final void testNotNull()
-    {
+    public final void testNotNull() {
         log.debug("testNotNull");
-        
-        try
-        {
+
+        try {
             Subject s = new Subject();
             s.getPublicCredentials().add(AuthMethod.ANON);
-            String surl = Subject.doAs(s, new FormatAction(URI));
-            log.debug("datalink URL: " + surl);
+            String surl = Subject.doAs(s, new FormatAction(uri.toASCIIString()));
             Assert.assertNotNull(surl);
-            URL url = new URL(surl);
-            Assert.assertEquals("/caom2ops/datalink", url.getPath());
-            String expected = "runid="+JOB_ID+"&ID=" + NetUtil.encode(URI);
-            Assert.assertEquals(expected, url.getQuery());
-        }
-        catch(Exception unexpected)
-        {
+            log.info("datalink URL: " + surl);
+            Assert.assertEquals(uri.toASCIIString(), surl); // fall through
+        } catch (Exception unexpected) {
             log.error("unexpected exception: ", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
-    private static class FormatAction implements PrivilegedExceptionAction<String>
-    {
-    	String uri;
-    	
-    	FormatAction(final String uri)
-    	{
-    		this.uri = uri;
-    	}
-    	
-    	public String run() throws Exception
-    	{
-    		DataLinkURLFormat formatter = new DataLinkURLFormat(JOB_ID);
-    		return formatter.format(this.uri);
-    	}
+
+    private static class FormatAction implements PrivilegedExceptionAction<String> {
+
+        String val;
+
+        FormatAction(String val) {
+            this.val = val;
+        }
+
+        public String run() throws Exception {
+            DataLinkURLFormat formatter = new DataLinkURLFormat();
+            return formatter.format(val);
+        }
     }
 }

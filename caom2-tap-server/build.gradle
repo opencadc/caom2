@@ -17,7 +17,7 @@ sourceCompatibility = 1.8
 
 group = 'org.opencadc'
 
-version = '1.2.8'
+version = '1.2.9'
 
 description = 'OpenCADC CAOM2 TAP server library'
 def git_url = 'https://github.com/opencadc/caom2service'
@@ -30,13 +30,12 @@ dependencies {
     compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
     compile 'org.opencadc:cadc-dali:[1.1,)'
     compile 'org.opencadc:cadc-dali-pg:[0.2,)'
-    compile 'org.opencadc:cadc-tap-server:[1.1.7,)'
+    compile 'org.opencadc:cadc-tap-server:[1.1.23,)'
     compile 'org.opencadc:cadc-tap-server-pg:[1.0.3,)'
     compile 'org.opencadc:cadc-tap-schema:[1.1.6,)'
     compile 'org.opencadc:cadc-adql:[1.1.9,)'
     compile 'org.opencadc:caom2-artifact-resolvers:[1.2.3,)'
     
-    compile 'org.opencadc:cadc-vos:[1.0,)'
     compile 'org.opencadc:cadc-gms:[1.0.0,)'
     compile 'org.opencadc:cadc-access-control:[1.1.1,2.0)'
     

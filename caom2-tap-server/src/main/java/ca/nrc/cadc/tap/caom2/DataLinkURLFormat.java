@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.tap.caom2;
 
@@ -75,7 +75,11 @@ import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.tap.DefaultTableWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
@@ -84,62 +88,104 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class DataLinkURLFormat  implements Format<Object>
-{
+public class DataLinkURLFormat implements Format<Object> {
+
     private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
 
-    private String jobID;
-    private static final String DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI = "ivo://cadc.nrc.ca/caom2ops";
+    // HACK: need this to try to lookup local datalink service from config
+    private static final String DATALINK_COL_ID = "caomPublisherID";
+    
+    private transient URL baseLinksURL;
+    private transient boolean baseLinksConfigChecked = false;
 
-    private DataLinkURLFormat() { }
-
-    public DataLinkURLFormat(String jobID)
-    {
-        if (jobID == null)
-            throw new IllegalArgumentException("null jobID");
-        this.jobID = jobID;
+    public DataLinkURLFormat() {
     }
 
     @Override
-    public Object parse(String s)
-    {
+    public Object parse(String s) {
         throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
     }
 
     @Override
-    public String format(Object o)
-    {
-        if (o == null)
+    public String format(Object o) {
+        if (o == null) {
             return "";
+        }
 
         String s = (String) o;
-        try
-        {
-            int i = s.indexOf('?');
-            String rid = DEFAULT_DATALINK_RESOURCE_IDENTIFIER_URI;
-            if (i > 0) {
-                rid = s.substring(0,i);
-            } // else: default for unresolvable caom planeURI of the form caom:blah/blah/blah
-            URI resourceID = URI.create(rid);
+        URL linkURL;
+        
+        // try local config
+        linkURL = getLocalDataLink(s);
+        if (linkURL != null) {
+            return linkURL.toExternalForm();
+        }
+        
+        // try data collection with aux capability
+        linkURL = resolvePublisherID(s);
+        if (linkURL != null) {
+            return linkURL.toExternalForm();
+        }
+        
+        // fall through to unresolved
+        return s;
+    }
+
+    // try to resolve the publisherID by looking up the data collection in the registry
+    private URL resolvePublisherID(String publisherID) {
+
+        // TODO: create URI and use scheme + authority + path?
+        int i = publisherID.indexOf('?');
+        if (i <= 0) {
+            return null; // unrecognizable string structure
+        }
+
+        String rid = publisherID.substring(0, i);
+        try {
+            URI resourceID = new URI(rid);
+            if (!"ivo".equals(resourceID.getScheme())) {
+                throw new RuntimeException("BUG or CONFIG: expected publisherID to have 'ivo' scheme, got: " + resourceID.getScheme());  
+            }
+            
             RegistryClient rc = new RegistryClient();
             Subject caller = AuthenticationUtil.getCurrentSubject();
             AuthMethod cur = AuthenticationUtil.getAuthMethod(caller);
-            URL baseURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_10, cur);
+            URL baseURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_11, cur);
+            if (baseURL == null) {
+                return null; // no aux capability for data collection
+            }
             StringBuilder sb = new StringBuilder();
             sb.append(baseURL.toExternalForm());
-            sb.append("?");
-            if (jobID != null) {
-                sb.append("runid=").append(NetUtil.encode(jobID)).append("&");
-            }
-            sb.append("ID=").append(NetUtil.encode(s));
-            return sb.toString();
+            sb.append("?ID=").append(NetUtil.encode(publisherID));
+            return new URL(sb.toString());
+        } catch (URISyntaxException ex) {
+            throw new RuntimeException("CONFIG: extracted data collection identifier is not valid URI: " + rid, ex);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate datalink URL for " + publisherID, ex);
         }
-        catch(Exception ex)
-        {
-            log.error("BUG", ex);
-        }
-        return "";
     }
 
-
+    // get the locally configured datalink service from config
+    private URL getLocalDataLink(String publisherID) {
+        log.warn("getLocalDataLink: " + publisherID + " columnID=" + DATALINK_COL_ID);
+        try {
+            
+            if (baseLinksURL == null && !baseLinksConfigChecked) {
+                this.baseLinksURL = DefaultTableWriter.getAccessURL(DATALINK_COL_ID, Standards.DATALINK_LINKS_11);
+                baseLinksConfigChecked = true; // try config once only
+            }
+            URL baseURL = baseLinksURL;
+            if (baseURL == null) {
+                return null;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append(baseURL.toExternalForm());
+            sb.append("?ID=").append(NetUtil.encode(publisherID));
+            return new URL(sb.toString());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("BUG: failed to generate datalink URL for " + publisherID, ex);
+        } catch (IOException ex) {
+            throw new RuntimeException("CONFIG: failed to read config for " + DATALINK_COL_ID);
+        } 
+    }
 }

@@ -146,6 +146,8 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     @Override
     public Format<Object> getClobFormat(TapSelectItem columnDesc) {
 
+        log.warn("getClobFormat: " + columnDesc.getColumnName() + " id=" + columnDesc.id);
+        
         // function with CLOB argument
         if (columnDesc != null) {
             // caom2.Artifact, caom2.SIAv1
@@ -159,7 +161,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
             // ivoa.ObsCore
             if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName)) {
                 if ("access_url".equalsIgnoreCase(columnDesc.getColumnName())) {
-                    return new DataLinkURLFormat(job.getID());
+                    return new DataLinkURLFormat();
                 }
             }
         }
