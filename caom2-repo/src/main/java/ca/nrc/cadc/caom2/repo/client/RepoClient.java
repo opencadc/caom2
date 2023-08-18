@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2.repo.client;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.NotAuthenticatedException;
 import ca.nrc.cadc.caom2.DeletedObservation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
@@ -79,17 +80,20 @@ import ca.nrc.cadc.caom2.repo.client.transform.AbstractListReader;
 import ca.nrc.cadc.caom2.repo.client.transform.DeletionListReader;
 import ca.nrc.cadc.caom2.repo.client.transform.ObservationStateListReader;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.ExpectationFailedException;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.InputStreamWrapper;
+import ca.nrc.cadc.net.PreconditionFailedException;
+import ca.nrc.cadc.net.RangeNotSatisfiableException;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.Capabilities;
 import ca.nrc.cadc.reg.CapabilitiesReader;
 import ca.nrc.cadc.reg.Capability;
 import ca.nrc.cadc.reg.Interface;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -436,17 +440,17 @@ public class RepoClient {
         if (tooBigRequest) {
             rec = DEFAULT_BATCH_SIZE;
         }
-        // Use HttpDownload to make the http GET calls (because it handles a lot
+        // Use HttpGet to make the http GET calls (because it handles a lot
         // of the
         // authentication stuff)
         boolean go = true;
         String surlCommon = baseServiceURL.toExternalForm() + File.separator + collection;
 
         while (go) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
             if (!tooBigRequest) {
                 go = false;// only one go
             }
+
             String surl = surlCommon;
             surl = surl + "?maxrec=" + (rec + 1);
             if (start != null) {
@@ -455,43 +459,33 @@ public class RepoClient {
             if (end != null) {
                 surl = surl + "&end=" + df.format(end);
             }
-            URL url;
             log.debug("URL: " + surl);
+
+            URL url;
             try {
                 url = new URL(surl);
-                HttpDownload get = new HttpDownload(url, bos);
-                get.setFollowRedirects(true);
-
-                get.run();
-                int responseCode = get.getResponseCode();
-                log.debug("RESPONSE CODE: '" + responseCode + "'");
-
-                // if (responseCode == 302) {
-                // // redirected url
-                // url = get.getRedirectURL();
-                // log.debug("REDIRECTED URL: " + url);
-                // bos = new ByteArrayOutputStream();
-                // get = new HttpDownload(url, bos);
-                // get.run();
-                // responseCode = get.getResponseCode();
-                // log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode
-                // + "'");
-                //
-                // }
-
-                if (get.getThrowable() != null) {
-                    if (get.getThrowable() instanceof AccessControlException) {
-                        throw (AccessControlException) get.getThrowable();
-                    }
-                    throw new RuntimeException("failed to get observation list", get.getThrowable());
-                }
             } catch (MalformedURLException e) {
                 throw new RuntimeException("BUG: failed to generate observation list url", e);
             }
 
+            HttpGet get = new HttpGet(url, true);
             try {
-                // log.debug("RESPONSE = '" + bos.toString() + "'");
-                List<ObservationState> partialList = transformer.read(new ByteArrayInputStream(bos.toByteArray()));
+                get.prepare();
+            } catch (AccessControlException | NotAuthenticatedException e) {
+                throw new AccessControlException(e.getMessage());
+            } catch (TransientException | IOException | ResourceNotFoundException
+                     | ResourceAlreadyExistsException e) {
+                throw new TransientException(e.getMessage());
+            } catch (ExpectationFailedException | IllegalArgumentException
+                     | PreconditionFailedException | RangeNotSatisfiableException
+                     | InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            } finally {
+                log.debug(String.format("RESPONSE CODE: '%s'", get.getResponseCode()));
+            }
+
+            try {
+                List<ObservationState> partialList = transformer.read(get.getInputStream());
                 if (partialList != null && !partialList.isEmpty() && !accList.isEmpty() && accList.get(accList.size() - 1).equals(partialList.get(0))) {
                     partialList.remove(0);
                 }
@@ -500,8 +494,6 @@ public class RepoClient {
                     accList.addAll(partialList);
                     log.debug("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
                 }
-
-                bos.close();
 
                 if (accList.size() > 0) {
                     start = accList.get(accList.size() - 1).maxLastModified;
@@ -527,14 +519,14 @@ public class RepoClient {
                     }
                 }
             } catch (ParseException | URISyntaxException | IOException e) {
-                throw new RuntimeException("Unable to list of ObservationState from " + bos.toString(), e);
+                throw new RuntimeException("Unable to list of ObservationState from " + surl, e);
             }
         }
         return accList;
 
     }
 
-    // pdowler: was going to use this so the HttpDownload would pass the
+    // pdowler: was going to use this so the HttpGet would pass the
     // InputStream directly to the reader
     // but will take additional refactoring
     private class StreamingListReader<T> implements InputStreamWrapper {
@@ -570,17 +562,17 @@ public class RepoClient {
         if (tooBigRequest) {
             rec = DEFAULT_BATCH_SIZE;
         }
-        // Use HttpDownload to make the http GET calls (because it handles a lot
+        // Use HttpGet to make the http GET calls (because it handles a lot
         // of the
         // authentication stuff)
         boolean go = true;
         String surlCommon = baseDeletionURL.toExternalForm() + File.separator + collection;
 
         while (go) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
             if (!tooBigRequest) {
                 go = false;// only one go
             }
+
             String surl = surlCommon;
             surl = surl + "?maxRec=" + (rec + 1);
             if (start != null) {
@@ -589,41 +581,34 @@ public class RepoClient {
             if (end != null) {
                 surl = surl + "&end=" + df.format(end);
             }
-            URL url;
             log.debug("URL: " + surl);
+
+            URL url;
             try {
                 url = new URL(surl);
-                HttpDownload get = new HttpDownload(url, bos);
-                get.setFollowRedirects(true);
-
-                get.run();
-                int responseCode = get.getResponseCode();
-                log.debug("RESPONSE CODE: '" + responseCode + "'");
-
-                if (responseCode == 302) {
-                    // redirected url
-                    url = get.getRedirectURL();
-                    log.debug("REDIRECTED URL: " + url);
-                    bos = new ByteArrayOutputStream();
-                    get = new HttpDownload(url, bos);
-                    responseCode = get.getResponseCode();
-                    log.debug("RESPONSE CODE (REDIRECTED URL): '" + responseCode + "'");
-
-                }
-
-                if (get.getThrowable() != null) {
-                    if (get.getThrowable() instanceof AccessControlException) {
-                        throw (AccessControlException) get.getThrowable();
-                    }
-                    throw new RuntimeException("failed to get observation list", get.getThrowable());
-                }
             } catch (MalformedURLException e) {
                 throw new RuntimeException("BUG: failed to generate observation list url", e);
             }
 
+            HttpGet get = new HttpGet(url, true);
+
             try {
-                // log.debug("RESPONSE = '" + bos.toString() + "'");
-                partialList = transformer.read(new ByteArrayInputStream(bos.toByteArray()));
+                get.prepare();
+            } catch (AccessControlException | NotAuthenticatedException e) {
+                throw new AccessControlException(e.getMessage());
+            } catch (TransientException | IOException | ResourceNotFoundException
+                     | ResourceAlreadyExistsException e) {
+                throw new TransientException(e.getMessage());
+            } catch (ExpectationFailedException | IllegalArgumentException
+                     | PreconditionFailedException | RangeNotSatisfiableException
+                     | InterruptedException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            } finally {
+                log.debug(String.format("RESPONSE CODE: '%s'", get.getResponseCode()));
+            }
+
+            try {
+                partialList = transformer.read(get.getInputStream());
                 // partialList =
                 // transformByteArrayOutputStreamIntoListOfObservationState(bos,
                 // df, '\t', '\n');
@@ -635,10 +620,8 @@ public class RepoClient {
                     accList.addAll(partialList);
                     log.debug("adding " + partialList.size() + " elements to accList. Now there are " + accList.size());
                 }
-
-                bos.close();
             } catch (ParseException | URISyntaxException | IOException e) {
-                throw new RuntimeException("Unable to list of ObservationState from " + bos.toString(), e);
+                throw new RuntimeException("Unable to list of ObservationState from " + surl, e);
             }
 
             if (accList.size() > 0) {

@@ -86,9 +86,6 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -97,11 +94,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import javax.naming.NamingException;
@@ -568,6 +563,9 @@ public class ObservationHarvester extends Harvester {
         } catch (InterruptedException | ExecutionException e) {
             log.error("SEVERE PROBLEM - ThreadPool harvesting Observations failed: " + e.getMessage());
             ret.abort = true;
+        } catch (Throwable th) {
+            log.error("unexpected exception", th);
+            throw th;
         } finally {
             timeTransaction = System.currentTimeMillis() - t;
             log.debug("time to get HarvestState: " + timeState + "ms");

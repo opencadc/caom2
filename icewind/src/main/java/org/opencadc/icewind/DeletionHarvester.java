@@ -358,9 +358,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 }
             }
         } catch (Throwable t) {
+            // catch to log the exception, then rethrow.
             log.error("unexpected exception", t);
-            ret.abort = true;
             correct = false;
+            throw t;
         } finally {
             if (correct) {
                 log.debug("DONE");
