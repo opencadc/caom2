@@ -167,7 +167,7 @@ public class DataLinkURLFormat implements Format<Object> {
 
     // get the locally configured datalink service from config
     private URL getLocalDataLink(String publisherID) {
-        log.warn("getLocalDataLink: " + publisherID + " columnID=" + DATALINK_COL_ID);
+        log.debug("getLocalDataLink: " + publisherID + " columnID=" + DATALINK_COL_ID);
         try {
             
             if (baseLinksURL == null && !baseLinksConfigChecked) {
