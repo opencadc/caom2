@@ -145,9 +145,6 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     
     @Override
     public Format<Object> getClobFormat(TapSelectItem columnDesc) {
-
-        log.warn("getClobFormat: " + columnDesc.getColumnName() + " id=" + columnDesc.id);
-        
         // function with CLOB argument
         if (columnDesc != null) {
             // caom2.Artifact, caom2.SIAv1
