@@ -95,7 +95,10 @@ public class PutAction extends RepoAction {
         checkWritePermission();
 
         Observation obs = getInputObservation();
-
+        if (obs == null) {
+            throw new IllegalArgumentException("invalid input: " + uri + " but no observation document in body");
+        }
+        
         if (!uri.equals(obs.getURI())) {
             throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
         }

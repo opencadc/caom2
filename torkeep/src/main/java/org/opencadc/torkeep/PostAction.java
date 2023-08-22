@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -97,6 +97,9 @@ public class PostAction extends RepoAction {
         checkWritePermission();
 
         Observation obs = getInputObservation();
+        if (obs == null) {
+            throw new IllegalArgumentException("invalid input: " + uri + " but no observation document in body");
+        }
 
         if (!uri.equals(obs.getURI())) {
             throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
