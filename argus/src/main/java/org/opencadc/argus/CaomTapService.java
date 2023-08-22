@@ -153,8 +153,12 @@ public class CaomTapService implements AvailabilityPlugin {
 
                 URI credURI = localAuthority.getServiceURI(stdID);
                 url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                checkResource = new CheckWebService(url);
-                checkResource.check();
+                if (url != null) {
+                    checkResource = new CheckWebService(url);
+                    checkResource.check();
+                } else {
+                    log.debug("check skipped: " + credURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                }
             } catch (NoSuchElementException ex) {
                 log.debug("not found: " + stdID);
             }
@@ -164,8 +168,12 @@ public class CaomTapService implements AvailabilityPlugin {
             try {
                 groupsURI = localAuthority.getServiceURI(stdID);
                 url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                checkResource = new CheckWebService(url);
-                checkResource.check();
+                if (url != null) {
+                    checkResource = new CheckWebService(url);
+                    checkResource.check();
+                } else {
+                    log.debug("check skipped: " + groupsURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                }
             } catch (NoSuchElementException ex) {
                 log.debug("not found: " + stdID);
             }
@@ -175,8 +183,12 @@ public class CaomTapService implements AvailabilityPlugin {
                 URI usersURI = localAuthority.getServiceURI(stdID);
                 if (!usersURI.equals(groupsURI)) {
                     url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                    checkResource = new CheckWebService(url);
-                    checkResource.check();
+                    if (url != null) {
+                        checkResource = new CheckWebService(url);
+                        checkResource.check();
+                    } else {
+                        log.debug("check skipped: " + usersURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                    }
                 } else {
                     log.debug("already checked: " + stdID + " = " + usersURI);
                 }
