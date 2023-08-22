@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.net.TransientException;
 import java.io.File;
 import java.net.URI;
 import java.util.Date;
@@ -187,14 +188,19 @@ public class CaomHarvester implements Runnable {
                     initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
                 }
 
-                // delete observations before harvest to avoid observationURI conflicts from delete+create
-                obsDeleter.setInitHarvestState(initDel);
-                obsDeleter.run();
+                try {
+                    // delete observations before harvest to avoid observationURI conflicts from delete+create
+                    obsDeleter.setInitHarvestState(initDel);
+                    obsDeleter.run();
 
-                // harvest observations
-                obsHarvester.run();
-                ingested += obsHarvester.getIngested();
+                    // harvest observations
+                    obsHarvester.run();
+                    ingested += obsHarvester.getIngested();
+                } catch (TransientException e) {
+                    ingested = 0;
+                }
             }
+
             if (this.exitWhenComplete) {
                 log.info("exitWhenComplete=" + exitWhenComplete + ": DONE");
                 done = true;

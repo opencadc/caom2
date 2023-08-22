@@ -93,8 +93,7 @@ public class RepoClientTest {
     private static final Logger log = Logger.getLogger(RepoClientTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.DEBUG);
-        // Log4jInit.setLevel("ca.nrc.cadc.reg", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.repo.client", Level.INFO);
     }
 
     // @Test
@@ -110,17 +109,13 @@ public class RepoClientTest {
     @Test
     public void testGetObservationListCADC() {
         try {
-            Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+            Subject s = AuthenticationUtil.getAnonSubject();
+            Subject.doAs(s, (PrivilegedExceptionAction<Object>) () -> {
+                RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/ams"), 8);
 
-                @Override
-                public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/ams"), 8);
-
-                    List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
-                    Assert.assertEquals(6, list.size());
-                    return null;
-                }
+                List<ObservationState> list = repoC.getObservationList("IRIS", null, null, 5);
+                Assert.assertEquals(6, list.size());
+                return null;
             });
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -132,17 +127,13 @@ public class RepoClientTest {
     public void testGetObservationListMAST() {
         try {
             Subject s = AuthenticationUtil.getAnonSubject();
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+            Subject.doAs(s, (PrivilegedExceptionAction<Object>) () -> {
+                RepoClient repoC = new RepoClient(URI.create("ivo://mast.stsci.edu/caom2repo"), 8);
 
-                @Override
-                public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://mast.stsci.edu/caom2repo"), 8);
+                List<ObservationState> list = repoC.getObservationList("HST", null, null, 5);
+                Assert.assertEquals(6, list.size());
 
-                    List<ObservationState> list = repoC.getObservationList("HST", null, null, 5);
-                    Assert.assertEquals(6, list.size());
-
-                    return null;
-                }
+                return null;
             });
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -154,17 +145,13 @@ public class RepoClientTest {
     public void testGetObservationListDenied() {
         try {
             Subject s = AuthenticationUtil.getAnonSubject();
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+            Subject.doAs(s, (PrivilegedExceptionAction<Object>) () -> {
+                RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/ams"), 8);
 
-                @Override
-                public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/ams"), 8);
+                List<ObservationState> list = repoC.getObservationList("DAO", null, null, 5);
+                Assert.fail("expected exception, got results");
 
-                    List<ObservationState> list = repoC.getObservationList("DAO", null, null, 5);
-                    Assert.fail("expected exception, got results");
-
-                    return null;
-                }
+                return null;
             });
         } catch (AccessControlException expected) {
             log.info("caught expected exception: " + expected);
@@ -177,20 +164,16 @@ public class RepoClientTest {
     @Test
     public void testGet() {
         try {
-            Subject s = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            Subject.doAs(s, new PrivilegedExceptionAction<Object>() {
+            Subject s = AuthenticationUtil.getAnonSubject();
+            Subject.doAs(s, (PrivilegedExceptionAction<Object>) () -> {
+                RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/ams"), 8);
 
-                @Override
-                public Object run() throws Exception {
-                    RepoClient repoC = new RepoClient(URI.create("ivo://cadc.nrc.ca/ams"), 8);
+                ObservationResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
+                Assert.assertNotNull(wr);
+                Assert.assertNotNull(wr.observation);
+                Assert.assertFalse(wr.observation.getPlanes().isEmpty());
 
-                    ObservationResponse wr = repoC.get(new ObservationURI("IRIS", "f001h000"));
-                    Assert.assertNotNull(wr);
-                    Assert.assertNotNull(wr.observation);
-                    Assert.assertFalse(wr.observation.getPlanes().isEmpty());
-
-                    return null;
-                }
+                return null;
             });
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
