@@ -145,15 +145,25 @@ public class ObservationHarvester extends Harvester {
         this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
 
         // dest is always a database
+        final String destDS = "jdbc/ObservationHarvester";
         Map<String, Object> destConfig = getConfigDAO(dest);
-        ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                dest.getUsername(), dest.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
-        final String destDS = "jdbc/obsHarvestDest";
         try {
-            DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
+            DataSource cur = null;
+            try {
+                cur = DBUtil.findJNDIDataSource(destDS);
+            } catch (NamingException notInitialized) {
+                log.debug("JNDI not initialized yet... OK");
+            }
+            if (cur == null) {
+                ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
+                    dest.getUsername(), dest.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
+            } else {
+                log.debug("found DataSource: " + destDS + " -- re-using");
+            }
         } catch (NamingException e) {
             throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
-                    dest, e.getMessage()));
+                    dest, e.getMessage()), e);
         }
         destConfig.put("jndiDataSourceName", destDS);
         destConfig.put("basePublisherID", basePublisherID.toASCIIString());

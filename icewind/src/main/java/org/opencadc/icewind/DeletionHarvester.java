@@ -85,6 +85,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import javax.naming.NamingException;
+import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
@@ -139,12 +140,23 @@ public class DeletionHarvester extends Harvester implements Runnable {
         this.repoClient = new RepoClient(src.getResourceID(), 1);
 
         // destination
+        final String destDS = "jdbc/DeletionHarvester";
+        
         Map<String, Object> destConfig = getConfigDAO(dest);
-        ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                dest.getUsername(), dest.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
-        final String destDS = "jdbc/destObsHarvest";
         try {
-            DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
+            DataSource cur = null;
+            try {
+                cur = DBUtil.findJNDIDataSource(destDS);
+            } catch (NamingException notInitialized) {
+                log.debug("JNDI not initialized yet... OK");
+            }
+            if (cur == null) {
+                ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
+                    dest.getUsername(), dest.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
+            } else {
+                log.debug("found DataSource: " + destDS + " -- re-using");
+            }
         } catch (NamingException e) {
             throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
                     dest, e.getMessage()));
