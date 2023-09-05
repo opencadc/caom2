@@ -138,7 +138,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
     private void init() {
         // source
         this.repoClient = new RepoClient(src.getResourceID(), 1);
-
+        // TODO: make these configurable
+        repoClient.setConnectionTimeout(18000); // 18 sec
+        repoClient.setReadTimeout(120000);      // 2 min
+        
         // destination
         final String destDS = "jdbc/DeletionHarvester";
         

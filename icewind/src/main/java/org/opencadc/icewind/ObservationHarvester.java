@@ -115,12 +115,11 @@ public class ObservationHarvester extends Harvester {
 
     private final URI basePublisherID;
     private final boolean nochecksum;
-    private RepoClient srcObservationService;
+    private RepoClient srcRepoClient;
     private ObservationDAO srcObservationDAO;
     private ObservationDAO destObservationDAO;
     private HarvestSkipURIDAO harvestSkipDAO;
     private boolean skipped;
-    private boolean computePlaneMetadata;
     private boolean ready = false;
     private int ingested = 0;
 
@@ -129,7 +128,6 @@ public class ObservationHarvester extends Harvester {
         super(Observation.class, src, dest, collection, batchSize, full);
         this.basePublisherID = basePublisherID;
         this.nochecksum = nochecksum;
-        this.computePlaneMetadata = false;
         init(nthreads);
     }
 
@@ -142,8 +140,11 @@ public class ObservationHarvester extends Harvester {
     }
 
     private void init(int nthreads) {
-        this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
-
+        this.srcRepoClient = new RepoClient(src.getResourceID(), nthreads);
+        // TODO: make these configurable
+        srcRepoClient.setConnectionTimeout(18000); // 18 sec
+        srcRepoClient.setReadTimeout(120000);      // 2 min
+        
         // dest is always a database
         final String destDS = "jdbc/ObservationHarvester";
         Map<String, Object> destConfig = getConfigDAO(dest);
@@ -177,10 +178,10 @@ public class ObservationHarvester extends Harvester {
         }
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
         
-        if (srcObservationService.isObsAvailable()) {
+        if (srcRepoClient.isObsAvailable()) {
             ready = true;
         } else {
-            log.error("Not available: obs endpoint in " + srcObservationService.toString());
+            log.error("Not available: obs endpoint in " + srcRepoClient.toString());
         }
     }
 
@@ -290,7 +291,7 @@ public class ObservationHarvester extends Harvester {
                 if (srcObservationDAO != null) {
                     obsList = srcObservationDAO.getList(collection, startDate, endDate, batchSize + 1);
                 } else {
-                    obsList = srcObservationService.getList(collection, startDate, endDate, batchSize + 1);
+                    obsList = srcRepoClient.getList(collection, startDate, endDate, batchSize + 1);
                 }
                 entityList = wrap(obsList);
             }
@@ -689,7 +690,7 @@ public class ObservationHarvester extends Harvester {
                 log.debug("getSkipped: " + hs.getSkipID());
                 listUris.add(new ObservationURI(hs.getSkipID()));
             }
-            List<ObservationResponse> listResponses = srcObservationService.get(listUris);
+            List<ObservationResponse> listResponses = srcRepoClient.get(listUris);
             log.warn("getSkipped: " + skip.size() + " HarvestSkipURI -> " + listResponses.size() + " ObservationResponse");
 
             for (ObservationResponse o : listResponses) {
