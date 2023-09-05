@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2018.                            (c) 2018.
+ *  (c) 2023.                            (c) 2023.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -139,6 +139,9 @@ public class RepoClient {
 
     private boolean isObsAvailable = false;
     private boolean isDelAvailable = false;
+    
+    private int connectionTimeout = 6000;  // default: 6 sec
+    private int  readTimeout = 60000;      // default: 60 sec
 
     /**
      * @return the isObsAvailable
@@ -267,6 +270,25 @@ public class RepoClient {
         this.isDelAvailable = true;
     }
 
+    /**
+     * Override the default connection timeout (6000ms aka 6sec).
+     * 
+     * @param connectionTimeout new timeout value
+     */
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    /**
+     * Override the default read timeout (60000ms aka 60sec).
+     * 
+     * @param readTimeout new timeout value
+     */
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
+    
     public List<DeletedObservation> getDeleted(String collection, Date start, Date end, Integer maxrec) {
         return readDeletedEntityList(new DeletionListReader(), collection, start, end, maxrec);
         // TODO: make call(s) to the deletion endpoint until requested number of
@@ -469,6 +491,8 @@ public class RepoClient {
             }
 
             HttpGet get = new HttpGet(url, true);
+            get.setConnectionTimeout(connectionTimeout);
+            get.setReadTimeout(readTimeout);
             try {
                 get.prepare();
             } catch (AccessControlException | NotAuthenticatedException e) {
@@ -591,7 +615,8 @@ public class RepoClient {
             }
 
             HttpGet get = new HttpGet(url, true);
-
+            get.setConnectionTimeout(connectionTimeout);
+            get.setReadTimeout(readTimeout);
             try {
                 get.prepare();
             } catch (AccessControlException | NotAuthenticatedException e) {
