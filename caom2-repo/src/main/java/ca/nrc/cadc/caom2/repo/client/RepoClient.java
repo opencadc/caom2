@@ -237,7 +237,13 @@ public class RepoClient {
         }
         Interface iface = obs.findInterface(meth);
         if (iface == null) {
-            throw new RuntimeException("observation list capability does not suppoort auth: " + meth.getValue());
+            iface = obs.findInterface(AuthMethod.ANON);
+            if (iface == null) {
+                throw new RuntimeException("observation list capability does not support auth: " + meth.getValue()
+                    + " or anon");
+            }
+            log.debug("observation list capability does not support auth: " + meth.getValue() + ": using anon");
+            meth = AuthMethod.ANON; // use same for deletion endpoint below
         }
         this.baseServiceURL = iface.getAccessURL().getURL();
         log.debug("observation list URL: " + baseServiceURL.toString());
