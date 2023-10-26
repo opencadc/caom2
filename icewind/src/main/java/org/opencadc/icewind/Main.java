@@ -97,7 +97,8 @@ public class Main {
     private static final String CERTIFICATE_FILE_LOCATION = System.getProperty("user.home") + "/.ssl/cadcproxy.pem";
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
-
+    
+    private static final String RETRY_SKIPPED_CONFIG_KEY = CONFIG_PREFIX + ".retrySkipped";
     private static final String REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".repoService";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
     private static final String MAX_IDLE_CONFIG_KEY = CONFIG_PREFIX + ".maxIdle";
@@ -197,9 +198,19 @@ public class Main {
                                                                  BASE_PUBLISHER_ID_CONFIG_KEY, configuredBasePublisherIDUrl));
             }
 
+            final boolean retrySkipped;
+            final String configuredRetrySkipped = props.getFirstPropertyValue(RETRY_SKIPPED_CONFIG_KEY);
+            if (configuredRetrySkipped == null) {
+                retrySkipped = false;
+            } else {
+                retrySkipped = Boolean.parseBoolean(configuredRetrySkipped);
+            }
+            
             final boolean exitWhenComplete;
             final String configuredExitWhenComplete = props.getFirstPropertyValue(EXIT_WHEN_COMPLETE_CONFIG_KEY);
-            if (configuredExitWhenComplete == null) {
+            if (retrySkipped) {
+                exitWhenComplete = true;
+            } else if (configuredExitWhenComplete == null) {
                 exitWhenComplete = DEFAULT_EXIT_WHEN_COMPLETE;
             } else {
                 exitWhenComplete = Boolean.parseBoolean(configuredExitWhenComplete);
@@ -208,13 +219,12 @@ public class Main {
             final String configuredMaxSleep = props.getFirstPropertyValue(MAX_IDLE_CONFIG_KEY);
             final long maxSleep = Long.parseLong(configuredMaxSleep);
 
-            // full=false, skip=false: incremental harvest
+            // full=false: incremental harvest
             final boolean full = false;
-            final boolean skip = false;
             final boolean noChecksum = false;
             CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, destinationHarvestResource,
                     configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE / 10,
-                                                        full, skip, noChecksum, exitWhenComplete, maxSleep);
+                                                        full, retrySkipped, noChecksum, exitWhenComplete, maxSleep);
 
             Subject subject = AuthenticationUtil.getAnonSubject();
             File cert = new File(CERTIFICATE_FILE_LOCATION);

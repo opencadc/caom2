@@ -44,6 +44,10 @@ org.opencadc.icewind.basePublisherID={uri}
 
 # (optional) exit after processing collections once
 #org.opencadc.icewind.exitWhenComplete=true
+
+# (optional) retry previously failed (skipped) observations
+# this mode always assumes exitWhenComplete=true
+org.opencadc.icewind.retrySkipped = true
 ```
 
 The _caom_ database account owns and manages (create, alter, drop) CAOM database objects
@@ -72,6 +76,12 @@ allows for the whole "data collection" to be registered in an IVOA registry usin
 
 `icewind` normally runs forever; the _exitWhenComplete_ flag (optional) can
 be set to `true` to cause the process to exit after syncing each collection once.
+
+`icewind` normally does incremental harvest of new or modified observations from 
+the source; the _retrySkipped_ flag (optional) can be set to `true` to cause it to
+retry previously failed (skipped) observations listed in the `caom2.HarvestSkipURI`
+table. This mode always assumes _exitWhenComplete_ so it terminates after one pass
+through the list.
 
 ### cadcproxy.pem (optional)
 This client certificate can be provided in /config directory. If present, it is used to 
