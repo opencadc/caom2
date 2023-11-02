@@ -72,13 +72,13 @@ import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.springframework.jdbc.support.MetaDataAccessException;
 
 /**
  *
@@ -117,8 +117,9 @@ public final class Main {
             
             String fname = am.getPositionalArgs().get(0);
             File f = new File(fname);
+            InputStream istream = new FileInputStream(f);
             ObservationReader r = new ObservationReader();
-            Observation obs = r.read(new FileReader(f));
+            Observation obs = r.read(istream);
             
             if (am.isSet("compute")) {
                 MetadataCompute mc = new MetadataCompute(obs);
