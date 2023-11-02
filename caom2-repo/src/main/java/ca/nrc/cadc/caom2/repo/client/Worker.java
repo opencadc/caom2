@@ -80,6 +80,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.concurrent.Callable;
 
 import javax.security.auth.Subject;
@@ -143,7 +144,7 @@ public class Worker implements Callable<ObservationResponse> {
         } else {
             try {
                 ObservationReader obsReader = new ObservationReader();
-                wr.observation = obsReader.read(bos.toString());
+                wr.observation = obsReader.read(bos.toString(Charset.forName("UTF-8")));
             } catch (Exception e) {
                 wr.error = new IllegalArgumentException("failed to read observation document: " + e.getMessage(), e);
             }
