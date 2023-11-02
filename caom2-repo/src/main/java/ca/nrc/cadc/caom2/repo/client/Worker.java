@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2023.                            (c) 2023.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,18 +73,15 @@ import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
-import ca.nrc.cadc.net.HttpDownload;
-
+import ca.nrc.cadc.net.HttpGet;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.concurrent.Callable;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -126,7 +123,7 @@ public class Worker implements Callable<ObservationResponse> {
         } catch (MalformedURLException e) {
             throw new RuntimeException("Unable to create URL object for " + surl);
         }
-        HttpDownload get = new HttpDownload(url, bos);
+        HttpGet get = new HttpGet(url, bos);
 
         if (subject != null) {
             Subject.doAs(subject, new RunnableAction(get));
@@ -144,7 +141,8 @@ public class Worker implements Callable<ObservationResponse> {
         } else {
             try {
                 ObservationReader obsReader = new ObservationReader();
-                wr.observation = obsReader.read(bos.toString(Charset.forName("UTF-8")));
+                ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+                wr.observation = obsReader.read(bis);
             } catch (Exception e) {
                 wr.error = new IllegalArgumentException("failed to read observation document: " + e.getMessage(), e);
             }
