@@ -70,10 +70,12 @@
 package org.opencadc.icewind;
 
 import ca.nrc.cadc.caom2.Artifact;
+import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.ObservationURI;
+import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
@@ -82,11 +84,13 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -339,7 +343,7 @@ public class ObservationHarvester extends Harvester {
                 log.debug("skipped=" + skipped
                         + " o=" + o
                         + " ow.entity=" + ow.entity
-                        + " ow.entity.error=" + (ow.entity != null || ow.entity.error != null));
+                        + " ow.entity.error=" + (ow.entity == null ? null : ow.entity.error));
                 try {
                     // o could be null in skip mode cleanup
                     if (o != null) {
@@ -600,15 +604,111 @@ public class ObservationHarvester extends Harvester {
         try {
             URI calculatedChecksum = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
 
-            log.debug("validateChecksum: " + o.getURI() + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
+            log.debug("validateChecksum: " + o.getURI() + " -- " + computeTreeSize(o) + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
+                //detailedChecksumDiagnostics(o);
                 throw new MismatchedChecksumException("Observation.accMetaChecksum mismatch");
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 digest algorithm not available");
         }
     }
+    
+    private void detailedChecksumDiagnostics(Observation obs) {
+        // code yanked from caom2-validator
+        try {
+            int depth = 5;
+            boolean acc = true;
+            StringBuilder cs = new StringBuilder();
+            StringBuilder acs = new StringBuilder();
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            if (depth > 1) {
+                for (Plane pl : obs.getPlanes()) {
+                    if (depth > 2) {
+                        for (Artifact ar : pl.getArtifacts()) {
+                            if (depth > 3) {
+                                for (Part pa : ar.getParts()) {
+                                    if (depth > 4) {
+                                        for (Chunk ch : pa.getChunks()) {
+                                            URI chunkCS = ch.computeMetaChecksum(digest);
+                                            cs.append("\n      chunk: ").append(ch.getID()).append(" ");
+                                            compare(cs, ch.getMetaChecksum(), chunkCS);
+                                            if (acc) {
+                                                URI chunkACS = ch.computeAccMetaChecksum(digest);
+                                                acs.append("\n      chunk: ").append(ch.getID()).append(" ");
+                                                compare(acs, ch.getAccMetaChecksum(), chunkACS);
+                                            }
+                                        }
+                                    }
+                                    URI partCS = pa.computeMetaChecksum(digest);
+                                    cs.append("\n       part: ").append(pa.getID()).append(" ");
+                                    compare(cs, pa.getMetaChecksum(), partCS);
+                                    if (acc) {
+                                        URI partACS = pa.computeAccMetaChecksum(digest);
+                                        acs.append("\n      part: ").append(pa.getID()).append(" ");
+                                        compare(acs, pa.getAccMetaChecksum(), partACS);
+                                    }
+                                }
+                            }
+                            URI artifactCS = ar.computeMetaChecksum(digest);
+                            cs.append("\n       artifact: ").append(ar.getID()).append(" ");
+                            compare(cs, ar.getMetaChecksum(), artifactCS);
+                            if (acc) {
+                                URI artifactACS = ar.computeAccMetaChecksum(digest);
+                                acs.append("\n      artifact: ").append(ar.getID()).append(" ");
+                                compare(acs, ar.getAccMetaChecksum(), artifactACS);
+                            }
+                        }
+                    }
+                    URI planeCS = pl.computeMetaChecksum(digest);
+                    cs.append("\n      plane: ").append(pl.getID()).append(" ");
+                    compare(cs, pl.getMetaChecksum(), planeCS);
+                    if (acc) {
+                        URI planeACS = pl.computeAccMetaChecksum(digest);
+                        acs.append("\n     plane: ").append(pl.getID()).append(" ");
+                        compare(acs, pl.getAccMetaChecksum(), planeACS);
+                    }
+                }
+            }
+            URI observationCS = obs.computeMetaChecksum(digest);
+            cs.append("\nobservation: ").append(obs.getID()).append(" ");
+            compare(cs, obs.getMetaChecksum(), observationCS);
+            
+            if (acc) {
+                URI observationACS = obs.computeAccMetaChecksum(digest);
+                acs.append("\nobservation: ").append(obs.getID()).append(" ");
+                compare(acs, obs.getAccMetaChecksum(), observationACS);
+            }
 
+            log.warn("** metaChecksum **");
+            log.warn(cs.toString());
+            if (acc) {
+                log.warn("** accMetaChecksum **");
+                log.warn(acs.toString());
+            }
+            log.warn("default charset: " + Charset.defaultCharset().displayName());
+            ObservationWriter ow = new ObservationWriter();
+            ow.write(obs, System.out);
+            
+        } catch (Exception oops) {
+            log.error("failure during detailedChecksumDiagnostics", oops);
+        }
+    }
+
+    private void compare(StringBuilder sb, URI u1, URI u2) {
+        sb.append(u1);
+        boolean eq = u1.equals(u2);
+        if (eq) {
+            sb.append(" == ");
+        } else {
+            sb.append(" != ");
+        }
+        sb.append(u2);
+        if (!eq) {
+            sb.append(" [MISMATCH]");
+        }
+    }
+    
     private String computeTreeSize(Observation o) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
