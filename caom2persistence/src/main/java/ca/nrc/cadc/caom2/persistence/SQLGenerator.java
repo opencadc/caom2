@@ -3283,6 +3283,7 @@ public class SQLGenerator {
                 MultiPolygon mp = getMultiPolygon(rs, col++);
                 if (points != null) {
                     pos.bounds = new Polygon(points, mp);
+                    // do not validate here
                 }
             }
             log.debug("position_bounds: " + pos.bounds);

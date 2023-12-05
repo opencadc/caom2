@@ -473,7 +473,8 @@ public class PostgreSQLGenerator extends SQLGenerator {
             Vertex v = new Vertex(cval1, cval2, t);
             ret.getVertices().add(v);
         }
-        ret.validate();
+        // do not validate here
+        // ret.validate();
         return ret;
     }
 
