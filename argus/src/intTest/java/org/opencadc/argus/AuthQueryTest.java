@@ -69,56 +69,36 @@
 
 package org.opencadc.argus;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.auth.AuthenticationUtil;
-import ca.nrc.cadc.auth.InvalidSignedTokenException;
-import ca.nrc.cadc.auth.PrincipalExtractor;
-import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
-import ca.nrc.cadc.auth.SSOCookieCredential;
-import ca.nrc.cadc.auth.SSOCookieManager;
-import ca.nrc.cadc.auth.SignedToken;
-import ca.nrc.cadc.auth.X509CertificateChain;
 import ca.nrc.cadc.dali.tables.TableData;
 import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
 import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.HttpPost;
-import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.ExecutionPhase;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.JobReader;
 import ca.nrc.cadc.uws.Result;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.Authenticator;
-import java.net.URI;
+import java.io.InputStream;
 import java.net.URL;
-import java.security.Principal;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -134,39 +114,34 @@ public class AuthQueryTest {
 
     private static final Logger log = Logger.getLogger(AuthQueryTest.class);
 
-    private static final URI GMS_RESOURCE_IDENTIFIER_URI = URI.create("ivo://cadc.nrc.ca/gms");
-
-    static final Subject subjectWithGroups;
-    static final Principal userWithGroups;
-    static URL syncCertURL;
-    static URL asyncCertURL;
-    static URL syncCookieURL;
-    static URL asyncCookieURL;
-
-    Map<String, Object> params;
-    Subject authSubject;
+    static final Subject noauthSubject;
+    static final Subject authSubject;
+    static URL syncURL;
+    static URL asyncURL;
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.argus.integration", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
 
         File cf = FileUtil.getFileFromResource(Constants.PEM_FILE, AuthQueryTest.class);
-        subjectWithGroups = SSLUtil.createSubject(cf);
-        userWithGroups = subjectWithGroups.getPrincipals(X500Principal.class).iterator().next();
-        log.debug("created subjectWithGroups: " + subjectWithGroups);
-
+        authSubject = SSLUtil.createSubject(cf);
+        log.debug("created subjectWithGroups: " + authSubject);
+        
+        cf = FileUtil.getFileFromResource(Constants.UNPRIV_PEM_FILE, AuthQueryTest.class);
+        noauthSubject = SSLUtil.createSubject(cf);
+        log.debug("created subjectNoGroups: " + noauthSubject);
+        
         try {
             TapClient tap = new TapClient(Constants.RESOURCE_ID);
-            syncCertURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
-            asyncCertURL = tap.getAsyncURL(Standards.SECURITY_METHOD_CERT);
-
-            syncCookieURL = tap.getSyncURL(Standards.SECURITY_METHOD_COOKIE);
-            asyncCookieURL = tap.getAsyncURL(Standards.SECURITY_METHOD_COOKIE);
+            syncURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
+            asyncURL = tap.getAsyncURL(Standards.SECURITY_METHOD_CERT);
+            log.info(" sync: " + syncURL);
+            log.info("async: " + asyncURL);
         } catch (Exception ex) {
             log.error("TEST SETUP BUG: failed to find TAP URL", ex);
         }
     }
 
-    private class SyncQueryAction implements PrivilegedExceptionAction<String> {
+    private class SyncQueryAction implements PrivilegedExceptionAction<VOTableDocument> {
 
         private URL url;
         private Map<String, Object> params;
@@ -177,28 +152,21 @@ public class AuthQueryTest {
         }
 
         @Override
-        public String run()
+        public VOTableDocument run()
                 throws Exception {
+            log.info("starting sync request: " + url);
             HttpPost doit = new HttpPost(url, params, true);
-            doit.run();
+            doit.prepare();
+            Assert.assertEquals(200, doit.getResponseCode());
 
-            if (doit.getThrowable() != null) {
-                log.error("Post failed", doit.getThrowable());
-                Assert.fail("exception on post: " + doit.getThrowable());
-            }
-
-            int code = doit.getResponseCode();
-            Assert.assertEquals(200, code);
-
-            String contentType = doit.getResponseContentType();
-            String result = doit.getResponseBody();
-
-            log.debug("contentType: " + contentType);
-            log.debug("respnse:\n" + result);
-
+            String contentType = doit.getContentType();
+            log.info("result contentType: " + contentType);
             Assert.assertEquals("application/x-votable+xml", contentType);
 
-            return result;
+            VOTableReader r = new VOTableReader();
+            VOTableDocument doc = r.read(doit.getInputStream());
+            
+            return doc;
         }
 
     }
@@ -216,30 +184,19 @@ public class AuthQueryTest {
         @Override
         public Job run()
                 throws Exception {
+            log.info("create async job: " + url);
             HttpPost doit = new HttpPost(url, params, false);
-            doit.run();
-
-            if (doit.getThrowable() != null) {
-                log.error("Post failed", doit.getThrowable());
-                Assert.fail("exception on post: " + doit.getThrowable());
-            }
-
+            doit.prepare();
             int code = doit.getResponseCode();
             Assert.assertEquals(303, code);
 
             URL jobURL = doit.getRedirectURL();
-
-            // exec the job
+            log.info("execute job: " + jobURL);
             URL phaseURL = new URL(jobURL.toString() + "/phase");
             Map<String, Object> nextParams = new HashMap<String, Object>();
             nextParams.put("PHASE", "RUN");
             doit = new HttpPost(phaseURL, nextParams, false);
-            doit.run();
-
-            if (doit.getThrowable() != null) {
-                log.error("Post failed", doit.getThrowable());
-                Assert.fail("exception on post: " + doit.getThrowable());
-            }
+            doit.prepare();
 
             JobReader jr = new JobReader();
             Job job = null;
@@ -247,7 +204,8 @@ public class AuthQueryTest {
             boolean done = false;
             while (!done) {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
-                HttpDownload w = new HttpDownload(waitURL, out);
+                log.info("polling job: " + waitURL);
+                HttpGet w = new HttpGet(waitURL, out);
                 w.run();
                 job = jr.read(new ByteArrayInputStream(out.toByteArray()));
                 ExecutionPhase ep = job.getExecutionPhase();
@@ -272,15 +230,14 @@ public class AuthQueryTest {
             params.put("LANG", "ADQL");
             params.put("QUERY", adql);
 
-            String result = Subject.doAs(subjectWithGroups, new SyncQueryAction(syncCertURL, params));
-            Assert.assertNotNull(result);
-
-            VOTableReader r = new VOTableReader();
-            VOTableDocument doc = r.read(result);
+            VOTableDocument doc = Subject.doAs(noauthSubject, new SyncQueryAction(syncURL, params));
+            log.info("result: " + doc);
+            Assert.assertNotNull(doc);
+            
             VOTableResource vr = doc.getResourceByType("results");
             VOTableTable vt = vr.getTable();
             TableData td = vt.getTableData();
-
+            
             // NOTE: the proxy cert is for CADCAuthtest1 which does not belong to
             // any groups that can access proprietary metadata so we expect no rows
             Iterator<List<Object>> iter = td.iterator();
@@ -292,8 +249,7 @@ public class AuthQueryTest {
     }
 
     // this test requires write permission to a working VOSpace
-    // currently hard-coded to the CADC vault service
-    // vault
+    // currently hard-coded to the production CADC vault service
     @Test
     public void testVOSAuthQuery() {
         String username = System.getProperty("user.name");
@@ -306,7 +262,7 @@ public class AuthQueryTest {
             params.put("QUERY", adql);
             params.put("DEST", dest);
 
-            Job job = Subject.doAs(subjectWithGroups, new AsyncQueryAction(asyncCertURL, params));
+            Job job = Subject.doAs(authSubject, new AsyncQueryAction(asyncURL, params));
             log.info("job: " + job);
             Assert.assertTrue("job completed", job.getExecutionPhase().equals(ExecutionPhase.COMPLETED));
             for (Result r : job.getResultsList()) {
