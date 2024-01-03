@@ -114,6 +114,8 @@ public class HarvestSkipURIDAO {
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
     
     public static final int BUCKET_LENGTH = 3;
+    
+    public String errorMessagePattern = null;
 
     public HarvestSkipURIDAO(DataSource dataSource, String database, String schema) {
         this.jdbc = new JdbcTemplate(dataSource);
@@ -232,6 +234,9 @@ public class HarvestSkipURIDAO {
                 throws SQLException {
             StringBuilder sb = new StringBuilder(SqlUtil.getSelectSQL(COLUMNS, tableName));
             sb.append(" WHERE source = ? AND cname = ?");
+            if (errorMessagePattern != null) {
+                sb.append(" AND errorMessage like ?");
+            }
             if (skipID != null) {
                 sb.append(" AND skipID = ?");
             } else {
@@ -260,6 +265,9 @@ public class HarvestSkipURIDAO {
             int col = 1;
             ps.setString(col++, source);
             ps.setString(col++, cname);
+            if (errorMessagePattern != null) {
+                ps.setString(col++, errorMessagePattern);
+            }
             if (skipID != null) {
                 ps.setString(col++, skipID.toASCIIString());
             }
