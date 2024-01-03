@@ -104,6 +104,9 @@ public class CaomHarvester implements Runnable {
     private final boolean exitWhenComplete;
     private final long maxIdle;
 
+    // hack option
+    String retryErrorMessagePattern;
+    
     /**
      * Harvest everything.
      *
@@ -177,7 +180,7 @@ public class CaomHarvester implements Runnable {
 
                 ObservationHarvester obsHarvester = new ObservationHarvester(src, dest, collection, basePublisherID, batchSize,
                         nthreads, full, nochecksum);
-                obsHarvester.setSkipped(skip);
+                obsHarvester.setSkipped(skip, retryErrorMessagePattern);
 
                 DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest,
                         collection, batchSize * 100);
