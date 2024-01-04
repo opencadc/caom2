@@ -126,6 +126,7 @@ public class ObservationHarvester extends Harvester {
     private boolean skipped;
     private boolean ready = false;
     private int ingested = 0;
+    private String errorMessagePattern;
 
     public ObservationHarvester(HarvesterResource src, HarvesterResource dest, String collection, URI basePublisherID,
                                 Integer batchSize, int nthreads, boolean full, boolean nochecksum) {
@@ -135,10 +136,15 @@ public class ObservationHarvester extends Harvester {
         init(nthreads);
     }
 
-    public void setSkipped(boolean skipped) {
+    public void setSkipped(boolean skipped, String errorMessagePattern) {
         this.skipped = skipped;
+        this.harvestSkipDAO.errorMessagePattern = errorMessagePattern;
     }
 
+    public void setErrorMessagePattern(String errorMessagePattern) {
+        this.errorMessagePattern = errorMessagePattern;
+    }
+    
     public int getIngested() {
         return this.ingested;
     }
@@ -404,7 +410,11 @@ public class ObservationHarvester extends Harvester {
                         }
 
                         if (hs != null) {
-                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                            String emsg = hs.errorMessage;
+                            if (emsg.length() > 32) {
+                                emsg = emsg.substring(0, 32);
+                            }
+                            log.info("delete: " + hs.getClass().getSimpleName() + "[" + hs.getSkipID() + " " + emsg + "]");
                             harvestSkipDAO.delete(hs);
                         }
                     } else if (skipped) {
@@ -414,7 +424,7 @@ public class ObservationHarvester extends Harvester {
                             ObservationURI uri = new ObservationURI(hs.getSkipID());
                             log.info("delete: " + uri);
                             destObservationDAO.delete(uri);
-                            log.info("delete: " + hs + " " + format(hs.getLastModified()));
+                            log.info("delete: " + hs.getClass().getSimpleName() + "[" + hs.getSkipID() + "]");
                             harvestSkipDAO.delete(hs);
                         } else {
                             // defer to the main catch for error handling
@@ -503,6 +513,9 @@ public class ObservationHarvester extends Harvester {
                     } else if (str.contains("spherepoly_from_array")) {
                         log.error("CONTENT PROBLEM - failed to persist: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
                         oops = new IllegalArgumentException("invalid polygon (spoly): " + oops.getMessage(), oops);
+                        ret.handled++;
+                    } else if (str.contains("value out of range: underflow")) {
+                        log.error("UNDIAGNOSED PROBLEM - failed to persist: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
                         ret.handled++;
                     } else {
                         log.error("unexpected exception", oops);

@@ -99,6 +99,7 @@ public class Main {
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
     
     private static final String RETRY_SKIPPED_CONFIG_KEY = CONFIG_PREFIX + ".retrySkipped";
+    private static final String RETRY_ERROR_PATTERN = CONFIG_PREFIX + ".retryErrorPattern";
     private static final String REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".repoService";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
     private static final String MAX_IDLE_CONFIG_KEY = CONFIG_PREFIX + ".maxIdle";
@@ -199,11 +200,14 @@ public class Main {
             }
 
             final boolean retrySkipped;
+            final String errorMessagePattern;
             final String configuredRetrySkipped = props.getFirstPropertyValue(RETRY_SKIPPED_CONFIG_KEY);
             if (configuredRetrySkipped == null) {
                 retrySkipped = false;
+                errorMessagePattern = null;
             } else {
                 retrySkipped = Boolean.parseBoolean(configuredRetrySkipped);
+                errorMessagePattern = props.getFirstPropertyValue(RETRY_ERROR_PATTERN);
             }
             
             final boolean exitWhenComplete;
@@ -225,7 +229,8 @@ public class Main {
             CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, destinationHarvestResource,
                     configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE / 10,
                                                         full, retrySkipped, noChecksum, exitWhenComplete, maxSleep);
-
+            harvester.retryErrorMessagePattern = errorMessagePattern;
+            
             Subject subject = AuthenticationUtil.getAnonSubject();
             File cert = new File(CERTIFICATE_FILE_LOCATION);
             if (cert.exists()) {
