@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2021.                            (c) 2021.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,10 +69,6 @@
 
 package ca.nrc.cadc.caom2.pkg;
 
-import java.security.AccessControlException;
-import org.opencadc.pkg.server.PackageItem;
-import org.opencadc.pkg.server.PackageRunner;
-
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.Artifact;
@@ -87,19 +83,20 @@ import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.uws.ParameterUtil;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.AccessControlContext;
+import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.opencadc.pkg.server.PackageItem;
+import org.opencadc.pkg.server.PackageRunner;
 
 
 public class CaomPackageRunner extends PackageRunner {
@@ -205,7 +202,7 @@ public class CaomPackageRunner extends PackageRunner {
                             log.debug("new PackageItem: " + a.getURI() + " from " + url);
                             log.debug("package entry filename " + artifactName);
 
-                            PackageItem newItem = new PackageItem(url, artifactName);
+                            PackageItem newItem = new PackageItem(artifactName, url);
                             packageItems.add(newItem);
                         }
                     }
