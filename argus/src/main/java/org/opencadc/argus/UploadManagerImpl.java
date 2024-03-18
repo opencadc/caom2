@@ -68,6 +68,7 @@
 package org.opencadc.argus;
 
 import ca.nrc.cadc.tap.BasicUploadManager;
+import ca.nrc.cadc.tap.upload.UploadLimits;
 
 /**
  *
@@ -75,12 +76,13 @@ import ca.nrc.cadc.tap.BasicUploadManager;
  */
 public class UploadManagerImpl extends BasicUploadManager {
 
-    /**
-     * Default maximum number of rows allowed in the UPLOAD VOTable.
-     */
-    public static final int MAX_UPLOAD_ROWS = 100000;
+    private static final UploadLimits UPL;
+
+    static {
+        UPL = new UploadLimits(32 * 1024L * 1024L); // 32 MiB
+    }
 
     public UploadManagerImpl() {
-        super(MAX_UPLOAD_ROWS);
+        super(UPL);
     }
 }
