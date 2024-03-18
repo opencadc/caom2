@@ -7,14 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ca.nrc.cadc.tap.AdqlQuery;
 import ca.nrc.cadc.tap.TapQuery;
+import ca.nrc.cadc.tap.impl.CaomAdqlQuery;
 import ca.nrc.cadc.tap.schema.TapSchema;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.uws.Parameter;
@@ -28,8 +24,7 @@ public class CaomSelectListConverterTest
 {
     private static final Logger log = Logger.getLogger(CaomSelectListConverterTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.tap.caom2", Level.INFO);
     }
 
@@ -37,6 +32,16 @@ public class CaomSelectListConverterTest
     
     public CaomSelectListConverterTest()
     {
+    }
+    
+    static class TestQuery extends CaomAdqlQuery
+    {
+        @Override
+        protected void init()
+        {
+            //super.init();
+            super.navigatorList.add(new CaomSelectListConverter(caomTapSchema));
+        }
     }
 
     @Test
@@ -139,16 +144,6 @@ public class CaomSelectListConverterTest
         finally
         {
             TestUtil.job.getParameterList().clear();
-        }
-    }
-    
-    static class TestQuery extends AdqlQuery
-    {
-        @Override
-        protected void init()
-        {
-            //super.init();
-            super.navigatorList.add(new CaomSelectListConverter(caomTapSchema));
         }
     }
 }

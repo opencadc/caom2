@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,12 +69,12 @@
 
 package ca.nrc.cadc.tap.impl;
 
-import ca.nrc.cadc.tap.AdqlQuery;
 import ca.nrc.cadc.tap.caom2.CaomReadAccessConverter;
 import ca.nrc.cadc.tap.caom2.CaomRegionConverter;
 import ca.nrc.cadc.tap.caom2.CaomSelectListConverter;
 import ca.nrc.cadc.tap.caom2.IsDownloadableConverter;
 import ca.nrc.cadc.tap.parser.BaseExpressionDeParser;
+import ca.nrc.cadc.tap.parser.PgAdqlQuery;
 import ca.nrc.cadc.tap.parser.PgsphereDeParser;
 import ca.nrc.cadc.tap.parser.converter.ColumnNameConverter;
 import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
@@ -94,7 +94,7 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class CaomAdqlQuery extends AdqlQuery
+public class CaomAdqlQuery extends PgAdqlQuery
 {
     private static Logger log = Logger.getLogger(CaomAdqlQuery.class);
     
