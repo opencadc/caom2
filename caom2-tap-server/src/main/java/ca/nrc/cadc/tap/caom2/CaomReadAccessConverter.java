@@ -75,7 +75,7 @@ import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
 import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
 import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
 import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
-import ca.nrc.cadc.tap.parser.operator.postgresql.TextSearchMatch;
+import ca.nrc.cadc.tap.parser.operator.postgresql.PgTextSearchMatch;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -277,7 +277,7 @@ public class CaomReadAccessConverter extends SelectNavigator
                     sb.append("|");
                 }
                 sb.deleteCharAt(sb.length() -1);
-                rtn = new TextSearchMatch(column, sb.toString());
+                rtn = new PgTextSearchMatch(column, sb.toString());
             }
             else
             {

@@ -85,6 +85,7 @@ import org.junit.Test;
 
 import ca.nrc.cadc.tap.AdqlQuery;
 import ca.nrc.cadc.tap.TapQuery;
+import ca.nrc.cadc.tap.impl.CaomAdqlQuery;
 import ca.nrc.cadc.tap.parser.extractor.SelectListExtractor;
 import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
 import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
@@ -109,40 +110,11 @@ public class CentroidFunctionTest
 
     private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
     
-    /**
-     * @throws java.lang.Exception
-     */
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.tap.caom", org.apache.log4j.Level.INFO);
     }
 
-    /**
-     * @throws java.lang.Exception
-     */
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception
-    {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @Before
-    public void setUp() throws Exception
-    {
-    }
-
-    /**
-     * @throws java.lang.Exception
-     */
-    @After
-    public void tearDown() throws Exception
-    {
-    }
-
-    private class TestQuery extends AdqlQuery
+    private class TestQuery extends CaomAdqlQuery
     {
         protected void init()
         {

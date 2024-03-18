@@ -74,6 +74,7 @@ package ca.nrc.cadc.tap.caom2;
 
 import ca.nrc.cadc.tap.AdqlQuery;
 import ca.nrc.cadc.tap.TapQuery;
+import ca.nrc.cadc.tap.impl.CaomAdqlQuery;
 import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
 import ca.nrc.cadc.tap.parser.converter.TableNameReferenceConverter;
 import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
@@ -112,7 +113,7 @@ public class CaomRegionConverterTest {
         Log4jInit.setLevel("ca.nrc.cadc.tap.caom2", Level.INFO);
     }
 
-    private class TestQuery extends AdqlQuery {
+    private class TestQuery extends CaomAdqlQuery {
 
         protected void init() {
             //super.init();
