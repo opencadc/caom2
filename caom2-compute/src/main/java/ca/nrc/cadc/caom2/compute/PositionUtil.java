@@ -99,6 +99,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import jsky.coords.wcscon;
+import ca.nrc.cadc.caom2.types.Shape;
 import org.apache.log4j.Logger;
 
 /**
@@ -126,11 +127,10 @@ public final class PositionUtil {
 
         Position p = new Position();
         if (productType != null) {
-            Polygon poly = computeBounds(artifacts, productType);
-            p.bounds = poly;
+            p.bounds = computeBounds(artifacts, productType);
             p.dimension = computeDimensionsFromRange(artifacts, productType);
             if (p.dimension == null) {
-                p.dimension = computeDimensionsFromWCS(poly, artifacts, productType);
+                p.dimension = computeDimensionsFromWCS(p.bounds, artifacts, productType);
             }
             p.resolution = computeResolution(artifacts, productType);
             p.sampleSize = computeSampleSize(artifacts, productType);
@@ -138,6 +138,48 @@ public final class PositionUtil {
         }
 
         return p;
+    }
+
+    public static Shape generateShape(Set<Artifact> artifacts, ProductType productType)
+            throws NoSuchKeywordException {
+        int num = 0;
+        Chunk chunk = null;
+        for (Artifact a : artifacts) {
+            log.debug("generatePolygons: " + a.getURI());
+            for (Part p : a.getParts()) {
+                log.debug("generatePolygons: " + a.getURI() + " " + p.getName());
+                for (Chunk c : p.getChunks()) {
+                    log.debug("generatePolygons: " + a.getURI() + " " + p.getName() + " " + c.getID());
+                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
+                        log.debug("generatePolygons: " + a.getURI() + " "
+                            + a.getProductType() + " " + p.productType + " " + c.productType);
+                        if (c.position != null) {
+                            num++;
+                            chunk = c;
+                        }
+                    } else {
+                        log.debug("generatePolygons SKIP: " + a.getURI() + " "
+                            + a.getProductType() + " " + p.productType + " " + c.productType);
+                    }
+                }
+            }
+        }
+        if (chunk == null) {
+            // no spatial
+            return null;
+        }
+        if (num > 1) {
+            // multiple, assume mosaic w/ polygons
+            return null;
+        }
+        if (chunk.position.getAxis().bounds != null) {
+            if (chunk.position.getAxis().bounds instanceof CoordCircle2D) {
+                CoordCircle2D cc =  (CoordCircle2D) chunk.position.getAxis().bounds;
+                return new Circle(new Point(cc.getCenter().coord1, cc.getCenter().coord2), cc.getRadius());
+            }
+            // handle CoordPolygon2D in generatePolygons
+        }
+        return null;
     }
 
     public static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
@@ -178,31 +220,35 @@ public final class PositionUtil {
     }
 
     // TODO: change return type to Shape; if we find CoordCircle2D in the SpatialWCS we should return a Circle
-    public static Polygon computeBounds(Set<Artifact> artifacts, ProductType productType)
+    public static Shape computeBounds(Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException {
-        // since we compute the union, just blindly use all the polygons
-        // derived from spatial wcs
-        List<MultiPolygon> polys = generatePolygons(artifacts, productType);
-        if (polys.isEmpty()) {
-            return null;
+        Shape ret = generateShape(artifacts, productType);
+        if (ret == null) {
+            // since we compute the union, just blindly use all the polygons
+            // derived from spatial wcs
+            List<MultiPolygon> polys = generatePolygons(artifacts, productType);
+            if (polys.isEmpty()) {
+                return null;
+            }
+            log.debug("[computeBounds] components: " + polys.size());
+            MultiPolygon mp = MultiPolygon.compose(polys);
+            ret = PolygonUtil.getOuterHull(mp);
         }
-        log.debug("[computeBounds] components: " + polys.size());
-        MultiPolygon mp = MultiPolygon.compose(polys);
-        Polygon poly = PolygonUtil.getOuterHull(mp);
-        log.debug("[computeBounds] done: " + poly);
-        return poly;
+        log.debug("[computeBounds] done: " + ret);
+        return ret;
     }
 
     // this works for mosaic camera data: multiple parts with ~single scale wcs functions
-    static Dimension2D computeDimensionsFromWCS(Polygon poly, Set<Artifact> artifacts, ProductType productType)
+    static Dimension2D computeDimensionsFromWCS(Shape bounds, Set<Artifact> artifacts, ProductType productType)
         throws NoSuchKeywordException {
-        log.debug("[computeDimensionsFromWCS] " + poly + " " + artifacts.size());
-        if (poly == null) {
+        log.debug("[computeDimensionsFromWCS] " + bounds + " " + artifacts.size());
+        if (bounds == null) {
             return null;
         }
 
         // pick the WCS with the largest pixel size
         SpatialWCS sw = null;
+        boolean foundCoordBounds = false;
         double scale = 0.0;
         int num = 0;
         for (Artifact a : artifacts) {
@@ -216,6 +262,7 @@ public final class PositionUtil {
                                 scale = ss;
                                 sw = c.position;
                             }
+                            foundCoordBounds = foundCoordBounds || c.position.getAxis().bounds != null;
                         }
                     }
                 }
@@ -225,11 +272,26 @@ public final class PositionUtil {
             return null;
         }
 
-        if (num == 1) { // single WCS solution
+        if (num == 1) { // single WCS solution, ASSUME CoordBounds2D mask is whole frame
             // deep copy
             long ix = sw.getAxis().function.getDimension().naxis1;
             long iy = sw.getAxis().function.getDimension().naxis2;
             return new Dimension2D(ix, iy);
+        }
+        
+        List<Point> points = null;
+        if (bounds instanceof Polygon) {
+            Polygon poly = (Polygon) bounds;
+            points = poly.getPoints();
+        } else if (bounds instanceof Circle) {
+            Circle circ = (Circle) bounds;
+            MultiPolygon mp = toPolygon(circ);
+            points = new ArrayList<>();
+            for (Vertex v : mp.getVertices()) {
+                if (!SegmentType.CLOSE.equals(v.getType())) {
+                    points.add(new Point(v.cval1, v.cval2));
+                }
+            }
         }
 
         WCSWrapper map = new WCSWrapper(sw, 1, 2);
@@ -241,7 +303,7 @@ public final class PositionUtil {
         double y2 = -1 * y1;
         CoordSys csys = inferCoordSys(sw);
         List<long[]> pixv = new ArrayList<long[]>();
-        for (Point pt : poly.getPoints()) {
+        for (Point pt : points) {
             double[] coords = new double[] {pt.cval1, pt.cval2};
             if (csys.swappedAxes) {
                 double tmp = coords[0];
@@ -491,12 +553,13 @@ public final class PositionUtil {
     static MultiPolygon toPolygon(SpatialWCS wcs, CoordCircle2D cc)
         throws NoSuchKeywordException {
         Circle circ = new Circle(new Point(cc.getCenter().coord1, cc.getCenter().coord2), cc.getRadius());
+        return toPolygon(circ);
+    }
+    
+    static MultiPolygon toPolygon(Circle circ) {
         CartesianTransform trans = CartesianTransform.getTransform(circ);
-        List<Vertex> skyCoords = new ArrayList<Vertex>();
+        List<Vertex> skyCoords = new ArrayList<>();
         
-        //if (Math.abs(cc.getCenter().coord2) + cc.getRadius() > 80.0) { // near a pole
-        //    throw new UnsupportedOperationException("cannot convert CoordCircle2D -> MultiPolygon near the pole (" + cc + ")");
-        //}
         Point tcen = trans.transform(circ.getCenter());
         double x = tcen.cval1;
         double y = tcen.cval2;
