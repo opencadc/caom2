@@ -79,6 +79,7 @@ import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
@@ -99,7 +100,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import jsky.coords.wcscon;
-import ca.nrc.cadc.caom2.types.Shape;
 import org.apache.log4j.Logger;
 
 /**
