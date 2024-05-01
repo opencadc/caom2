@@ -81,21 +81,38 @@ public class ProductType extends VocabularyTerm
         implements CaomEnum<String>, Serializable {
     private static final long serialVersionUID = 2017040200800L;
 
-    private static final URI CAOM = URI
-            .create("http://www.opencadc.org/caom2/ProductType");
+    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
 
-    public static ProductType SCIENCE = new ProductType("science");
-    public static ProductType CALIBRATION = new ProductType("calibration");
+    // IVOA DataLink terms
+    public static ProductType THIS = new ProductType("this");
+
     public static ProductType AUXILIARY = new ProductType("auxiliary");
-    public static ProductType INFO = new ProductType("info");
-    public static ProductType PREVIEW = new ProductType("preview");
-    public static ProductType NOISE = new ProductType("noise");
-    public static ProductType WEIGHT = new ProductType("weight");
-    public static ProductType THUMBNAIL = new ProductType("thumbnail");
     public static ProductType BIAS = new ProductType("bias");
+    public static ProductType CALIBRATION = new ProductType("calibration");
+    public static ProductType CODERIVED = new ProductType("coderived");
+    public static ProductType COUNTERPART = new ProductType("counterpart");
     public static ProductType DARK = new ProductType("dark");
+    public static ProductType ERROR = new ProductType("error");
     public static ProductType FLAT = new ProductType("flat");
-
+    public static ProductType NOISE = new ProductType("noise");
+    public static ProductType PREVIEW = new ProductType("preview");
+    public static ProductType PREVIEW_IMAGE = new ProductType("preview-image");
+    public static ProductType PREVIEW_PLOT = new ProductType("preview-plot");
+    public static ProductType THUMBNAIL = new ProductType("thumbnail");
+    public static ProductType WEIGHT = new ProductType("weight");
+    
+    // DataLink terms explicitly not included
+    // cutout
+    // derivation
+    // progenitor
+    // detached-header
+    // package
+    
+    // CAOM specific terms
+    public static ProductType SCIENCE = new ProductType("science");
+    public static ProductType INFO = new ProductType("info");
+    
+    
     /**
      * @deprecated
      */

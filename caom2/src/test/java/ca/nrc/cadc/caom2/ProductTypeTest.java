@@ -141,8 +141,9 @@ public class ProductTypeTest
     {
         try
         {
-            String s1 = "http://example.com/foo#bar";
-            DataProductType c2 = DataProductType.toValue(s1);
+            // a datalink core extension we have not included yet
+            String s1 = "http://www.example.net/rdf/topic#flibble";
+            ProductType c2 = ProductType.toValue(s1);
             String s2 = c2.getValue();
             log.info(s1 + " == " + s2);
             Assert.assertEquals(s1, s2);
