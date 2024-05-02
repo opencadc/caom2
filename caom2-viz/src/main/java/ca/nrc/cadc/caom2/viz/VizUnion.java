@@ -74,9 +74,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.compute.PositionUtil;
 import ca.nrc.cadc.caom2.compute.Util;
@@ -85,6 +83,7 @@ import ca.nrc.cadc.caom2.types.MultiPolygon;
 import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.types.Polygon;
 import ca.nrc.cadc.caom2.types.SegmentType;
+import ca.nrc.cadc.caom2.types.Shape;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import java.awt.BorderLayout;
@@ -140,7 +139,7 @@ public class VizUnion {
 
     private void doit(Plane plane)
         throws Exception {
-        Polygon bounds = null;
+        Shape bounds = null;
         ProductType ptype = Util.choseProductType(plane.getArtifacts());
         if (plane.position != null && plane.position.bounds != null && !forceRecompute) {
             // use polygon from input file
@@ -163,15 +162,21 @@ public class VizUnion {
             log.info("area: " + bounds.getArea());
         }
             
-        DisplayPane dp = new DisplayPane();
+        if (bounds instanceof Polygon) {
+            Polygon poly = (Polygon) bounds;
+            DisplayPane dp = new DisplayPane();
         
-        dp.setPlane(plane, bounds);
-        JFrame f = new JFrame("CAOM-2.0 VizTest : " + plane.getProductID());
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.getContentPane().add(dp);
-        f.pack();
-        f.setLocation(1000, 200);
-        f.setVisible(true);
+            dp.setPlane(plane, poly);
+            JFrame f = new JFrame("CAOM-2.0 VizTest : " + plane.getProductID());
+            f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            f.getContentPane().add(dp);
+            f.pack();
+            f.setLocation(1000, 200);
+            f.setVisible(true);
+        } else {
+            log.warn("cannot display: " + bounds.getClass().getName());
+        }
+        
     }
 
     static class DisplayPane extends JPanel {
