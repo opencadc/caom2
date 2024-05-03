@@ -1,5 +1,11 @@
 <div>
 Terms from the vocabulary may be used in CAOM instances as values of the 
 caom2:Artifact.productType field. Terms in the base vocabulary are to be
-used without the URI prefix (e.g. science instead of http://www.opencadc.org/caom2/productType#science).
+used without the URI prefix (e.g. science instead of http://www.opencadc.org/caom2/productType#science)
+and (unlike DataLink) without the # symbol.
+<hr/>
+This vocabulary close mirrors the IVOA <a href="https://www.ivoa.net/rdf/datalink/core">DataLink core</a>
+vocabulary. It currently includes the subset of terms that are sensibly "logical file types" and omits
+those that are not used in CAOM (those that are relations with other observations or usually on-the-fly
+process oputputs like cutouts). The plan is to deprecate this vocabulary and use DataLink core directly.
 </div>
