@@ -25,10 +25,12 @@ dependencies {
     providedCompile 'javax.servlet:javax.servlet-api:[3.1.0,)'
     
     compile 'org.opencadc:cadc-util:[1.9,2.0)'
+    compile 'org.opencadc:cadc-datalink:[1.1.2,2.0)'
     compile 'org.opencadc:cadc-datalink-server:[1.1.4,2.0)'
     compile 'org.opencadc:cadc-uws-server:[1.2.18,2.0)'
     compile 'org.opencadc:cadc-permissions-client:[0.3.0,1.0)'
-    compile 'org.opencadc:caom2-compute:[2.4,3.0)'
+    compile 'org.opencadc:caom2-compute:[2.4.8,2.5)'
+    compile 'org.opencadc:caom2-compute:[2.4.11,2.5)'
     compile 'org.opencadc:caom2-tap:[1.8.0,2.0)'
     compile 'org.opencadc:caom2-artifact-resolvers:[1.2.10,2.0)'
     compile 'org.opencadc:cadc-vosi:[1.4.1,2.0)'

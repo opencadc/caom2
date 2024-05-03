@@ -172,19 +172,21 @@ public class ArtifactProcessor {
         DataLink.LinkAuthTerm linkAuthPrediction = DataLink.LinkAuthTerm.OPTIONAL;
         boolean pkgAuthorized = true;
         for (Artifact a : ar.getArtifacts()) {
-            DataLink.Term sem = DataLink.Term.THIS;
-            if (ProductType.PREVIEW.equals(a.getProductType())) {
-                sem = DataLink.Term.PREVIEW;
-                numFiles--; // exclude from #pkg
-            } else if (ProductType.THUMBNAIL.equals(a.getProductType())) {
-                sem = DataLink.Term.THUMBNAIL;
-                numFiles--; // exclude from #pkg
-            } else if (ProductType.CATALOG.equals(a.getProductType())) {
+            DataLink.Term sem = null;
+            // handle known discrepancies between datalink and caom2
+            if (ProductType.CATALOG.equals(a.getProductType())) {
                 sem = DataLink.Term.DERIVATION;
-            } else if (ProductType.AUXILIARY.equals(a.getProductType())
-                    || ProductType.WEIGHT.equals(a.getProductType())
-                    || ProductType.NOISE.equals(a.getProductType())
-                    || ProductType.INFO.equals(a.getProductType())) {
+            }
+            if (ProductType.SCIENCE.equals(a.getProductType()) 
+                    || ProductType.CALIBRATION.equals(a.getProductType())) {
+                sem = DataLink.Term.THIS;
+            }
+            if (sem == null) {
+                String hashed = "#" + a.getProductType().getTerm();
+                // match DataLink vocabulary
+                sem = DataLink.Term.getTerm(hashed);
+            }
+            if (sem == null) {
                 sem = DataLink.Term.AUXILIARY;
             }
 
