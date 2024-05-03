@@ -104,6 +104,8 @@ public class ProductType extends VocabularyTerm
     // DataLink terms explicitly not included
     // cutout
     // derivation
+    // documentation
+    // proc
     // progenitor
     // detached-header
     // package
