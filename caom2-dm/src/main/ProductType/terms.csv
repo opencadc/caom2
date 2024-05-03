@@ -1,6 +1,9 @@
 #predicate,parent,label,"Description"
 
-science,1,science data,"primary data file for observations that contains the science data (extraterrestrial photons)"
+this,1,primary data,"primary data file for observations"
+science,1,science data,"primary data file for observations that contains the science data"
+
+coderived,1,coderived data,"output files produced along with this as additional or alternaticve product"
 
 calibration,1,calibration data,"primary file for observations intended for use in removing instrument signature"
 bias,2,bias frame,"calibration file used to correct for CCD bias"
@@ -8,10 +11,14 @@ dark,2,dark frame,"calibration file used to correct for no exposure counts in a 
 flat,2,flat field,"calibration file used to correct for sensitivity variation across a CCD"
 
 auxiliary,1,related file,"file that could be useful in interpreting the primary file(s)"
-noise,2,noise map,"auxiliary file that provides noise estimates per pixel in the primary file(s)"
-weight,2,weight map,"auxiliary file that provides weights that can be used when analysing the primary file(s)"
+error,2,error map,"resource with array(s) containing error values"
+noise,2,noise map,"file that provides noise estimates per pixel in the primary file(s)"
+weight,2,weight map,"file that provides weights that can be used when analysing the primary file(s)"
 
+documentation,1,human-readable information,"extra information about the primary files (e.g. processing logs)"
 info,1,human-readable information,"extra information about the primary files (e.g. processing logs)"
 
-preview,1,preview image,"a degraded representation of the data useful for display and assessing content"
+preview,1,preview,"a degraded representation of the data useful for display and assessing content"
+preview-image,2,preview image,"a two-dimension image preview"
+preview-plot,2,preview plot,"a preview presented as a plot/graph"
 thumbnail,2,small preview image,"a highly degraded representation of the data suitable for displaying in a list"

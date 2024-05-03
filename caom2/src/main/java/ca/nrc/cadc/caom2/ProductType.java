@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -90,8 +90,8 @@ public class ProductType extends VocabularyTerm
     public static ProductType BIAS = new ProductType("bias");
     public static ProductType CALIBRATION = new ProductType("calibration");
     public static ProductType CODERIVED = new ProductType("coderived");
-    public static ProductType COUNTERPART = new ProductType("counterpart");
     public static ProductType DARK = new ProductType("dark");
+    public static ProductType DOCUMENTATION = new ProductType("documentation");
     public static ProductType ERROR = new ProductType("error");
     public static ProductType FLAT = new ProductType("flat");
     public static ProductType NOISE = new ProductType("noise");
@@ -102,17 +102,19 @@ public class ProductType extends VocabularyTerm
     public static ProductType WEIGHT = new ProductType("weight");
     
     // DataLink terms explicitly not included
+    // counterpart
     // cutout
     // derivation
-    // documentation
-    // proc
-    // progenitor
     // detached-header
     // package
+    // proc
+    // progenitor
     
     // CAOM specific terms
-    public static ProductType SCIENCE = new ProductType("science");
-    public static ProductType INFO = new ProductType("info");
+    public static ProductType SCIENCE = new ProductType("science"); // this
+    
+    @Deprecated
+    public static ProductType INFO = new ProductType("info"); // documentation
     
     
     /**
