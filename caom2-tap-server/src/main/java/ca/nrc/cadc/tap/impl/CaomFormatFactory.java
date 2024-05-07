@@ -105,6 +105,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
             return new PositionBoundsShapeFormat();
         }
+        // default to pgsphere formatters
         return super.getShapeFormat(columnDesc);
     }
 

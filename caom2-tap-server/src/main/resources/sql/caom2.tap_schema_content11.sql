@@ -148,8 +148,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'observable_ucd', 'UCD (Universal Content Descriptor) for the observed/measure quantity', 'caom2:Plane.observable.ucd', NULL, NULL, 'char', '64*', NULL, 0,0,0 , 40),
 ( 'caom2.Plane', 'quality_flag', 'flag describing the data quality (possible values: junk)', 'caom2:Plane.quality.flag', NULL, NULL, 'char', '16*', NULL, 0,0,0 , 41),
 
-( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'char', '*', 'caom2:shape', 0,0,0 , 50),
-( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'double', '*', 'caom2:multipolygon', 0,0,0 , 50),
+( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'char', '*', 'shape', 0,0,0 , 50),
+( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'double', '*', 'multipolygon', 0,0,0 , 50),
 ( 'caom2.Plane', 'position_bounds_size', 'size of the polygon bounds (diameter of minimum spanning circle)', 'caom2:Plane.position.bounds.size', NULL, 'deg', 'double', NULL, NULL, 0,0,0 , 51),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 52),
 ( 'caom2.Plane', 'position_resolutionBounds', 'range of spatial resolution (FWHM) [new in 2.4]', 'caom2:Plane.position.resolutionBounds', NULL, 'arcsec', 'double', '2', 'interval', 0,0,0 , 52),
@@ -159,7 +159,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_timeDependent', 'flag indicating that the position is time-dependent (0=false, 1=true)', 'caom2:Plane.position.timeDependent', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 56),
 
 ( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,1,0 , 61),
-( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '*', 'caom2:multiinterval', 0,0,0 , 61),
+( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '2x*', 'interval', 0,0,0 , 61),
 ( 'caom2.Plane', 'energy_bounds_lower', 'lower bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.lower', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 62),
 ( 'caom2.Plane', 'energy_bounds_upper', 'upper bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.upper', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 63),
 ( 'caom2.Plane', 'energy_bounds_width', 'width of the energy bounds', 'caom2:Plane.energy.bounds.width', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 64),
@@ -179,7 +179,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'energy_restwav', 'rest wavelength of target spectral feature (barycentric)', 'caom2:Plane.energy.restwav', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 75),
 
 ( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 0,1,0 , 80),
-( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '*', 'caom2:multiinterval', 0,0,0 , 81),
+( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '2x*', 'interval', 0,0,0 , 81),
 ( 'caom2.Plane', 'time_bounds_lower', 'lower bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.lower', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 81),
 ( 'caom2.Plane', 'time_bounds_upper', 'upper bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.upper', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 82),
 ( 'caom2.Plane', 'time_bounds_width', 'width of the time bounds', 'caom2:Plane.time.bounds.width', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 83),
@@ -194,7 +194,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Plane', 'custom_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Plane.custom.ctype', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 100),
 ( 'caom2.Plane', 'custom_bounds', 'custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 101),
-( 'caom2.Plane', 'custom_bounds_samples', 'detailed custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds.samples', NULL, NULL, 'double', '*', 'caom2:multiinterval', 0,0,0 , 102),
+( 'caom2.Plane', 'custom_bounds_samples', 'detailed custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds.samples', NULL, NULL, 'double', '2x*', 'interval', 0,0,0 , 102),
 ( 'caom2.Plane', 'custom_bounds_lower', 'lower bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.lower', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 103),
 ( 'caom2.Plane', 'custom_bounds_upper', 'upper bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.upper', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 104),
 ( 'caom2.Plane', 'custom_bounds_width', 'width of the custom bounds [new in 2.4]', 'caom2:Plane.custom.bounds.width', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 105),
