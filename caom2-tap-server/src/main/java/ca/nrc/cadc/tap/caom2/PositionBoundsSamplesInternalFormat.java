@@ -68,11 +68,6 @@
 package ca.nrc.cadc.tap.caom2;
 
 
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.dali.MultiPolygon;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.util.MultiPolygonFormat;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
 import java.sql.ResultSet;
@@ -80,17 +75,16 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 /**
- * Format position_bounds_samples as a xtype="multipolygon".
+ * Format position_bounds_samples as a xtype="caom2:multipolygon".
  * 
  * @author pdowler
  */
-public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
+public class PositionBoundsSamplesInternalFormat extends AbstractResultSetFormat {
     private static final Logger log = Logger.getLogger(PositionBoundsSamplesFormat.class);
 
     private DoubleArrayFormat daf = new DoubleArrayFormat();
-    private MultiPolygonFormat mpf = new MultiPolygonFormat();
      
-    public PositionBoundsSamplesFormat() { 
+    public PositionBoundsSamplesInternalFormat() { 
     }
 
     @Override
@@ -100,25 +94,6 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
 
     @Override
     public String format(Object o) {
-        if (o == null) {
-            return "";
-        }
-        double[] arr = daf.unwrap(o);
-        MultiPolygon mp = new MultiPolygon();
-        // caom2 MP has longitude,latitide,segmentType
-        Polygon poly = new Polygon();
-        for (int i = 0; i < arr.length; i += 3) {
-            double cv1 = arr[i];
-            double cv2 = arr[i + 1];
-            SegmentType st = SegmentType.toValue((int) arr[i + 2]);
-            if (SegmentType.CLOSE.equals(st)) {
-                mp.getPolygons().add(poly);
-                poly = new Polygon();
-            } else {
-                poly.getVertices().add(new Point(cv1, cv2));
-            }
-        }
-        
-        return mpf.format(mp);
+        return daf.format(o);
     }
 }

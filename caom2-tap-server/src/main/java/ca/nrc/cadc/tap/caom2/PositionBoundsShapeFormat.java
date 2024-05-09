@@ -104,19 +104,21 @@ public class PositionBoundsShapeFormat extends AbstractResultSetFormat {
 
     @Override
     public String format(Object o) {
-        if (o == null)
+        if (o == null) {
             return "";
-        
+        }
+
         double[] dd = daf.unwrap(o);
         StringBuilder sb = new StringBuilder();
         
-        if (dd.length == 3)
+        if (dd.length == 3) {
             sb.append("circle ");
-        else if (dd.length >= 6)
+        } else if (dd.length >= 6) {
             sb.append("polygon ");
-        else
+        } else {
             throw new RuntimeException("CONTENT: unexpected position_bounds length: " + dd.length); 
-        
+        }
+
         sb.append(daf.format(dd));
         
         return sb.toString();
