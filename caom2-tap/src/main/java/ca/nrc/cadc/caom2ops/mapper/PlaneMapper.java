@@ -169,7 +169,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                     if (samplesObject != null) {
                         MultiPolygon mp = new MultiPolygon();
                         if (samplesObject instanceof ca.nrc.cadc.dali.MultiPolygon) {
-                            log.warn("found ca.nrc.cadc.dali.MultiPolygon");
+                            log.debug("found ca.nrc.cadc.dali.MultiPolygon");
                             ca.nrc.cadc.dali.MultiPolygon mpoly = (ca.nrc.cadc.dali.MultiPolygon) samplesObject;
                             for (ca.nrc.cadc.dali.Polygon poly : mpoly.getPolygons()) {
                                 SegmentType st = SegmentType.MOVE;
@@ -180,7 +180,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                                 mp.getVertices().add(new Vertex(0, 0, SegmentType.CLOSE));
                             }
                         } else {
-                            log.warn("found double[] aka old style caom2:multipolygon");
+                            log.debug("found double[] aka old style caom2:multipolygon");
                             double[] posBoundsSamples = (double[]) samplesObject;
                             for (int i = 0; i < posBoundsSamples.length; i += 3) {
                                 double cv1 = posBoundsSamples[i];
