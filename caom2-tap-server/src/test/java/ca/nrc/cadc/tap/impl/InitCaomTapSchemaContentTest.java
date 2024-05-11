@@ -68,18 +68,16 @@
 package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.util.Log4jInit;
-
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.List;
+import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import javax.sql.DataSource;
 
 /**
  *
@@ -98,8 +96,8 @@ public class InitCaomTapSchemaContentTest {
     @Test
     public void testParseCreateDDL() {
         try {
-            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(new TestDataSource(), null, schema);
-            for (String fname : InitCaomTapSchemaContent.CREATE_SQL) {
+            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(new TestDataSource(), null, schema, true);
+            for (String fname : InitCaomTapSchemaContent.BASE_EXTRA_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = init.parseDDL(fname, schema);
                 Assert.assertNotNull(statements);
@@ -150,8 +148,8 @@ public class InitCaomTapSchemaContentTest {
     @Test
     public void testParseUpgradeDDL() {
         try {
-            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(new TestDataSource(), null, schema);
-            for (String fname : InitCaomTapSchemaContent.UPGRADE_SQL) {
+            InitCaomTapSchemaContent init = new InitCaomTapSchemaContent(new TestDataSource(), null, schema, true);
+            for (String fname : InitCaomTapSchemaContent.BASE_EXTRA_SQL) {
                 log.info("process file: " + fname);
                 List<String> statements = init.parseDDL(fname, schema);
                 Assert.assertNotNull(statements);

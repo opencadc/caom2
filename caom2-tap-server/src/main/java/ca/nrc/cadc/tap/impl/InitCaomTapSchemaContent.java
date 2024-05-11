@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -87,17 +87,18 @@ public class InitCaomTapSchemaContent extends InitDatabase {
     private static final Logger log = Logger.getLogger(InitCaomTapSchemaContent.class);
 
     public static final String MODEL_NAME = "caom-schema";
-    public static final String MODEL_VERSION = "1.2.12";
+    public static final String MODEL_VERSION = "1.2.13";
 
     // the SQL is tightly coupled to cadc-tap-schema table names (for TAP-1.1)
-    static String[] CREATE_SQL = new String[] {
+    static String[] BASE_SQL = new String[] {
         "caom2.tap_schema_content11.sql",
         "ivoa.tap_schema_content11.sql"
     };
 
     // upgrade is normally the same as create since SQL is idempotent
-    static String[] UPGRADE_SQL = new String[] {
+    static String[] BASE_EXTRA_SQL = new String[] {
         "caom2.tap_schema_content11.sql",
+        "caom2.tap_schema_content11-extra.sql",
         "ivoa.tap_schema_content11.sql"
     };
     
@@ -108,13 +109,18 @@ public class InitCaomTapSchemaContent extends InitDatabase {
      * @param dataSource connection with write permission to tap_schema tables
      * @param database database name (should be null if not needed in SQL)
      * @param schema schema name (usually tap_schema)
+     * @param extras add tap_schema content for extra tables (materialised views)
      */
-    public InitCaomTapSchemaContent(DataSource dataSource, String database, String schema) {
-        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION);
-        for (String s : CREATE_SQL) {
-            createSQL.add(s);
+    public InitCaomTapSchemaContent(DataSource dataSource, String database, String schema, boolean extras) {
+        // use MODELVERSION/extras so changing extras will cause a recreate
+        // eg 1.2.13/false <-> 1.2.13/true
+        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION + "/" + extras);
+        String[] src = BASE_SQL;
+        if (extras) {
+            src = BASE_EXTRA_SQL;
         }
-        for (String s : UPGRADE_SQL) {
+        for (String s : src) {
+            createSQL.add(s);
             upgradeSQL.add(s);
         }
     }
