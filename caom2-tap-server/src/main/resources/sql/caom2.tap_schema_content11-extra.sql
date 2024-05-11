@@ -2,11 +2,11 @@
 
 insert into tap_schema.tables11 (schema_name,table_name,table_type,description,utype,table_index) values
 -- index start at 30
-( 'caom2', 'caom2.EnumField', 'view', 'pre-computed aggregate (group by) materialised view built from enumerated types in CAOM model', NULL , 30),
-( 'caom2', 'caom2.ObsCoreEnumField', 'view', 'pre-computed aggregate (group by) materialised view built from enumerated types in ObsCore-1.1 model', NULL, 31),
-( 'caom2', 'caom2.distinct_proposal_id', 'view', 'pre-computed materialised view of distinct caom2.Observation.proposal_id values', NULL , 32),
-( 'caom2', 'caom2.distinct_proposal_pi', 'view', 'pre-computed materialised view of distinct caom2.Observation.proposal_pi values', NULL , 33),
-( 'caom2', 'caom2.distinct_proposal_title', 'view', 'pre-computed materialised view of distinct caom2.Observation.proposal_title values', NULL , 34)
+( 'caom2', 'caom2.EnumField', 'table', 'pre-computed aggregate (group by) materialised view built from enumerated types in CAOM model', NULL , 30),
+( 'caom2', 'caom2.ObsCoreEnumField', 'table', 'pre-computed aggregate (group by) materialised view built from enumerated types in ObsCore-1.1 model', NULL, 31),
+( 'caom2', 'caom2.distinct_proposal_id', 'table', 'pre-computed materialised view of distinct caom2.Observation.proposal_id values', NULL , 32),
+( 'caom2', 'caom2.distinct_proposal_pi', 'table', 'pre-computed materialised view of distinct caom2.Observation.proposal_pi values', NULL , 33),
+( 'caom2', 'caom2.distinct_proposal_title', 'table', 'pre-computed materialised view of distinct caom2.Observation.proposal_title values', NULL , 34)
 ;
 
 -- EnumField

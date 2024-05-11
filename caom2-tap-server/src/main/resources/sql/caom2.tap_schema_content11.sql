@@ -17,13 +17,11 @@ target_table in (select table_name from tap_schema.tables11 where schema_name = 
 
 -- delete columns from tables in the caom2 schema
 delete from tap_schema.columns11 where table_name in 
-(select table_name from tap_schema.tables11 where schema_name = 'caom2'
-and table_type='table' or table_name='caom2.SIAv1')
+(select table_name from tap_schema.tables11 where schema_name = 'caom2')
 ;
 
 -- delete tables in the caom2 schema
 delete from tap_schema.tables11 where schema_name = 'caom2'
-and table_type='table' or table_name='caom2.SIAv1'
 ;
 
 -- delete the caom2 schema

@@ -71,7 +71,16 @@ using the _TempStorageManager_, the base URL must include "/results" as the last
 (e.g. `https://example.net/argus/results`).
 
 ### argus.properties
-This file may be needed in the future but is not currently used.
+This file is currently optional and configures optional service features.
+```
+# enable materialized views (optional; default: false)
+org.opencadc.argus.enableMaterializedViews = true | false
+```
+
+The _enableMaterializedViews_ key causes `argus` to add descriptions of materialized views to the TAP_SCHEMA
+for use in queries. NOTE: enabling this feature does not currrently create or maintain the views so only enable
+this if you have out-of-band creation working. TODO: implement creation and periodic update of materialized
+views in `argus`.
 
 ### injecting VOTable resources into query results
 Some columns in the CAOM metadata have _ID_ values that are asssigned to the VOTable FIELD in the output.
