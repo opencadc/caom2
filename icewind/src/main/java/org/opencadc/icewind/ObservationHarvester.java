@@ -340,12 +340,15 @@ public class ObservationHarvester extends Harvester {
 
                 String skipMsg = null;
 
+                
                 if (destObservationDAO.getTransactionManager().isOpen()) {
                     throw new RuntimeException("BUG: found open transaction at start of next observation");
                 }
+                long tmp = System.currentTimeMillis();
                 log.debug("starting transaction");
                 destObservationDAO.getTransactionManager().startTransaction();
                 boolean ok = false;
+                long txnStartTime = System.currentTimeMillis() - tmp;
                 log.debug("skipped=" + skipped
                         + " o=" + o
                         + " ow.entity=" + ow.entity
@@ -428,7 +431,7 @@ public class ObservationHarvester extends Harvester {
                             harvestSkipDAO.delete(hs);
                         } else {
                             // defer to the main catch for error handling
-                            throw new HarvestReadException(ow.entity.error);
+                            throw ow.entity.error;
                         }
                     } else if (ow.entity.error != null) {
                         // o == null when harvesting from service: try to make progress on failures
@@ -436,8 +439,9 @@ public class ObservationHarvester extends Harvester {
                             state.curLastModified = ow.entity.observationState.maxLastModified;
                             state.curID = null; // unknown
                         }
-                        if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
-                            ObservationURI uri = new ObservationURI(hs.getSkipID());
+                        //if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
+                        if (ow.entity.error instanceof ResourceNotFoundException) {
+                            ObservationURI uri = ow.entity.observationState.getURI();
                             log.info("delete: " + uri);
                             destObservationDAO.delete(uri);
                             if (hs != null) {
@@ -445,73 +449,74 @@ public class ObservationHarvester extends Harvester {
                                 harvestSkipDAO.delete(hs);
                             }
                         } else {
-                            throw new HarvestReadException(ow.entity.error);
+                            throw ow.entity.error;
                         }
                     }
 
+                    tmp = System.currentTimeMillis();
                     log.debug("committing transaction");
                     destObservationDAO.getTransactionManager().commitTransaction();
                     log.debug("commit: OK");
-
+                    long txnCommitTime = System.currentTimeMillis() - tmp;
+                    log.warn("transaction: start=" + txnStartTime + " commit=" + txnCommitTime);
                     ok = true;
                     ret.ingested++;
-                } catch (Throwable oops) {
+                } catch (IllegalStateException oops) {
+                    if (oops.getMessage().contains("XML failed schema validation")) {
+                        log.error("CONTENT PROBLEM - XML failed schema validation: " + oops.getMessage());
+                        ret.handled++;
+                    } else if (oops.getMessage().contains("failed to read")) {
+                        log.error("CONTENT PROBLEM - " + oops.getMessage(), oops.getCause());
+                        ret.handled++;
+                    } else {
+                        // TODO
+                    }
+                    skipMsg = oops.getMessage(); // message for HarvestSkipURI record
+                } catch (MismatchedChecksumException oops) {
+                    log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
+                    ret.handled++;
+                    skipMsg = oops.getMessage(); // message for HarvestSkipURI record
+                } catch (IllegalArgumentException oops) {
+                    log.error("CONTENT PROBLEM - invalid observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
+                    if (oops.getCause() != null) {
+                        log.error("cause: " + oops.getCause());
+                    }
+                    ret.handled++;
+                    skipMsg = oops.getMessage(); // message for HarvestSkipURI record
+                } catch (TransientException oops) {
+                    log.error("NETWORK PROBLEM - " + oops.getMessage());
+                    ret.handled++;
+                    skipMsg = oops.getMessage(); // message for HarvestSkipURI record
+                } catch (NullPointerException ex) {
+                    log.error("BUG", ex);
+                    ret.abort = true;
+                    skipMsg = "BUG: " + ex.getClass().getName(); // message for HarvestSkipURI record
+                } catch (BadSqlGrammarException ex) {
+                    log.error("BUG", ex);
+                    BadSqlGrammarException bad = (BadSqlGrammarException) ex;
+                    SQLException sex1 = bad.getSQLException();
+                    if (sex1 != null) {
+                        log.error("CAUSE", sex1);
+                        SQLException sex2 = sex1.getNextException();
+                        log.error("NEXT CAUSE", sex2);
+                    }
+                    ret.abort = true;
+                    skipMsg = ex.getMessage(); // message for HarvestSkipURI record
+                } catch (DataAccessResourceFailureException ex) {
+                    log.error("FATAL PROBLEM - probably out of space in database", ex);
+                    ret.abort = true;
+                    skipMsg = "FATAL: " + ex.getMessage(); // message for HarvestSkipURI record
+                } catch (Exception oops) {
+                    // need to inspect the error messages
                     log.debug("exception during harvest", oops);
                     skipMsg = null;
                     String str = oops.toString();
-                    if (oops instanceof HarvestReadException) {
-                        // unwrap HarvestReadException from above
-                        oops = oops.getCause();
-                        // unwrap intervening RuntimeException(s)
-                        while (oops.getCause() != null && oops instanceof RuntimeException) {
-                            oops = oops.getCause();
-                        }
-                        log.error("HARVEST PROBLEM - failed to read observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
-                        ret.handled++;
-                    } else if (oops instanceof IllegalStateException) {
-                        if (oops.getMessage().contains("XML failed schema validation")) {
-                            log.error("CONTENT PROBLEM - XML failed schema validation: " + oops.getMessage());
-                            ret.handled++;
-                        } else if (oops.getMessage().contains("failed to read")) {
-                            log.error("CONTENT PROBLEM - " + oops.getMessage(), oops.getCause());
-                            ret.handled++;
-                        }
-                    } else if (oops instanceof IllegalArgumentException) {
-                        log.error("CONTENT PROBLEM - invalid observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
-                        if (oops.getCause() != null) {
-                            log.error("cause: " + oops.getCause());
-                        }
-                        ret.handled++;
-                    } else if (oops instanceof MismatchedChecksumException) {
-                        log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
-                        ret.handled++;
-                    } else if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
+                    
+                    if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
                         log.error("CONTENT PROBLEM - duplicate observation: " + ow.entity.observationState.getURI());
                         ret.handled++;
-                    } else if (oops instanceof TransientException) {
-                        log.error("CONTENT PROBLEM - " + oops.getMessage());
-                        ret.handled++;
-                    } else if (oops instanceof Error) {
-                        log.error("FATAL - probably installation or environment", oops);
-                        ret.abort = true;
-                    } else if (oops instanceof NullPointerException) {
-                        log.error("BUG", oops);
-                        ret.abort = true;
-                    } else if (oops instanceof BadSqlGrammarException) {
-                        log.error("BUG", oops);
-                        BadSqlGrammarException bad = (BadSqlGrammarException) oops;
-                        SQLException sex1 = bad.getSQLException();
-                        if (sex1 != null) {
-                            log.error("CAUSE", sex1);
-                            SQLException sex2 = sex1.getNextException();
-                            log.error("NEXT CAUSE", sex2);
-                        }
-                        ret.abort = true;
-                    } else if (oops instanceof DataAccessResourceFailureException) {
-                        log.error("SEVERE PROBLEM - probably out of space in database", oops);
-                        ret.abort = true;
                     } else if (str.contains("spherepoly_from_array")) {
-                        log.error("CONTENT PROBLEM - failed to persist: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
+                        log.error("PGSPHERE PROBLEM - failed to persist: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
                         oops = new IllegalArgumentException("invalid polygon (spoly): " + oops.getMessage(), oops);
                         ret.handled++;
                     } else if (str.contains("value out of range: underflow")) {
@@ -522,11 +527,18 @@ public class ObservationHarvester extends Harvester {
                     }
                     // message for HarvestSkipURI record
                     skipMsg = oops.getMessage();
+                } catch (Error err) {
+                    log.error("FATAL - probably installation or environment", err);
+                    ret.abort = true;
                 } finally {
                     if (!ok) {
-                        destObservationDAO.getTransactionManager().rollbackTransaction();
-                        log.debug("rollback: OK");
-                        timeTransaction += System.currentTimeMillis() - t;
+                        try {
+                            destObservationDAO.getTransactionManager().rollbackTransaction();
+                            log.debug("rollback: OK");
+                            timeTransaction += System.currentTimeMillis() - t;
+                        } catch (Exception tex) {
+                            log.error("failed to rollback obs transaction", tex);
+                        }
 
                         try {
                             log.debug("starting HarvestSkipURI transaction");
@@ -574,8 +586,12 @@ public class ObservationHarvester extends Harvester {
                             log.debug("commit HarvestSkipURI: OK");
                         } catch (Throwable oops) {
                             log.warn("failed to insert HarvestSkipURI", oops);
-                            destObservationDAO.getTransactionManager().rollbackTransaction();
-                            log.debug("rollback HarvestSkipURI: OK");
+                            try {
+                                destObservationDAO.getTransactionManager().rollbackTransaction();
+                                log.debug("rollback HarvestSkipURI: OK");
+                            } catch (Exception tex) {
+                                log.error("failed to rollback skip transaction", tex);
+                            }
                             ret.abort = true;
                         }
                         ret.failed++;
@@ -601,13 +617,6 @@ public class ObservationHarvester extends Harvester {
             log.debug("time to run transactions: " + timeTransaction + "ms");
         }
         return ret;
-    }
-
-    private static class HarvestReadException extends Exception {
-
-        public HarvestReadException(Exception cause) {
-            super(cause);
-        }
     }
 
     private void validateChecksum(Observation o) throws MismatchedChecksumException {
@@ -727,15 +736,21 @@ public class ObservationHarvester extends Harvester {
         sb.append("[");
         int numA = 0;
         int numP = 0;
+        int numC = 0;
         for (Plane p : o.getPlanes()) {
             numA += p.getArtifacts().size();
             for (Artifact a : p.getArtifacts()) {
                 numP += a.getParts().size();
+                for (Part pp : a.getParts()) {
+                    numC += pp.getChunks().size();
+                }
             }
         }
+        sb.append("1,"); // obs
         sb.append(o.getPlanes().size()).append(",");
         sb.append(numA).append(",");
-        sb.append(numP).append("]");
+        sb.append(numP).append(",");
+        sb.append(numC).append("]");
         return sb.toString();
     }
 

@@ -322,7 +322,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
                                 + " modified date " + format(cur.getMaxLastModified()));
                         if (deleted.after(lastUpdate)) {
                             log.info("delete: " + de.getClass().getSimpleName() + " " + de.getURI() + " "
-                                    + de.getID());
+                                    + de.getID() + " " + format(de.lastModified));
                             obsDAO.delete(de.getID());
                             ret.deleted++;
                         } else {

@@ -33,6 +33,12 @@ org.opencadc.icewind.collection={collection name}
 # Maximum sleep between runs (seconds)
 org.opencadc.icewind.maxIdle={integer}
 
+# optional: number of observations to read into memory per batch (default: 100)
+org.opencadc.icewind.batchSize={num}
+
+# optional: number of threads used to read observations from repoService (default: 1 + batchSize/10)
+org.opencadc.icewind.numThreads={num}
+
 # Destination caom2 database settings
 org.opencadc.icewind.caom.schema={CAOM schema name}
 org.opencadc.icewind.caom.username={username for CAOM admin}
