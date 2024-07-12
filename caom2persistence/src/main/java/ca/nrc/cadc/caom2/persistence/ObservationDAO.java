@@ -454,7 +454,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             //       and if they do not get(uri) they can get a duplicate observation error
             //       if they violate unique keys
             //String skelSQL = gen.getSelectSQL(obs.getID(), 1, true);
-            //log.warn("PUT: " + skelSQL);
+            //log.debug("PUT: " + skelSQL);
             
             long tt = System.currentTimeMillis();
             final ObservationSkeleton dirtyRead = getSkelImpl(obs.getID(), jdbc, false); // obs only
@@ -544,7 +544,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             final long txnCommitTime = System.currentTimeMillis() - tt;
             txnOpen = false;
             
-            log.warn("transaction start=" + txnStartTime
+            log.debug("transaction start=" + txnStartTime
                     + " dirtyRead=" + dirtyReadTime
                     + " lock=" + lockTime
                     + " select=" + selectSkelTime
