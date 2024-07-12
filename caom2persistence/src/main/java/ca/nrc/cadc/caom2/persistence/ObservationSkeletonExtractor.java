@@ -74,6 +74,7 @@ import ca.nrc.cadc.caom2.persistence.skel.ChunkSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.ObservationSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PartSkeleton;
 import ca.nrc.cadc.caom2.persistence.skel.PlaneSkeleton;
+import ca.nrc.cadc.caom2.persistence.skel.Skeleton;
 import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
 import java.sql.ResultSet;
@@ -84,6 +85,7 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -96,6 +98,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
     // lastModified,id,... for obs,plane,artifact,part,chunk
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
+    // extract from join
     @Override
     public Object extractData(ResultSet rs) throws SQLException, DataAccessException {
         ObservationSkeleton ret = null;
@@ -132,6 +135,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
             }
             if (ncol > col) {
                 // plane
+                col++; // skip FK
                 d = Util.getDate(rs, col++, utcCalendar);
                 md = Util.getDate(rs, col++, utcCalendar);
                 cs = Util.getURI(rs, col++);
@@ -150,6 +154,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                     }
                     if (ncol > col) {
                         // artifact
+                        col++; // skip FK
                         d = Util.getDate(rs, col++, utcCalendar);
                         md = Util.getDate(rs, col++, utcCalendar);
                         cs = Util.getURI(rs, col++);
@@ -168,6 +173,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                             }
                             if (ncol > col) {
                                 // part
+                                col++; // skip FK
                                 d = Util.getDate(rs, col++, utcCalendar);
                                 md = Util.getDate(rs, col++, utcCalendar);
                                 cs = Util.getURI(rs, col++);
@@ -186,6 +192,7 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
                                     }
                                     if (ncol > col) {
                                         // chunk
+                                        col++; // skip FK
                                         d = Util.getDate(rs, col++, utcCalendar);
                                         md = Util.getDate(rs, col++, utcCalendar);
                                         cs = Util.getURI(rs, col++);
@@ -213,4 +220,56 @@ public class ObservationSkeletonExtractor implements ResultSetExtractor {
         return ret;
     }
 
+    public void extract(Skeleton ret, ResultSet rs, int col) throws SQLException {
+        ret.lastModified = Util.getDate(rs, col++, utcCalendar);
+        ret.maxLastModified = Util.getDate(rs, col++, utcCalendar);
+        ret.metaChecksum = Util.getURI(rs, col++);
+        ret.accMetaChecksum = Util.getURI(rs, col++);
+        ret.id = Util.getUUID(rs, col++);
+    }
+    
+    public final RowMapper<ObservationSkeleton> observationMapper = new RowMapper<ObservationSkeleton>() {
+        @Override
+        public ObservationSkeleton mapRow(ResultSet rs, int i) throws SQLException {
+            ObservationSkeleton ret = new ObservationSkeleton();
+            extract(ret, rs, 1);
+            return ret;
+        }
+    };
+
+    public final RowMapper<PlaneSkeleton> planeMapper = new RowMapper<PlaneSkeleton>() {
+        @Override
+        public PlaneSkeleton mapRow(ResultSet rs, int i) throws SQLException {
+            PlaneSkeleton ret = new PlaneSkeleton();
+            extract(ret, rs, 2); // skip FK
+            return ret;
+        }
+    };
+
+    public final RowMapper<ArtifactSkeleton> artifactMapper = new RowMapper<ArtifactSkeleton>() {
+        @Override
+        public ArtifactSkeleton mapRow(ResultSet rs, int i) throws SQLException {
+            ArtifactSkeleton ret = new ArtifactSkeleton();
+            extract(ret, rs, 2); // skip FK
+            return ret;
+        }
+    };
+
+    public final RowMapper<PartSkeleton> partMapper = new RowMapper<PartSkeleton>() {
+        @Override
+        public PartSkeleton mapRow(ResultSet rs, int i) throws SQLException {
+            PartSkeleton ret = new PartSkeleton();
+            extract(ret, rs, 2); // skip FK
+            return ret;
+        }
+    };
+
+    public final RowMapper<ChunkSkeleton> chunkMapper = new RowMapper<ChunkSkeleton>() {
+        @Override
+        public ChunkSkeleton mapRow(ResultSet rs, int i) throws SQLException {
+            ChunkSkeleton ret = new ChunkSkeleton();
+            extract(ret, rs, 2); // skip FK
+            return ret;
+        }
+    };
 }

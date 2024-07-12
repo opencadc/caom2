@@ -571,11 +571,12 @@ public class SQLGenerator {
         };
         columnMap.put(DeletedObservation.class, deletedObservationCols);
         
+        // FK column first, PK last (except observation
         columnMap.put(ObservationSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "obsID"});
-        columnMap.put(PlaneSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "planeID"});
-        columnMap.put(ArtifactSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "artifactID"});
-        columnMap.put(PartSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "partID"});
-        columnMap.put(ChunkSkeleton.class, new String[]{"lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "chunkID"});
+        columnMap.put(PlaneSkeleton.class, new String[]{"obsID", "lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "planeID"});
+        columnMap.put(ArtifactSkeleton.class, new String[]{"planeID", "lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "artifactID"});
+        columnMap.put(PartSkeleton.class, new String[]{"artifactID", "lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "partID"});
+        columnMap.put(ChunkSkeleton.class, new String[]{"partID", "lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "chunkID"});
 
         columnMap.put(ObservationState.class, new String[]{"collection", "observationID", "maxLastModified", "accMetaChecksum", "obsID"});
     }
@@ -751,6 +752,11 @@ public class SQLGenerator {
     }
 
     public String getSelectSQL(Class clz, UUID id) {
+        return getSelectSQL(clz, id, true);
+    }
+    
+    public String getSelectSQL(Class clz, UUID id, boolean primaryKey) {
+    
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
         String[] cols = columnMap.get(clz);
@@ -763,7 +769,11 @@ public class SQLGenerator {
         sb.append(" FROM ");
         sb.append(getTable(clz));
         sb.append(" WHERE ");
-        sb.append(getPrimaryKeyColumn(clz));
+        if (primaryKey) {
+            sb.append(getPrimaryKeyColumn(clz));
+        } else {
+            sb.append(getForeignKeyColumn(clz));
+        }
         sb.append(" = ");
         sb.append(literal(id));
         return sb.toString();
@@ -824,7 +834,8 @@ public class SQLGenerator {
 
     public String getForeignKeyColumn(Class c) {
         if (Observation.class.isAssignableFrom(c)
-                || DeletedEntity.class.isAssignableFrom(c)) {
+                || DeletedEntity.class.isAssignableFrom(c)
+                || ObservationSkeleton.class.isAssignableFrom(c)) {
             throw new IllegalArgumentException(c.getSimpleName() + " does not have a foreign key");
         }
         String[] cols = columnMap.get(c);
@@ -2977,7 +2988,7 @@ public class SQLGenerator {
             return columnMap.get(Observation.class).length;
         }
 
-        public Object mapRow(ResultSet rs, int row)
+        public Observation mapRow(ResultSet rs, int row)
                 throws SQLException {
             return mapRow(rs, row, 1);
         }
@@ -3170,7 +3181,7 @@ public class SQLGenerator {
             return columnMap.get(Plane.class).length;
         }
         
-        public Object mapRow(ResultSet rs, int row)
+        public Plane mapRow(ResultSet rs, int row)
                 throws SQLException {
             return mapRow(rs, row, 1);
         }
@@ -3445,7 +3456,7 @@ public class SQLGenerator {
             return columnMap.get(Artifact.class).length;
         }
         
-        public Object mapRow(ResultSet rs, int row)
+        public Artifact mapRow(ResultSet rs, int row)
                 throws SQLException {
             return mapRow(rs, row, 1);
         }
@@ -3539,7 +3550,7 @@ public class SQLGenerator {
             return columnMap.get(Part.class).length;
         }
 
-        public Object mapRow(ResultSet rs, int row)
+        public Part mapRow(ResultSet rs, int row)
                 throws SQLException {
             return mapRow(rs, row, 1);
         }
@@ -3610,7 +3621,7 @@ public class SQLGenerator {
             return columnMap.get(Chunk.class).length;
         }
 
-        public Object mapRow(ResultSet rs, int row)
+        public Chunk mapRow(ResultSet rs, int row)
                 throws SQLException {
             return mapRow(rs, row, 1);
         }
