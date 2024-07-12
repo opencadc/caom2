@@ -458,7 +458,7 @@ public class ObservationHarvester extends Harvester {
                     destObservationDAO.getTransactionManager().commitTransaction();
                     log.debug("commit: OK");
                     long txnCommitTime = System.currentTimeMillis() - tmp;
-                    log.warn("transaction: start=" + txnStartTime + " commit=" + txnCommitTime);
+                    log.debug("transaction: start=" + txnStartTime + " commit=" + txnCommitTime);
                     ok = true;
                     ret.ingested++;
                 } catch (IllegalStateException oops) {
