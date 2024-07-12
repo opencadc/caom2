@@ -103,6 +103,8 @@ public class Main {
     private static final String REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".repoService";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
     private static final String MAX_IDLE_CONFIG_KEY = CONFIG_PREFIX + ".maxIdle";
+    private static final String BATCH_SIZE_CONFIG_KEY = CONFIG_PREFIX + ".batchSize";
+    private static final String NUM_THREADS_CONFIG_KEY = CONFIG_PREFIX + ".numThreads";
     private static final String DB_URL_CONFIG_KEY = CONFIG_PREFIX + ".caom.url";
     private static final String DB_SCHEMA_CONFIG_KEY = CONFIG_PREFIX + ".caom.schema";
     private static final String DB_USERNAME_CONFIG_KEY = CONFIG_PREFIX + ".caom.username";
@@ -124,6 +126,7 @@ public class Main {
     public static void main(final String[] args) {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
         Log4jInit.setLevel("org.opencadc.caom2", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.icewind", Level.INFO);
 
         try {
             final PropertiesReader propertiesReader = new PropertiesReader(CONFIG_FILE_NAME);
@@ -222,12 +225,23 @@ public class Main {
 
             final String configuredMaxSleep = props.getFirstPropertyValue(MAX_IDLE_CONFIG_KEY);
             final long maxSleep = Long.parseLong(configuredMaxSleep);
+            
+            String configBatchSize = props.getFirstPropertyValue(BATCH_SIZE_CONFIG_KEY);
+            int batchSize = DEFAULT_BATCH_SIZE;
+            if (configBatchSize != null) {
+                batchSize = Integer.parseInt(configBatchSize);
+            }
+            String configNumThreads = props.getFirstPropertyValue(BATCH_SIZE_CONFIG_KEY);
+            int numThreads = 1 + batchSize / 10;
+            if (configNumThreads != null) {
+                numThreads = Integer.parseInt(configNumThreads);
+            }
 
             // full=false: incremental harvest
             final boolean full = false;
             final boolean noChecksum = false;
             CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, destinationHarvestResource,
-                    configuredCollections, basePublisherID, DEFAULT_BATCH_SIZE, DEFAULT_BATCH_SIZE / 10,
+                    configuredCollections, basePublisherID, batchSize, numThreads,
                                                         full, retrySkipped, noChecksum, exitWhenComplete, maxSleep);
             harvester.retryErrorMessagePattern = errorMessagePattern;
             

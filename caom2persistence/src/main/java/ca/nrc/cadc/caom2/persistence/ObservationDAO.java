@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -89,7 +89,6 @@ import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.PreconditionFailedException;
-import ca.nrc.cadc.net.TransientException;
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -454,25 +453,37 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             // NOTE: this is by ID which means to update the caller must get(uri) then put(o)
             //       and if they do not get(uri) they can get a duplicate observation error
             //       if they violate unique keys
-            String sql = gen.getSelectSQL(obs.getID(), SQLGenerator.MAX_DEPTH, true);
-            log.debug("PUT: " + sql);
+            //String skelSQL = gen.getSelectSQL(obs.getID(), 1, true);
+            //log.debug("PUT: " + skelSQL);
             
-            final ObservationSkeleton dirtyRead = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
-
+            long tt = System.currentTimeMillis();
+            final ObservationSkeleton dirtyRead = getSkelImpl(obs.getID(), jdbc, false); // obs only
+            final long dirtyReadTime = System.currentTimeMillis() - tt;
+            
             log.debug("starting transaction");
+            tt = System.currentTimeMillis();
             getTransactionManager().startTransaction();
             txnOpen = true;
-
+            final long txnStartTime = System.currentTimeMillis() - tt;
+            
             // obtain row lock on observation update
             ObservationSkeleton cur = null;
+            long lockTime = 0L;
+            long selectSkelTime = 0L;
             if (dirtyRead != null) {
+                
                 String lock = gen.getUpdateLockSQL(obs.getID());
                 log.debug("LOCK SQL: " + lock);
+                tt = System.currentTimeMillis();
                 jdbc.update(lock);
+                lockTime = System.currentTimeMillis() - tt;
                 
                 // req-acquire current state after obtaining lock
-                cur = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
-                
+                tt = System.currentTimeMillis();
+                //skelSQL = gen.getSelectSQL(obs.getID(), SQLGenerator.MAX_DEPTH, true);
+                cur = getSkelImpl(obs.getID(), jdbc, true);
+                selectSkelTime = System.currentTimeMillis() - tt;
+            
                 // check conditional update
                 if (expectedMetaChecksum != null) {
                     if (cur == null) {
@@ -490,6 +501,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             updateEntity(obs, cur, now);
 
             // delete obsolete children
+            tt = System.currentTimeMillis();
             List<Pair<Plane>> pairs = new ArrayList<Pair<Plane>>();
             if (cur != null) {
                 // delete the skeletons that are not in obs.getPlanes()
@@ -510,47 +522,127 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                     pairs.add(new Pair<Plane>(null, p));
                 }
             }
-
+            final long deletePlanesTime = System.currentTimeMillis() - tt;
+            
+            tt = System.currentTimeMillis();
             super.put(cur, obs, null, jdbc);
-
+            final long putObservationTime = System.currentTimeMillis() - tt;
+            
             // insert/update children
+            tt = System.currentTimeMillis();
             LinkedList<CaomEntity> parents = new LinkedList<CaomEntity>();
             parents.push(obs);
             for (Pair<Plane> p : pairs) {
                 planeDAO.put(p.cur, p.val, parents, jdbc);
             }
-
+            final long putPlanesTime = System.currentTimeMillis() - tt;
+            
             log.debug("committing transaction");
+            tt = System.currentTimeMillis();
             getTransactionManager().commitTransaction();
             log.debug("commit: OK");
+            final long txnCommitTime = System.currentTimeMillis() - tt;
             txnOpen = false;
+            
+            log.debug("transaction start=" + txnStartTime
+                    + " dirtyRead=" + dirtyReadTime
+                    + " lock=" + lockTime
+                    + " select=" + selectSkelTime
+                    + " del-planes=" + deletePlanesTime
+                    + " put-obs=" + putObservationTime
+                    + " put-planes=" + putPlanesTime
+                    + " commit=" + txnCommitTime);
         } catch (DataIntegrityViolationException e) {
             log.debug("failed to insert " + obs + ": ", e);
-            getTransactionManager().rollbackTransaction();
-            log.debug("rollback: OK");
+            try {
+                getTransactionManager().rollbackTransaction();
+                log.debug("rollback: OK");
+            } catch (Exception tex) {
+                log.error("failed to rollback", tex);
+            }
             txnOpen = false;
             throw e;
         } catch (PreconditionFailedException ex) {
             log.debug("failed to update " + obs + ": ", ex);
-            getTransactionManager().rollbackTransaction();
-            log.debug("rollback: OK");
+            try {
+                getTransactionManager().rollbackTransaction();
+                log.debug("rollback: OK");
+            } catch (Exception tex) {
+                log.error("failed to rollback", tex);
+            }
             txnOpen = false;
             throw ex;
         } catch (Exception e) {
             log.error("failed to insert " + obs + ": ", e);
-            getTransactionManager().rollbackTransaction();
-            log.debug("rollback: OK");
+            try {
+                getTransactionManager().rollbackTransaction();
+                log.debug("rollback: OK");
+            } catch (Exception tex) {
+                log.error("failed to rollback", tex);
+            }
             txnOpen = false;
             throw e;
         } finally {
             if (txnOpen) {
                 log.error("BUG - open transaction in finally");
-                getTransactionManager().rollbackTransaction();
-                log.error("rollback: OK");
+                try {
+                    getTransactionManager().rollbackTransaction();
+                    log.debug("rollback: OK");
+                } catch (Exception tex) {
+                    log.error("BADNESS: failed to rollback in finally", tex);
+                }
             }
             long dt = System.currentTimeMillis() - t;
             log.debug("PUT: " + obs.getURI() + " " + dt + "ms");
         }
+    }
+
+    private ObservationSkeleton getSkelImpl(UUID id, JdbcTemplate jdbc, boolean complete) {
+        return getSkelNav(id, jdbc, complete);
+    }
+
+    private ObservationSkeleton getSkelJoin(UUID id, JdbcTemplate jdbc) {
+        String skelSQL = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
+        log.debug("getSkel: " + skelSQL);
+        ObservationSkeleton ret = (ObservationSkeleton) jdbc.query(skelSQL, new ObservationSkeletonExtractor());
+        return ret;
+    }
+    
+    private ObservationSkeleton getSkelNav(UUID id, JdbcTemplate jdbc, boolean complete) {
+        ObservationSkeletonExtractor ose = new ObservationSkeletonExtractor();
+        String skelSQL = gen.getSelectSQL(ObservationSkeleton.class, id, true); // by PK
+        log.debug("getSkel: " + skelSQL);
+        List<ObservationSkeleton> skels = jdbc.query(skelSQL, ose.observationMapper);
+        if (skels == null || skels.isEmpty()) {
+            return null;
+        }
+        ObservationSkeleton ret = skels.get(0);
+        if (!complete) {
+            return ret;
+        }
+        String planeSkelSQL = gen.getSelectSQL(PlaneSkeleton.class, id, false); // by FK
+        log.debug("getSkel: " + planeSkelSQL);
+        List<PlaneSkeleton> planes = jdbc.query(planeSkelSQL, ose.planeMapper);
+        for (PlaneSkeleton ps : planes) {
+            ret.planes.add(ps);
+            String artifactSkelSQL = gen.getSelectSQL(ArtifactSkeleton.class, ps.id, false); // by FK
+            log.debug("getSkel: " + artifactSkelSQL);
+            List<ArtifactSkeleton> artifacts = jdbc.query(artifactSkelSQL, ose.artifactMapper);
+            for (ArtifactSkeleton as : artifacts) {
+                ps.artifacts.add(as);
+                String partSkelSQL = gen.getSelectSQL(PartSkeleton.class, as.id, false); // by FK
+                log.debug("getSkel: " + partSkelSQL);
+                List<PartSkeleton> parts = jdbc.query(partSkelSQL, ose.partMapper);
+                for (PartSkeleton pas : parts) {
+                    as.parts.add(pas);
+                    String chunkSkelSQL = gen.getSelectSQL(ChunkSkeleton.class, pas.id, false); // by FK
+                    log.debug("getSkel: " + chunkSkelSQL);
+                    List<ChunkSkeleton> chunks = jdbc.query(chunkSkelSQL, ose.chunkMapper);
+                    pas.chunks.addAll(chunks);
+                }
+            }
+        }
+        return ret;
     }
 
     /**
@@ -592,7 +684,12 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
             }
             log.debug("DELETE: " + sql);
-            final ObservationSkeleton dirtyRead = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+            ObservationSkeleton dirtyRead;
+            if (id != null) {
+                dirtyRead = getSkelImpl(id, jdbc, false); // obs only
+            } else {
+                dirtyRead = (ObservationSkeleton) jdbc.query(sql, new ObservationSkeletonExtractor());
+            }
 
             log.debug("starting transaction");
             getTransactionManager().startTransaction();
@@ -606,7 +703,11 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 jdbc.update(lock);
                 
                 // req-acquire current state after obtaining lock
-                skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
+                if (id != null) {
+                    skel = getSkelImpl(id, jdbc, true);
+                } else {
+                    skel = (ObservationSkeleton) jdbc.query(sql, gen.getSkeletonExtractor(ObservationSkeleton.class));
+                }
             }
             
             if (skel != null) {
