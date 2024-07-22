@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -83,16 +83,14 @@ import java.util.TreeSet;
  * @author pdowler
  */
 public class Plane extends CaomEntity implements Comparable<Plane> {
-    // immutable state
-    private final String productID;
+    // immutable
+    private final URI uri;
+    
+    // mutable
+    private final Set<Artifact> artifacts = new TreeSet<>();
+    private final TreeSet<URI> metaReadGroups = new TreeSet<>();
+    private final TreeSet<URI> dataReadGroups = new TreeSet<>();
 
-    // mutable contents
-    private final Set<Artifact> artifacts = new TreeSet<Artifact>();
-    private final TreeSet<URI> metaReadGroups = new TreeSet<URI>();
-    private final TreeSet<URI> dataReadGroups = new TreeSet<URI>();
-
-    // mutable state
-    public URI creatorID;
     public Date metaRelease;
     public Date dataRelease;
     public DataProductType dataProductType;
@@ -106,20 +104,22 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
     public Time time;
     public Polarization polarization;
     public CustomAxis custom;
+    
+    // local state
+    public transient URI publisherID;
 
-    public Plane(String productID) {
-        CaomValidator.assertValidPathComponent(getClass(), "productID",
-                productID);
-        this.productID = productID;
+    public Plane(URI uri) {
+        CaomValidator.assertNotNull(getClass(), "uri", uri);
+        this.uri = uri;
     }
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + productID + "]";
+        return getClass().getSimpleName() + "[" + uri + "]";
     }
 
-    public String getProductID() {
-        return productID;
+    public URI getURI() {
+        return uri;
     }
 
     public Set<Artifact> getArtifacts() {
@@ -151,11 +151,11 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
 
     @Override
     public int hashCode() {
-        return productID.hashCode();
+        return uri.hashCode();
     }
 
     @Override
     public int compareTo(Plane p) {
-        return this.productID.compareTo(p.productID);
+        return this.uri.compareTo(p.uri);
     }
 }

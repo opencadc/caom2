@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,19 +70,17 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
 import java.net.URI;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
- *
+ * Simple one-step provenance.
+ * 
  * @author pdowler
  */
-public class Provenance implements Serializable {
-    private static final long serialVersionUID = 201202081100L;
-
+public class Provenance {
     // immutable state
     private String name;
 
@@ -95,8 +93,8 @@ public class Provenance implements Serializable {
     public Date lastExecuted;
 
     // mutable contents
-    private final Set<String> keywords = new TreeSet<String>();
-    private final Set<PlaneURI> inputs = new TreeSet<PlaneURI>();
+    private final Set<String> keywords = new TreeSet<>();
+    private final Set<URI> inputs = new TreeSet<>();
 
     private Provenance() {
     }
@@ -115,7 +113,7 @@ public class Provenance implements Serializable {
         return name;
     }
 
-    public Set<PlaneURI> getInputs() {
+    public Set<URI> getInputs() {
         return inputs;
     }
 

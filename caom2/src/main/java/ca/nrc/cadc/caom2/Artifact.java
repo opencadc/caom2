@@ -87,8 +87,8 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     private final URI uri;
 
     // mutable contents
-    private final Set<Part> parts = new TreeSet<Part>();
-    private final Set<URI> contentReadGroups = new TreeSet<URI>();
+    private final Set<Part> parts = new TreeSet<>();
+    private final Set<URI> contentReadGroups = new TreeSet<>();
     private ProductType productType;
     private ReleaseType releaseType;
 

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,43 +69,30 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
+import java.net.URI;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
  * A CompositeObservation is created by collecting data from multiple
- * SimpleObservations together.
+ * observations together.
  * 
  * @author pdowler
  */
 public class DerivedObservation extends Observation {
-    private static final long serialVersionUID = 201110261400L;
-
     // mutable contents
-    private final Set<ObservationURI> members = new TreeSet<ObservationURI>();
+    private final Set<URI> members = new TreeSet<>();
 
-    /**
-     * @param collection
-     * @param observationID
-     * @param algorithm
-     */
+    public DerivedObservation(String collection, URI uri, Algorithm algorithm) {
+        super(collection, uri, algorithm);
+    }
+
+    @Deprecated
     public DerivedObservation(String collection, String observationID, Algorithm algorithm) {
-        super(collection, observationID, algorithm);
+        this(collection, URI.create("caom:" + collection + "/" + observationID), algorithm);
     }
 
-    public Set<ObservationURI> getMembers() {
+    public Set<URI> getMembers() {
         return members;
-    }
-
-    @Override
-    public void setAlgorithm(Algorithm a) {
-        CaomValidator.assertNotNull(SimpleObservation.class, "algorithm", a);
-        if (SimpleObservation.ALGORITHM.getName().equals(a.getName())) {
-            throw new IllegalArgumentException(
-                    "cannot set DerivedObservation.algorithm to " + a
-                            + "(reserved for SimpleObservation)");
-        }
-        super.setAlgorithm(a);
     }
 }

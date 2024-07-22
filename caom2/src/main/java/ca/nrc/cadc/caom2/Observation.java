@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -82,14 +82,14 @@ import java.util.TreeSet;
  * @author pdowler
  */
 public abstract class Observation extends CaomEntity implements Comparable<Observation> {
-    private static final long serialVersionUID = 201604081100L;
-
-    // immutable state
+    // immutable
     private final String collection;
-    private final String observationID;
-
-    // mutable state
+    private final URI uri; 
+    
+    // mutable
     private Algorithm algorithm;
+    private final SortedSet<Plane> planes = new TreeSet<>();
+    private final SortedSet<URI> metaReadGroups = new TreeSet<>();
 
     public Integer sequenceNumber;
     public ObservationIntentType intent;
@@ -103,39 +103,29 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
     public Environment environment;
     public Date metaRelease;
 
-    // mutable contents
-    private final SortedSet<Plane> planes = new TreeSet<Plane>();
-    private final SortedSet<URI> metaReadGroups = new TreeSet<URI>();
+    
 
-    protected Observation(String collection, String observationID,
-            Algorithm algorithm) {
-        super();
-        CaomValidator.assertValidPathComponent(getClass(), "collection",
-                collection);
-        CaomValidator.assertValidPathComponent(getClass(), "observationID",
-                observationID);
+    protected Observation(String collection, URI uri, Algorithm algorithm) {
+        CaomValidator.assertNotNull(getClass(), "collection", collection);
+        CaomValidator.assertNotNull(getClass(), "uri", uri);
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
+        CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
         this.collection = collection;
-        this.observationID = observationID;
+        this.uri = uri;
         this.algorithm = algorithm;
     }
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + collection + "/"
-                + observationID + "]";
+        return getClass().getSimpleName() + "[" + uri + "]";
     }
 
     public String getCollection() {
         return collection;
     }
 
-    public String getObservationID() {
-        return observationID;
-    }
-
-    public ObservationURI getURI() {
-        return new ObservationURI(collection, observationID);
+    public URI getURI() {
+        return uri;
     }
 
     public void setAlgorithm(Algorithm algorithm) {

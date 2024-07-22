@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,29 +69,31 @@
 
 package ca.nrc.cadc.caom2;
 
+import java.net.URI;
+
 /**
  * A SimpleObservation is the result of observing with a telescope.
  * 
  * @author pdowler
  */
 public class SimpleObservation extends Observation {
-    private static final long serialVersionUID = 201704131000L;
+    public static final Algorithm EXPOSURE = new Algorithm("exposure");
+    public static final Algorithm SIMULATION = new Algorithm("simulation");
 
-    // Can be used as a default unless an algorithm is
-    // explicitly assigned.
-    public static final Algorithm ALGORITHM = new Algorithm("exposure");
+    @Deprecated
+    public static final Algorithm ALGORITHM = EXPOSURE;
 
-    /**
-     * @param collection
-     * @param observationID
-     */
+    public SimpleObservation(String collection, URI uri, Algorithm algorithm) {
+        super(collection, uri, algorithm);
+    }
+    
+    @Deprecated
     public SimpleObservation(String collection, String observationID) {
-        super(collection, observationID, ALGORITHM);
+        this(collection, observationID, EXPOSURE);
     }
 
-    public SimpleObservation(String collection, String observationID,
-            Algorithm algorithm) {
-        super(collection, observationID, algorithm);
+    @Deprecated
+    public SimpleObservation(String collection, String observationID, Algorithm algorithm) {
+        this(collection, URI.create("caom:" + collection + "/" + observationID), algorithm);
     }
-
 }
