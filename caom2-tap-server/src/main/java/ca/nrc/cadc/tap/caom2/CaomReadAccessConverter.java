@@ -139,8 +139,6 @@ public class CaomReadAccessConverter extends SelectNavigator
         AssetTable at = new AssetTable("planeID", "metaRelease", "metaReadAccessGroups");
         at.isView = true;
         ASSET_TABLES.put("caom2.ObsCore".toLowerCase(), at); // observation join plane
-        ASSET_TABLES.put("caom2.ObsFile".toLowerCase(), at); // artifact
-        ASSET_TABLES.put("caom2.ObsPart".toLowerCase(), at); // part join chunk
         ASSET_TABLES.put("caom2.SIAv1".toLowerCase(), at);   // observation join plane join artifact
     }
 

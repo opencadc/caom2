@@ -80,6 +80,8 @@ public class Constants {
     private static final Logger log = Logger.getLogger(Constants.class);
 
     public static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/argus");
+    //public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/argus");
+    //public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/sc2tap");
     
     public static final String PEM_FILE = "argus-auth.pem";
     public static final String UNPRIV_PEM_FILE = "argus-noauth.pem";
