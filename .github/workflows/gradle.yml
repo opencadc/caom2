@@ -23,7 +23,7 @@ jobs:
     - name: build and test caom2-tap-server
       run: cd caom2-tap-server && ../gradlew clean build javadoc install
     
-    - name: build and test caom2-daralink-server
+    - name: build and test caom2-datalink-server
       run: cd caom2-datalink-server && ../gradlew clean build javadoc install
     
     - name: build and test caom2-meta-server
