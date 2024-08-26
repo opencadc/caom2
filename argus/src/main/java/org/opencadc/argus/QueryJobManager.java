@@ -89,7 +89,7 @@ public class QueryJobManager extends SimpleJobManager {
     public QueryJobManager() {
         super();
         // persist UWS jobs to PostgreSQL.
-        JobPersistence jobPersist = new PostgresJobPersistence(AuthenticationUtil.getIdentityManager());
+        JobPersistence jobPersist = new PostgresJobPersistence();
 
         // max threads: 6 == number of simultaneously running async queries (per instance)
         // plus sync queries, plus VOSI-tables queries
