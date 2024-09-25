@@ -72,9 +72,11 @@ package ca.nrc.cadc.caom2.util;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.types.Polygon;
+import ca.nrc.cadc.dali.InvalidPolygonException;
+import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.util.HexUtil;
 import java.net.URI;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -89,9 +91,10 @@ public final class CaomValidator {
      * Perform all validation of the content of an observation.
      * 
      * @param obs
-     * @throws IllegalArgumentException 
+     * @throws IllegalArgumentException
+     * @throws InvalidPolygonException
      */
-    public static void validate(Observation obs) {
+    public static void validate(Observation obs) throws InvalidPolygonException {
         validateKeywords(obs);
         validatePlanes(obs);
         validateChecksumURIs(obs);
@@ -125,6 +128,22 @@ public final class CaomValidator {
         assertNotNull(caller, name, test);
         if (test.isEmpty()) {
             throw new IllegalArgumentException(caller.getSimpleName() + ": zero-length string value in " + name);
+        }
+    }
+
+    /**
+     * Utility method so constructors can validate arguments.
+     * 
+     * @param caller
+     * @param name
+     * @param test
+     * @throws IllegalArgumentException 
+     */
+    public static void assertNotEmpty(Class caller, String name, Collection test)
+            throws IllegalArgumentException {
+        assertNotNull(caller, name, test);
+        if (test.isEmpty()) {
+            throw new IllegalArgumentException(caller.getSimpleName() + ": empty collection in " + name);
         }
     }
 
@@ -241,20 +260,15 @@ public final class CaomValidator {
         }
     }
 
-    private static void validatePlanes(Observation obs) {
+    private static void validatePlanes(Observation obs) throws InvalidPolygonException {
         for (Plane p : obs.getPlanes()) {
             if (p.position != null) {
-                if (p.position.bounds != null && p.position.bounds instanceof Polygon) {
-                    Polygon poly = (Polygon) p.position.bounds;
+                if (p.position.getBounds() instanceof Polygon) {
+                    Polygon poly = (Polygon) p.position.getBounds();
                     poly.validate();
                 }
             }
-            if (p.energy != null && p.energy.bounds != null) {
-                p.energy.bounds.validate();
-            }
-            if (p.time != null && p.time.bounds != null) {
-                p.time.bounds.validate();
-            }
+            // TODO??
         }
     }
     

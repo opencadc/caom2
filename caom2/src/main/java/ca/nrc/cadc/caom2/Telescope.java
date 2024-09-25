@@ -88,7 +88,8 @@ public class Telescope implements Serializable {
     public Double geoLocationX;
     public Double geoLocationY;
     public Double geoLocationZ;
-
+    public VocabularyTerm trackingMode;
+    
     // mutable contents
     private final Set<String> keywords = new TreeSet<String>();
 

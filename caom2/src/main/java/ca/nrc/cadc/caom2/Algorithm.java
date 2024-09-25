@@ -93,7 +93,21 @@ public class Algorithm implements Serializable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Algorithm) {
+            Algorithm rhs = (Algorithm) obj;
+            return name.equals(rhs.name);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return (Algorithm.class.getName() + "." + name).hashCode();
+    }
+
+    @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + name + "]";
+        return Algorithm.class.getSimpleName() + "[" + name + "]";
     }
 }

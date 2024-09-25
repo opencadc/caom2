@@ -65,11 +65,11 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.SampledInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.List;
 import java.util.Set;
@@ -83,159 +83,124 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class EnergyBandTest 
-{
+public class EnergyBandTest {
+
     private static final Logger log = Logger.getLogger(EnergyBandTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
+    public void testTemplate() {
+        try {
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testRoundtrip()
-    {
-        try
-        {
+    public void testRoundtrip() {
+        try {
             int min = Integer.MAX_VALUE;
             int max = Integer.MIN_VALUE;
-            for (EnergyBand c : EnergyBand.values())
-            {
+            for (EnergyBand c : EnergyBand.values()) {
                 log.debug("testing: " + c);
                 String s = c.getValue();
                 EnergyBand c2 = EnergyBand.toValue(s);
                 Assert.assertEquals(c, c2);
             }
-            
-            try 
-            {
+
+            try {
                 EnergyBand c = EnergyBand.toValue("NoSuchEnergyBand");
                 Assert.fail("expected IllegalArgumentException, got: " + c);
-            } 
-            catch(IllegalArgumentException expected) 
-            {
+            } catch (IllegalArgumentException expected) {
                 log.debug("caught expected exception: " + expected);
             }
-            
-            
-        }
-        catch(Exception unexpected)
-        {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testChecksum()
-    {
-        try
-        {
+    public void testChecksum() {
+        try {
             // correctness is a 100% duplicate of the enum code itself, but
             // we can test uniqueness
             Set<Integer> values = new TreeSet<Integer>();
-            for (EnergyBand c : EnergyBand.values())
-            {
+            for (EnergyBand c : EnergyBand.values()) {
                 int i = c.checksum();
                 boolean added = values.add(i);
                 Assert.assertTrue("added " + i, added);
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testFromNullInterval()
-    {
-        try
-        {
-            SampledInterval i = null;
+    public void testFromNullInterval() {
+        try {
+            Interval<Double> i = null;
             List<EnergyBand> e = EnergyBand.getEnergyBand(i);
             Assert.assertNotNull(e);
             Assert.assertTrue(e.isEmpty());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testZeroWavelength()
-    {
-        try
-        {
-            SampledInterval i = new SampledInterval(0.0, Double.MIN_VALUE);
+    public void testZeroWavelength() {
+        try {
+            Interval<Double> i = new Interval<Double>(0.0, Double.MIN_VALUE);
             List<EnergyBand> e = EnergyBand.getEnergyBand(i);
             Assert.assertNotNull(e);
             Assert.assertTrue(e.isEmpty());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testFromNoOverlap()
-    {
-        try
-        {
-            SampledInterval i = new SampledInterval(-20.0, -10.0);
+    public void testFromNoOverlap() {
+        try {
+            Interval<Double> i = new Interval<Double>(-20.0, -10.0);
             List<EnergyBand> e = EnergyBand.getEnergyBand(i);
             Assert.assertNotNull(e);
             Assert.assertTrue(e.isEmpty());
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testFromPartialOverlapInterval()
-    {
-        try
-        {
-            SampledInterval inter;
+    public void testFromPartialOverlapInterval() {
+        try {
+            Interval<Double> inter;
             List<EnergyBand> e;
-            
-            inter = new SampledInterval(200e-9, 900e-9);
+
+            inter = new Interval<Double>(200e-9, 900e-9);
             e = EnergyBand.getEnergyBand(inter);
             Assert.assertNotNull(e);
             Assert.assertTrue(e.contains(EnergyBand.OPTICAL));  // 6/7 optical
             Assert.assertTrue(e.contains(EnergyBand.UV));       // 1/7 shorter wavelength
-            
-            inter = new SampledInterval(400e-9, 1100e-9); 
+
+            inter = new Interval<Double>(400e-9, 1100e-9);
             e = EnergyBand.getEnergyBand(inter);
             Assert.assertNotNull(e);
             Assert.assertTrue(e.contains(EnergyBand.OPTICAL));  // 6/7 optical
             Assert.assertTrue(e.contains(EnergyBand.INFRARED)); // 1/7 longer wavelength
-            
-        }
-        catch(Exception unexpected)
-        {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

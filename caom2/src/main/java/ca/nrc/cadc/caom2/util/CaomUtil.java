@@ -71,8 +71,6 @@ package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.EnergyBand;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -285,80 +283,6 @@ public class CaomUtil implements Serializable {
         }
     }
 
-    public static String encodeObservationURIs(Set<ObservationURI> set) {
-        if (set.isEmpty()) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        Iterator<ObservationURI> i = set.iterator();
-        while (i.hasNext()) {
-            sb.append(i.next().getURI().toASCIIString());
-            if (i.hasNext()) {
-                sb.append(STRING_LIST_SEPARATOR);
-            }
-        }
-        return sb.toString();
-    }
-
-    public static void decodeObservationURIs(String val,
-            Set<ObservationURI> out) {
-        if (val == null) {
-            return;
-        }
-        val = val.trim();
-        if (val.length() == 0) {
-            return;
-        }
-        String[] ss = val.split(STRING_LIST_SEPARATOR);
-        for (String s : ss) {
-            if (s.length() > 0) {
-                try {
-                    URI uri = new URI(s);
-                    ObservationURI puri = new ObservationURI(uri);
-                    out.add(puri);
-                } catch (URISyntaxException ex) {
-                    throw new RuntimeException("failed to decode URI: " + s,
-                            ex);
-                }
-            }
-        }
-    }
-
-    public static String encodePlaneURIs(Set<PlaneURI> set) {
-        if (set.isEmpty()) {
-            return null;
-        }
-        StringBuilder sb = new StringBuilder();
-        Iterator<PlaneURI> i = set.iterator();
-        while (i.hasNext()) {
-            sb.append(i.next().getURI().toASCIIString());
-            if (i.hasNext()) {
-                sb.append(STRING_LIST_SEPARATOR);
-            }
-        }
-        return sb.toString();
-    }
-
-    public static void decodePlaneURIs(String val, Set<PlaneURI> out) {
-        if (val == null) {
-            return;
-        }
-        val = val.trim();
-        if (val.length() == 0) {
-            return;
-        }
-        String[] ss = val.split(STRING_LIST_SEPARATOR);
-        for (String s : ss) {
-            try {
-                URI uri = new URI(s);
-                PlaneURI puri = new PlaneURI(uri);
-                out.add(puri);
-            } catch (URISyntaxException ex) {
-                throw new RuntimeException("failed to decode URI: " + s, ex);
-            }
-        }
-    }
-    
     public static String encodeURIs(Set<URI> set) {
         if (set.isEmpty()) {
             return null;

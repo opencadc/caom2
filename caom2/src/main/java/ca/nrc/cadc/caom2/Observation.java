@@ -103,8 +103,6 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
     public Environment environment;
     public Date metaRelease;
 
-    
-
     protected Observation(String collection, URI uri, Algorithm algorithm) {
         CaomValidator.assertNotNull(getClass(), "collection", collection);
         CaomValidator.assertNotNull(getClass(), "uri", uri);

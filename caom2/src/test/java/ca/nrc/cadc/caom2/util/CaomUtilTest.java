@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,10 +74,8 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.DerivedObservation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.ReleaseType;
@@ -152,7 +150,7 @@ public class CaomUtilTest
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
-            ce = new Plane("baz");
+            ce = new Plane(new URI("caom:FOO/bar/baz"));
             CaomUtil.assignID(ce, id);
             Assert.assertEquals(id, ce.getID());
             
@@ -194,7 +192,7 @@ public class CaomUtilTest
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");
             Assert.assertEquals(expected, ce.getMaxLastModified());
             
-            ce = new Plane("baz");
+            ce = new Plane(new URI("caom:FOO/bar/baz"));
             CaomUtil.assignLastModified(ce, expected, "lastModified");
             Assert.assertEquals(expected, ce.getLastModified());
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");
@@ -217,73 +215,6 @@ public class CaomUtilTest
             Assert.assertEquals(expected, ce.getLastModified());
             CaomUtil.assignLastModified(ce, expected, "maxLastModified");
             Assert.assertEquals(expected, ce.getMaxLastModified());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testObservationURI()
-    {
-        try
-        {
-            Set<ObservationURI> uris = new TreeSet<ObservationURI>();
-            String actual = CaomUtil.encodeObservationURIs(uris);
-            Assert.assertNull(actual);
-            Set<ObservationURI> uris2 = new TreeSet<ObservationURI>();
-            CaomUtil.decodeObservationURIs(actual, uris2);
-            Assert.assertTrue(uris2.isEmpty());
-            
-            ObservationURI u1 = new ObservationURI("FOO", "bar1");
-            ObservationURI u2 = new ObservationURI("FOO", "bar2");
-            ObservationURI u3 = new ObservationURI("FOO", "bar3");
-            
-            uris2.clear();
-            uris.add(u1);
-            uris.add(u2);
-            uris.add(u3);
-            actual = CaomUtil.encodeObservationURIs(uris);
-            Assert.assertNotNull(actual);
-            CaomUtil.decodeObservationURIs(actual, uris2);
-            Assert.assertEquals(3, uris2.size());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testPlaneURI()
-    {
-        try
-        {
-            Set<PlaneURI> uris = new TreeSet<PlaneURI>();
-            String actual = CaomUtil.encodePlaneURIs(uris);
-            Assert.assertNull(actual);
-            Set<PlaneURI> uris2 = new TreeSet<PlaneURI>();
-            CaomUtil.decodePlaneURIs(actual, uris2);
-            Assert.assertTrue(uris2.isEmpty());
-            
-            ObservationURI ouri = new ObservationURI("FOO", "bar");
-            uris.add(new PlaneURI(ouri, "foo1"));
-            uris.add(new PlaneURI(ouri, "foo2"));
-            uris.add(new PlaneURI(ouri, "foo3"));
-            for (PlaneURI u : uris)
-                log.debug("orig: " + u);
-            actual = CaomUtil.encodePlaneURIs(uris);
-            log.debug("encoded: " + actual);
-            Assert.assertNotNull(actual);
-            CaomUtil.decodePlaneURIs(actual, uris2);
-            for (PlaneURI u : uris2)
-                log.debug("decoded: " + u);
-            Assert.assertEquals(3, uris2.size());
-            Assert.assertTrue( uris.containsAll(uris2));
-            Assert.assertTrue( uris2.containsAll(uris));
         }
         catch(Exception unexpected)
         {

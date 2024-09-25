@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,10 +69,11 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SampledInterval;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
+import ca.nrc.cadc.dali.Interval;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -82,39 +83,42 @@ import java.util.TreeSet;
  * @author pdowler
  */
 public class Energy implements Serializable {
-    // mutable content
-    private Set<EnergyBand> energyBands = new TreeSet<>(); // sorted enum
     
-    public SampledInterval bounds;
+    private final Interval<Double> bounds;
+    private final List<Interval<Double>> samples = new ArrayList<>();
+    private final Set<EnergyBand> energyBands = new TreeSet<>(); // sorted enum
+    
     public Long dimension;
     public Double resolvingPower;
-    public Interval resolvingPowerBounds;
+    public Interval<Double> resolvingPowerBounds;
+    public Double resolution;
+    public Interval<Double> resolutionBounds;
     public Double sampleSize;
     public String bandpassName;
     public EnergyTransition transition;
     public Double restwav;
+    public VocabularyTerm calibration;
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Energy[");
-        sb.append(bounds);
-        sb.append(",d=").append(dimension);
-        sb.append(",s=").append(sampleSize);
-        sb.append(",r=").append(resolvingPower);
-        sb.append(",rb=").append(resolvingPowerBounds);
-        sb.append(",b=").append(bandpassName);
-        sb.append(",e=").append(energyBands);
-        sb.append(",t=").append(transition);
-        sb.append(",w=").append(restwav);
-        sb.append("]");
-        return sb.toString();
+    public Energy(Interval<Double> bounds, List<Interval<Double>> samples) {
+        CaomValidator.assertNotNull(getClass(), "bounds", samples);
+        CaomValidator.assertNotEmpty(getClass(), "samples", samples);
+        this.bounds = bounds;
+        this.samples.addAll(samples);
+    }
+
+    public Interval<Double> getBounds() {
+        return bounds;
+    }
+
+    public List<Interval<Double>> getSamples() {
+        return samples;
     }
 
     public Set<EnergyBand> getEnergyBands() {
         return energyBands;
     }
     
+    @Deprecated
     public Double getFreqWidth() {
         if (bounds == null) {
             return null;
@@ -124,6 +128,7 @@ public class Energy implements Serializable {
                 bounds.getUpper(), "m");
     }
 
+    @Deprecated
     public Double getFreqSampleSize() {
         if (sampleSize == null || bounds == null) {
             return null;
@@ -133,5 +138,15 @@ public class Energy implements Serializable {
         double w = 0.5 * (bounds.getUpper() + bounds.getLower());
         double dw = 0.5 * sampleSize;
         return new EnergyConverter().toDeltaHz(w - dw, w + dw, "m");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Energy[");
+        sb.append(bounds);
+        sb.append(",d=").append(dimension);
+        sb.append("]");
+        return sb.toString();
     }
 }

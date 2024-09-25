@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,111 +62,57 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.types;
+package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import ca.nrc.cadc.dali.Interval;
 
 /**
  *
  * @author pdowler
  */
-public class SampledInterval implements Serializable {
-    private static final long serialVersionUID = 201708241230L;
-
-    private double lower;
-    private double upper;
-    private List<Interval> samples = new ArrayList<Interval>();
-
-    public static final String[] CTOR_UTYPES = { "lower", "upper" };
-
-    private SampledInterval() {
-    }
-
-    public SampledInterval(double lower, double upper) {
-        this.lower = lower;
-        this.upper = upper;
-    }
-
-    public SampledInterval(double lower, double upper, List<Interval> samples) {
-        this.lower = lower;
-        this.upper = upper;
-        CaomValidator.assertNotNull(SampledInterval.class, "samples", samples);
-        this.samples.addAll(samples);
-        validate();
-    }
-
-    public final void validate() {
-        if (upper < lower) {
+public class Visibility {
+    private final Interval<Double> distance;
+    private final Double distributionEccentricity;
+    private final Double distributionFill;
+    
+    public Visibility(Interval<Double> distance, double distributionEccentricity, double distributionFill) {
+        CaomValidator.assertNotNull(getClass(), "distance", distance);
+        CaomValidator.assertPositive(getClass(), "distributionEccentricity", distributionEccentricity);
+        if (distributionFill <= 0.0 || distributionFill > 1.0) {
             throw new IllegalArgumentException(
-                    "invalid interval (upper < lower): " + lower + "," + upper);
+                Visibility.class.getSimpleName() + ": distributionFill must be in (0.0,1.0]");
         }
-        CaomValidator.assertNotNull(SampledInterval.class, "samples", samples);
-        if (samples.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "invalid interval (samples cannot be empty)");
-        }
+        this.distance = distance;
+        this.distributionEccentricity = distributionEccentricity;
+        this.distributionFill = distributionFill;
+    }
 
-        Interval prev = null;
-        for (Interval si : samples) {
-            if (si.getLower() < lower) {
-                throw new IllegalArgumentException(
-                        "invalid interval: sample extends below lower bound: "
-                                + si + " vs " + lower);
-            }
-            if (si.getUpper() > upper) {
-                throw new IllegalArgumentException(
-                        "invalid interval: sample extends above upper bound: "
-                                + si + " vs " + upper);
-            }
+    public Interval<Double> getDistance() {
+        return distance;
+    }
 
-            if (prev != null) {
-                if (si.getLower() <= prev.getUpper()) {
-                    throw new IllegalArgumentException(
-                            "invalid interval: sample overlaps previous sample: "
-                                    + si + " vs " + prev);
-                }
-            }
-            prev = si;
-        }
+    public Double getDistributionEccentricity() {
+        return distributionEccentricity;
+    }
+
+    public Double getDistributionFill() {
+        return distributionFill;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Interval[").append(lower).append(",").append(upper);
-        if (!samples.isEmpty()) {
-            sb.append(" samples[ ");
-            for (Interval si : samples) {
-                sb.append("[").append(si.lower).append(",").append(si.upper)
-                        .append("] ");
-            }
-            sb.append("]");
-        }
+        sb.append(this.getClass().getSimpleName()).append("[");
+        sb.append(distance);
+        sb.append(",e=").append(distributionEccentricity);
+        sb.append(",f=").append(distributionFill);
         sb.append("]");
         return sb.toString();
     }
-
-    public double getLower() {
-        return lower;
-    }
-
-    public double getUpper() {
-        return upper;
-    }
-
-    public List<Interval> getSamples() {
-        return samples;
-    }
-
-    public double getWidth() {
-        return (upper - lower);
-    }
+    
+    
 }

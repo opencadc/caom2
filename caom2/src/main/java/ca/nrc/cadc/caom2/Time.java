@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,21 +69,42 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SampledInterval;
+import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.dali.Interval;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author pdowler
  */
 public class Time implements Serializable {
-    public SampledInterval bounds;
+    private final Interval<Double> bounds;
+    private final List<Interval<Double>> samples = new ArrayList<>();
+
     public Long dimension;
     public Double resolution;
-    public Interval resolutionBounds;
+    public Interval<Double> resolutionBounds;
     public Double sampleSize;
     public Double exposure;
+    public Interval<Double> exposureBounds;
+    public VocabularyTerm calibration;
+
+    public Time(Interval<Double> bounds, List<Interval<Double>> samples) {
+        CaomValidator.assertNotNull(getClass(), "bounds", samples);
+        CaomValidator.assertNotEmpty(getClass(), "samples", samples);
+        this.bounds = bounds;
+        this.samples.addAll(samples);
+    }
+
+    public Interval<Double> getBounds() {
+        return bounds;
+    }
+
+    public List<Interval<Double>> getSamples() {
+        return samples;
+    }
 
     @Override
     public String toString() {
@@ -91,10 +112,6 @@ public class Time implements Serializable {
         sb.append("Time[");
         sb.append(bounds);
         sb.append(",d=").append(dimension);
-        sb.append(",r=").append(resolution);
-        sb.append(",rb=").append(resolutionBounds);
-        sb.append(",s=").append(sampleSize);
-        sb.append(",e=").append(exposure);
         sb.append("]");
         return sb.toString();
     }

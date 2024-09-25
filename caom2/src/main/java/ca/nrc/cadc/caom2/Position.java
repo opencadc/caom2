@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,9 +69,11 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.Shape;
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Shape;
 import java.io.Serializable;
 
 /**
@@ -79,23 +81,38 @@ import java.io.Serializable;
  * @author pdowler
  */
 public class Position implements Serializable {
-    public Shape bounds;
-    public Dimension2D dimension;
-    public Double resolution;
-    public Interval resolutionBounds;
-    public Double sampleSize;
-    public Boolean timeDependent;
+    private final Shape bounds;
+    private final MultiShape samples;
     
+    public Shape minBounds;
+    public Dimension2D dimension;
+    public Interval<Double> maxAngularScale;
+    public Double resolution;
+    public Interval<Double> resolutionBounds;
+    public Double sampleSize;
+    public VocabularyTerm calibration;
+    
+    public Position(Shape bounds, MultiShape samples) {
+        CaomValidator.assertNotNull(getClass(), "bounds", samples);
+        CaomValidator.assertNotNull(getClass(), "samples", samples);
+        this.bounds = bounds;
+        this.samples = samples;
+    }
+
+    public Shape getBounds() {
+        return bounds;
+    }
+
+    public MultiShape getSamples() {
+        return samples;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
         sb.append(bounds);
         sb.append(",d=").append(dimension);
-        sb.append(",r=").append(resolution);
-        sb.append(",rb=").append(resolutionBounds);
-        sb.append(",s=").append(sampleSize);
-        sb.append(",t=").append(timeDependent);
         sb.append("]");
         return sb.toString();
     }

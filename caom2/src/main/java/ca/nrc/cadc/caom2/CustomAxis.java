@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,8 +67,10 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.dali.Interval;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Custom data axis description.
@@ -77,17 +79,30 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
  */
 public class CustomAxis {
     private final String ctype;
-    
-    public SampledInterval bounds;
+    private final Interval<Double> bounds;
+    private final List<Interval<Double>> samples = new ArrayList<>();
+
     public Long dimension;
     
-    public CustomAxis(String ctype) {
+    public CustomAxis(String ctype, Interval<Double> bounds, List<Interval<Double>> samples) {
         CaomValidator.assertNotNull(CustomAxis.class, "ctype", ctype);
+        CaomValidator.assertNotNull(getClass(), "bounds", samples);
+        CaomValidator.assertNotEmpty(getClass(), "samples", samples);
         this.ctype = ctype;
+        this.bounds = bounds;
+        this.samples.addAll(samples);
     }
 
     public String getCtype() {
         return ctype;
+    }
+
+    public Interval<Double> getBounds() {
+        return bounds;
+    }
+
+    public List<Interval<Double>> getSamples() {
+        return samples;
     }
 
     @Override

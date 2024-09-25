@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -75,14 +75,16 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
  * @author pdowler
  */
 public class Observable {
-    private String ucd;
+    private final VocabularyTerm ucd;
+    
+    public VocabularyTerm calibration;
     
     /**
      * Constructor. 
      * 
      * @param ucd UCD value
      */
-    public Observable(String ucd) { 
+    public Observable(VocabularyTerm ucd) { 
         CaomValidator.assertNotNull(Observable.class, "ucd", ucd);
         this.ucd = ucd;
     }
@@ -93,15 +95,10 @@ public class Observable {
      * 
      * @return the UCD
      */
-    public String getUCD() {
+    public VocabularyTerm getUCD() {
         return ucd;
     }
 
-    public void setUCD(String ucd) {
-        CaomValidator.assertNotNull(Observable.class, "ucd", ucd);
-        this.ucd = ucd;
-    }
-    
     @Override
     public String toString() {
         return Observable.class.getSimpleName() + "[" + ucd + "]";

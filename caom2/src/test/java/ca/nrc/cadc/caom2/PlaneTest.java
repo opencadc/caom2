@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,13 +65,12 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.util.ArrayList;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -81,66 +80,56 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class PlaneTest 
-{
+public class PlaneTest {
     private static final Logger log = Logger.getLogger(PlaneTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
+    public void testTemplate() {
+        try {
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testConstructor()
-    {
-        try
-        {
-            Plane p = new Plane("ShinyNewProduct");
-            Assert.assertEquals("ShinyNewProduct", p.getProductID());
+    public void testConstructor() {
+        try {
+            URI uri = new URI("caom:Stuff/Thing/thing1");
+            Plane p = new Plane(uri);
+            Assert.assertEquals(uri, p.getURI());
 
-            try
-            {
+            try {
                 p = new Plane(null);
-                Assert.fail("expected IllegalArgumentException for productID=null");
+                Assert.fail("expected IllegalArgumentException for uri=null, got: " + p);
+            } catch (IllegalArgumentException expected) {
+                log.debug("expected: " + expected);
             }
-            catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testArtifactSet()
-    {
-        try
-        {
-            Plane p = new Plane("thing1");
+    public void testArtifactSet() {
+        try {
+            URI uri = new URI("caom:Stuff/Thing/thing1");
+            Plane p = new Plane(uri);
             Assert.assertEquals(0, p.getArtifacts().size());
 
             // add something
-            boolean added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null), ProductType.AUXILIARY, ReleaseType.DATA));
+            boolean added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null), ProductType.THIS, ReleaseType.DATA));
             Assert.assertTrue("foo:abc", added);
             Assert.assertEquals(1, p.getArtifacts().size());
 
             // fail to add duplicate
-            added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null), ProductType.AUXILIARY, ReleaseType.DATA));
+            added = p.getArtifacts().add(new Artifact(new URI("foo", "abc", null), ProductType.THIS, ReleaseType.DATA));
             Assert.assertFalse("foo:abc", added);
             Assert.assertEquals(1, p.getArtifacts().size());
 
@@ -152,37 +141,7 @@ public class PlaneTest
             // clear
             p.getArtifacts().clear();
             Assert.assertEquals(0, p.getArtifacts().size());
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testEquals()
-    {
-        try
-        {
-            Plane plane = new Plane("foo");
-            Plane eq = new Plane("foo");
-            Plane neq = new Plane("bar");
-            
-            Assert.assertTrue( plane.equals(plane) );
-
-            log.debug("equals: " + plane + " == " + eq);
-            Assert.assertTrue( plane.equals(eq) );
-            
-            log.debug("equals: " + plane + " != " + neq);
-            Assert.assertFalse( plane.equals(neq) );
-            
-            Assert.assertFalse( plane.equals(null) );
-            Assert.assertFalse( plane.equals(new Integer(1)) ); // a different class
-            
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

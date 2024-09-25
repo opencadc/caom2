@@ -24,6 +24,7 @@ dependencies {
     compile 'org.jdom:jdom2:2.0.6'
     
     compile 'org.opencadc:cadc-util:[1.6,2.0)'
+    compile 'org.opencadc:cadc-dali:[1.2.19,)'
 
     testCompile 'junit:junit:4.13'
 }

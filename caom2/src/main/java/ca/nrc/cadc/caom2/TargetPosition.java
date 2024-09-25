@@ -69,8 +69,8 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.Point;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.dali.Point;
 import java.io.Serializable;
 
 /**

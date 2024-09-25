@@ -69,8 +69,8 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
+import ca.nrc.cadc.dali.Interval;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -163,8 +163,8 @@ public enum EnergyBand implements CaomEnum<String> {
      * @param bounds
      * @return
      */
-    public static List<EnergyBand> getEnergyBand(SampledInterval bounds) {
-        List<EnergyBand> ret = new ArrayList<EnergyBand>();
+    public static List<EnergyBand> getEnergyBand(Interval bounds) {
+        List<EnergyBand> ret = new ArrayList<>();
         if (bounds == null) {
             return ret;
         }
@@ -199,20 +199,21 @@ public enum EnergyBand implements CaomEnum<String> {
     }
 
     // fraction of e that overlaps b
-    private static double getOverlapFraction(EnergyBandWrapper b, SampledInterval ei) {
+    private static double getOverlapFraction(EnergyBandWrapper b, Interval<Double> ei) {
         // no overlap
         if (b.ub < ei.getLower() || ei.getUpper() < b.lb) {
             return 0.0;
         }
 
+        double w = (ei.getUpper() - ei.getLower()) / 2.0;
         // partial overlap below
         if (ei.getLower() < b.lb) {
-            return (ei.getUpper() - b.lb) / ei.getWidth();
+            return (ei.getUpper() - b.lb) / w;
         }
 
         // partial overlap above
         if (b.ub < ei.getUpper()) {
-            return (b.ub - ei.getLower()) / ei.getWidth();
+            return (b.ub - ei.getLower()) / w;
         }
 
         // contained

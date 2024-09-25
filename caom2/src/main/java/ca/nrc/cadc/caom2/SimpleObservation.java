@@ -80,9 +80,6 @@ public class SimpleObservation extends Observation {
     public static final Algorithm EXPOSURE = new Algorithm("exposure");
     public static final Algorithm SIMULATION = new Algorithm("simulation");
 
-    @Deprecated
-    public static final Algorithm ALGORITHM = EXPOSURE;
-
     public SimpleObservation(String collection, URI uri, Algorithm algorithm) {
         super(collection, uri, algorithm);
     }

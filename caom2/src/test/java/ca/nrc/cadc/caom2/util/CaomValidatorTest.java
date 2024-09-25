@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.util.Log4jInit;
@@ -231,7 +230,7 @@ public class CaomValidatorTest
         try
         {
             Observation o = new SimpleObservation("FOO", "bar");
-            Plane p = new Plane("baz");
+            Plane p = new Plane(new URI("caom:FOO/bar/baz"));
             o.getPlanes().add(p);
             CaomValidator.validate(o);
         }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -92,6 +92,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.persist.Entity;
 
 /**
  * Base class for CAOM entity classes. The base class contains the UUID, modification
@@ -99,53 +100,27 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public abstract class CaomEntity {
+public abstract class CaomEntity extends Entity {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
+    
+    // Entity metaChecksum algorithm setup: DO NOT CHANGE
+    static final boolean ENTITY_TRUNCATE_DATES = true;
+    static final boolean ENTITY_DIGEST_FIELD_NAMES = true;
+    
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     static boolean MCS_DEBUG = false; // way to much debug when true
     static boolean OVERRRIDE_CORRECT_UUID_SORT = false; 
 
     // state
-    private UUID id;
-    private Date lastModified;
     private Date maxLastModified;
-    private URI metaChecksum;
     private URI accMetaChecksum;
     
-    /**
-     * URI of the form {scheme}:{scheme-specific-part} to signify which process created this CAOM instance.
-     * The scheme should be a short human-readable indicator of the institution/data-centre/provider and
-     * the scheme-specific-part would normally be the name and version of a piece of software. Child entities
-     * are assumed to be produced by the same process as their parent unless specifically set otherwise, so 
-     * it is normally sufficient to set this for the observation only.
-     */
-    public URI metaProducer;
-
-    /**
-     * Constructor. This implementation assigns a random 128-bit UUID.
-     */
     protected CaomEntity() {
-        this.id = UUID.randomUUID();
+        super(ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES);
     }
 
-    /**
-     * Get the unique persistent identifier for this object.
-     * 
-     * @return
-     */
-    public final UUID getID() {
-        return id;
-    }
-
-    /**
-     * Get the timestamp of the last modification of the state of this object.
-     * The last modified date includes all local state but not the state of
-     * child objects contained in collections.
-     * 
-     * @return
-     */
-    public final Date getLastModified() {
-        return lastModified;
+    protected CaomEntity(UUID id) {
+        super(id, ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES);
     }
 
     /**
@@ -156,16 +131,6 @@ public abstract class CaomEntity {
      */
     public final Date getMaxLastModified() {
         return maxLastModified;
-    }
-
-    /**
-     * Get the checksum for the state of this entity. This checksum does not
-     * include child entities.
-     * 
-     * @return checksum URI in the form algorithm:value
-     */
-    public URI getMetaChecksum() {
-        return metaChecksum;
     }
 
     /**
@@ -180,37 +145,6 @@ public abstract class CaomEntity {
     }
 
     /**
-     * The base implementation compares numeric IDs.
-     * 
-     * @param o
-     * @return
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-        if (o instanceof CaomEntity) {
-            CaomEntity a = (CaomEntity) o;
-            return this.id.equals(a.id);
-        }
-        return false;
-    }
-
-    /**
-     * The base implementation uses the hash code of the numeric ID.
-     * 
-     * @return hashCode
-     */
-    @Override
-    public int hashCode() {
-        return this.id.hashCode();
-    }
-
-    /**
      * Compute new metadata checksum for this entity. The computed value is
      * based on the current state and is returned without changing the stored
      * value that is accessed via the getMetaChecksum() method.
@@ -218,9 +152,9 @@ public abstract class CaomEntity {
      * @param digest
      * @return
      */
-    public URI computeMetaChecksum(MessageDigest digest) {
+    public URI computeMetaChecksumV1(MessageDigest digest) {
         try {
-            calcMetaChecksum(this.getClass(), this, digest);
+            calcMetaChecksumV1(this.getClass(), this, digest);
             byte[] metaChecksumBytes = digest.digest();
             String hexMetaChecksum = HexUtil.toHex(metaChecksumBytes);
             String alg = digest.getAlgorithm().toLowerCase();
@@ -233,7 +167,7 @@ public abstract class CaomEntity {
         }
     }
 
-    private void calcMetaChecksum(Class c, Object o, MessageDigest digest) {
+    private void calcMetaChecksumV1(Class c, Object o, MessageDigest digest) {
         // calculation order:
         // 1. CaomEntity.id for entities
         // 2. CaomEntity.metaProducer
@@ -253,19 +187,19 @@ public abstract class CaomEntity {
         try {
             if (o instanceof CaomEntity) {
                 CaomEntity ce = (CaomEntity) o;
-                digest.update(primitiveValueToBytes(ce.id, "CaomEntity.id", digest.getAlgorithm()));
+                digest.update(primitiveValueToBytesV1(ce.getID(), "CaomEntity.id", digest.getAlgorithm()));
                 if (MCS_DEBUG) {
-                    log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.id);
+                    log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".id " + ce.getID());
                 }
                 if (ce.metaProducer != null) {
-                    digest.update(primitiveValueToBytes(ce.metaProducer, "CaomEntity.metaProducer", digest.getAlgorithm()));
+                    digest.update(primitiveValueToBytesV1(ce.metaProducer, "CaomEntity.metaProducer", digest.getAlgorithm()));
                     if (MCS_DEBUG) {
                         log.debug("metaChecksum: " + ce.getClass().getSimpleName() + ".metaProducer " + ce.metaProducer);
                     }
                 }
             }
 
-            SortedSet<Field> fields = getStateFields(c, false);
+            SortedSet<Field> fields = getStateFields(c);
             for (Field f : fields) {
                 String cf = c.getSimpleName() + "." + f.getName();
                 // if (SC_DEBUG) log.debug("check: " + cf);
@@ -276,9 +210,9 @@ public abstract class CaomEntity {
                     if (fo instanceof CaomEnum) {
                         // use ce.getValue
                         CaomEnum ce = (CaomEnum) fo;
-                        digest.update(primitiveValueToBytes(ce.getValue(), cf, digest.getAlgorithm()));
+                        digest.update(primitiveValueToBytesV1(ce.getValue(), cf, digest.getAlgorithm()));
                     } else if (isLocalClass(ac)) {
-                        calcMetaChecksum(ac, fo, digest);
+                        calcMetaChecksumV1(ac, fo, digest);
                     } else if (fo instanceof Collection) {
                         Collection stuff = (Collection) fo;
                         Iterator i = stuff.iterator();
@@ -289,15 +223,15 @@ public abstract class CaomEntity {
                                 // use ce.getValue
                                 CaomEnum ce = (CaomEnum) co;
                                 digest.update(
-                                        primitiveValueToBytes(ce.getValue(), cf, digest.getAlgorithm()));
+                                        primitiveValueToBytesV1(ce.getValue(), cf, digest.getAlgorithm()));
                             } else if (isLocalClass(cc)) {
-                                calcMetaChecksum(cc, co, digest);
+                                calcMetaChecksumV1(cc, co, digest);
                             } else { // non-caom2 class ~primtive value
-                                digest.update(primitiveValueToBytes(co, cf, digest.getAlgorithm()));
+                                digest.update(primitiveValueToBytesV1(co, cf, digest.getAlgorithm()));
                             }
                         }
                     } else { // non-caom2 class ~primtive value
-                        digest.update(primitiveValueToBytes(fo, cf, digest.getAlgorithm()));
+                        digest.update(primitiveValueToBytesV1(fo, cf, digest.getAlgorithm()));
                     }
                 } else if (MCS_DEBUG) {
                     log.debug("skip: " + cf);
@@ -311,7 +245,7 @@ public abstract class CaomEntity {
         }
     }
 
-    private byte[] primitiveValueToBytes(Object o, String name, String digestAlg) {
+    private byte[] primitiveValueToBytesV1(Object o, String name, String digestAlg) {
         byte[] ret = null;
         int len = 0;
         if (o instanceof Byte) {
@@ -400,9 +334,9 @@ public abstract class CaomEntity {
      * @param digest
      * @return
      */
-    public URI computeAccMetaChecksum(MessageDigest digest) {
+    public URI computeAccMetaChecksumV1(MessageDigest digest) {
         try {
-            calcAccMetaChecksum(this.getClass(), this, digest);
+            calcAccMetaChecksumV1(this.getClass(), this, digest);
             byte[] accMetaChecksumBytes = digest.digest();
             String accHexMetaChecksum = HexUtil.toHex(accMetaChecksumBytes);
             String alg = digest.getAlgorithm().toLowerCase();
@@ -415,7 +349,7 @@ public abstract class CaomEntity {
         }
     }
 
-    private void calcAccMetaChecksum(Class c, Object o, MessageDigest digest) {
+    private void calcAccMetaChecksumV1(Class c, Object o, MessageDigest digest) {
 
         // calculation order:
         // 1. bytes of the metaChecksum of the entity
@@ -426,7 +360,7 @@ public abstract class CaomEntity {
             MessageDigest md = MessageDigest.getInstance(digest.getAlgorithm());
 
             // add this object's complete metadata
-            calcMetaChecksum(c, o, md);
+            calcMetaChecksumV1(c, o, md);
             digest.update(md.digest());
             // call to digest also resets
             // md.reset();
@@ -460,7 +394,7 @@ public abstract class CaomEntity {
                             if (MCS_DEBUG) {
                                 log.debug("calculate: " + ce.getID());
                             }
-                            calcAccMetaChecksum(cc, ce, md);
+                            calcAccMetaChecksumV1(cc, ce, md);
                             byte[] bb = md.digest();
                             // call to digest also resets
                             // md.reset();
@@ -503,11 +437,13 @@ public abstract class CaomEntity {
     }
 
     // child is a CaomEntity
+    /*
     static boolean isChildEntity(Field f) throws IllegalAccessException {
         return (CaomEntity.class.isAssignableFrom(f.getType()));
     }
-
+    */
     // child collection is a non-empty Set<CaomEntity>
+    /*
     static boolean isChildCollection(Field f) throws IllegalAccessException {
         if (Set.class.isAssignableFrom(f.getType())) {
             if (f.getGenericType() instanceof ParameterizedType) {
@@ -521,7 +457,8 @@ public abstract class CaomEntity {
         }
         return false;
     }
-
+    */
+    /*
     static SortedSet<Field> getStateFields(Class c, boolean includeTransient)
             throws IllegalAccessException {
         SortedSet<Field> ret = new TreeSet<>(new FieldComparator());
@@ -544,7 +481,8 @@ public abstract class CaomEntity {
         }
         return ret;
     }
-
+    */
+    /*
     static SortedSet<Field> getChildFields(Class c)
             throws IllegalAccessException {
         SortedSet<Field> ret = new TreeSet<>(new FieldComparator());
@@ -563,6 +501,7 @@ public abstract class CaomEntity {
         }
         return ret;
     }
+    */
 
     static Date max(Date d1, Date d2) {
         if (d1.compareTo(d2) >= 0) {
