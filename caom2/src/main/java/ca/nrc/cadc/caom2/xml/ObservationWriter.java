@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
@@ -765,6 +766,7 @@ public class ObservationWriter implements Serializable {
                 addElement("calibrationLevel", String.valueOf(plane.calibrationLevel.getValue()), planeElement);
             }
             addProvenanceElement(plane.provenance, planeElement, dateFormat);
+            addObservableElement(plane.observable, planeElement);
             addMetricsElement(plane.metrics, planeElement, dateFormat);
             addQuaility(plane.quality, planeElement, dateFormat);
 
@@ -850,6 +852,12 @@ public class ObservationWriter implements Serializable {
         if (comp.resolution != null) {
             addNumberElement("resolution", comp.resolution, e);
         }
+        if (comp.resolutionBounds != null) {
+            Element rb = getCaom2Element("resolutionBounds");
+            addNumberElement("lower", comp.resolutionBounds.getLower(), rb);
+            addNumberElement("upper", comp.resolutionBounds.getUpper(), rb);
+            e.addContent(rb);
+        }
         if (comp.sampleSize != null) {
             addNumberElement("sampleSize", comp.sampleSize, e);
         }
@@ -896,6 +904,12 @@ public class ObservationWriter implements Serializable {
         }
         if (comp.resolvingPower != null) {
             addNumberElement("resolvingPower", comp.resolvingPower, e);
+        }
+        if (comp.resolvingPowerBounds != null) {
+            Element rb = getCaom2Element("resolvingPowerBounds");
+            addNumberElement("lower", comp.resolvingPowerBounds.getLower(), rb);
+            addNumberElement("upper", comp.resolvingPowerBounds.getUpper(), rb);
+            e.addContent(rb);
         }
         if (comp.sampleSize != null) {
             addNumberElement("sampleSize", comp.sampleSize, e);
@@ -955,6 +969,12 @@ public class ObservationWriter implements Serializable {
         }
         if (comp.resolution != null) {
             addNumberElement("resolution", comp.resolution, e);
+        }
+        if (comp.resolutionBounds != null) {
+            Element rb = getCaom2Element("resolutionBounds");
+            addNumberElement("lower", comp.resolutionBounds.getLower(), rb);
+            addNumberElement("upper", comp.resolutionBounds.getUpper(), rb);
+            e.addContent(rb);
         }
         if (comp.sampleSize != null) {
             addNumberElement("sampleSize", comp.sampleSize, e);
@@ -1062,6 +1082,19 @@ public class ObservationWriter implements Serializable {
         }
         addInputsElement(provenance.getInputs(), element, dateFormat);
         parent.addContent(element);
+    }
+
+    protected void addObservableElement(Observable observable, Element parent) {
+        if (observable == null) {
+            return;
+        }
+        
+        Element obsE = getCaom2Element("observable");
+        parent.addContent(obsE);
+        
+        Element ucdE = getCaom2Element("ucd");
+        ucdE.setText(observable.getUCD());
+        obsE.addContent(ucdE);
     }
 
     protected void addMetricsElement(Metrics metrics, Element parent,

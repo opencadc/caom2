@@ -83,6 +83,7 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.ObservationIntentType;
 import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
@@ -389,6 +390,7 @@ public class Caom2TestInstances
                 p.provenance = getProvenance();
                 p.metrics = getMetrics();
                 p.quality = new DataQuality(Quality.JUNK);
+                p.observable = new Observable("phot.count");
                 
                 // alphabetical so easier to trace and debug metaChecksum computation
             
@@ -397,17 +399,18 @@ public class Caom2TestInstances
                 p.energy.bounds = new SampledInterval(400e-6, 900e-6);
                 p.energy.bounds.getSamples().add(new Interval(400e-6, 500e-6));
                 p.energy.bounds.getSamples().add(new Interval(800e-6, 900e-6));
-                p.energy.dimension = 2l;
+                p.energy.dimension = 2L;
                 for (EnergyBand eb : EnergyBand.values()) {
                     p.energy.getEnergyBands().add(eb);
                 }
                 p.energy.resolvingPower = 2.0;
+                p.energy.resolvingPowerBounds = new Interval(2.0, 5.0);
                 p.energy.restwav = 600e-9;
                 p.energy.sampleSize = 100e-6;
                 p.energy.transition = new EnergyTransition("H", "alpha");
 
                 p.polarization = new Polarization();
-                p.polarization.dimension = 3l;
+                p.polarization.dimension = 3L;
                 p.polarization.states = new TreeSet<PolarizationState>();
                 p.polarization.states.add(PolarizationState.I);
                 p.polarization.states.add(PolarizationState.Q);
@@ -432,6 +435,7 @@ public class Caom2TestInstances
                 }
                 p.position.dimension = new Dimension2D(1024, 2048);
                 p.position.resolution = 0.05;
+                p.position.resolutionBounds = new Interval(0.04, 0.06);
                 p.position.sampleSize = 0.025;
                 p.position.timeDependent = false;
 
@@ -439,9 +443,10 @@ public class Caom2TestInstances
                 p.time.bounds = new SampledInterval(50000.25, 50000.75);
                 p.time.bounds.getSamples().add(new Interval(50000.25, 50000.40));
                 p.time.bounds.getSamples().add(new Interval(50000.50, 50000.75));
-                p.time.dimension = 2l;
+                p.time.dimension = 2L;
                 p.time.exposure = 666.0;
                 p.time.resolution = 0.5;
+                p.time.resolutionBounds = new Interval(0.5, 0.5);
                 p.time.sampleSize = 0.15;
                 
                 p.custom = new CustomAxis("FARADAY");

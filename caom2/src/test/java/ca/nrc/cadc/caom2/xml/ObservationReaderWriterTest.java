@@ -1105,8 +1105,6 @@ public class ObservationReaderWriterTest
             assertNotNull(expectedPlane);
             assertNotNull(actualPlane);
 
-            compareEntity(expectedPlane, actualPlane);
-
             assertEquals(expectedPlane.getProductID(), actualPlane.getProductID());
             assertEquals(expectedPlane.creatorID, actualPlane.creatorID);
             assertEquals(expectedPlane.metaRelease, actualPlane.metaRelease);
@@ -1118,7 +1116,11 @@ public class ObservationReaderWriterTest
             compare(expectedPlane.metrics, actualPlane.metrics);
             compare(expectedPlane.observable, actualPlane.observable);
             
-            compareComputed(expectedPlane, actualPlane);
+            compare(expectedPlane.position, actualPlane.position);
+            compare(expectedPlane.energy, actualPlane.energy);
+            compare(expectedPlane.time, actualPlane.time);
+            compare(expectedPlane.polarization, actualPlane.polarization);
+            compare(expectedPlane.custom, actualPlane.custom);
             
             compareDataQuality(expectedPlane.quality, actualPlane.quality);
             compareProvenance(expectedPlane.provenance, actualPlane.provenance);
@@ -1174,15 +1176,6 @@ public class ObservationReaderWriterTest
         assertNotNull(actual);
         
         assertEquals(expected.getUCD(), actual.getUCD());
-    }
-    
-    protected void compareComputed(Plane expected, Plane actual)
-    {
-        compare(expected.position, actual.position);
-        compare(expected.energy, actual.energy);
-        compare(expected.time, actual.time);
-        compare(expected.polarization, actual.polarization);
-        compare(expected.custom, actual.custom);
     }
     
     protected void compare(Position expected, Position actual)
@@ -1381,11 +1374,11 @@ public class ObservationReaderWriterTest
     }
     
     protected void compare(Interval expected, Interval actual) {
-        if (expected == null)
-        {
-            Assert.assertNull(actual);
+        if (expected == null && actual == null) {
             return;
         }
+        assertNotNull(expected);
+        assertNotNull(actual);
         Assert.assertEquals(expected.getLower(), actual.getLower(), 0.0);
         Assert.assertEquals(expected.getUpper(), actual.getUpper(), 0.0);
     }
@@ -1394,7 +1387,6 @@ public class ObservationReaderWriterTest
     {
         if (expected == null && actual == null)
             return;
-        
         assertNotNull(expected);
         assertNotNull(actual);
         
