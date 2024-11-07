@@ -75,13 +75,12 @@ import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Shape;
-import java.io.Serializable;
 
 /**
  *
  * @author pdowler
  */
-public class Position implements Serializable {
+public class Position {
     private Shape bounds;
     private MultiShape samples;
     

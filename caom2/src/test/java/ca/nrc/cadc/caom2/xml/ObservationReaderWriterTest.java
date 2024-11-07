@@ -211,7 +211,7 @@ public class ObservationReaderWriterTest {
     // this "test" writes out a pretty complete document to use in comparison with python round-trip
     // and python meta checksum computations
     @Test
-    public void doWriteCompleteComposite() {
+    public void doWriteComplete() {
         try {
             Caom2TestInstances ti = new Caom2TestInstances();
             ti.setComplete(true);
@@ -254,7 +254,7 @@ public class ObservationReaderWriterTest {
                 }
             }
 
-            File f = new File("sample-composite-caom24.xml");
+            File f = new File("sample-derived-caom25.xml");
             FileOutputStream fos = new FileOutputStream(f);
             ObservationWriter w = new ObservationWriter();
             w.write(o, fos);
@@ -429,11 +429,14 @@ public class ObservationReaderWriterTest {
             final ObservationWriter w = new ObservationWriter();
             final ObservationReader r = new ObservationReader(true);
             
-            // level 2: Observation + Plane only (no changes in Artifact and below)
-            SimpleObservation simple = getCompleteSimple(3, false);
-            StringBuilder sb = new StringBuilder();
-            w.write(simple, sb);
+            Caom2TestInstances ti = new Caom2TestInstances();
+            ti.setComplete(true);
+            ti.setDepth(2); // changes in Observation and Plane only
+            ti.setChildCount(2);
+            Observation obs = ti.getDerivedObservation();
             
+            StringBuilder sb = new StringBuilder();
+            w.write(obs, sb);
             String xml = sb.toString();
             PrintWriter pw = new PrintWriter(new File("orig.xml"));
             pw.print(xml);
@@ -449,7 +452,7 @@ public class ObservationReaderWriterTest {
             pw.print(xml);
             pw.close();
             
-            compareObservations(simple, rt);
+            compareObservations(obs, rt);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -602,7 +605,7 @@ public class ObservationReaderWriterTest {
 
         writer.setWriteEmptyCollections(writeEmptyCollections);
         writer.write(observation, sb);
-        log.debug(sb.toString());
+        log.info(sb.toString());
 
         // well-formed XML
         ObservationReader reader = new ObservationReader(false);

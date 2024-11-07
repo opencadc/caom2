@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,8 +70,6 @@
 package ca.nrc.cadc.caom2.util;
 
 import ca.nrc.cadc.caom2.CaomEntity;
-
-import java.io.Serializable;
 import java.util.Comparator;
 
 /**
@@ -79,12 +77,7 @@ import java.util.Comparator;
  * 
  * @author pdowler
  */
-public class LastModifiedComparator
-        implements Comparator<CaomEntity>, Serializable {
-    private static final long serialVersionUID = 201311261300L;
-
-    public LastModifiedComparator() {
-    }
+public class LastModifiedComparator implements Comparator<CaomEntity> {
 
     public int compare(CaomEntity o1, CaomEntity o2) {
         return o1.getLastModified().compareTo(o2.getLastModified());

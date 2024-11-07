@@ -133,7 +133,6 @@ import ca.nrc.cadc.util.StringUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URI;
@@ -156,9 +155,7 @@ import org.jdom2.output.XMLOutputter;
  *
  * @author jburke
  */
-public class ObservationWriter implements Serializable {
-    private static final long serialVersionUID = 201604081100L;
-
+public class ObservationWriter {
     private static Logger log = Logger.getLogger(ObservationWriter.class);
 
     private String stylesheetURL;

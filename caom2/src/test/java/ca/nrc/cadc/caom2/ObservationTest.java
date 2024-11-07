@@ -106,7 +106,7 @@ public class ObservationTest {
 
             Observation o = new SimpleObservation("STUFF", uri, SimpleObservation.EXPOSURE);
             log.debug("created: " + o);
-            Assert.assertEquals("Stuff", o.getCollection());
+            Assert.assertEquals("STUFF", o.getCollection());
             Assert.assertEquals(uri, o.getURI());
             Assert.assertEquals(SimpleObservation.EXPOSURE, o.getAlgorithm());
 

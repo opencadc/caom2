@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -70,7 +70,6 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import java.io.Serializable;
 import java.net.URI;
 import java.util.Set;
 import java.util.TreeSet;
@@ -79,8 +78,7 @@ import java.util.TreeSet;
  *
  * @author pdowler
  */
-public class Target implements Serializable {
-    private static final long serialVersionUID = 201110261400L;
+public class Target {
 
     // immutable state
     private String name;

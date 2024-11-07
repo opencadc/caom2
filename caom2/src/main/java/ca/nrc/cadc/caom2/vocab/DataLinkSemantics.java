@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2.vocab;
 
 import ca.nrc.cadc.caom2.CaomEnum;
 import ca.nrc.cadc.caom2.VocabularyTerm;
-import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -79,9 +78,7 @@ import java.net.URISyntaxException;
  *
  * @author pdowler
  */
-public class DataLinkSemantics extends VocabularyTerm
-        implements CaomEnum<String>, Serializable {
-    private static final long serialVersionUID = 2017040200800L;
+public class DataLinkSemantics extends VocabularyTerm implements CaomEnum<String> {
 
     //private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
     private static final URI DATALINK_NS = URI.create("http://www.ivoa.net/rdf/datalink/core");

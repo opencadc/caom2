@@ -69,13 +69,11 @@
 
 package ca.nrc.cadc.caom2;
 
-import java.io.Serializable;
-
 /**
  *
  * @author pdowler
  */
-public class Metrics implements Serializable {
+public class Metrics {
     // mutable state
     public Double sourceNumberDensity;
     public Double background;

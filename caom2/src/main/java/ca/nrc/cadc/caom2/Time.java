@@ -69,11 +69,9 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Interval;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,7 +79,7 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class Time implements Serializable {
+public class Time {
     private DoubleInterval bounds;
     public List<DoubleInterval> samples = new ArrayList<>();
 

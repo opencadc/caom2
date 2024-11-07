@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,7 +69,6 @@
 
 package ca.nrc.cadc.caom2;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -79,9 +78,7 @@ import java.net.URISyntaxException;
  * 
  * @author pdowler
  */
-public class DataProductType extends VocabularyTerm implements CaomEnum<String>, Serializable {
-    private static final long serialVersionUID = 201704061700L;
-
+public class DataProductType extends VocabularyTerm implements CaomEnum<String> {
     private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
     private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/DataProductType");
 

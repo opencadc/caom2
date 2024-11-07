@@ -69,14 +69,11 @@
 
 package ca.nrc.cadc.caom2;
 
-import java.io.Serializable;
-
 /**
  *
  * @author pdowler
  */
-public class Algorithm implements Serializable {
-    private static final long serialVersionUID = 201110261400L;
+public class Algorithm {
 
     private String name;
 

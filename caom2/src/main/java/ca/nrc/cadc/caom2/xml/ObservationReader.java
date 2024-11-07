@@ -75,7 +75,6 @@ import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DerivedObservation;
@@ -109,6 +108,7 @@ import ca.nrc.cadc.caom2.Visibility;
 import ca.nrc.cadc.caom2.VocabularyTerm;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.vocab.Tracking;
 import ca.nrc.cadc.caom2.vocab.UCD;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -136,7 +136,6 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
@@ -147,7 +146,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.Serializable;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -174,9 +172,7 @@ import org.jdom2.Namespace;
  *
  * @author jburke
  */
-public class ObservationReader implements Serializable {
-    private static final long serialVersionUID = 201604081100L;
-
+public class ObservationReader {
     //private static final String CAOM20_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
     //private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
     //private static final String CAOM22_SCHEMA_RESOURCE = "CAOM-2.2.xsd";
@@ -295,8 +291,7 @@ public class ObservationReader implements Serializable {
         }
     }
 
-    private class ReadContext implements Serializable {
-        private static final long serialVersionUID = 201604081100L;
+    private class ReadContext {
         DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         int docVersion = CURRENT_CAOM2_SCHEMA_LEVEL;
 
@@ -860,7 +855,7 @@ public class ObservationReader implements Serializable {
             throws ObservationParsingException {
         Element element = getChildElement("members", parent, namespace, false);
         if (element != null) {
-            List children = getChildrenElements("observationURI", element,
+            List children = getChildrenElements("member", element,
                     namespace, false);
             Iterator it = children.iterator();
             while (it.hasNext()) {

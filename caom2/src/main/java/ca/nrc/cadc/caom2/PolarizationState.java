@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -68,11 +68,6 @@
 */
 
 package ca.nrc.cadc.caom2;
-
-import ca.nrc.cadc.util.HexUtil;
-
-import java.io.Serializable;
-import java.util.Comparator;
 
 /**
  * Standard polarization codes for FITS WCS STOKES axis. We have added some

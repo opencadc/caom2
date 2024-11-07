@@ -117,7 +117,7 @@ public class JsonWriterTest
     {
         try
         {
-            int i = 5;
+            int i = 1;
             Observation o = getCompleteSimple(i, true);
             
             JsonWriter jw = new JsonWriter();
@@ -133,7 +133,7 @@ public class JsonWriterTest
             
             String xmlns = obs.getString("@xmlns:caom2");
             Assert.assertNotNull(xmlns);
-            Assert.assertEquals("http://www.opencadc.org/caom2/xml/v2.3", xmlns);
+            Assert.assertEquals("http://www.opencadc.org/caom2/xml/v2.5", xmlns);
             
             String otype = obs.getString("@xsi:type");
             Assert.assertNotNull(otype);
@@ -151,7 +151,7 @@ public class JsonWriterTest
     {
         try
         {
-            int i = 5;
+            int i = 1;
             Observation o = getCompleteComposite(i, true);
             
             JsonWriter jw = new JsonWriter();
@@ -167,11 +167,11 @@ public class JsonWriterTest
             
             String xmlns = obs.getString("@xmlns:caom2");
             Assert.assertNotNull(xmlns);
-            Assert.assertEquals("http://www.opencadc.org/caom2/xml/v2.3", xmlns);
+            Assert.assertEquals("http://www.opencadc.org/caom2/xml/v2.5", xmlns);
             
             String otype = obs.getString("@xsi:type");
             Assert.assertNotNull(otype);
-            Assert.assertEquals("caom2:CompositeObservation", otype);
+            Assert.assertEquals("caom2:DerivedObservation", otype);
         }
         catch(Exception unexpected)
         {

@@ -69,15 +69,14 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.util.CaomUtil;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.util.Date;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -103,17 +102,17 @@ public class CaomEntityTest {
     public CaomEntityTest() {
         try {
             URI ouri = new URI("caom:FOO/bar");
-            SimpleObservation so = new SimpleObservation("FOO", ouri, SimpleObservation.EXPOSURE);
-            DerivedObservation co = new DerivedObservation("FOO", ouri, new Algorithm("doit"));
+            final SimpleObservation so = new SimpleObservation("FOO", ouri, SimpleObservation.EXPOSURE);
+            final DerivedObservation co = new DerivedObservation("FOO", ouri, new Algorithm("doit"));
             co.getMembers().add(new URI("caom:FOO/baz"));
 
-            Plane pl = new Plane(new URI("caom:FOO/baz/thing1"));
+            final Plane pl = new Plane(new URI("caom:FOO/baz/thing1"));
             pl.provenance = new Provenance("doit");
             pl.provenance.getInputs().add(new URI("caom:FOO/baz/thing2"));
 
-            Artifact ar = new Artifact(new URI("cadc", "FOO/bar-thing1", null), DataLinkSemantics.THIS, ReleaseType.DATA);
-            Part pa = new Part("x");
-            Chunk ch = new Chunk();
+            final Artifact ar = new Artifact(new URI("cadc", "FOO/bar-thing1", null), DataLinkSemantics.THIS, ReleaseType.DATA);
+            final Part pa = new Part("x");
+            final Chunk ch = new Chunk();
 
             // need to add child objects so the state vs child fields get counted correctly
             so.getPlanes().add(pl);
@@ -353,34 +352,39 @@ public class CaomEntityTest {
         try {
             // test accumulated
             URI ouri = new URI("caom:FOO/bar");
-            Observation obs = new SimpleObservation("FOO", ouri, SimpleObservation.EXPOSURE);
-            CaomUtil.assignID(obs, new UUID(0L, 666L));
-            URI orig = obs.computeAccMetaChecksumV1(MessageDigest.getInstance("MD5"));
-            log.debug("oc1: " + orig + " id1: " + obs.getID());
+            Observation obs1 = new SimpleObservation("FOO", ouri, SimpleObservation.EXPOSURE);
+            CaomUtil.assignID(obs1, new UUID(0L, 666L));
+            URI orig = obs1.computeAccMetaChecksumV1(MessageDigest.getInstance("MD5"));
+            log.debug("oc1: " + orig + " id1: " + obs1.getID());
             Assert.assertNotNull(orig);
 
             // plane
             UUID uuid1 = new UUID(0L, 1L);
             UUID uuid2 = new UUID(0L, 2L);
-            Plane p1 = new Plane(new URI(ouri.toASCIIString() + "/baz1"));
-            Plane p2 = new Plane(new URI(ouri.toASCIIString() + "/baz2"));
+            Plane p11 = new Plane(new URI(ouri.toASCIIString() + "/baz1"));
+            Plane p12 = new Plane(new URI(ouri.toASCIIString() + "/baz2"));
 
-            // important: Observation.getPlanes() Set sorts by uri so we have to reverse
-            // the uuid order so this test will pass/fail correctly
-            CaomUtil.assignID(p2, uuid1);
-            CaomUtil.assignID(p1, uuid2);
+            
+            CaomUtil.assignID(p11, uuid1);
+            CaomUtil.assignID(p12, uuid2);
 
-            // add in reverse uuid order so that a List impl will fail test without explicit sort
-            obs.getPlanes().add(p1);
-            obs.getPlanes().add(p2);
+           
+            obs1.getPlanes().add(p11);
+            obs1.getPlanes().add(p12);
 
-            URI c1 = obs.computeAccMetaChecksumV1(MessageDigest.getInstance("MD5"));
+            URI c1 = obs1.computeAccMetaChecksumV1(MessageDigest.getInstance("MD5"));
             log.debug("multi-plane accumulated checksum: " + c1);
 
-            // this test only verifies that none of the values above including hard-coded UUIDs changed
-            // and the accumulation order in the code did not change... feels icky
-            URI expected = URI.create("md5:5a634dbc198c7e61c247f0049f1a0356");
-            Assert.assertEquals("hard coded accumulated checksum", expected, c1);
+            // now restructure to put planes in other order to verify that accMetaChecksum sorts
+            obs1.getPlanes().clear();
+             // add in reverse uuid order so that a List impl will fail test without explicit sort
+            obs1.getPlanes().add(p12);
+            obs1.getPlanes().add(p11);
+            
+            URI c2 = obs1.computeAccMetaChecksumV1(MessageDigest.getInstance("MD5"));
+            log.debug("multi-plane accumulated checksum: " + c1);
+            
+            Assert.assertEquals("accMetaCHecksum", c1, c2);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

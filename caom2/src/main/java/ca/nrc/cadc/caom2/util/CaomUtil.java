@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -85,7 +85,6 @@ import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.util.StringUtil;
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -102,10 +101,7 @@ import org.opencadc.persist.Entity;
  *
  * @author pdowler
  */
-public class CaomUtil implements Serializable {
-    // this class is serialzable because it is non-final (TBD, see below)
-    private static final long serialVersionUID = 201401101400L;
-
+public class CaomUtil {
     private static Logger log = Logger.getLogger(CaomUtil.class);
 
     /**
@@ -151,11 +147,15 @@ public class CaomUtil implements Serializable {
 
     public static void assignLastModified(Object ce, Date d, String fieldName) {
         try {
-            Field f = CaomEntity.class.getDeclaredField(fieldName);
+            Class c = Entity.class;
+            if ("maxLastModified".equals(fieldName)) {
+                c = CaomEntity.class;
+            }
+            log.debug("assignLastModified: " + c.getSimpleName() + "." + fieldName);
+            Field f = c.getDeclaredField(fieldName);
             f.setAccessible(true);
             f.set(ce, d);
-            // log.debug("assignLastModified: " + d.getTime() + " -> " +
-            // ce.getClass().getSimpleName() + "." + fieldName);
+            
         } catch (NoSuchFieldException fex) {
             throw new RuntimeException("BUG", fex);
         } catch (IllegalAccessException bug) {
@@ -165,7 +165,12 @@ public class CaomUtil implements Serializable {
 
     public static void assignMetaChecksum(Object ce, URI v, String fieldName) {
         try {
-            Field f = CaomEntity.class.getDeclaredField(fieldName);
+            Class c = Entity.class;
+            if ("accMetaChecksum".equals(fieldName)) {
+                c = CaomEntity.class;
+            }
+            log.debug("assignMetaChecksum: " + c.getSimpleName() + "." + fieldName);
+            Field f = c.getDeclaredField(fieldName);
             f.setAccessible(true);
             f.set(ce, v);
             // log.debug("assignLastModified: " + d.getTime() + " -> " +

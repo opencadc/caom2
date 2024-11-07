@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.EnergyConverter;
 import ca.nrc.cadc.dali.Interval;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -180,8 +179,7 @@ public enum EnergyBand implements CaomEnum<String> {
         return ret;
     }
     
-    private static final class EnergyBandWrapper implements Serializable {
-        private static final long serialVersionUID = 201207191400L;
+    private static final class EnergyBandWrapper {
         EnergyBand band;
         double lb;
         double ub;

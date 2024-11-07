@@ -69,12 +69,10 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
+import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Interval;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -84,7 +82,7 @@ import java.util.TreeSet;
  *
  * @author pdowler
  */
-public class Energy implements Serializable {
+public class Energy {
     
     private DoubleInterval bounds;
     private final List<DoubleInterval> samples = new ArrayList<>();

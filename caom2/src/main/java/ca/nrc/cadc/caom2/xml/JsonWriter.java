@@ -71,7 +71,6 @@ package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.xml.JsonOutputter;
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.Writer;
 import org.apache.log4j.Logger;
 import org.jdom2.Document;
@@ -82,9 +81,7 @@ import org.jdom2.output.Format;
  *
  * @author pdowler
  */
-public class JsonWriter extends ObservationWriter implements Serializable {
-    private static final long serialVersionUID = 20150205121500L;
-
+public class JsonWriter extends ObservationWriter {
     private static final Logger log = Logger.getLogger(JsonWriter.class);
 
     private boolean prettyPrint;
@@ -94,7 +91,7 @@ public class JsonWriter extends ObservationWriter implements Serializable {
     }
 
     public JsonWriter(boolean prettyPrint) {
-        this(prettyPrint, XmlConstants.CAOM2_4_NAMESPACE);
+        this(prettyPrint, XmlConstants.CAOM2_5_NAMESPACE);
     }
 
     public JsonWriter(boolean prettyPrint, String caom2Namespace) {
@@ -121,8 +118,10 @@ public class JsonWriter extends ObservationWriter implements Serializable {
         outputter.getListElementNames().add("points");
         outputter.getListElementNames().add("inputs");
         outputter.getListElementNames().add("states");
+        outputter.getListElementNames().add("shapes");
         outputter.getListElementNames().add("samples");
         outputter.getListElementNames().add("members");
+        outputter.getListElementNames().add("metaReadGroups");
         if (docVersion >= 23) {
             outputter.getListElementNames().add("keywords");
         }
