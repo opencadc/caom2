@@ -907,6 +907,7 @@ public class ObservationReader implements Serializable {
             plane.metrics = getMetrics(planeElement, namespace, rc);
             plane.quality = getQuality(planeElement, namespace, rc);
 
+            plane.observable = getObservable(planeElement, namespace, rc);
             plane.position = getPosition(planeElement, namespace, rc);
             plane.energy = getEnergy(planeElement, namespace, rc);
             plane.time = getTime(planeElement, namespace, rc);
