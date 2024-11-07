@@ -63,7 +63,7 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.xml;
 
@@ -86,115 +86,104 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * 
+ *
  * @author pdowler
  */
-public class StableMetaChecksumTest 
-{
+public class StableMetaChecksumTest {
+
     private static final Logger log = Logger.getLogger(StableMetaChecksumTest.class);
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
-    
-    public StableMetaChecksumTest() { }
-    
+
+    public StableMetaChecksumTest() {
+    }
+
     @Test
     public void testStableChecksums23() {
         doit("sample-composite-caom23.xml", false);
     }
-    
+
     @Test
     public void testStableChecksums24() {
         doit("sample-composite-caom24.xml", false);
     }
-    
+
     @Test
     public void testStableChecksums25() {
         doit("sample-derived-caom25.xml", true);
     }
-    
+
     // checksums are not stable between 2.4 and 2.5 due to a change in the checksum algorithm
     // that also allowed other non-compatible changes in the model
     private void doit(String filename, boolean stable) {
-        try
-        {
+        try {
             // read stored file with computed checksums and verify
             File f = FileUtil.getFileFromResource(filename, StableMetaChecksumTest.class);
-            if (!f.exists())
-            {
+            if (!f.exists()) {
                 log.warn("testStableChecksums: not found: " + f.getName() + " -- SKIPPING TEST");
                 return;
             }
-            
+
             Reader r = new FileReader(f);
             ObservationReader or = new ObservationReader(); // latest model/schema version
             Observation o = or.read(r);
             Assert.assertNotNull(o);
-            
+
             boolean verifyAcc = true;
             log.info(filename + ": verify metaChecksum: true verify accMetaChecksum: " + verifyAcc);
-            
+
             MessageDigest digest = MessageDigest.getInstance("MD5");
             URI mcs = o.computeMetaChecksum(digest);
             if (stable) {
-                Assert.assertEquals("observation.metaChecksum (" + stable +")", o.getMetaChecksum(), mcs);
+                Assert.assertEquals("observation.metaChecksum (" + stable + ")", o.getMetaChecksum(), mcs);
             } else {
-                Assert.assertNotEquals("observation.metaChecksum (" + stable +")", o.getMetaChecksum(), mcs);
+                Assert.assertNotEquals("observation.metaChecksum (" + stable + ")", o.getMetaChecksum(), mcs);
             }
-            if (verifyAcc)
-            {
+            if (verifyAcc) {
                 URI acs = o.computeAccMetaChecksum(digest);
                 if (stable) {
-                    Assert.assertEquals("observation.accMetaChecksum (" + stable +")", o.getAccMetaChecksum(), acs);
+                    Assert.assertEquals("observation.accMetaChecksum (" + stable + ")", o.getAccMetaChecksum(), acs);
                 } else {
-                    Assert.assertNotEquals("observation.accMetaChecksum (" + stable +")", o.getAccMetaChecksum(), acs);
+                    Assert.assertNotEquals("observation.accMetaChecksum (" + stable + ")", o.getAccMetaChecksum(), acs);
                 }
             }
-            
-            for (Plane pl : o.getPlanes())
-            {
+
+            for (Plane pl : o.getPlanes()) {
                 mcs = pl.computeMetaChecksum(digest);
                 if (stable) {
-                    Assert.assertEquals("plane.metaChecksum (" + stable +")", pl.getMetaChecksum(), mcs);
+                    Assert.assertEquals("plane.metaChecksum (" + stable + ")", pl.getMetaChecksum(), mcs);
                 } else {
-                    Assert.assertEquals("plane.metaChecksum (" + stable +")", pl.getMetaChecksum(), mcs);
+                    Assert.assertEquals("plane.metaChecksum (" + stable + ")", pl.getMetaChecksum(), mcs);
                 }
-                if (verifyAcc)
-                {
+                if (verifyAcc) {
                     URI acs = pl.computeAccMetaChecksum(digest);
                     if (stable) {
-                        Assert.assertEquals("plane.accMetaChecksum (" + stable +")", pl.getAccMetaChecksum(), acs);
+                        Assert.assertEquals("plane.accMetaChecksum (" + stable + ")", pl.getAccMetaChecksum(), acs);
                     } else {
-                        Assert.assertNotEquals("plane.accMetaChecksum (" + stable +")", pl.getAccMetaChecksum(), acs);
+                        Assert.assertNotEquals("plane.accMetaChecksum (" + stable + ")", pl.getAccMetaChecksum(), acs);
                     }
                 }
                 // CAOM-2.5: no changes in Artifact-Part-Chunk so ignore stable flag
-                for (Artifact ar : pl.getArtifacts())
-                {
+                for (Artifact ar : pl.getArtifacts()) {
                     mcs = ar.computeMetaChecksum(digest);
                     Assert.assertEquals("artifact.metaChecksum", ar.getMetaChecksum(), mcs);
-                    if (verifyAcc)
-                    {
+                    if (verifyAcc) {
                         URI acs = ar.computeAccMetaChecksum(digest);
                         Assert.assertEquals("artifact.accMetaChecksum", ar.getAccMetaChecksum(), acs);
                     }
-                    for (Part pa : ar.getParts())
-                    {
+                    for (Part pa : ar.getParts()) {
                         mcs = pa.computeMetaChecksum(digest);
                         Assert.assertEquals("part.metaChecksum", pa.getMetaChecksum(), mcs);
-                        if (verifyAcc)
-                        {
+                        if (verifyAcc) {
                             URI acs = pa.computeAccMetaChecksum(digest);
                             Assert.assertEquals("part.accMetaChecksum", pa.getAccMetaChecksum(), acs);
                         }
-                        for (Chunk ch : pa.getChunks())
-                        {
+                        for (Chunk ch : pa.getChunks()) {
                             mcs = ch.computeMetaChecksum(digest);
                             Assert.assertEquals("chunk.metaChecksum", ch.getMetaChecksum(), mcs);
-                            if (verifyAcc)
-                            {
+                            if (verifyAcc) {
                                 URI acs = ch.computeAccMetaChecksum(digest);
                                 Assert.assertEquals("chunk.accMetaChecksum", ch.getAccMetaChecksum(), acs);
                             }
@@ -202,15 +191,11 @@ public class StableMetaChecksumTest
                     }
                 }
             }
-            
+
             log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc + " [OK]");
-        }
-        catch(MissingResourceException oops)
-        {
+        } catch (MissingResourceException oops) {
             log.warn("SKIPPING TEST: " + oops);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
