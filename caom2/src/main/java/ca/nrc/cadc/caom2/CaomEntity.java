@@ -112,9 +112,9 @@ public abstract class CaomEntity extends Entity {
     static boolean MCS_DEBUG = false; // way to much debug when true
     static boolean OVERRRIDE_CORRECT_UUID_SORT = false; 
 
-    // state
-    private Date maxLastModified;
-    private URI accMetaChecksum;
+    // state but not part of meta checksum
+    private transient Date maxLastModified;
+    private transient URI accMetaChecksum;
     
     protected CaomEntity() {
         super(ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES);

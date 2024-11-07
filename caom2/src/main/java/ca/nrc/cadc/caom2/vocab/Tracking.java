@@ -78,7 +78,7 @@ import org.apache.log4j.Logger;
 public class Tracking extends VocabularyTerm {
     private static final Logger log = Logger.getLogger(Tracking.class);
 
-    public static final URI NAMESPACE = URI.create("https://ivoa.net/rdf/TelescopeTracking");
+    public static final URI NAMESPACE = URI.create("https://ivoa.net/rdf/Tracking");
     
     public static final Tracking SIDEREAL = new Tracking("sidereal");
     

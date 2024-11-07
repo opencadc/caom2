@@ -406,8 +406,13 @@ public class ObservationReader {
         String tval = type.getValue();
 
         String collection = getChildText("collection", root, namespace, false);
-        //String observationID = getChildText("observationID", root, namespace, true);
-        String suri = getChildText("uri", root, namespace, true);
+        String suri = null;
+        if (rc.docVersion == 24) {
+            String observationID = getChildText("observationID", root, namespace, true);
+            suri = "caom:" + collection + "/" + observationID;
+        } else {
+            suri = getChildText("uri", root, namespace, true);
+        }
 
         URI obsURI = null;
         if (suri != null) {
@@ -454,7 +459,7 @@ public class ObservationReader {
         obs.instrument = getInstrument(root, namespace, rc);
         obs.environment = getEnvironment(root, namespace, rc);
 
-        addPlanes(obs.getPlanes(), root, namespace, rc);
+        addPlanes(obs.getURI(), obs.getPlanes(), root, namespace, rc);
 
         if (obs instanceof DerivedObservation) {
             addMembers(((DerivedObservation) obs).getMembers(), root,
@@ -886,7 +891,7 @@ public class ObservationReader {
      * @param rc
      * @throws ObservationParsingException
      */
-    protected void addPlanes(Set<Plane> planes, Element parent,
+    protected void addPlanes(URI obsURI, Set<Plane> planes, Element parent,
             Namespace namespace, ReadContext rc)
             throws ObservationParsingException {
         Element element = getChildElement("planes", parent, namespace, false);
@@ -899,8 +904,15 @@ public class ObservationReader {
         Iterator it = planeElements.iterator();
         while (it.hasNext()) {
             Element planeElement = (Element) it.next();
-            String suri = getChildText("uri", planeElement, namespace, true);
-            //String productID = getChildText("productID", planeElement, namespace, false);
+            String suri = null;
+            if (rc.docVersion == 24) {
+                String productID = getChildText("productID", planeElement, namespace, true);
+                suri = obsURI + "/" + productID;
+                log.warn("addPlanes: " + obsURI + " + " + productID + " -> " + suri);
+            } else {
+                suri = getChildText("uri", planeElement, namespace, true);
+            }
+            
             
             URI planeURI = null;
             if (suri != null) {
@@ -913,36 +925,18 @@ public class ObservationReader {
                 }
             }
             Plane plane = new Plane(planeURI);
-            // compat: build uri from Observation.uri and productID
             
             plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, rc.dateFormat);
             addGroups(plane.getMetaReadGroups(), "metaReadGroups", planeElement, namespace, rc);
             plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, rc.dateFormat);
             addGroups(plane.getDataReadGroups(), "dataReadGroups", planeElement, namespace, rc);
 
-            /*
-            String creatorIDStr = getChildText("creatorID", planeElement,
-                    namespace, false);
-            if (creatorIDStr != null) {
-                try {
-                    plane.creatorID = new URI(creatorIDStr);
-                } catch (URISyntaxException e) {
-                    String error = "Unable to parse creatorID " + creatorIDStr
-                            + " to URI in element " + element.getName()
-                            + " because " + e.getMessage();
-                    throw new ObservationParsingException(error, e);
-                }
-            }
-            */
-            
-            String dataProductType = getChildText("dataProductType",
-                    planeElement, namespace, false);
+            String dataProductType = getChildText("dataProductType", planeElement, namespace, false);
             if (dataProductType != null) {
                 plane.dataProductType = DataProductType.toValue(dataProductType);
             }
 
-            String calibrationLevel = getChildText("calibrationLevel",
-                    planeElement, namespace, false);
+            String calibrationLevel = getChildText("calibrationLevel", planeElement, namespace, false);
             if (calibrationLevel != null) {
                 plane.calibrationLevel = CalibrationLevel.toValue(Integer.parseInt(calibrationLevel));
             }
@@ -1034,7 +1028,9 @@ public class ObservationReader {
         Position ret = new Position(bounds, samples);
         
         Element mb = getChildElement("minBounds", element, namespace, false);
-        ret.minBounds = getShape(mb, namespace);
+        if (mb != null) {
+            ret.minBounds = getShape(mb, namespace);
+        }
                 
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null) {

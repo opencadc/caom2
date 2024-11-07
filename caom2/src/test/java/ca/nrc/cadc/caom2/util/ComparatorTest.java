@@ -153,19 +153,9 @@ public class ComparatorTest
         TestEntity(Date lm, Date mlm)
         {
             super();
-            assignLastModified(this, lm, "lastModified");
-            assignLastModified(this, mlm, "maxLastModified");
+            CaomUtil.assignLastModified(this, lm, "lastModified");
+            CaomUtil.assignLastModified(this, mlm, "maxLastModified");
         }
     }
-    private void assignLastModified(Object ce, Date d, String fieldName)
-    {
-        try
-        {
-            Field f = CaomEntity.class.getDeclaredField(fieldName);
-            f.setAccessible(true);
-            f.set(ce, d);
-        }
-        catch(NoSuchFieldException fex) { throw new RuntimeException("BUG", fex); }
-        catch(IllegalAccessException bug) { throw new RuntimeException("BUG", bug); }
-    }
+   
 }

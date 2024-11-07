@@ -136,6 +136,10 @@ public class DataLinkSemantics extends VocabularyTerm implements CaomEnum<String
             }
         }
 
+        // backwards compat to CAOM-2.4
+        if ("science".equals(s)) {
+            return THIS;
+        }
         // custom term
         try {
             URI u = new URI(s);

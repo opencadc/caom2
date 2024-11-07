@@ -268,20 +268,21 @@ public class ObservationReaderWriterTest {
     @Test
     public void testSupportAllVersions() {
         try {
-            Observation obs = new SimpleObservation("FOO", "bar");
+            Observation obs = new SimpleObservation("FOO", URI.create("caom:FOO/bar"), SimpleObservation.EXPOSURE);
+            Plane p = new Plane(URI.create(obs.getURI().toASCIIString() + "/baz"));
+            obs.getPlanes().add(p);
 
-            ObservationReader validatingReader = new ObservationReader();
-            ObservationReader nonvalidatingReader = new ObservationReader(false);
+            final ObservationReader validatingReader = new ObservationReader();
+            final ObservationWriter w24 = new ObservationWriter("caom2", XmlConstants.CAOM2_4_NAMESPACE, false);
 
             ByteArrayOutputStream bos;
 
-            ObservationWriter w24 = new ObservationWriter("caom2", XmlConstants.CAOM2_4_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
             w24.write(obs, bos);
             String caom24 = bos.toString();
             log.info("caom-2.4 XML:\n" + caom24);
             Assert.assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
-            Observation obs24 = nonvalidatingReader.read(caom24);
+            Observation obs24 = validatingReader.read(caom24);
             compareObservations(obs, obs24);
 
             // add maxLastModified and meta checksums
@@ -296,8 +297,18 @@ public class ObservationReaderWriterTest {
             caom24 = bos.toString();
             log.info("caom-2.4 XML:\n" + caom24);
             Assert.assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
-            obs24 = nonvalidatingReader.read(caom24);
+            obs24 = validatingReader.read(caom24);
             compareObservations(obs, obs24);
+            
+            // current
+            ObservationWriter w = new ObservationWriter();
+            bos = new ByteArrayOutputStream();
+            w.write(obs, bos);
+            String caom = bos.toString();
+            log.info("current XML:\n" + caom);
+            Assert.assertTrue(caom.contains(XmlConstants.CAOM2_5_NAMESPACE));
+            Observation obs25 = validatingReader.read(caom);
+            compareObservations(obs, obs25);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

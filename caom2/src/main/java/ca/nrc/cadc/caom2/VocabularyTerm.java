@@ -74,10 +74,17 @@ import java.net.URI;
  *
  * @author pdowler
  */
-public class VocabularyTerm {
+public abstract class VocabularyTerm {
+    // TODO: transient so not included in meta checksum? woulds allow vocabulary rename
+    //       would also need to drop base and always just wrap a simple term...
     private final URI namespace;
     private final String term;
     private boolean base;
+
+    private VocabularyTerm() {
+        this.namespace = null;
+        this.term = null;
+    }
 
     /**
      * Constructor. This creates a term in the specified vocabulary namepsace
@@ -86,7 +93,7 @@ public class VocabularyTerm {
      * @param namespace
      * @param term
      */
-    public VocabularyTerm(URI namespace, String term) {
+    protected VocabularyTerm(URI namespace, String term) {
         this(namespace, term, false);
     }
 

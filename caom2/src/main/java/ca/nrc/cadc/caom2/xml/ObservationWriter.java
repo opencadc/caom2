@@ -416,8 +416,21 @@ public class ObservationWriter {
         addEntityAttributes(obs, element, dateFormat);
 
         addElement("collection", obs.getCollection(), element);
-        //addElement("observationID", obs.getObservationID(), element);
-        addElement("uri", obs.getURI().toASCIIString(), element);
+        if (docVersion == 24) {
+            if ("caom".equals(obs.getURI().getScheme())) {
+                String[] ss = obs.getURI().getSchemeSpecificPart().split("/");
+                if (ss.length == 2) {
+                    addElement("observationID", ss[1], element);
+                } else {
+                    throw new IllegalArgumentException("invalid use of caom scheme in Observation.uri: " + obs.getURI());
+                }
+            } else {
+                throw new UnsupportedOperationException("cannot output Observation.uri '" + obs.getURI() + "' in CAOM-2.4 schema");
+            }
+        } else {
+            // 2.5+
+            addElement("uri", obs.getURI().toASCIIString(), element);
+        }
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);
@@ -738,11 +751,25 @@ public class ObservationWriter {
         for (Plane plane : planes) {
             Element planeElement = getCaom2Element("plane");
             addEntityAttributes(plane, planeElement, dateFormat);
-            //addElement("productID", plane.getProductID(), planeElement);
-            addElement("uri", plane.getURI().toASCIIString(), planeElement);
+            if (docVersion == 24) {
+                if ("caom".equals(plane.getURI().getScheme())) {
+                    String[] ss = plane.getURI().getSchemeSpecificPart().split("/");
+                    if (ss.length == 3) {
+                        addElement("productID", ss[2], planeElement);
+                    } else {
+                        throw new IllegalArgumentException("invalid use of caom scheme in Plane.uri: " + plane.getURI());
+                    }
+                } else {
+                    throw new UnsupportedOperationException("cannot output Plane.uri '" + plane.getURI() + "' in CAOM-2.4 schema");
+                }
+                addURIElement("creatorID", plane.getURI(), planeElement);
+            } else {
+                // 2.5+
+                addElement("uri", plane.getURI().toASCIIString(), planeElement);
+            }
 
             //if (docVersion >= 23 && plane.creatorID != null) {
-            //    addURIElement("creatorID", plane.creatorID, planeElement);
+            //    
             //}
 
             addDateElement("metaRelease", plane.metaRelease, planeElement, dateFormat);
