@@ -765,9 +765,9 @@ public class ObservationWriter {
             }
             addProvenanceElement(plane.provenance, planeElement, dateFormat);
             addObservableElement(plane.observable, planeElement);
-            addMetricsElement(plane.metrics, planeElement);
+            addMetricsElement(plane.metrics, planeElement, dateFormat);
             addQuality(plane.quality, planeElement);
-            
+
             addPositionElement(plane.position, planeElement);
             addEnergyElement(plane.energy, planeElement);
             addTimeElement(plane.time, planeElement);
@@ -822,12 +822,10 @@ public class ObservationWriter {
         if (comp.resolution != null) {
             addNumberElement("resolution", comp.resolution, posE);
         }
-
         if (comp.resolutionBounds != null) {
             Element rbe = getIntervalElement("resolutionBounds", comp.resolutionBounds);
             posE.addContent(rbe);
         }
-
         if (comp.sampleSize != null) {
             addNumberElement("sampleSize", comp.sampleSize, posE);
         }
@@ -969,48 +967,45 @@ public class ObservationWriter {
             return;
         }
 
-        Element timE = getCaom2Element("time");
-        parent.addContent(timE);
+        Element e = getCaom2Element("time");
+        parent.addContent(e);
         
         Element be = getIntervalElement("bounds", comp.getBounds());
-        timE.addContent(be);
+        e.addContent(be);
 
         Element ses = getCaom2Element("samples");
         for (Interval si : comp.getSamples()) {
             Element ee = getIntervalElement("sample", si);
             ses.addContent(ee);
         }
-        timE.addContent(ses);
+        e.addContent(ses);
 
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
             ce.addContent(Long.toString(comp.dimension));
-            timE.addContent(ce);
+            e.addContent(ce);
         }
-
         if (comp.resolution != null) {
-            addNumberElement("resolution", comp.resolution, timE);
+            addNumberElement("resolution", comp.resolution, e);
         }
         if (comp.resolutionBounds != null) {
             Element ee = getIntervalElement("resolutionBounds", comp.resolutionBounds);
-            timE.addContent(ee);
+            e.addContent(ee);
         }
-
         if (comp.sampleSize != null) {
-            addNumberElement("sampleSize", comp.sampleSize, timE);
+            addNumberElement("sampleSize", comp.sampleSize, e);
         }
         if (comp.exposure != null) {
-            addNumberElement("exposure", comp.exposure, timE);
+            addNumberElement("exposure", comp.exposure, e);
         }
         if (comp.exposureBounds != null) {
             Element ee = getIntervalElement("exposureBounds", comp.exposureBounds);
-            timE.addContent(ee);
+            e.addContent(ee);
         }
-
         if (comp.calibration != null) {
             Element ce = getCaom2Element("calibration");
             ce.setText(comp.calibration.getTerm());
-            timE.addContent(ce);
+            e.addContent(ce);
         }
     }
 
@@ -1089,25 +1084,6 @@ public class ObservationWriter {
         addNumberElement("distributionFill", comp.getDistributionFill(), visE);
     }
 
-    protected void addObservableElement(Observable observable, Element parent) {
-        if (observable == null) {
-            return;
-        }
-        
-        Element obsE = getCaom2Element("observable");
-        parent.addContent(obsE);
-        
-        Element ucdE = getCaom2Element("ucd");
-        ucdE.setText(observable.getUCD().getTerm());
-        obsE.addContent(ucdE);
-        
-        if (observable.calibration != null) {
-            Element ce = getCaom2Element("calibration");
-            ce.setText(observable.calibration.getTerm());
-            obsE.addContent(ce);
-        }
-    }
-
     protected void addProvenanceElement(Provenance provenance, Element parent,
             DateFormat dateFormat) {
         if (provenance == null) {
@@ -1132,7 +1108,27 @@ public class ObservationWriter {
         parent.addContent(element);
     }
 
-    protected void addMetricsElement(Metrics metrics, Element parent) {
+    protected void addObservableElement(Observable observable, Element parent) {
+        if (observable == null) {
+            return;
+        }
+        
+        Element obsE = getCaom2Element("observable");
+        parent.addContent(obsE);
+        
+        Element ucdE = getCaom2Element("ucd");
+        ucdE.setText(observable.getUCD().getTerm());
+        obsE.addContent(ucdE);
+        
+        if (observable.calibration != null) {
+            Element ce = getCaom2Element("calibration");
+            ce.setText(observable.calibration.getTerm());
+            obsE.addContent(ce);
+        }
+    }
+
+    protected void addMetricsElement(Metrics metrics, Element parent,
+            DateFormat dateFormat) {
         if (metrics == null) {
             return;
         }

@@ -446,7 +446,7 @@
             <xs:extension base="caom2:CaomEntity">
                 <xs:sequence>
                     <xs:element name="uri" type="xs:anyURI"/>
-                    <xs:element name="productType" type="caom2:ProductType"/>
+                    <xs:element name="productType" type="xs:string"/>
                     <xs:element name="releaseType" type="caom2:ReleaseType"/>
                     
                     <xs:element name="contentRelease" type="xs:string" minOccurs="0">
@@ -481,7 +481,7 @@
             <xs:extension base="caom2:CaomEntity">
                 <xs:sequence>
                     <xs:element name="name" type="xs:string" minOccurs="1"/>
-                    <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
+                    <xs:element name="productType" type="xs:string" minOccurs="0"/>
                     <xs:element name="chunks" type="caom2:Chunks" minOccurs="0"/>
                 </xs:sequence>
             </xs:extension>
@@ -500,7 +500,7 @@
         <xs:complexContent>
             <xs:extension base="caom2:CaomEntity">
                 <xs:sequence>
-                    <xs:element name="productType" type="caom2:ProductType" minOccurs="0"/>
+                    <xs:element name="productType" type="xs:string" minOccurs="0"/>
                     <xs:element name="naxis" type="xs:integer" minOccurs="0"/>
                     <xs:element name="observableAxis" type="xs:integer" minOccurs="0"/>
                     <xs:element name="positionAxis1" type="xs:integer" minOccurs="0"/>
@@ -764,6 +764,7 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <!-- open vocabulary in 2.4
     <xs:simpleType name="ProductType">
         <xs:restriction base="xs:string">
             <xs:enumeration value="science"/>
@@ -777,7 +778,8 @@
             <xs:enumeration value="thumbnail"/>
         </xs:restriction>
     </xs:simpleType>
-    
+    -->
+
     <!-- open vocabulary in 2.3
     <xs:simpleType name="DataProductType">
         <xs:restriction base="xs:string">

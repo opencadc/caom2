@@ -950,7 +950,7 @@ public class ObservationReader {
             plane.provenance = getProvenance(planeElement, namespace, rc);
             plane.metrics = getMetrics(planeElement, namespace, rc);
             plane.quality = getQuality(planeElement, namespace, rc);
-            
+
             plane.observable = getObservable(planeElement, namespace, rc);
             plane.position = getPosition(planeElement, namespace, rc);
             plane.energy = getEnergy(planeElement, namespace, rc);

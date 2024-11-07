@@ -345,9 +345,9 @@ public class Caom2TestInstances {
                 p.provenance = getProvenance();
                 p.metrics = getMetrics();
                 p.quality = new DataQuality(Quality.JUNK);
-
-                p.observable = new Observable(new UCD("flux"));
+                p.observable = new Observable(new UCD("phot.count"));
                 p.observable.calibration = CalibrationStatus.RELATIVE;
+                
 
                 // alphabetical so easier to trace and debug metaChecksum computation
                 p.energy = new Energy(new DoubleInterval(400e-6, 900e-6));

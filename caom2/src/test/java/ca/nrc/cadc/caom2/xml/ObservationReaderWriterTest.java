@@ -1072,10 +1072,11 @@ public class ObservationReaderWriterTest {
     }
 
     protected void compare(DoubleInterval expected, DoubleInterval actual) {
-        if (expected == null) {
-            Assert.assertNull(actual);
+        if (expected == null && actual == null) {
             return;
         }
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
         Assert.assertEquals(expected.getLower(), actual.getLower(), 0.0);
         Assert.assertEquals(expected.getUpper(), actual.getUpper(), 0.0);
     }
@@ -1084,13 +1085,12 @@ public class ObservationReaderWriterTest {
         if (expected == null && actual == null) {
             return;
         }
-
         Assert.assertNotNull(expected);
         Assert.assertNotNull(actual);
-
+        
         Assert.assertEquals(expected.getFlag(), actual.getFlag());
     }
-
+    
     protected void compareProvenance(Provenance expected, Provenance actual) {
         if (expected == null && actual == null) {
             return;
