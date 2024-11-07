@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
 import ca.nrc.cadc.caom2.wcs.ObservableAxis;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
@@ -88,7 +89,7 @@ import ca.nrc.cadc.caom2.wcs.TemporalWCS;
  */
 public class Chunk extends CaomEntity implements Comparable<Chunk> {
     // mutable state
-    public ProductType productType;
+    public DataLinkSemantics productType;
 
     public Integer naxis;
     public Integer observableAxis;

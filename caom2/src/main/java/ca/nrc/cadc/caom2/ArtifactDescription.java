@@ -62,75 +62,45 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Shape;
-import java.io.Serializable;
+import java.net.URI;
 
 /**
  *
  * @author pdowler
  */
-public class Position implements Serializable {
-    private Shape bounds;
-    private MultiShape samples;
-    
-    public Shape minBounds;
-    public Dimension2D dimension;
-    public DoubleInterval maxAngularScale;
-    public Double resolution;
-    public DoubleInterval resolutionBounds;
-    public Double sampleSize;
-    public CalibrationStatus calibration;
-    
-    public Position(Shape bounds, MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.bounds = bounds;
-        this.samples = samples;
+public class ArtifactDescription extends CaomEntity {
+    private final URI uri;
+    private String description;
+
+    public ArtifactDescription(URI uri, String description) {
+        CaomValidator.assertNotNull(getClass(), "uri", uri);
+        CaomValidator.assertNotNull(getClass(), "description", description);
+        this.uri = uri;
+        this.description = description;
     }
 
-    public void validate() {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
+    public URI getURI() {
+        return uri;
     }
 
-    public Shape getBounds() {
-        return bounds;
+    public String getDescription() {
+        return description;
     }
 
-    public void setBounds(Shape bounds) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        this.bounds = bounds;
+    public void setDescription(String description) {
+        CaomValidator.assertNotNull(getClass(), "description", description);
+        this.description = description;
     }
 
-    public MultiShape getSamples() {
-        return samples;
-    }
-
-    public void setSamples(MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.samples = samples;
-    }
-
-    
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(bounds);
-        sb.append(",d=").append(dimension);
-        sb.append("]");
-        return sb.toString();
+        return ArtifactDescription.class.getSimpleName() + "["
+                + uri + " = " + description + "]";
     }
 }

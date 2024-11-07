@@ -69,7 +69,9 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Interval;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -80,29 +82,37 @@ import java.util.List;
  * @author pdowler
  */
 public class Time implements Serializable {
-    private final Interval<Double> bounds;
-    private final List<Interval<Double>> samples = new ArrayList<>();
+    private DoubleInterval bounds;
+    public List<DoubleInterval> samples = new ArrayList<>();
 
     public Long dimension;
     public Double resolution;
-    public Interval<Double> resolutionBounds;
+    public DoubleInterval resolutionBounds;
     public Double sampleSize;
     public Double exposure;
-    public Interval<Double> exposureBounds;
-    public VocabularyTerm calibration;
+    public DoubleInterval exposureBounds;
+    public CalibrationStatus calibration;
 
-    public Time(Interval<Double> bounds, List<Interval<Double>> samples) {
-        CaomValidator.assertNotNull(getClass(), "bounds", samples);
-        CaomValidator.assertNotEmpty(getClass(), "samples", samples);
+    public Time(DoubleInterval bounds) {
+        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
         this.bounds = bounds;
-        this.samples.addAll(samples);
     }
 
-    public Interval<Double> getBounds() {
+    public void validate() {
+        CaomValidator.assertNotNull(getClass(), "bounds", samples);
+        CaomValidator.assertNotEmpty(getClass(), "samples", samples);
+    }
+
+    public DoubleInterval getBounds() {
         return bounds;
     }
 
-    public List<Interval<Double>> getSamples() {
+    public void setBounds(DoubleInterval bounds) {
+        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
+        this.bounds = bounds;
+    }
+
+    public List<DoubleInterval> getSamples() {
         return samples;
     }
 

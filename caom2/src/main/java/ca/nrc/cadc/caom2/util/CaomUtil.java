@@ -96,6 +96,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.persist.Entity;
 
 /**
  *
@@ -138,7 +139,7 @@ public class CaomUtil implements Serializable {
     // methods to assign to private field in CaomEntity
     public static void assignID(Object ce, UUID id) {
         try {
-            Field f = CaomEntity.class.getDeclaredField("id");
+            Field f = Entity.class.getDeclaredField("id");
             f.setAccessible(true);
             f.set(ce, id);
         } catch (NoSuchFieldException fex) {

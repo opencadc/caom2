@@ -75,9 +75,7 @@ import java.net.URI;
  *
  * @author pdowler
  */
-public class VocabularyTerm implements Serializable {
-    private static final long serialVersionUID = 201704061700L;
-
+public class VocabularyTerm {
     private final URI namespace;
     private final String term;
     private boolean base;

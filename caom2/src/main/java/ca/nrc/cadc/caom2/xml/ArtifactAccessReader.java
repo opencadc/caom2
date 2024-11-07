@@ -68,7 +68,7 @@
 package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.date.DateUtil;
@@ -186,7 +186,7 @@ public class ArtifactAccessReader {
     
     private Artifact getArtifact(Element ae) {
         URI uri = getURI(ae.getChildTextTrim(ENAMES.uri.name()), true);
-        ProductType pt = ProductType.toValue(ae.getChildTextTrim(ENAMES.productType.name()));
+        DataLinkSemantics pt = DataLinkSemantics.toValue(ae.getChildTextTrim(ENAMES.productType.name()));
         ReleaseType rt = ReleaseType.toValue(ae.getChildTextTrim(ENAMES.releaseType.name()));
         Artifact ret = new Artifact(uri, pt, rt);
         ret.contentChecksum = getURI(ae.getChildTextTrim(ENAMES.contentChecksum.name()), false);

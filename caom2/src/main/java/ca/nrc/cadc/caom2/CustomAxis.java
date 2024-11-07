@@ -68,6 +68,7 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Interval;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,19 +79,23 @@ import java.util.List;
  * @author pdowler
  */
 public class CustomAxis {
+    // immutable
     private final String ctype;
-    private final Interval<Double> bounds;
-    private final List<Interval<Double>> samples = new ArrayList<>();
-
+    // mutable
+    private DoubleInterval bounds;
+    public List<DoubleInterval> samples = new ArrayList<>();
     public Long dimension;
     
-    public CustomAxis(String ctype, Interval<Double> bounds, List<Interval<Double>> samples) {
+    public CustomAxis(String ctype, DoubleInterval bounds) {
         CaomValidator.assertNotNull(CustomAxis.class, "ctype", ctype);
-        CaomValidator.assertNotNull(getClass(), "bounds", samples);
-        CaomValidator.assertNotEmpty(getClass(), "samples", samples);
+        CaomValidator.assertNotNull(CustomAxis.class, "bounds", bounds);
         this.ctype = ctype;
         this.bounds = bounds;
-        this.samples.addAll(samples);
+    }
+    
+    public void validate() {
+        CaomValidator.assertNotNull(getClass(), "bounds", samples);
+        CaomValidator.assertNotEmpty(getClass(), "samples", samples);
     }
 
     public String getCtype() {
@@ -101,7 +106,12 @@ public class CustomAxis {
         return bounds;
     }
 
-    public List<Interval<Double>> getSamples() {
+    public void setBounds(DoubleInterval bounds) {
+        CaomValidator.assertNotNull(CustomAxis.class, "bounds", bounds);
+        this.bounds = bounds;
+    }
+
+    public List<DoubleInterval> getSamples() {
         return samples;
     }
 

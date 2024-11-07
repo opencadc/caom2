@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.util.Log4jInit;
 import java.util.Set;
 import java.util.TreeSet;
@@ -109,17 +110,17 @@ public class ProductTypeTest
     {
         try
         {
-            for (ProductType c : ProductType.values())
+            for (DataLinkSemantics c : DataLinkSemantics.values())
             {
                 log.debug("testing: " + c);
                 String s = c.getValue();
-                ProductType c2 = ProductType.toValue(s);
+                DataLinkSemantics c2 = DataLinkSemantics.toValue(s);
                 Assert.assertEquals(c, c2);
             }
             
             try 
             {
-                ProductType c = ProductType.toValue("NoSuchType");
+                DataLinkSemantics c = DataLinkSemantics.toValue("NoSuchType");
                 Assert.fail("expected IllegalArgumentException, got: " + c);
             } 
             catch(IllegalArgumentException expected) 
@@ -143,7 +144,7 @@ public class ProductTypeTest
         {
             // a datalink core extension we have not included yet
             String s1 = "http://www.example.net/rdf/topic#flibble";
-            ProductType c2 = ProductType.toValue(s1);
+            DataLinkSemantics c2 = DataLinkSemantics.toValue(s1);
             String s2 = c2.getValue();
             log.info(s1 + " == " + s2);
             Assert.assertEquals(s1, s2);

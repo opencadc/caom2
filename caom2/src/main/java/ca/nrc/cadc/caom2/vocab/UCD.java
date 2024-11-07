@@ -62,100 +62,25 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.vocab;
 
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.VocabularyTerm;
 import java.net.URI;
-import java.net.URISyntaxException;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class ProductType extends VocabularyTerm
-        implements CaomEnum<String>, Serializable {
-    private static final long serialVersionUID = 2017040200800L;
+public class UCD extends VocabularyTerm {
+    private static final Logger log = Logger.getLogger(UCD.class);
 
-    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
-
-    // IVOA DataLink terms
-    public static ProductType THIS = new ProductType("this");
-
-    public static ProductType AUXILIARY = new ProductType("auxiliary");
-    public static ProductType BIAS = new ProductType("bias");
-    public static ProductType CALIBRATION = new ProductType("calibration");
-    public static ProductType CODERIVED = new ProductType("coderived");
-    public static ProductType DARK = new ProductType("dark");
-    public static ProductType DOCUMENTATION = new ProductType("documentation");
-    public static ProductType ERROR = new ProductType("error");
-    public static ProductType FLAT = new ProductType("flat");
-    public static ProductType NOISE = new ProductType("noise");
-    public static ProductType PREVIEW = new ProductType("preview");
-    public static ProductType PREVIEW_IMAGE = new ProductType("preview-image");
-    public static ProductType PREVIEW_PLOT = new ProductType("preview-plot");
-    public static ProductType THUMBNAIL = new ProductType("thumbnail");
-    public static ProductType WEIGHT = new ProductType("weight");
+    public static final URI NAMESPACE = URI.create("https://ivoa.net/rdf/UCD1+");
     
-    // DataLink terms explicitly not included
-    // counterpart
-    // cutout
-    // derivation
-    // detached-header
-    // package
-    // proc
-    // progenitor
-    
-    // CAOM specific terms
-    public static ProductType SCIENCE = new ProductType("science"); // this
-    
-    @Deprecated
-    public static ProductType INFO = new ProductType("info"); // documentation
-    
-    
-    /**
-     * @deprecated
-     */
-    public static ProductType CATALOG = new ProductType("catalog");
-
-    public static final ProductType[] values() {
-        return new ProductType[] { SCIENCE, CALIBRATION, AUXILIARY, INFO,
-                                   PREVIEW, CATALOG, NOISE, WEIGHT, 
-                                   THUMBNAIL, BIAS, DARK, FLAT };
-    }
-
-    private ProductType(String term) {
-        super(CAOM, term, true);
-    }
-
-    protected ProductType(URI namespace, String term) {
-        super(namespace, term, false);
-    }
-
-    public static ProductType toValue(String s) {
-        for (ProductType d : values()) {
-            if (d.getValue().equals(s)) {
-                return d;
-            }
-        }
-
-        // custom term
-        try {
-            URI u = new URI(s);
-            String t = u.getFragment();
-            if (t == null) {
-                throw new IllegalArgumentException(
-                        "invalid value (no term/fragment): " + s);
-            }
-            String[] ss = u.toASCIIString().split("#");
-            URI ns = new URI(ss[0]);
-            return new ProductType(ns, t);
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException("invalid value: " + s, ex);
-        }
+    public UCD(String term) {
+        super(NAMESPACE, term);
     }
 }

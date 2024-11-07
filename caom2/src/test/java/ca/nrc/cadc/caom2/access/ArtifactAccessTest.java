@@ -69,7 +69,7 @@ package ca.nrc.cadc.caom2.access;
 
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import java.net.URI;
 import org.apache.log4j.Logger;
@@ -90,7 +90,7 @@ public class ArtifactAccessTest {
     public void testCtor() {
         try {
             URI uri = URI.create("foo:bar/baz");
-            ArtifactAccess aa = new ArtifactAccess(new Artifact(uri, ProductType.SCIENCE, ReleaseType.DATA));
+            ArtifactAccess aa = new ArtifactAccess(new Artifact(uri, DataLinkSemantics.THIS, ReleaseType.DATA));
             Assert.assertNotNull(aa.getArtifact());
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);

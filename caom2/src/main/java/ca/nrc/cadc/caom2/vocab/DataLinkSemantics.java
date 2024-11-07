@@ -62,75 +62,96 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.vocab;
 
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.caom2.CaomEnum;
+import ca.nrc.cadc.caom2.VocabularyTerm;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  *
  * @author pdowler
  */
-public class Position implements Serializable {
-    private Shape bounds;
-    private MultiShape samples;
+public class DataLinkSemantics extends VocabularyTerm
+        implements CaomEnum<String>, Serializable {
+    private static final long serialVersionUID = 2017040200800L;
+
+    //private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
+    private static final URI DATALINK_NS = URI.create("http://www.ivoa.net/rdf/datalink/core");
     
-    public Shape minBounds;
-    public Dimension2D dimension;
-    public DoubleInterval maxAngularScale;
-    public Double resolution;
-    public DoubleInterval resolutionBounds;
-    public Double sampleSize;
-    public CalibrationStatus calibration;
+    // IVOA DataLink terms
+    public static DataLinkSemantics THIS = new DataLinkSemantics("this");
+
+    public static DataLinkSemantics AUXILIARY = new DataLinkSemantics("auxiliary");
+    public static DataLinkSemantics BIAS = new DataLinkSemantics("bias");
+    public static DataLinkSemantics CALIBRATION = new DataLinkSemantics("calibration");
+    public static DataLinkSemantics CODERIVED = new DataLinkSemantics("coderived");
+    public static DataLinkSemantics DARK = new DataLinkSemantics("dark");
+    public static DataLinkSemantics DOCUMENTATION = new DataLinkSemantics("documentation");
+    public static DataLinkSemantics ERROR = new DataLinkSemantics("error");
+    public static DataLinkSemantics FLAT = new DataLinkSemantics("flat");
+    public static DataLinkSemantics NOISE = new DataLinkSemantics("noise");
+    public static DataLinkSemantics PREVIEW = new DataLinkSemantics("preview");
+    public static DataLinkSemantics PREVIEW_IMAGE = new DataLinkSemantics("preview-image");
+    public static DataLinkSemantics PREVIEW_PLOT = new DataLinkSemantics("preview-plot");
+    public static DataLinkSemantics THUMBNAIL = new DataLinkSemantics("thumbnail");
+    public static DataLinkSemantics WEIGHT = new DataLinkSemantics("weight");
     
-    public Position(Shape bounds, MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.bounds = bounds;
-        this.samples = samples;
-    }
-
-    public void validate() {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-    }
-
-    public Shape getBounds() {
-        return bounds;
-    }
-
-    public void setBounds(Shape bounds) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        this.bounds = bounds;
-    }
-
-    public MultiShape getSamples() {
-        return samples;
-    }
-
-    public void setSamples(MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.samples = samples;
-    }
-
+    // DataLink terms explicitly not included because they are not applicable to Artifact
+    // counterpart
+    // cutout
+    // derivation
+    // detached-header
+    // package
+    // proc
+    // progenitor
     
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(bounds);
-        sb.append(",d=").append(dimension);
-        sb.append("]");
-        return sb.toString();
+    private static final DataLinkSemantics[] VALUES = new DataLinkSemantics[] {
+        THIS, AUXILIARY, BIAS, CALIBRATION,
+        CODERIVED, DARK, DOCUMENTATION, ERROR, FLAT, NOISE, 
+        PREVIEW, PREVIEW_IMAGE, PREVIEW_PLOT,
+        THUMBNAIL, WEIGHT
+    };
+
+    public static final DataLinkSemantics[] values() {
+        return VALUES;
+    }
+
+    private DataLinkSemantics(String term) {
+        super(DATALINK_NS, term, true);
+    }
+
+    protected DataLinkSemantics(URI namespace, String term) {
+        super(namespace, term, false);
+    }
+
+    public static DataLinkSemantics toValue(String s) {
+        for (DataLinkSemantics d : VALUES) {
+            if (d.getValue().equals(s)) {
+                return d;
+            }
+        }
+
+        // custom term
+        try {
+            URI u = new URI(s);
+            String t = u.getFragment();
+            if (t == null) {
+                throw new IllegalArgumentException(
+                        "invalid value (no term/fragment): " + s);
+            }
+            String[] ss = u.toASCIIString().split("#");
+            URI ns = new URI(ss[0]);
+            return new DataLinkSemantics(ns, t);
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("invalid value: " + s, ex);
+        }
     }
 }

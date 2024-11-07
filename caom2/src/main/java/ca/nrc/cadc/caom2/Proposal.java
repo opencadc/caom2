@@ -71,6 +71,7 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
+import java.net.URI;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -88,6 +89,7 @@ public class Proposal implements Serializable {
     public String pi;
     public String project;
     public String title;
+    public URI reference;
 
     // mutable content
     private final Set<String> keywords = new TreeSet<String>();

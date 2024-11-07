@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.lang.reflect.Field;
@@ -110,7 +111,7 @@ public class CaomEntityTest {
             pl.provenance = new Provenance("doit");
             pl.provenance.getInputs().add(new URI("caom:FOO/baz/thing2"));
 
-            Artifact ar = new Artifact(new URI("cadc", "FOO/bar-thing1", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact ar = new Artifact(new URI("cadc", "FOO/bar-thing1", null), DataLinkSemantics.THIS, ReleaseType.DATA);
             Part pa = new Part("x");
             Chunk ch = new Chunk();
 
@@ -252,7 +253,7 @@ public class CaomEntityTest {
             Assert.assertEquals("add child does not change checksum of parent", mc6, mc7);
 
             // add artifact to test URI primitive
-            Artifact a = new Artifact(URI.create("boo:Stuff/Nonsense"), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(URI.create("boo:Stuff/Nonsense"), DataLinkSemantics.THIS, ReleaseType.DATA);
             URI ac1 = a.computeMetaChecksum(MessageDigest.getInstance("MD5"));
             Assert.assertNotNull(ac1);
 
@@ -294,7 +295,7 @@ public class CaomEntityTest {
             Assert.assertNotEquals("add child changes acc checksum", oc1, oc2);
 
             // artifact
-            Artifact a = new Artifact(URI.create("boo:Stuff/Nonsense"), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(URI.create("boo:Stuff/Nonsense"), DataLinkSemantics.THIS, ReleaseType.DATA);
             pl.getArtifacts().add(a);
             URI ac1 = a.computeMetaChecksum(MessageDigest.getInstance("MD5"));
             Assert.assertNotNull(ac1);

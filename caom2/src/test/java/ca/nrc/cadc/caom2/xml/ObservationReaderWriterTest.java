@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,13 +65,12 @@
 *  $Revision: 4 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
-import ca.nrc.cadc.caom2.CaomIDGenerator;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.DataQuality;
@@ -83,10 +82,8 @@ import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
 import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
@@ -98,12 +95,7 @@ import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.Visibility;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -128,12 +120,19 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -141,63 +140,57 @@ import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
  *
  * @author jburke
  */
-public class ObservationReaderWriterTest
-{
+public class ObservationReaderWriterTest {
+
     private static Logger log = Logger.getLogger(ObservationReaderWriterTest.class);
-    static
-    {
+
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.persist", Level.INFO);
     }
-    
-    public ObservationReaderWriterTest() { }
+
+    public ObservationReaderWriterTest() {
+    }
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
-            
-        }
-        catch(Exception unexpected)
-        {
+    public void testTemplate() {
+        try {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testLenientTimestampParser()
-    {
-        try
-        {
+    public void testLenientTimestampParser() {
+        try {
             Caom2TestInstances ti = new Caom2TestInstances();
             ti.setComplete(false);
             ti.setDepth(1);
             Observation o = ti.getSimpleObservation();
-            
+
             String ivoaDateStr = "2017-08-15T12:34:56.000";
             String truncDateStr = "2017-08-15T12:34:56";
-            
+
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             Date ts = df.parse(ivoaDateStr);
-            
+
             CaomUtil.assignLastModified(o, ts, "lastModified");
             CaomUtil.assignLastModified(o, ts, "maxLastModified");
-            
-            
+
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObservationWriter w = new ObservationWriter();
             w.write(o, bos);
@@ -205,34 +198,30 @@ public class ObservationReaderWriterTest
             log.debug("testLenientTimestampParser[before]:\n" + xml);
             String xml2 = xml.replaceAll(ivoaDateStr, truncDateStr);
             log.debug("testLenientTimestampParser[after]:\n" + xml2);
-            
+
             ObservationReader r = new ObservationReader();
             Observation o2 = r.read(xml2);
             compareObservations(o, o2);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     // this "test" writes out a pretty complete document to use in comparison with python round-trip
     // and python meta checksum computations
     @Test
-    public void doWriteCompleteComposite()
-    {
-        try
-        {
+    public void doWriteCompleteComposite() {
+        try {
             Caom2TestInstances ti = new Caom2TestInstances();
             ti.setComplete(true);
             ti.setDepth(5);
             ti.setChildCount(2);
-            Observation o = ti.getCompositeObservation();
-            
+            Observation o = ti.getDerivedObservation();
+
             long t1 = new Date().getTime();
             long t2 = t1 + 2000l;
-            
+
             MessageDigest digest = MessageDigest.getInstance("MD5");
             CaomUtil.assignLastModified(o, new Date(t1), "lastModified");
             CaomUtil.assignLastModified(o, new Date(t2), "maxLastModified");
@@ -240,26 +229,22 @@ public class ObservationReaderWriterTest
             URI oacs = o.computeAccMetaChecksum(digest);
             CaomUtil.assignMetaChecksum(o, ocs, "metaChecksum");
             CaomUtil.assignMetaChecksum(o, oacs, "accMetaChecksum");
-            for (Plane pl : o.getPlanes())
-            {
+            for (Plane pl : o.getPlanes()) {
                 CaomUtil.assignLastModified(pl, new Date(t1), "lastModified");
                 CaomUtil.assignLastModified(pl, new Date(t2), "maxLastModified");
                 CaomUtil.assignMetaChecksum(pl, pl.computeMetaChecksum(digest), "metaChecksum");
                 CaomUtil.assignMetaChecksum(pl, pl.computeAccMetaChecksum(digest), "accMetaChecksum");
-                for (Artifact ar : pl.getArtifacts())
-                {
+                for (Artifact ar : pl.getArtifacts()) {
                     CaomUtil.assignLastModified(ar, new Date(t1), "lastModified");
                     CaomUtil.assignLastModified(ar, new Date(t2), "maxLastModified");
                     CaomUtil.assignMetaChecksum(ar, ar.computeMetaChecksum(digest), "metaChecksum");
                     CaomUtil.assignMetaChecksum(ar, ar.computeAccMetaChecksum(digest), "accMetaChecksum");
-                    for (Part pa : ar.getParts())
-                    {
+                    for (Part pa : ar.getParts()) {
                         CaomUtil.assignLastModified(pa, new Date(t1), "lastModified");
                         CaomUtil.assignLastModified(pa, new Date(t2), "maxLastModified");
                         CaomUtil.assignMetaChecksum(pa, pa.computeMetaChecksum(digest), "metaChecksum");
                         CaomUtil.assignMetaChecksum(pa, pa.computeAccMetaChecksum(digest), "accMetaChecksum");
-                        for (Chunk ch : pa.getChunks())
-                        {
+                        for (Chunk ch : pa.getChunks()) {
                             CaomUtil.assignLastModified(ch, new Date(t1), "lastModified");
                             CaomUtil.assignLastModified(ch, new Date(t2), "maxLastModified");
                             CaomUtil.assignMetaChecksum(ch, ch.computeMetaChecksum(digest), "metaChecksum");
@@ -268,271 +253,121 @@ public class ObservationReaderWriterTest
                     }
                 }
             }
-            
+
             File f = new File("sample-composite-caom24.xml");
             FileOutputStream fos = new FileOutputStream(f);
             ObservationWriter w = new ObservationWriter();
             w.write(o, fos);
             fos.close();
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testSupportAllVersions()
-    {
-        try
-        {
+    public void testSupportAllVersions() {
+        try {
             Observation obs = new SimpleObservation("FOO", "bar");
-            CaomUtil.assignID(obs, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
-            
+
             ObservationReader validatingReader = new ObservationReader();
             ObservationReader nonvalidatingReader = new ObservationReader(false);
-            
-            ObservationWriter w20 = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            w20.write(obs, bos);
-            String caom20 = bos.toString();
-            log.info("caom-2.0 XML:\n" + caom20);
-            assertTrue(caom20.contains(XmlConstants.CAOM2_0_NAMESPACE));
-            Observation obs20 = validatingReader.read(caom20);
-            compareObservations(obs, obs20);
-            
-            // add timestamps
-            long t1 = new Date().getTime();
-            long t2 = t1 + 2000l;
-            CaomUtil.assignLastModified(obs, new Date(t1), "lastModified");
-            bos = new ByteArrayOutputStream();
-            w20.write(obs, bos);
-            caom20 = bos.toString();
-            log.info("caom-2.0 XML:\n" + caom20);
-            assertTrue(caom20.contains(XmlConstants.CAOM2_0_NAMESPACE));
-            obs20 = validatingReader.read(caom20);
-            compareObservations(obs, obs20);
-            
-            // ID was UUID from CAOM-2.1 onward
-            CaomUtil.assignID(obs, UUID.randomUUID());
-            ObservationWriter w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
-            bos = new ByteArrayOutputStream();
-            w21.write(obs, bos);
-            String caom21 = bos.toString();
-            log.info("caom-2.1 XML:\n" + caom21);
-            assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
-            Observation obs21 = validatingReader.read(caom21);
-            compareObservations(obs, obs21);
-            
-            // new writer
-            w21 = new ObservationWriter("caom2", XmlConstants.CAOM2_1_NAMESPACE, false);
-            bos = new ByteArrayOutputStream();
-            w21.write(obs, bos);
-            caom21 = bos.toString();
-            log.info("caom-2.1 XML:\n" + caom21);
-            assertTrue(caom21.contains(XmlConstants.CAOM2_1_NAMESPACE));
-            obs21 = validatingReader.read(caom21);
-            compareObservations(obs, obs21);
-            
-            ObservationWriter w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
-            bos = new ByteArrayOutputStream();
-            w22.write(obs, bos);
-            String caom22 = bos.toString();
-            log.info("caom-2.2 XML:\n" + caom22);
-            assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
-            Observation obs22 = nonvalidatingReader.read(caom22);
-            compareObservations(obs, obs22);
-            
-            // new writer
-            w22 = new ObservationWriter("caom2", XmlConstants.CAOM2_2_NAMESPACE, false);
-            bos = new ByteArrayOutputStream();
-            w22.write(obs, bos);
-            caom22 = bos.toString();
-            log.info("caom-2.2 XML:\n" + caom22);
-            assertTrue(caom22.contains(XmlConstants.CAOM2_2_NAMESPACE));
-            obs22 = nonvalidatingReader.read(caom22);
-            compareObservations(obs, obs22);
 
-            ObservationWriter w23 = new ObservationWriter("caom2", XmlConstants.CAOM2_3_NAMESPACE, false);
+            ByteArrayOutputStream bos;
+
+            ObservationWriter w24 = new ObservationWriter("caom2", XmlConstants.CAOM2_4_NAMESPACE, false);
             bos = new ByteArrayOutputStream();
-            w23.write(obs, bos);
-            String caom23 = bos.toString();
-            log.info("caom-2.3 XML:\n" + caom23);
-            assertTrue(caom23.contains(XmlConstants.CAOM2_3_NAMESPACE));
-            Observation obs23 = nonvalidatingReader.read(caom23);
-            compareObservations(obs, obs23);
-            
+            w24.write(obs, bos);
+            String caom24 = bos.toString();
+            log.info("caom-2.4 XML:\n" + caom24);
+            Assert.assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
+            Observation obs24 = nonvalidatingReader.read(caom24);
+            compareObservations(obs, obs24);
+
             // add maxLastModified and meta checksums
-            CaomUtil.assignLastModified(obs, new Date(t2), "maxLastModified");
+            CaomUtil.assignLastModified(obs, new Date(), "maxLastModified");
             MessageDigest digest = MessageDigest.getInstance("MD5");
             URI ocs = obs.computeMetaChecksum(digest);
             URI oacs = obs.computeAccMetaChecksum(digest);
             CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
             CaomUtil.assignMetaChecksum(obs, oacs, "accMetaChecksum");
             bos = new ByteArrayOutputStream();
-            w23.write(obs, bos);
-            caom23 = bos.toString();
-            log.info("caom-2.3 XML:\n" + caom23);
-            assertTrue(caom23.contains(XmlConstants.CAOM2_3_NAMESPACE));
-            obs23 = nonvalidatingReader.read(caom23);
-            compareObservations(obs, obs23);
-            
-            ObservationWriter w24 = new ObservationWriter("caom2", XmlConstants.CAOM2_4_NAMESPACE, false);
-            bos = new ByteArrayOutputStream();
-            w24.write(obs, bos);
-            String caom24 = bos.toString();
-            log.info("caom-2.4 XML:\n" + caom24);
-            assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
-            Observation obs24 = nonvalidatingReader.read(caom24);
-            compareObservations(obs, obs24);
-            
-            // add maxLastModified and meta checksums
-            CaomUtil.assignLastModified(obs, new Date(t2), "maxLastModified");
-            digest = MessageDigest.getInstance("MD5");
-            ocs = obs.computeMetaChecksum(digest);
-            oacs = obs.computeAccMetaChecksum(digest);
-            CaomUtil.assignMetaChecksum(obs, ocs, "metaChecksum");
-            CaomUtil.assignMetaChecksum(obs, oacs, "accMetaChecksum");
-            bos = new ByteArrayOutputStream();
             w24.write(obs, bos);
             caom24 = bos.toString();
             log.info("caom-2.4 XML:\n" + caom24);
-            assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
+            Assert.assertTrue(caom24.contains(XmlConstants.CAOM2_4_NAMESPACE));
             obs24 = nonvalidatingReader.read(caom24);
             compareObservations(obs, obs24);
-            
-        }
-        catch(Exception unexpected)
-        {
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testInvalidLongID()
-    {
-        try
-        {
-            Observation obs = new SimpleObservation("FOO", "bar");
-            CaomUtil.assignID(obs, new UUID(0L, 1L));
-            ObservationWriter w = new ObservationWriter("caom2", XmlConstants.CAOM2_0_NAMESPACE, false);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            w.write(obs, bos);
-            String str = bos.toString();
-            String invalid = str.replace("caom2:id=\"", "caom2:id=\"x");
-            log.debug("invalid XML: " + invalid);
+    public void testCleanWhitespace() {
+        try {
             ObservationReader r = new ObservationReader();
-            Observation obs2 = r.read(invalid);
-            Assert.fail("expected ObservationParsingException");
-        }
-        catch(ObservationParsingException expected)
-        {
-            log.debug("caught expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testInvalidUUID()
-    {
-        try
-        {
-            Observation obs = new SimpleObservation("FOO", "bar");
-            CaomUtil.assignID(obs, new UUID(0L, 1L));
-            ObservationWriter w = new ObservationWriter();
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            w.write(obs, bos);
-            String str = bos.toString();
-            String invalid = str.replace("0000", "xxxx");
-            log.debug("invalid XML: " + invalid);
-            ObservationReader r = new ObservationReader();
-            Observation obs2 = r.read(invalid);
-            Assert.fail("expected ObservationParsingException");
-        }
-        catch(ObservationParsingException expected)
-        {
-            log.debug("caught expected exception: " + expected);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testCleanWhitespace()
-    {
-        try
-        {
-            ObservationReader r = new ObservationReader();
-            
+
             String actual;
-            
+
             actual = r.cleanWhitespace(null);
-            assertNull(actual);
-            
+            Assert.assertNull(actual);
+
             actual = r.cleanWhitespace("");
-            assertNull(actual);
-            
+            Assert.assertNull(actual);
+
             actual = r.cleanWhitespace("foo");
-            assertEquals("foo", actual);
-            
+            Assert.assertEquals("foo", actual);
+
             actual = r.cleanWhitespace("  trimmed  ");
-            assertEquals("trimmed", actual);
-            
+            Assert.assertEquals("trimmed", actual);
+
             actual = r.cleanWhitespace("  trim outside only  ");
-            assertEquals("trim outside only", actual);
-            
+            Assert.assertEquals("trim outside only", actual);
+
             actual = r.cleanWhitespace("  trim  multiple \t inside  ");
-            assertEquals("trim  multiple \t inside", actual); // leave inside alone
-            
+            Assert.assertEquals("trim  multiple \t inside", actual); // leave inside alone
+
             actual = r.cleanWhitespace("  trim\njunk\rinside\tphrase  ");
-            assertEquals("trim\njunk\rinside\tphrase", actual); // leave inside alone
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertEquals("trim\njunk\rinside\tphrase", actual); // leave inside alone
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testReadNull()
-    {
-        try
-        {
+    public void testReadNull() {
+        try {
             ObservationReader r = new ObservationReader();
-            
-            try { r.read((String) null); }
-            catch(IllegalArgumentException expected) { }
-            
-            try { r.read((InputStream) null); }
-            catch(IllegalArgumentException expected) { }
-            
-            try { r.read((Reader) null); }
-            catch(IllegalArgumentException expected) { }
-        }
-        catch(Exception unexpected)
-        {
+
+            try {
+                r.read((String) null);
+            } catch (IllegalArgumentException expected) {
+            }
+
+            try {
+                r.read((InputStream) null);
+            } catch (IllegalArgumentException expected) {
+            }
+
+            try {
+                r.read((Reader) null);
+            } catch (IllegalArgumentException expected) {
+            }
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testCleanWhitespaceRoundTrip()
-    {
-        try
-        {
+    public void testCleanWhitespaceRoundTrip() {
+        try {
             ObservationReader r = new ObservationReader();
-            SimpleObservation observation = new SimpleObservation("FOO", "bar");
+            SimpleObservation observation = new SimpleObservation("FOO", URI.create("caom:FOO/bar"), SimpleObservation.EXPOSURE);
             observation.telescope = new Telescope("bar\tbaz\n1.0");
             StringBuilder sb = new StringBuilder();
             ObservationWriter writer = new ObservationWriter();
@@ -543,262 +378,188 @@ public class ObservationReaderWriterTest
             // do not validate the XML.
             ObservationReader reader = new ObservationReader(false);
             Observation returned = reader.read(sb.toString());
-            
-            assertEquals("FOO", returned.getURI().getCollection());
-            assertEquals("bar", returned.getURI().getObservationID());
-            assertNotNull("has telescope", returned.telescope);
-            // no lnger sanitising
-            assertEquals("bar\tbaz\n1.0", returned.telescope.getName());
 
-        }
-        catch(Exception unexpected)
-        {
+            Assert.assertEquals(observation.getCollection(), returned.getCollection());
+            Assert.assertEquals(observation.getURI(), returned.getURI());
+            Assert.assertNotNull("has telescope", returned.telescope);
+            // no longer sanitising
+            Assert.assertEquals("bar\tbaz\n1.0", returned.telescope.getName());
+
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testMinimalSimple()
-    {
-        try
-        {
-            
-            for (int i = 1; i <= 5; i++)
-            {
+    public void testMinimalSimple() {
+        try {
+
+            for (int i = 1; i <= 5; i++) {
                 log.info("testMinimalSimple: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
                 SimpleObservation observation = getMinimalSimple(i, boundsIsCircle);
-                
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
-                
+
                 // CoordBounds2D as CoordPolygon2D
                 boundsIsCircle = false;
                 observation = getMinimalSimple(i, boundsIsCircle);
-                
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testCompleteSimple()
-    {
-        try
-        {
-            for (int i = 1; i <= 5; i++)
-            {
+    public void testRountTrip25() {
+        try {
+            final ObservationWriter w = new ObservationWriter();
+            final ObservationReader r = new ObservationReader(true);
+            
+            // level 2: Observation + Plane only (no changes in Artifact and below)
+            SimpleObservation simple = getCompleteSimple(3, false);
+            StringBuilder sb = new StringBuilder();
+            w.write(simple, sb);
+            
+            String xml = sb.toString();
+            PrintWriter pw = new PrintWriter(new File("orig.xml"));
+            pw.print(xml);
+            pw.close();
+            log.info("simple: \n" + xml);
+            Observation rt = r.read(xml);
+            log.info("read: " + rt.getClass().getSimpleName() + " " + rt.getURI());
+
+            sb = new StringBuilder();
+            w.write(rt, sb);
+            xml = sb.toString();
+            pw = new PrintWriter(new File("roundtrip.xml"));
+            pw.print(xml);
+            pw.close();
+            
+            compareObservations(simple, rt);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testCompleteSimple() {
+        try {
+            for (int i = 1; i <= 5; i++) {
                 log.info("testCompleteSimple: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
                 SimpleObservation observation = getCompleteSimple(i, boundsIsCircle);
-                
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
-                
+
                 // CoordBounds2D as CoordPolygon2D
                 boundsIsCircle = false;
                 observation = getCompleteSimple(i, boundsIsCircle);
-                
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
             }
-
-            SimpleObservation observation = getCompleteSimple(5, true);
-            testObservation(observation, false, "c2", null, true); // custom ns prefix, default namespace
-
-            // revert to 2.0 compat
-            CaomUtil.assignID(observation, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
-            // nullify optional fields introduced after 2.0 so the comparison will work
-            observation.metaProducer = null;
-            observation.requirements = null;
-            observation.target.targetID = null;
-            observation.getMetaReadGroups().clear();
-            for (Plane p : observation.getPlanes())
-            {
-                CaomUtil.assignID(p, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
-                p.metaProducer = null;
-                p.quality = null;
-                p.creatorID = null;
-                p.position = null;
-                p.energy = null;
-                p.time = null;
-                p.polarization = null;
-                p.custom = null;
-                p.observable = null;
-                p.metrics.sampleSNR = null;
-                p.getMetaReadGroups().clear();
-                p.getDataReadGroups().clear();
-                for (Artifact a : p.getArtifacts())
-                {
-                    CaomUtil.assignID(a, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
-                    a.metaProducer = null;
-                    a.contentChecksum = null;
-                    a.contentRelease = null;
-                    a.getContentReadGroups().clear();
-                    for (Part pa : a.getParts()) {
-                        CaomUtil.assignID(pa, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
-                        pa.metaProducer = null;
-                        for (Chunk c : pa.getChunks()) {
-                            c.metaProducer = null;
-                            c.customAxis = null;
-                            c.custom = null;
-                            CaomUtil.assignID(c, new UUID(0L, CaomIDGenerator.getInstance().generateID()));
-                        }
-                    }
-                }
-                
-            }
-            testObservation(observation, false, "caom2", XmlConstants.CAOM2_0_NAMESPACE, true); // compat mode
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testCompleteSimpleSetAlgorithm()
-    {
-        try
-        {
-            for (int i = 1; i <= 1; i++)
-            {
-                log.info("testCompleteSimpleSetAlgorithm: depth = " + i);
-                // CoordBounds2D as CoordCircle2D
-                boolean boundsIsCircle = true;
-                SimpleObservation observation = getCompleteSimpleSetAlgorithm(i, boundsIsCircle);
-
-                // Write empty elements.
-                testObservation(observation, true);
-
-                // Do not write empty elements.
-                testObservation(observation, false);
-
-                // CoordBounds2D as CoordPolygon2D
-                boundsIsCircle = false;
-                observation = getCompleteSimpleSetAlgorithm(i, boundsIsCircle);
-
-                // Write empty elements.
-                testObservation(observation, true);
-
-                // Do not write empty elements.
-                testObservation(observation, false);
-            }
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testMinimalComposite()
-    {
-        try
-        {
-            for (int i = 1; i < 6; i++)
-            {
+    public void testMinimalComposite() {
+        try {
+            for (int i = 1; i < 6; i++) {
                 log.info("testMinimalComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
-                DerivedObservation observation = getMinimalComposite(i, boundsIsCircle);
-                
+                DerivedObservation observation = getMinimalDerived(i, boundsIsCircle);
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
-                
+
                 // CoordBounds2D as CoordPolygon2D
                 boundsIsCircle = false;
-                observation = getMinimalComposite(i, boundsIsCircle);
-                
+                observation = getMinimalDerived(i, boundsIsCircle);
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testCompleteComposite()
-    {
-        try
-        {
-            for (int i = 1; i < 6; i++)
-            {
+    public void testCompleteComposite() {
+        try {
+            for (int i = 1; i < 6; i++) {
                 log.info("testCompleteComposite: depth = " + i);
                 // CoordBounds2D as CoordCircle2D
                 boolean boundsIsCircle = true;
-                DerivedObservation observation = getCompleteComposite(i, boundsIsCircle);
-                
+                DerivedObservation observation = getCompleteDerived(i, boundsIsCircle);
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
-                
+
                 // CoordBounds2D as CoordPolygon2D
                 boundsIsCircle = false;
-                observation = getCompleteComposite(i, boundsIsCircle);
-                
+                observation = getCompleteDerived(i, boundsIsCircle);
+
                 // Write empty elements.
                 testObservation(observation, true);
-                
+
                 // Do not write empty elements.
                 testObservation(observation, false);
             }
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     protected SimpleObservation getMinimalSimple(int depth, boolean boundsIsCircle)
-        throws Exception
-    {        
+            throws Exception {
         Caom2TestInstances instances = new Caom2TestInstances();
         instances.setComplete(false);
         instances.setDepth(depth);
         instances.setBoundsIsCircle(boundsIsCircle);
         return instances.getSimpleObservation();
     }
-    
+
     protected SimpleObservation getCompleteSimple(int depth, boolean boundsIsCircle)
-        throws Exception
-    {        
+            throws Exception {
         Caom2TestInstances instances = new Caom2TestInstances();
         instances.setComplete(true);
         instances.setDepth(depth);
@@ -806,52 +567,39 @@ public class ObservationReaderWriterTest
         return instances.getSimpleObservation();
     }
 
-    protected SimpleObservation getCompleteSimpleSetAlgorithm(int depth, boolean boundsIsCircle)
-            throws Exception
-    {
-        Caom2TestInstances instances = new Caom2TestInstances();
-        instances.setComplete(true);
-        instances.setDepth(depth);
-        instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getSimpleObservationSetAlgorithm();
-    }
-    
-    protected DerivedObservation getMinimalComposite(int depth, boolean boundsIsCircle)
-        throws Exception
-    {
+    protected DerivedObservation getMinimalDerived(int depth, boolean boundsIsCircle)
+            throws Exception {
         Caom2TestInstances instances = new Caom2TestInstances();
         instances.setComplete(false);
         instances.setDepth(depth);
         instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getCompositeObservation();
+        return instances.getDerivedObservation();
     }
-    
-    protected DerivedObservation getCompleteComposite(int depth, boolean boundsIsCircle)
-        throws Exception
-    {
+
+    protected DerivedObservation getCompleteDerived(int depth, boolean boundsIsCircle)
+            throws Exception {
         Caom2TestInstances instances = new Caom2TestInstances();
         instances.setComplete(true);
         instances.setDepth(depth);
         instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getCompositeObservation();
+        return instances.getDerivedObservation();
     }
 
     protected void testObservation(Observation observation, boolean writeEmptyCollections)
-        throws Exception
-    {
+            throws Exception {
         testObservation(observation, writeEmptyCollections, null, null, true);
     }
 
     protected void testObservation(Observation observation, boolean writeEmptyCollections, String nsPrefix, String forceNS, boolean schemaVal)
-        throws Exception
-    {
+            throws Exception {
         StringBuilder sb = new StringBuilder();
         ObservationWriter writer = null;
-        if (forceNS != null)
+        if (forceNS != null) {
             writer = new ObservationWriter(nsPrefix, forceNS, writeEmptyCollections);
-        else
+        } else {
             writer = new ObservationWriter();
-        
+        }
+
         writer.setWriteEmptyCollections(writeEmptyCollections);
         writer.write(observation, sb);
         log.debug(sb.toString());
@@ -861,77 +609,64 @@ public class ObservationReaderWriterTest
         Observation returned = reader.read(sb.toString());
 
         compareObservations(observation, returned);
-        
-        if (!schemaVal)
+
+        if (!schemaVal) {
             return;
-        
+        }
+
         // valid XML
         reader = new ObservationReader(true);
         returned = reader.read(sb.toString());
 
         compareObservations(observation, returned);
     }
-    
-    protected void compareEntity(CaomEntity expected, CaomEntity actual) throws NoSuchAlgorithmException
-    {
-        assertEquals("type", expected.getClass().getName(), actual.getClass().getName());
+
+    protected void compareEntity(CaomEntity expected, CaomEntity actual) throws NoSuchAlgorithmException {
+        Assert.assertEquals("type", expected.getClass().getName(), actual.getClass().getName());
         String t = expected.getClass().getSimpleName();
-        assertEquals(expected.getID(), actual.getID());
-        if (expected.getLastModified() != null)
-        {
-            assertNotNull(t+".lastModified", actual.getLastModified());
-            assertEquals(t+".lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
+        Assert.assertEquals(expected.getID(), actual.getID());
+        if (expected.getLastModified() != null) {
+            Assert.assertNotNull(t + ".lastModified", actual.getLastModified());
+            Assert.assertEquals(t + ".lastModified", expected.getLastModified().getTime(), actual.getLastModified().getTime());
         }
-        if (expected.getMaxLastModified() != null)
-        {
-            assertNotNull(t+".maxLastModified", actual.getMaxLastModified());
-            assertEquals(t+".maxLastModified", expected.getMaxLastModified().getTime(), actual.getMaxLastModified().getTime());
+        if (expected.getMaxLastModified() != null) {
+            Assert.assertNotNull(t + ".maxLastModified", actual.getMaxLastModified());
+            Assert.assertEquals(t + ".maxLastModified", expected.getMaxLastModified().getTime(), actual.getMaxLastModified().getTime());
         }
-        if (expected.getMetaChecksum() != null)
-        {
-            assertNotNull(t+".metaChecksum", actual.getMetaChecksum());
-            assertEquals(t+".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
+        if (expected.getMetaChecksum() != null) {
+            Assert.assertNotNull(t + ".metaChecksum", actual.getMetaChecksum());
+            Assert.assertEquals(t + ".metaChecksum", expected.getMetaChecksum(), actual.getMetaChecksum());
         }
-        if (expected.getAccMetaChecksum()!= null)
-        {
-            assertNotNull(t+".accMetaChecksum", actual.getAccMetaChecksum());
-            assertEquals(t+".accMetaChecksum", expected.getAccMetaChecksum(), actual.getAccMetaChecksum());
+        if (expected.getAccMetaChecksum() != null) {
+            Assert.assertNotNull(t + ".accMetaChecksum", actual.getAccMetaChecksum());
+            Assert.assertEquals(t + ".accMetaChecksum", expected.getAccMetaChecksum(), actual.getAccMetaChecksum());
         }
         if (expected.metaProducer == null) {
-            assertNull(t+".metaProducer", actual.metaProducer);
+            Assert.assertNull(t + ".metaProducer", actual.metaProducer);
         } else {
-            assertEquals(t+".metaProducer", expected.metaProducer, actual.metaProducer);
+            Assert.assertEquals(t + ".metaProducer", expected.metaProducer, actual.metaProducer);
         }
-        
+
         // verify checksums
         MessageDigest md5 = MessageDigest.getInstance("MD5");
         URI expectedCS = expected.computeMetaChecksum(md5);
         URI actualCS = actual.computeMetaChecksum(md5);
         Assert.assertEquals(expected.getClass().getSimpleName() + ".metaChecksum recomp", expectedCS, actualCS);
-        
+
         URI expectedAcc = actual.computeAccMetaChecksum(md5);
         URI actualAcc = actual.computeAccMetaChecksum(md5);
         Assert.assertEquals(actual.getClass().getSimpleName() + ".accMetaChecksum recomp", expectedAcc, actualAcc);
     }
-    
-    protected void compareObservations(Observation expected, Observation actual) throws NoSuchAlgorithmException
-    {
-        assertNotNull(expected.getURI().getCollection());
-        assertNotNull(actual.getURI().getCollection());
-        assertEquals(expected.getURI().getCollection(), actual.getURI().getCollection());
-        
-        assertNotNull(expected.getURI().getObservationID());
-        assertNotNull(actual.getURI().getObservationID());
-        assertEquals(expected.getURI().getObservationID(), actual.getURI().getObservationID());
-        
-        assertNotNull(expected.getAlgorithm());
-        assertNotNull(actual.getAlgorithm());
-        assertEquals(expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
-        
-        assertEquals(expected.metaRelease, actual.metaRelease);
+
+    protected void compareObservations(Observation expected, Observation actual) throws NoSuchAlgorithmException {
+        Assert.assertEquals(expected.getCollection(), actual.getCollection());
+        Assert.assertEquals(expected.getURI(), actual.getURI());
+        Assert.assertEquals(expected.getAlgorithm().getName(), actual.getAlgorithm().getName());
+
+        Assert.assertEquals(expected.metaRelease, actual.metaRelease);
         compareSets("observation.metaReadGroups", expected.getMetaReadGroups(), actual.getMetaReadGroups());
-        assertEquals(expected.getMetaReadGroups().size(), actual.getMetaReadGroups().size());
-        
+        Assert.assertEquals(expected.getMetaReadGroups().size(), actual.getMetaReadGroups().size());
+
         compareProposal(expected.proposal, actual.proposal);
         compareTarget(expected.target, actual.target);
         compareTargetPosition(expected.targetPosition, actual.targetPosition);
@@ -939,215 +674,215 @@ public class ObservationReaderWriterTest
         compareTelescope(expected.telescope, actual.telescope);
         compareInstrument(expected.instrument, actual.instrument);
         compareEnvironment(expected.environment, actual.environment);
-        
+
         comparePlanes(expected.getPlanes(), actual.getPlanes());
-        
-        if (expected instanceof DerivedObservation && actual instanceof DerivedObservation)
-        {
-            compareMembers(((DerivedObservation) expected).getMembers(), ((DerivedObservation) actual).getMembers());
+
+        if (expected instanceof DerivedObservation && actual instanceof DerivedObservation) {
+            compareSets("observation.members", ((DerivedObservation) expected).getMembers(), ((DerivedObservation) actual).getMembers());
         }
-        
+
         compareEntity(expected, actual);
     }
-    
-    protected void compareProposal(Proposal expected, Proposal actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.getID(), actual.getID());
-        assertEquals(expected.pi, actual.pi);
-        assertEquals(expected.project, actual.project);
-        assertEquals(expected.title, actual.title);
-        assertEquals(expected.getKeywords(), actual.getKeywords());
-    }
-    
-    protected void compareTarget(Target expected, Target actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.getName(), actual.getName());
-        assertEquals(expected.targetID, actual.targetID);
-        assertEquals(expected.type, actual.type);
-        assertEquals(expected.redshift, actual.redshift);
-        assertEquals(expected.getKeywords(), actual.getKeywords());
-    }
-    
-    protected void compareTargetPosition(TargetPosition expected, TargetPosition actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.getCoordsys(), actual.getCoordsys());
-        comparePoint(expected.getCoordinates(), actual.getCoordinates());
-        assertEquals(expected.equinox, actual.equinox);
-    }
-    
-    protected void comparePoint(Point expected, Point actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.cval1, actual.cval1, 0.0);
-        assertEquals(expected.cval2, actual.cval2, 0.0);
-    }
-    
-    protected void compareTelescope(Telescope expected, Telescope actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.getName(), actual.getName());
-        assertEquals(expected.geoLocationX, actual.geoLocationX);
-        assertEquals(expected.geoLocationY, actual.geoLocationY);
-        assertEquals(expected.geoLocationZ, actual.geoLocationZ);
-        assertEquals(expected.getKeywords(), actual.getKeywords());
-    }
-    
-    protected void compareInstrument(Instrument expected, Instrument actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.getName(), actual.getName());
-        assertEquals(expected.getKeywords(), actual.getKeywords());
-    }
 
-    protected void compareEnvironment(Environment expected, Environment actual)
-    {
-        if (expected == null)
-        {
-            assertNull(actual);
+    protected void compareProposal(Proposal expected, Proposal actual) {
+        if (expected == null && actual == null) {
             return;
         }
 
-        assertNotNull(actual);
-        assertEquals(expected.seeing, actual.seeing, 0.0);
-        assertEquals(expected.humidity, actual.humidity, 0.0);
-        assertEquals(expected.elevation, actual.elevation, 0.0);
-        assertEquals(expected.tau, actual.tau, 0.0);
-        assertEquals(expected.wavelengthTau, actual.wavelengthTau, 0.0);
-        assertEquals(expected.ambientTemp, actual.ambientTemp, 0.0);
-        assertEquals(expected.photometric, actual.photometric);
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.getID(), actual.getID());
+        Assert.assertEquals(expected.pi, actual.pi);
+        Assert.assertEquals(expected.project, actual.project);
+        Assert.assertEquals(expected.title, actual.title);
+        Assert.assertEquals(expected.reference, actual.reference);
+        Assert.assertEquals(expected.getKeywords(), actual.getKeywords());
+    }
+
+    protected void compareTarget(Target expected, Target actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.getName(), actual.getName());
+        Assert.assertEquals(expected.targetID, actual.targetID);
+        Assert.assertEquals(expected.type, actual.type);
+        Assert.assertEquals(expected.redshift, actual.redshift);
+        Assert.assertEquals(expected.getKeywords(), actual.getKeywords());
+    }
+
+    protected void compareTargetPosition(TargetPosition expected, TargetPosition actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.getCoordsys(), actual.getCoordsys());
+        comparePoint(expected.getCoordinates(), actual.getCoordinates());
+        Assert.assertEquals(expected.equinox, actual.equinox);
+    }
+
+    protected void comparePoint(Point expected, Point actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.getLongitude(), actual.getLongitude(), 0.0);
+        Assert.assertEquals(expected.getLatitude(), actual.getLatitude(), 0.0);
+    }
+
+    protected void compareTelescope(Telescope expected, Telescope actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.getName(), actual.getName());
+        Assert.assertEquals(expected.geoLocationX, actual.geoLocationX);
+        Assert.assertEquals(expected.geoLocationY, actual.geoLocationY);
+        Assert.assertEquals(expected.geoLocationZ, actual.geoLocationZ);
+        Assert.assertEquals(expected.trackingMode, actual.trackingMode);
+        Assert.assertEquals(expected.getKeywords(), actual.getKeywords());
+    }
+
+    protected void compareInstrument(Instrument expected, Instrument actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.getName(), actual.getName());
+        Assert.assertEquals(expected.getKeywords(), actual.getKeywords());
+    }
+
+    protected void compareEnvironment(Environment expected, Environment actual) {
+        if (expected == null) {
+            Assert.assertNull(actual);
+            return;
+        }
+
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.seeing, actual.seeing, 0.0);
+        Assert.assertEquals(expected.humidity, actual.humidity, 0.0);
+        Assert.assertEquals(expected.elevation, actual.elevation, 0.0);
+        Assert.assertEquals(expected.tau, actual.tau, 0.0);
+        Assert.assertEquals(expected.wavelengthTau, actual.wavelengthTau, 0.0);
+        Assert.assertEquals(expected.ambientTemp, actual.ambientTemp, 0.0);
+        Assert.assertEquals(expected.photometric, actual.photometric);
 
     }
-    
+
     protected void compareSets(String label, Set<URI> expected, Set<URI> actual) {
-         if (expected == null && actual == null)
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(label, expected);
-        assertNotNull(label, actual);
-        assertEquals(label + ".size", expected.size(), actual.size());
-        
+        }
+
+        Assert.assertNotNull(label, expected);
+        Assert.assertNotNull(label, actual);
+        Assert.assertEquals(label + ".size", expected.size(), actual.size());
+
         Iterator<URI> actualIter = expected.iterator();
         Iterator<URI> expectedIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
+        while (expectedIter.hasNext()) {
             URI expectedUri = expectedIter.next();
             URI actualUri = actualIter.next();
-            assertEquals(label + ".uri", expectedUri, actualUri);
+            Assert.assertEquals(label + ".uri", expectedUri, actualUri);
         }
     }
-    
-    protected void compareMembers(Set<ObservationURI> expected, Set<ObservationURI> actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compareSets(Set<URI> expected, Set<URI> actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.size(), actual.size());
-        
-        Iterator<ObservationURI> actualIter = expected.iterator();
-        Iterator<ObservationURI> expectedIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
-            ObservationURI expectedUri = expectedIter.next();
-            ObservationURI actualUri = actualIter.next();
-            
-            assertNotNull(expectedUri);
-            assertNotNull(actualUri);
-            assertEquals(expectedUri, actualUri);
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.size(), actual.size());
+
+        Iterator<URI> actualIter = expected.iterator();
+        Iterator<URI> expectedIter = actual.iterator();
+        while (expectedIter.hasNext()) {
+            URI expectedUri = expectedIter.next();
+            URI actualUri = actualIter.next();
+
+            Assert.assertNotNull(expectedUri);
+            Assert.assertNotNull(actualUri);
+            Assert.assertEquals(expectedUri, actualUri);
         }
     }
-    
-    protected void comparePlanes(Set<Plane> expected, Set<Plane> actual) throws NoSuchAlgorithmException
-    {
-        if (expected == null && actual == null)
+
+    protected void comparePlanes(Set<Plane> expected, Set<Plane> actual) throws NoSuchAlgorithmException {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.size(), actual.size());
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.size(), actual.size());
+
         Iterator expectedIter = expected.iterator();
         Iterator actualIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
+        while (expectedIter.hasNext()) {
             Plane expectedPlane = (Plane) expectedIter.next();
             Plane actualPlane = (Plane) actualIter.next();
-            
-            assertNotNull(expectedPlane);
-            assertNotNull(actualPlane);
 
-            compareEntity(expectedPlane, actualPlane);
+            Assert.assertNotNull(expectedPlane);
+            Assert.assertNotNull(actualPlane);
 
-            assertEquals(expectedPlane.getProductID(), actualPlane.getProductID());
-            assertEquals(expectedPlane.creatorID, actualPlane.creatorID);
-            assertEquals(expectedPlane.metaRelease, actualPlane.metaRelease);
+            Assert.assertEquals(expectedPlane.getURI(), actualPlane.getURI());
+            Assert.assertEquals(expectedPlane.metaRelease, actualPlane.metaRelease);
             compareSets("plane.metaReadGroups", expectedPlane.getMetaReadGroups(), actualPlane.getMetaReadGroups());
-            assertEquals(expectedPlane.dataRelease, actualPlane.dataRelease);
+            Assert.assertEquals(expectedPlane.dataRelease, actualPlane.dataRelease);
             compareSets("plane.dataReadGroups", expectedPlane.getDataReadGroups(), actualPlane.getDataReadGroups());
-            assertEquals(expectedPlane.dataProductType, actualPlane.dataProductType);
-            assertEquals(expectedPlane.calibrationLevel, actualPlane.calibrationLevel);
+            Assert.assertEquals(expectedPlane.dataProductType, actualPlane.dataProductType);
+            Assert.assertEquals(expectedPlane.calibrationLevel, actualPlane.calibrationLevel);
+
             compare(expectedPlane.metrics, actualPlane.metrics);
+            
             compare(expectedPlane.observable, actualPlane.observable);
-            
-            compareComputed(expectedPlane, actualPlane);
-            
+            compare(expectedPlane.position, actualPlane.position);
+            compare(expectedPlane.energy, actualPlane.energy);
+            compare(expectedPlane.time, actualPlane.time);
+            compare(expectedPlane.polarization, actualPlane.polarization);
+            compare(expectedPlane.custom, actualPlane.custom);
+            compare(expectedPlane.visibility, actualPlane.visibility);
+
             compareDataQuality(expectedPlane.quality, actualPlane.quality);
             compareProvenance(expectedPlane.provenance, actualPlane.provenance);
-            
+
             compareArtifacts(expectedPlane.getArtifacts(), actualPlane.getArtifacts());
-            
+
             compareEntity(expectedPlane, actualPlane);
         }
     }
-    
-    protected void compare(Requirements expected, Requirements actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compare(Requirements expected, Requirements actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.getFlag(), actual.getFlag());
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.getFlag(), actual.getFlag());
     }
-    
-    protected void compare(Metrics expected, Metrics actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compare(Metrics expected, Metrics actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compare(expected.background, actual.background);
         compare(expected.backgroundStddev, actual.backgroundStddev);
         compare(expected.fluxDensityLimit, actual.fluxDensityLimit);
@@ -1155,529 +890,447 @@ public class ObservationReaderWriterTest
         compare(expected.sourceNumberDensity, actual.sourceNumberDensity);
         compare(expected.sampleSNR, actual.sampleSNR);
     }
-    
+
     protected void compare(Double e, Double a) {
-        if (e == null)
+        if (e == null) {
             Assert.assertNull(a);
-        else
+        } else {
             Assert.assertEquals(e, a, 0.0);
+        }
     }
-     
-     
-     
-    protected void compare(Observable expected, Observable actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compare(Observable expected, Observable actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.getUCD(), actual.getUCD());
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.getUCD(), actual.getUCD());
+        Assert.assertEquals(expected.calibration, actual.calibration);
     }
-    
-    protected void compareComputed(Plane expected, Plane actual)
-    {
-        compare(expected.position, actual.position);
-        compare(expected.energy, actual.energy);
-        compare(expected.time, actual.time);
-        compare(expected.polarization, actual.polarization);
-        compare(expected.custom, actual.custom);
-    }
-    
-    protected void compare(Position expected, Position actual)
-    {
-        if (expected == null)
-        {
+
+    protected void compare(Position expected, Position actual) {
+        if (expected == null) {
             Assert.assertNull(actual);
             return;
         }
-        if (expected.bounds == null)
-            Assert.assertNull(actual.bounds);
-        else {
-            compare(expected.bounds, actual.bounds);
+        compare(expected.getBounds(), actual.getBounds());
+        compare(expected.getSamples(), actual.getSamples());
+        
+        if (expected.minBounds == null) {
+            Assert.assertNull(actual.minBounds);
+        } else {
+            compare(expected.minBounds, actual.minBounds);
         }
-            
-        if (expected.dimension == null)
+        if (expected.dimension == null) {
             Assert.assertNull(actual.dimension);
-        else
-        {
+        } else {
             Assert.assertEquals(expected.dimension.naxis1, actual.dimension.naxis1);
             Assert.assertEquals(expected.dimension.naxis2, actual.dimension.naxis2);
         }
-        if (expected.resolution == null)
-            Assert.assertNull(actual.resolution);
-        else
-            Assert.assertEquals(expected.resolution, actual.resolution);
-        
+        compare(expected.maxAngularScale, actual.maxAngularScale);
+        compare(expected.resolution, actual.resolution);
         compare(expected.resolutionBounds, actual.resolutionBounds);
-        
-        if (expected.sampleSize == null)
-            Assert.assertNull(actual.sampleSize);
-        else
-            Assert.assertEquals(expected.sampleSize, actual.sampleSize);
-        if (expected.timeDependent == null)
-            Assert.assertNull(actual.timeDependent);
-        else
-            Assert.assertEquals(expected.timeDependent, actual.timeDependent);
+        compare(expected.sampleSize, actual.sampleSize);
+        Assert.assertEquals(expected.calibration, actual.calibration);
     }
-    
-    protected void compare(Energy expected, Energy actual)
-    {
-        if (expected == null)
-        {
+
+    protected void compare(Energy expected, Energy actual) {
+        if (expected == null) {
             Assert.assertNull(actual);
             return;
         }
-        if (expected.bounds == null)
-            Assert.assertNull(actual.bounds);
-        else
-        {
-            Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
-            Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
-            Iterator<Interval> esi = expected.bounds.getSamples().iterator();
-            Iterator<Interval> asi = expected.bounds.getSamples().iterator();
-            while (esi.hasNext()) {
-                Interval ei = esi.next();
-                Interval ai = asi.next();
-                compare(ei, ai);
-            }
-        }
-        
-        Assert.assertEquals(expected.dimension, actual.dimension);
-        Assert.assertEquals(expected.resolvingPower, actual.resolvingPower);
-        compare(expected.resolvingPowerBounds, actual.resolvingPowerBounds);
-        Assert.assertEquals(expected.sampleSize, actual.sampleSize);
-        Assert.assertEquals(expected.bandpassName, actual.bandpassName);
+        Assert.assertEquals(expected.getBounds(), actual.getBounds());
+        Assert.assertEquals(expected.getSamples(), actual.getSamples());
         
         Assert.assertEquals("energyBands", expected.getEnergyBands().size(), actual.getEnergyBands().size());
         Iterator<EnergyBand> ebs = expected.getEnergyBands().iterator();
         Iterator<EnergyBand> abs = actual.getEnergyBands().iterator();
-        while(ebs.hasNext()) {
+        while (ebs.hasNext()) {
             Assert.assertEquals(ebs.next(), abs.next());
         }
-        
-        Assert.assertEquals(expected.restwav, actual.restwav);
-        if (expected.transition == null)
-            Assert.assertNull(actual.transition);
-        else
-        {
-            Assert.assertEquals(expected.transition.getSpecies(), actual.transition.getSpecies());
-            Assert.assertEquals(expected.transition.getTransition(), actual.transition.getTransition());
-        }
-    }
-    
-    protected void compare(Time expected, Time actual)
-    {
-        if (expected == null)
-        {
-            Assert.assertNull(actual);
-            return;
-        }
-        if (expected.bounds == null)
-            Assert.assertNull(actual.bounds);
-        else
-        {
-            Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
-            Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
-            Iterator<Interval> esi = expected.bounds.getSamples().iterator();
-            Iterator<Interval> asi = expected.bounds.getSamples().iterator();
-            while (esi.hasNext()) {
-                Interval ei = esi.next();
-                Interval ai = asi.next();
-                compare(ei, ai);
-            }
-        }
-        
         Assert.assertEquals(expected.dimension, actual.dimension);
+        Assert.assertEquals(expected.resolvingPower, actual.resolvingPower);
+        compare(expected.resolvingPowerBounds, actual.resolvingPowerBounds);
         Assert.assertEquals(expected.resolution, actual.resolution);
         compare(expected.resolutionBounds, actual.resolutionBounds);
         Assert.assertEquals(expected.sampleSize, actual.sampleSize);
-        Assert.assertEquals(expected.exposure, actual.exposure);
+        Assert.assertEquals(expected.bandpassName, actual.bandpassName);
+        Assert.assertEquals(expected.rest, actual.rest);
+        if (expected.transition == null) {
+            Assert.assertNull(actual.transition);
+        } else {
+            Assert.assertEquals(expected.transition.getSpecies(), actual.transition.getSpecies());
+            Assert.assertEquals(expected.transition.getTransition(), actual.transition.getTransition());
+        }
+        Assert.assertEquals(expected.rest, actual.rest);
+        Assert.assertEquals(expected.calibration, actual.calibration);
     }
-    
-    protected void compare(Polarization expected, Polarization actual)
-    {
-        if (expected == null)
-        {
+
+    protected void compare(Time expected, Time actual) {
+        if (expected == null) {
             Assert.assertNull(actual);
             return;
         }
-        if (expected.states == null)
-            Assert.assertNull(actual.states);
-        else
-        {
-            Assert.assertEquals(expected.dimension, actual.dimension);
-            Assert.assertEquals(expected.states.size(), actual.states.size());
-            // states is in canonical order already
-            Iterator<PolarizationState> ei = expected.states.iterator();
-            Iterator<PolarizationState> ai = actual.states.iterator();
-            while ( ei.hasNext() )
-            {
-                Assert.assertEquals(ei.next(), ai.next());
-            }
+        Assert.assertEquals(expected.getBounds(), actual.getBounds());
+        Assert.assertEquals(expected.getSamples(), actual.getSamples());
+
+        Assert.assertEquals(expected.dimension, actual.dimension);
+        Assert.assertEquals(expected.resolution, actual.resolution);
+        compare(expected.resolutionBounds, actual.resolutionBounds);
+        Assert.assertEquals(expected.exposure, actual.exposure);
+        compare(expected.exposureBounds, actual.exposureBounds);
+        Assert.assertEquals(expected.sampleSize, actual.sampleSize);
+        Assert.assertEquals(expected.calibration, actual.calibration);
+    }
+
+    protected void compare(Polarization expected, Polarization actual) {
+        if (expected == null) {
+            Assert.assertNull(actual);
+            return;
+        }
+        Assert.assertEquals(expected.dimension, actual.dimension);
+        Assert.assertEquals(expected.getStates().size(), actual.getStates().size());
+        // states is in canonical order already
+        Iterator<PolarizationState> ei = expected.getStates().iterator();
+        Iterator<PolarizationState> ai = actual.getStates().iterator();
+        while (ei.hasNext()) {
+            Assert.assertEquals(ei.next(), ai.next());
         }
     }
-    
-    protected void compare(CustomAxis expected, CustomAxis actual)
-    {
-        if (expected == null)
-        {
+
+    protected void compare(CustomAxis expected, CustomAxis actual) {
+        if (expected == null) {
             Assert.assertNull(actual);
             return;
         }
         Assert.assertNotNull("plane.custom", actual);
         Assert.assertEquals("CustomAxis.ctype", expected.getCtype(), actual.getCtype());
-        
-        if (expected.bounds == null)
-            Assert.assertNull(actual.bounds);
-        else
-        {
-            Assert.assertEquals(expected.bounds.getLower(), actual.bounds.getLower(), 0.0);
-            Assert.assertEquals(expected.bounds.getUpper(), actual.bounds.getUpper(), 0.0);
-            Iterator<Interval> esi = expected.bounds.getSamples().iterator();
-            Iterator<Interval> asi = expected.bounds.getSamples().iterator();
-            while (esi.hasNext()) {
-                Interval ei = esi.next();
-                Interval ai = asi.next();
-                Assert.assertEquals(ei.getLower(), ai.getLower(), 0.0);
-                Assert.assertEquals(ei.getUpper(), ai.getUpper(), 0.0);
-            }
-        }
+
+        Assert.assertEquals(expected.getBounds().getLower(), actual.getBounds().getLower(), 0.0);
+        Assert.assertEquals(expected.getBounds().getUpper(), actual.getBounds().getUpper(), 0.0);
+        // TODO: samples
         
         Assert.assertEquals(expected.dimension, actual.dimension);
-        
     }
-    
+
+    protected void compare(Visibility expected, Visibility actual) {
+        if (expected == null) {
+            Assert.assertNull(actual);
+            return;
+        }
+        Assert.assertNotNull("plane.visibility", actual);
+        compare(expected.getDistance(), actual.getDistance());
+        compare(expected.getDistributionEccentricity(), actual.getDistributionEccentricity());
+        compare(expected.getDistributionFill(), actual.getDistributionFill());
+    }
+
+    protected void compare(MultiShape expected, MultiShape actual) {
+        Assert.assertEquals(expected.getShapes().size(), actual.getShapes().size());
+        Iterator<Shape> ei = expected.getShapes().iterator();
+        Iterator<Shape> ai = actual.getShapes().iterator();
+        while (ei.hasNext()) {
+            compare(ei.next(), ai.next());
+        }
+    }
+
     protected void compare(Shape expected, Shape actual) {
-        assertEquals(expected.getClass(), actual.getClass());
+        Assert.assertEquals(expected.getClass().getName(), actual.getClass().getName());
         if (expected instanceof Circle) {
             Circle ec = (Circle) expected;
             Circle ac = (Circle) actual;
-            assertEquals(ec.getCenter().cval1, ac.getCenter().cval1, 0.0);
-            assertEquals(ec.getCenter().cval2, ac.getCenter().cval2, 0.0);
-            assertEquals(ec.getRadius(), ac.getRadius(), 0.0);
+            Assert.assertEquals(ec.getCenter().getLongitude(), ac.getCenter().getLongitude(), 0.0);
+            Assert.assertEquals(ec.getCenter().getLatitude(), ac.getCenter().getLatitude(), 0.0);
+            Assert.assertEquals(ec.getRadius(), ac.getRadius(), 0.0);
         } else if (expected instanceof Polygon) {
             Polygon ep = (Polygon) expected;
             Polygon ap = (Polygon) actual;
-            assertEquals(ep.getPoints().size(), ap.getPoints().size());
-            for (int i = 0; i < ep.getPoints().size(); i++) {
-                Point ept = ep.getPoints().get(i);
-                Point apt = ap.getPoints().get(i);
-                assertEquals(ept.cval1, apt.cval1, 0.0);
-                assertEquals(ept.cval2, apt.cval2, 0.0);
-            }
-            assertEquals(ep.getSamples().getVertices().size(), ap.getSamples().getVertices().size());
-            for (int i = 0; i < ep.getSamples().getVertices().size(); i++) {
-                Vertex ev = ep.getSamples().getVertices().get(i);
-                Vertex av = ap.getSamples().getVertices().get(i);
-                assertEquals(ev.cval1, av.cval1, 0.0);
-                assertEquals(ev.cval2, av.cval2, 0.0);
-                assertEquals(ev.getType(), av.getType());
+            Assert.assertEquals(ep.getVertices().size(), ap.getVertices().size());
+            for (int i = 0; i < ep.getVertices().size(); i++) {
+                Point ept = ep.getVertices().get(i);
+                Point apt = ap.getVertices().get(i);
+                Assert.assertEquals(ept.getLongitude(), apt.getLongitude(), 0.0);
+                Assert.assertEquals(ept.getLatitude(), apt.getLatitude(), 0.0);
             }
         } else {
             throw new RuntimeException("TEST BUG: unexpected shape type: " + expected.getClass().getName());
         }
     }
-    
-    protected void compare(Interval expected, Interval actual) {
-        if (expected == null)
-        {
+
+    protected void compare(List<DoubleInterval> expected, List<DoubleInterval> actual) {
+        Assert.assertEquals(expected.size(), actual.size());
+        Iterator<DoubleInterval> ei = expected.iterator();
+        Iterator<DoubleInterval> ai = actual.iterator();
+        while (ei.hasNext()) {
+            compare(ei.next(), ai.next());
+        }
+    }
+
+    protected void compare(DoubleInterval expected, DoubleInterval actual) {
+        if (expected == null) {
             Assert.assertNull(actual);
             return;
         }
         Assert.assertEquals(expected.getLower(), actual.getLower(), 0.0);
         Assert.assertEquals(expected.getUpper(), actual.getUpper(), 0.0);
     }
-    
-    protected void compareDataQuality(DataQuality expected, DataQuality actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compareDataQuality(DataQuality expected, DataQuality actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.getFlag(), actual.getFlag());
-    }
-    
-    protected void compareProvenance(Provenance expected, Provenance actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.version, actual.version);
-        assertEquals(expected.project, actual.project);
-        assertEquals(expected.producer, actual.producer);
-        assertEquals(expected.runID, actual.runID);
-        assertEquals(expected.reference, actual.reference);
-        assertEquals(expected.lastExecuted, actual.lastExecuted);
-        compareInputs(expected.getInputs(), actual.getInputs());
-    }
-    
-    protected void compareInputs(Set<PlaneURI> expected, Set<PlaneURI> actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.size(), actual.size());
-        
-        Iterator actualIter = expected.iterator();
-        Iterator expectedIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
-            PlaneURI expectedPlaneUri = (PlaneURI) expectedIter.next();
-            PlaneURI actualPlaneUri = (PlaneURI) actualIter.next();
-            
-            assertNotNull(expectedPlaneUri);
-            assertNotNull(actualPlaneUri);
-            assertEquals(expectedPlaneUri, actualPlaneUri);
         }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.getFlag(), actual.getFlag());
     }
-    
-    protected void compareArtifacts(Set<Artifact> expected, Set<Artifact> actual) throws NoSuchAlgorithmException
-    {
-        if (expected == null && actual == null)
+
+    protected void compareProvenance(Provenance expected, Provenance actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.size(), actual.size());
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.version, actual.version);
+        Assert.assertEquals(expected.project, actual.project);
+        Assert.assertEquals(expected.producer, actual.producer);
+        Assert.assertEquals(expected.runID, actual.runID);
+        Assert.assertEquals(expected.reference, actual.reference);
+        Assert.assertEquals(expected.lastExecuted, actual.lastExecuted);
+        compareSets("provenance.inputs", expected.getInputs(), actual.getInputs());
+    }
+
+    protected void compareArtifacts(Set<Artifact> expected, Set<Artifact> actual) throws NoSuchAlgorithmException {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.size(), actual.size());
+
         Iterator actualIter = expected.iterator();
         Iterator expectedIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
+        while (expectedIter.hasNext()) {
             Artifact expectedArtifact = (Artifact) expectedIter.next();
             Artifact actualArtifact = (Artifact) actualIter.next();
-            
-            assertNotNull(expectedArtifact);
-            assertNotNull(actualArtifact);
 
-            assertEquals(expectedArtifact.getURI(), actualArtifact.getURI());
-            assertEquals(expectedArtifact.getProductType(), actualArtifact.getProductType());
-            assertEquals(expectedArtifact.getReleaseType(), actualArtifact.getReleaseType());
-            
-            assertEquals(expectedArtifact.contentType, actualArtifact.contentType);
-            assertEquals(expectedArtifact.contentLength, actualArtifact.contentLength);
-            if (expectedArtifact.contentChecksum != null && actualArtifact.contentChecksum != null)
-            {
-                assertEquals(expectedArtifact.contentChecksum, actualArtifact.contentChecksum);
-            }
+            Assert.assertNotNull(expectedArtifact);
+            Assert.assertNotNull(actualArtifact);
 
-            assertEquals(expectedArtifact.contentRelease, actualArtifact.contentRelease);
+            Assert.assertEquals(expectedArtifact.getURI(), actualArtifact.getURI());
+            Assert.assertEquals(expectedArtifact.getProductType(), actualArtifact.getProductType());
+            Assert.assertEquals(expectedArtifact.getReleaseType(), actualArtifact.getReleaseType());
+
+            Assert.assertEquals(expectedArtifact.contentType, actualArtifact.contentType);
+            Assert.assertEquals(expectedArtifact.contentLength, actualArtifact.contentLength);
+            Assert.assertEquals(expectedArtifact.contentChecksum, actualArtifact.contentChecksum);
+            Assert.assertEquals(expectedArtifact.contentRelease, actualArtifact.contentRelease);
             compareSets("Artifact.contentReadGroups", expectedArtifact.getContentReadGroups(), actualArtifact.getContentReadGroups());
-            
+
             compareParts(expectedArtifact.getParts(), expectedArtifact.getParts());
-            
+
             compareEntity(expectedArtifact, actualArtifact);
         }
     }
-    
-    protected void compareParts(Set<Part> expected, Set<Part> actual) throws NoSuchAlgorithmException
-    {
-        if (expected == null && actual == null)
+
+    protected void compareParts(Set<Part> expected, Set<Part> actual) throws NoSuchAlgorithmException {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.size(), actual.size());
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.size(), actual.size());
+
         Iterator actualIter = expected.iterator();
         Iterator expectedIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
+        while (expectedIter.hasNext()) {
             Part expectedPart = (Part) expectedIter.next();
             Part actualPart = (Part) actualIter.next();
-            
-            assertNotNull(expectedPart);
-            assertNotNull(actualPart);
 
-            assertEquals(expectedPart.getName(), actualPart.getName());
-            assertEquals(expectedPart.productType, actualPart.productType);
+            Assert.assertNotNull(expectedPart);
+            Assert.assertNotNull(actualPart);
+
+            Assert.assertEquals(expectedPart.getName(), actualPart.getName());
+            Assert.assertEquals(expectedPart.productType, actualPart.productType);
 
             compareChunks(expectedPart.getChunks(), actualPart.getChunks());
-            
+
             compareEntity(expectedPart, actualPart);
         }
     }
-    
-    protected void compareChunks(Set<Chunk> expected, Set<Chunk> actual) throws NoSuchAlgorithmException
-    {
-        if (expected == null && actual == null)
+
+    protected void compareChunks(Set<Chunk> expected, Set<Chunk> actual) throws NoSuchAlgorithmException {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        assertEquals(expected.size(), actual.size());
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+        Assert.assertEquals(expected.size(), actual.size());
+
         Iterator actualIter = expected.iterator();
         Iterator expectedIter = actual.iterator();
-        while (expectedIter.hasNext())
-        {
+        while (expectedIter.hasNext()) {
             Chunk expectedChunk = (Chunk) expectedIter.next();
             Chunk actualChunk = (Chunk) actualIter.next();
-            
-            assertNotNull(expectedChunk);
-            assertNotNull(actualChunk);
 
-            assertEquals(expectedChunk.productType, actualChunk.productType);
-            assertEquals(expectedChunk.naxis, actualChunk.naxis);
-            assertEquals(expectedChunk.observableAxis, actualChunk.observableAxis);
-            assertEquals(expectedChunk.positionAxis1, actualChunk.positionAxis1);
-            assertEquals(expectedChunk.positionAxis2, actualChunk.positionAxis2);
-            assertEquals(expectedChunk.energyAxis, actualChunk.energyAxis);
-            assertEquals(expectedChunk.timeAxis, actualChunk.timeAxis);
-            assertEquals(expectedChunk.polarizationAxis, actualChunk.polarizationAxis);
-            assertEquals(expectedChunk.customAxis, actualChunk.customAxis);
-            
+            Assert.assertNotNull(expectedChunk);
+            Assert.assertNotNull(actualChunk);
+
+            Assert.assertEquals(expectedChunk.productType, actualChunk.productType);
+            Assert.assertEquals(expectedChunk.naxis, actualChunk.naxis);
+            Assert.assertEquals(expectedChunk.observableAxis, actualChunk.observableAxis);
+            Assert.assertEquals(expectedChunk.positionAxis1, actualChunk.positionAxis1);
+            Assert.assertEquals(expectedChunk.positionAxis2, actualChunk.positionAxis2);
+            Assert.assertEquals(expectedChunk.energyAxis, actualChunk.energyAxis);
+            Assert.assertEquals(expectedChunk.timeAxis, actualChunk.timeAxis);
+            Assert.assertEquals(expectedChunk.polarizationAxis, actualChunk.polarizationAxis);
+            Assert.assertEquals(expectedChunk.customAxis, actualChunk.customAxis);
+
             compareObservableAxis(expectedChunk.observable, actualChunk.observable);
             compareSpatialWCS(expectedChunk.position, actualChunk.position);
             compareSpectralWCS(expectedChunk.energy, actualChunk.energy);
             compareTemporalWCS(expectedChunk.time, actualChunk.time);
             comparePolarizationWCS(expectedChunk.polarization, actualChunk.polarization);
             compare(expectedChunk.custom, actualChunk.custom);
-            
+
             compareEntity(expectedChunk, actualChunk);
         }
     }
-    
-    protected void compareObservableAxis(ObservableAxis expected, ObservableAxis actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compareObservableAxis(ObservableAxis expected, ObservableAxis actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareSlice(expected.getDependent(), actual.getDependent());
         compareSlice(expected.independent, actual.independent);
     }
-    
-    protected void compareSpatialWCS(SpatialWCS expected, SpatialWCS actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compareSpatialWCS(SpatialWCS expected, SpatialWCS actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareCoordAxis2D(expected.getAxis(), actual.getAxis());
-        assertEquals(expected.coordsys, actual.coordsys);
-        assertEquals(expected.equinox, actual.equinox);
-        assertEquals(expected.resolution, actual.resolution);
+        Assert.assertEquals(expected.coordsys, actual.coordsys);
+        Assert.assertEquals(expected.equinox, actual.equinox);
+        Assert.assertEquals(expected.resolution, actual.resolution);
     }
-    
-    protected void compareSpectralWCS(SpectralWCS expected, SpectralWCS actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compareSpectralWCS(SpectralWCS expected, SpectralWCS actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareCoordAxis1D(expected.getAxis(), actual.getAxis());
-        assertEquals(expected.bandpassName, actual.bandpassName);
-        assertEquals(expected.resolvingPower, actual.resolvingPower);
-        assertEquals(expected.restfrq, actual.restfrq);
-        assertEquals(expected.restwav, actual.restwav);
-        assertEquals(expected.getSpecsys(), actual.getSpecsys());
-        assertEquals(expected.ssysobs, actual.ssysobs);
-        assertEquals(expected.ssyssrc, actual.ssyssrc);
-        assertEquals(expected.velang, actual.velang);
-        assertEquals(expected.velosys, actual.velosys);
-        assertEquals(expected.zsource, actual.zsource);
+        Assert.assertEquals(expected.bandpassName, actual.bandpassName);
+        Assert.assertEquals(expected.resolvingPower, actual.resolvingPower);
+        Assert.assertEquals(expected.restfrq, actual.restfrq);
+        Assert.assertEquals(expected.restwav, actual.restwav);
+        Assert.assertEquals(expected.getSpecsys(), actual.getSpecsys());
+        Assert.assertEquals(expected.ssysobs, actual.ssysobs);
+        Assert.assertEquals(expected.ssyssrc, actual.ssyssrc);
+        Assert.assertEquals(expected.velang, actual.velang);
+        Assert.assertEquals(expected.velosys, actual.velosys);
+        Assert.assertEquals(expected.zsource, actual.zsource);
     }
-    
-    protected void compareTemporalWCS(TemporalWCS expected, TemporalWCS actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void compareTemporalWCS(TemporalWCS expected, TemporalWCS actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareCoordAxis1D(expected.getAxis(), actual.getAxis());
-        assertEquals(expected.exposure, actual.exposure);
-        assertEquals(expected.resolution, actual.resolution);
+        Assert.assertEquals(expected.exposure, actual.exposure);
+        Assert.assertEquals(expected.resolution, actual.resolution);
     }
-    
-    protected void comparePolarizationWCS(PolarizationWCS expected, PolarizationWCS actual)
-    {
-        if (expected == null && actual == null)
+
+    protected void comparePolarizationWCS(PolarizationWCS expected, PolarizationWCS actual) {
+        if (expected == null && actual == null) {
             return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        compareCoordAxis1D(expected.getAxis(), actual.getAxis());
-    }
-    
-    protected void compare(CustomWCS expected, CustomWCS actual)
-    {
-        if (expected == null && actual == null)
-            return;
-        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareCoordAxis1D(expected.getAxis(), actual.getAxis());
     }
-    
-    protected void compareAxis(Axis expected, Axis actual)
-    {        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(actual.getCtype());
-        assertNotNull(actual.getCunit());
-        
-        assertEquals(expected.getCtype(), actual.getCtype());
-        assertEquals(expected.getCunit(), actual.getCunit());
+
+    protected void compare(CustomWCS expected, CustomWCS actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        compareCoordAxis1D(expected.getAxis(), actual.getAxis());
     }
-    
-    protected void compareValueCoord2(ValueCoord2D expected, ValueCoord2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.coord1, actual.coord1, 0.0);
-        assertEquals(expected.coord2, actual.coord2, 0.0);
+
+    protected void compareAxis(Axis expected, Axis actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(actual.getCtype());
+        Assert.assertNotNull(actual.getCunit());
+
+        Assert.assertEquals(expected.getCtype(), actual.getCtype());
+        Assert.assertEquals(expected.getCunit(), actual.getCunit());
     }
-    
-    protected void compareCoord2D(Coord2D expected, Coord2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+
+    protected void compareValueCoord2(ValueCoord2D expected, ValueCoord2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.coord1, actual.coord1, 0.0);
+        Assert.assertEquals(expected.coord2, actual.coord2, 0.0);
+    }
+
+    protected void compareCoord2D(Coord2D expected, Coord2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareRefCoord(expected.getCoord1(), actual.getCoord1());
         compareRefCoord(expected.getCoord2(), actual.getCoord2());
     }
-    
-    protected void compareCoordAxis1D(CoordAxis1D expected, CoordAxis1D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+
+    protected void compareCoordAxis1D(CoordAxis1D expected, CoordAxis1D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareCoordError(expected.error, actual.error);
         compareCoordRange1D(expected.range, actual.range);
         compareCoordBounds1D(expected.bounds, actual.bounds);
         compareCoordFunction1D(expected.function, actual.function);
     }
-    
-    protected void compareCoordAxis2D(CoordAxis2D expected, CoordAxis2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
 
-        assertNotNull(actual.getAxis1());
-        assertNotNull(actual.getAxis2());
-        
+    protected void compareCoordAxis2D(CoordAxis2D expected, CoordAxis2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(actual.getAxis1());
+        Assert.assertNotNull(actual.getAxis2());
+
         compareAxis(expected.getAxis1(), actual.getAxis1());
         compareAxis(expected.getAxis2(), actual.getAxis2());
         compareCoordError(expected.error1, actual.error1);
@@ -1686,160 +1339,147 @@ public class ObservationReaderWriterTest
         compareCoordBounds2D(expected.bounds, actual.bounds);
         compareCoordFunction2D(expected.function, actual.function);
     }
-    
-    protected void compareCoordBounds1D(CoordBounds1D expected, CoordBounds1D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(expected.getSamples());
-        assertNotNull(actual.getSamples());
-        assertEquals(expected.getSamples().size(), actual.getSamples().size());
-        
+
+    protected void compareCoordBounds1D(CoordBounds1D expected, CoordBounds1D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(expected.getSamples());
+        Assert.assertNotNull(actual.getSamples());
+        Assert.assertEquals(expected.getSamples().size(), actual.getSamples().size());
+
         Iterator actualIter = expected.getSamples().iterator();
         Iterator expectedIter = actual.getSamples().iterator();
-        while (expectedIter.hasNext())
-        {
+        while (expectedIter.hasNext()) {
             CoordRange1D expectedRange = (CoordRange1D) expectedIter.next();
             CoordRange1D actualRange = (CoordRange1D) actualIter.next();
             compareCoordRange1D(expectedRange, actualRange);
         }
     }
-    
-    protected void compareCoordBounds2D(CoordBounds2D expected, CoordBounds2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        if (expected instanceof CoordCircle2D && actual instanceof CoordCircle2D)
+
+    protected void compareCoordBounds2D(CoordBounds2D expected, CoordBounds2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        if (expected instanceof CoordCircle2D && actual instanceof CoordCircle2D) {
             compareCoordCircle2D((CoordCircle2D) expected, (CoordCircle2D) actual);
-        else if (expected instanceof CoordPolygon2D && actual instanceof CoordPolygon2D)
+        } else if (expected instanceof CoordPolygon2D && actual instanceof CoordPolygon2D) {
             compareCoordPolygon2D((CoordPolygon2D) expected, (CoordPolygon2D) actual);
-        else
-            fail("CoordBounds2D expected and actual are different types.");
-                
+        } else {
+            Assert.fail("CoordBounds2D expected and actual are different types.");
+        }
+
     }
-    
-    protected void compareCoordCircle2D(CoordCircle2D expected, CoordCircle2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(actual.getCenter());
-        assertNotNull(actual.getRadius());
+
+    protected void compareCoordCircle2D(CoordCircle2D expected, CoordCircle2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(actual.getCenter());
+        Assert.assertNotNull(actual.getRadius());
         compareValueCoord2(expected.getCenter(), actual.getCenter());
-        assertEquals(expected.getRadius(), actual.getRadius());
+        Assert.assertEquals(expected.getRadius(), actual.getRadius());
     }
-    
-    protected void compareCoordError(CoordError expected, CoordError actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(actual.syser);
-        assertNotNull(actual.rnder);
-        
-        assertEquals(expected.syser, actual.syser);
-        assertEquals(expected.rnder, actual.rnder);
+
+    protected void compareCoordError(CoordError expected, CoordError actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(actual.syser);
+        Assert.assertNotNull(actual.rnder);
+
+        Assert.assertEquals(expected.syser, actual.syser);
+        Assert.assertEquals(expected.rnder, actual.rnder);
     }
-    
-    protected void compareCoordFunction1D(CoordFunction1D expected, CoordFunction1D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.getNaxis(), actual.getNaxis());
-        assertEquals(expected.getDelta(), actual.getDelta());
+
+    protected void compareCoordFunction1D(CoordFunction1D expected, CoordFunction1D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.getNaxis(), actual.getNaxis());
+        Assert.assertEquals(expected.getDelta(), actual.getDelta());
         compareRefCoord(expected.getRefCoord(), actual.getRefCoord());
     }
-    
-    protected void compareCoordFunction2D(CoordFunction2D expected, CoordFunction2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(actual.getDimension());
-        assertNotNull(actual.getRefCoord());
-        assertNotNull(actual.getCd11());
-        assertNotNull(actual.getCd12());
-        assertNotNull(actual.getCd21());
-        assertNotNull(actual.getCd22());
-        
+
+    protected void compareCoordFunction2D(CoordFunction2D expected, CoordFunction2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(actual.getDimension());
+        Assert.assertNotNull(actual.getRefCoord());
+        Assert.assertNotNull(actual.getCd11());
+        Assert.assertNotNull(actual.getCd12());
+        Assert.assertNotNull(actual.getCd21());
+        Assert.assertNotNull(actual.getCd22());
+
         compareDimension2D(expected.getDimension(), actual.getDimension());
         compareCoord2D(expected.getRefCoord(), actual.getRefCoord());
-        assertEquals(expected.getCd11(), actual.getCd11(), 0.0);
-        assertEquals(expected.getCd12(), actual.getCd12(), 0.0);
-        assertEquals(expected.getCd21(), actual.getCd21(), 0.0);
-        assertEquals(expected.getCd22(), actual.getCd22(), 0.0);
+        Assert.assertEquals(expected.getCd11(), actual.getCd11(), 0.0);
+        Assert.assertEquals(expected.getCd12(), actual.getCd12(), 0.0);
+        Assert.assertEquals(expected.getCd21(), actual.getCd21(), 0.0);
+        Assert.assertEquals(expected.getCd22(), actual.getCd22(), 0.0);
     }
-    
-    protected void compareCoordPolygon2D(CoordPolygon2D expected, CoordPolygon2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(expected.getVertices());
-        assertNotNull(actual.getVertices());
-        assertEquals(expected.getVertices().size(), actual.getVertices().size());
-        
+
+    protected void compareCoordPolygon2D(CoordPolygon2D expected, CoordPolygon2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(expected.getVertices());
+        Assert.assertNotNull(actual.getVertices());
+        Assert.assertEquals(expected.getVertices().size(), actual.getVertices().size());
+
         Iterator<ValueCoord2D> actualIter = expected.getVertices().iterator();
         Iterator<ValueCoord2D> expectedIter = actual.getVertices().iterator();
-        while (expectedIter.hasNext())
-        {
+        while (expectedIter.hasNext()) {
             ValueCoord2D expectedCoord2D = expectedIter.next();
             ValueCoord2D actualCoord2D = actualIter.next();
             compareValueCoord2(expectedCoord2D, actualCoord2D);
         }
     }
-    
-    protected void compareCoordRange1D(CoordRange1D expected, CoordRange1D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
+
+    protected void compareCoordRange1D(CoordRange1D expected, CoordRange1D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
         compareRefCoord(expected.getStart(), actual.getStart());
         compareRefCoord(expected.getEnd(), actual.getEnd());
     }
-    
-    protected void compareCoordRange2D(CoordRange2D expected, CoordRange2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(actual.getStart());
-        assertNotNull(actual.getEnd());
-        
+
+    protected void compareCoordRange2D(CoordRange2D expected, CoordRange2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(actual.getStart());
+        Assert.assertNotNull(actual.getEnd());
+
         compareCoord2D(expected.getStart(), actual.getStart());
         compareCoord2D(expected.getEnd(), actual.getEnd());
     }
-    
-    protected void compareDimension2D(Dimension2D expected, Dimension2D actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
 
-        assertEquals(expected.naxis1, actual.naxis1);
-        assertEquals(expected.naxis2, actual.naxis2);
+    protected void compareDimension2D(Dimension2D expected, Dimension2D actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.naxis1, actual.naxis1);
+        Assert.assertEquals(expected.naxis2, actual.naxis2);
     }
-    
-    protected void compareRefCoord(RefCoord expected, RefCoord actual)
-    {
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertEquals(expected.pix, actual.pix, 0.0);
-        assertEquals(expected.val, actual.val, 0.0);
+
+    protected void compareRefCoord(RefCoord expected, RefCoord actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertEquals(expected.pix, actual.pix, 0.0);
+        Assert.assertEquals(expected.val, actual.val, 0.0);
     }
-    
-    protected void compareSlice(Slice expected, Slice actual)
-    {        
-        assertNotNull(expected);
-        assertNotNull(actual);
-        
-        assertNotNull(actual.getBin());
-        assertNotNull(actual.getAxis());
-        
-        assertEquals(expected.getBin(), actual.getBin());
+
+    protected void compareSlice(Slice expected, Slice actual) {
+        Assert.assertNotNull(expected);
+        Assert.assertNotNull(actual);
+
+        Assert.assertNotNull(actual.getBin());
+        Assert.assertNotNull(actual.getAxis());
+
+        Assert.assertEquals(expected.getBin(), actual.getBin());
         compareAxis(expected.getAxis(), actual.getAxis());
     }
 

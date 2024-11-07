@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -83,28 +83,21 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Environment;
 import ca.nrc.cadc.caom2.Instrument;
 import ca.nrc.cadc.caom2.Metrics;
+import ca.nrc.cadc.caom2.Observable;
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.PlaneURI;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.Proposal;
 import ca.nrc.cadc.caom2.Provenance;
 import ca.nrc.cadc.caom2.Requirements;
-import ca.nrc.cadc.caom2.SimpleObservation;
 import ca.nrc.cadc.caom2.Target;
 import ca.nrc.cadc.caom2.TargetPosition;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.Visibility;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -129,6 +122,11 @@ import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.StringBuilderWriter;
 import ca.nrc.cadc.util.StringUtil;
@@ -204,11 +202,20 @@ public class ObservationWriter implements Serializable {
                             + caom2NamespacePrefix);
         }
 
-        if (namespace == null || XmlConstants.CAOM2_4_NAMESPACE.equals(namespace)) {
+        if (namespace == null || XmlConstants.CAOM2_5_NAMESPACE.equals(namespace)) {
+            this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
+                    XmlConstants.CAOM2_5_NAMESPACE);
+            docVersion = 25;
+        } else if (XmlConstants.CAOM2_4_NAMESPACE.equals(namespace)) {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
                     XmlConstants.CAOM2_4_NAMESPACE);
             docVersion = 24;
-        } else if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace)) {
+        } else {
+            throw new IllegalArgumentException(
+                    "invalid namespace: " + namespace);
+        }
+        /*
+        else if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace)) {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
                     XmlConstants.CAOM2_3_NAMESPACE);
             docVersion = 23;
@@ -224,11 +231,9 @@ public class ObservationWriter implements Serializable {
             this.caom2Namespace = Namespace.getNamespace(caom2NamespacePrefix,
                     XmlConstants.CAOM2_0_NAMESPACE);
             docVersion = 20;
-        } else {
-            throw new IllegalArgumentException(
-                    "invalid namespace: " + namespace);
-        }
-
+        } 
+        */
+        
         this.xsiNamespace = Namespace.getNamespace("xsi", XmlConstants.XMLSCHEMA);
 
         log.debug("output version: " + docVersion + " "
@@ -408,20 +413,14 @@ public class ObservationWriter implements Serializable {
                 .getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
 
         Element element = getCaom2Element("Observation");
-        String type = caom2Namespace.getPrefix() + ":";
-        if (obs instanceof SimpleObservation) {
-            type += SimpleObservation.class.getSimpleName();
-        } else if (docVersion <= 23) {
-            type += "CompositeObservation";
-        } else {
-            type += DerivedObservation.class.getSimpleName();
-        }
+        String type = caom2Namespace.getPrefix() + ":" + obs.getClass().getSimpleName();
         element.setAttribute("type", type, xsiNamespace);
 
         addEntityAttributes(obs, element, dateFormat);
 
         addElement("collection", obs.getCollection(), element);
-        addElement("observationID", obs.getObservationID(), element);
+        //addElement("observationID", obs.getObservationID(), element);
+        addElement("uri", obs.getURI().toASCIIString(), element);
 
         // Observation elements.
         addDateElement("metaRelease", obs.metaRelease, element, dateFormat);
@@ -496,6 +495,7 @@ public class ObservationWriter implements Serializable {
         addElement("pi", proposal.pi, element);
         addElement("project", proposal.project, element);
         addElement("title", proposal.title, element);
+        addURIElement("reference", proposal.reference, element);
         if (docVersion < 23) {
             addStringListElement("keywords", proposal.getKeywords(), element);
         } else {
@@ -567,10 +567,8 @@ public class ObservationWriter implements Serializable {
             element.addContent(equinox);
         }
         Element coords = getCaom2Element("coordinates");
-        addNumberElement("cval1", targetPosition.getCoordinates().cval1,
-                coords);
-        addNumberElement("cval2", targetPosition.getCoordinates().cval2,
-                coords);
+        addNumberElement("cval1", targetPosition.getCoordinates().getLongitude(), coords);
+        addNumberElement("cval2", targetPosition.getCoordinates().getLatitude(), coords);
         element.addContent(coords);
         parent.addContent(element);
     }
@@ -619,6 +617,9 @@ public class ObservationWriter implements Serializable {
         addNumberElement("geoLocationX", telescope.geoLocationX, element);
         addNumberElement("geoLocationY", telescope.geoLocationY, element);
         addNumberElement("geoLocationZ", telescope.geoLocationZ, element);
+        if (telescope.trackingMode != null) {
+            addElement("trackingMode", telescope.trackingMode.getTerm(), element);
+        }
         if (docVersion < 23) {
             addStringListElement("keywords", telescope.getKeywords(), element);
         } else {
@@ -693,15 +694,15 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addMembersElement(Set<ObservationURI> members,
+    protected void addMembersElement(Set<URI> members,
             Element parent, DateFormat dateFormat) {
         if (members == null || (members.isEmpty() && !writeEmptyCollections)) {
             return;
         }
 
         Element element = getCaom2Element("members");
-        for (ObservationURI member : members) {
-            addURIElement("observationURI", member.getURI(), element);
+        for (URI member : members) {
+            addURIElement("member", member, element);
         }
         parent.addContent(element);
     }
@@ -740,11 +741,12 @@ public class ObservationWriter implements Serializable {
         for (Plane plane : planes) {
             Element planeElement = getCaom2Element("plane");
             addEntityAttributes(plane, planeElement, dateFormat);
-            addElement("productID", plane.getProductID(), planeElement);
+            //addElement("productID", plane.getProductID(), planeElement);
+            addElement("uri", plane.getURI().toASCIIString(), planeElement);
 
-            if (docVersion >= 23 && plane.creatorID != null) {
-                addURIElement("creatorID", plane.creatorID, planeElement);
-            }
+            //if (docVersion >= 23 && plane.creatorID != null) {
+            //    addURIElement("creatorID", plane.creatorID, planeElement);
+            //}
 
             addDateElement("metaRelease", plane.metaRelease, planeElement, dateFormat);
             if (docVersion >= 24) {
@@ -765,15 +767,17 @@ public class ObservationWriter implements Serializable {
                 addElement("calibrationLevel", String.valueOf(plane.calibrationLevel.getValue()), planeElement);
             }
             addProvenanceElement(plane.provenance, planeElement, dateFormat);
-            addMetricsElement(plane.metrics, planeElement, dateFormat);
-            addQuaility(plane.quality, planeElement, dateFormat);
-
+            addObservableElement(plane.observable, planeElement);
+            addMetricsElement(plane.metrics, planeElement);
+            addQuality(plane.quality, planeElement);
+            
             addPositionElement(plane.position, planeElement);
             addEnergyElement(plane.energy, planeElement);
             addTimeElement(plane.time, planeElement);
             addPolarizationElement(plane.polarization, planeElement);
             addCustomElement(plane.custom, planeElement);
-
+            addVisibilityElement(plane.visibility, planeElement);
+            
             addArtifactsElement(plane.getArtifacts(), planeElement, dateFormat);
             element.addContent(planeElement);
         }
@@ -788,75 +792,92 @@ public class ObservationWriter implements Serializable {
             return;
         }
 
-        Element e = getCaom2Element("position");
-        if (comp.bounds != null) {
-            if (comp.bounds instanceof Circle) {
-                Circle circ = (Circle) comp.bounds;
-                Element pe = getCaom2Element("bounds");
-                String xsiType = caom2Namespace.getPrefix() + ":"
-                        + Circle.class.getSimpleName();
-                pe.setAttribute("type", xsiType, xsiNamespace);
-
-                Element ce = getCaom2Element("center");
-                addNumberElement("cval1", circ.getCenter().cval1, ce);
-                addNumberElement("cval2", circ.getCenter().cval2, ce);
-                pe.addContent(ce);
-                addNumberElement("radius", circ.getRadius(), pe);
-                e.addContent(pe);
-            } else if (comp.bounds instanceof Polygon) {
-                if (docVersion < 23) {
-                    throw new UnsupportedOperationException("cannot downgrade polygon doc version " + docVersion);
-                }
-                Polygon poly = (Polygon) comp.bounds;
-                Element pe = getCaom2Element("bounds");
-                String xsiType = caom2Namespace.getPrefix() + ":"
-                        + Polygon.class.getSimpleName();
-                pe.setAttribute("type", xsiType, xsiNamespace);
-
-                Element pes = getCaom2Element("points");
-
-                for (Point p : poly.getPoints()) {
-                    Element ppe = getCaom2Element("point");
-                    addNumberElement("cval1", p.cval1, ppe);
-                    addNumberElement("cval2", p.cval2, ppe);
-                    pes.addContent(ppe);
-                }
-                pe.addContent(pes);
-
-                Element se = getCaom2Element("samples");
-                Element ves = getCaom2Element("vertices");
-                MultiPolygon mp = poly.getSamples();
-                for (Vertex v : mp.getVertices()) {
-                    Element ve = getCaom2Element("vertex");
-                    addNumberElement("cval1", v.cval1, ve);
-                    addNumberElement("cval2", v.cval2, ve);
-                    addNumberElement("type", v.getType().getValue(), ve);
-                    ves.addContent(ve);
-                }
-                se.addContent(ves);
-                pe.addContent(se);
-                e.addContent(pe);
-            } else {
-                throw new UnsupportedOperationException(
-                        comp.bounds.getClass().getName() + " -> XML");
-            }
+        Element posE = getCaom2Element("position");
+        parent.addContent(posE);
+        
+        Element be = getShapeElement("bounds", comp.getBounds());
+        posE.addContent(be);
+        
+        Element se = getCaom2Element("samples");
+        for (Shape s : comp.getSamples().getShapes()) {
+            Element samp = getShapeElement("shape", s);
+            se.addContent(samp);
         }
+        posE.addContent(se);
+
+        if (comp.minBounds != null) {
+            Element mb = getShapeElement("minBounds", comp.minBounds);
+            posE.addContent(mb);
+        }
+
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
             addNumberElement("naxis1", comp.dimension.naxis1, ce);
             addNumberElement("naxis2", comp.dimension.naxis2, ce);
-            e.addContent(ce);
+            posE.addContent(ce);
         }
+
+        if (comp.maxAngularScale != null) {
+            Element me = getIntervalElement("maxANgularScale", comp.maxAngularScale);
+            posE.addContent(me);
+        }
+
         if (comp.resolution != null) {
-            addNumberElement("resolution", comp.resolution, e);
+            addNumberElement("resolution", comp.resolution, posE);
         }
+
+        if (comp.resolutionBounds != null) {
+            Element rbe = getIntervalElement("resolutionBounds", comp.resolutionBounds);
+            posE.addContent(rbe);
+        }
+
         if (comp.sampleSize != null) {
-            addNumberElement("sampleSize", comp.sampleSize, e);
+            addNumberElement("sampleSize", comp.sampleSize, posE);
         }
-        if (comp.timeDependent != null) {
-            addBooleanElement("timeDependent", comp.timeDependent, e);
+
+        if (comp.calibration != null) {
+            Element ce = getCaom2Element("calibration");
+            ce.setText(comp.calibration.getTerm());
+            posE.addContent(ce);
         }
-        parent.addContent(e);
+    }
+
+    protected Element getShapeElement(String name, Shape s) {
+        Element ret = getCaom2Element(name);
+        String xsiType = caom2Namespace.getPrefix() + ":" + s.getClass().getSimpleName();
+        ret.setAttribute("type", xsiType, xsiNamespace);
+        if (s instanceof Circle) {
+            Circle circ = (Circle) s;
+            Element ce = getCaom2Element("center");
+            addNumberElement("cval1", circ.getCenter().getLongitude(), ce);
+            addNumberElement("cval2", circ.getCenter().getLatitude(), ce);
+            ret.addContent(ce);
+            addNumberElement("radius", circ.getRadius(), ret);
+        } else if (s instanceof Polygon) {
+            if (docVersion < 23) {
+                throw new UnsupportedOperationException("cannot downgrade polygon doc version " + docVersion);
+            }
+            Polygon poly = (Polygon) s;
+            Element pes = getCaom2Element("points");
+            for (Point p : poly.getVertices()) {
+                Element ppe = getCaom2Element("point");
+                addNumberElement("cval1", p.getLongitude(), ppe);
+                addNumberElement("cval2", p.getLatitude(), ppe);
+                pes.addContent(ppe);
+            }
+            ret.addContent(pes);
+        } else {
+            throw new UnsupportedOperationException(
+                    s.getClass().getName() + " -> XML");
+        }
+        return ret;
+    }
+
+    protected Element getIntervalElement(String name, Interval si) {
+        Element ret = getCaom2Element(name);
+        addNumberElement("lower", si.getLower(), ret);
+        addNumberElement("upper", si.getUpper(), ret);
+        return ret;
     }
 
     protected Element getSampleElement(Interval si) {
@@ -874,55 +895,73 @@ public class ObservationWriter implements Serializable {
             return;
         }
 
-        Element e = getCaom2Element("energy");
-        if (comp.bounds != null) {
-            Element pe = getCaom2Element("bounds");
-            addNumberElement("lower", comp.bounds.getLower(), pe);
-            addNumberElement("upper", comp.bounds.getUpper(), pe);
-            e.addContent(pe);
-            if (!comp.bounds.getSamples().isEmpty()) {
-                Element ses = getCaom2Element("samples");
-                for (Interval si : comp.bounds.getSamples()) {
-                    Element se = getSampleElement(si);
-                    ses.addContent(se);
-                }
-                pe.addContent(ses);
-            }
+        Element nrgE = getCaom2Element("energy");
+        parent.addContent(nrgE);
+        
+        Element be = getIntervalElement("bounds", comp.getBounds());
+        nrgE.addContent(be);
+
+        Element ses = getCaom2Element("samples");
+        for (Interval si : comp.getSamples()) {
+            Element ee = getIntervalElement("sample", si);
+            ses.addContent(ee);
         }
+        nrgE.addContent(ses);
+            
         if (comp.dimension != null) {
-            Element ce = getCaom2Element("dimension");
-            ce.addContent(Long.toString(comp.dimension));
-            e.addContent(ce);
+            Element ee = getCaom2Element("dimension");
+            ee.addContent(Long.toString(comp.dimension));
+            nrgE.addContent(ee);
         }
+
         if (comp.resolvingPower != null) {
-            addNumberElement("resolvingPower", comp.resolvingPower, e);
+            addNumberElement("resolvingPower", comp.resolvingPower, nrgE);
         }
+        if (comp.resolvingPowerBounds != null) {
+            Element ee = getIntervalElement("resolvingPowerBounds", comp.resolvingPowerBounds);
+            nrgE.addContent(ee);
+        }
+
+        if (comp.resolution != null) {
+            addNumberElement("resolution", comp.resolution, nrgE);
+        }
+        if (comp.resolutionBounds != null) {
+            Element ee = getIntervalElement("resolutionBounds", comp.resolutionBounds);
+            nrgE.addContent(ee);
+        }
+
         if (comp.sampleSize != null) {
-            addNumberElement("sampleSize", comp.sampleSize, e);
+            addNumberElement("sampleSize", comp.sampleSize, nrgE);
         }
+
         if (comp.bandpassName != null) {
-            addElement("bandpassName", comp.bandpassName, e);
+            addElement("bandpassName", comp.bandpassName, nrgE);
         }
         if (docVersion < 24) {
             if (comp.getEnergyBands().size() == 1) {
                 String eb = comp.getEnergyBands().iterator().next().getValue();
-                addElement("emBand", eb, e);
+                addElement("emBand", eb, nrgE);
             }
         } else {
-            addEnergyBands(comp.getEnergyBands(), e);
+            addEnergyBands(comp.getEnergyBands(), nrgE);
         }
        
-        if (comp.restwav != null) {
-            addNumberElement("restwav", comp.restwav, e);
+        if (comp.rest != null) {
+            addNumberElement("rest", comp.rest, nrgE);
         }
+
         if (comp.transition != null) {
             Element ce = getCaom2Element("transition");
             addElement("species", comp.transition.getSpecies(), ce);
             addElement("transition", comp.transition.getTransition(), ce);
-            e.addContent(ce);
+            nrgE.addContent(ce);
         }
 
-        parent.addContent(e);
+        if (comp.calibration != null) {
+            Element ce = getCaom2Element("calibration");
+            ce.setText(comp.calibration.getTerm());
+            nrgE.addContent(ce);
+        }
     }
 
     protected void addTimeElement(Time comp, Element parent) {
@@ -933,37 +972,49 @@ public class ObservationWriter implements Serializable {
             return;
         }
 
-        Element e = getCaom2Element("time");
-        if (comp.bounds != null) {
-            Element pe = getCaom2Element("bounds");
-            addNumberElement("lower", comp.bounds.getLower(), pe);
-            addNumberElement("upper", comp.bounds.getUpper(), pe);
-            e.addContent(pe);
-            if (!comp.bounds.getSamples().isEmpty()) {
-                Element ses = getCaom2Element("samples");
-                for (Interval si : comp.bounds.getSamples()) {
-                    Element se = getSampleElement(si);
-                    ses.addContent(se);
-                }
-                pe.addContent(ses);
-            }
+        Element timE = getCaom2Element("time");
+        parent.addContent(timE);
+        
+        Element be = getIntervalElement("bounds", comp.getBounds());
+        timE.addContent(be);
+
+        Element ses = getCaom2Element("samples");
+        for (Interval si : comp.getSamples()) {
+            Element ee = getIntervalElement("sample", si);
+            ses.addContent(ee);
         }
+        timE.addContent(ses);
+
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
             ce.addContent(Long.toString(comp.dimension));
-            e.addContent(ce);
-        }
-        if (comp.resolution != null) {
-            addNumberElement("resolution", comp.resolution, e);
-        }
-        if (comp.sampleSize != null) {
-            addNumberElement("sampleSize", comp.sampleSize, e);
-        }
-        if (comp.exposure != null) {
-            addNumberElement("exposure", comp.exposure, e);
+            timE.addContent(ce);
         }
 
-        parent.addContent(e);
+        if (comp.resolution != null) {
+            addNumberElement("resolution", comp.resolution, timE);
+        }
+        if (comp.resolutionBounds != null) {
+            Element ee = getIntervalElement("resolutionBounds", comp.resolutionBounds);
+            timE.addContent(ee);
+        }
+
+        if (comp.sampleSize != null) {
+            addNumberElement("sampleSize", comp.sampleSize, timE);
+        }
+        if (comp.exposure != null) {
+            addNumberElement("exposure", comp.exposure, timE);
+        }
+        if (comp.exposureBounds != null) {
+            Element ee = getIntervalElement("exposureBounds", comp.exposureBounds);
+            timE.addContent(ee);
+        }
+
+        if (comp.calibration != null) {
+            Element ce = getCaom2Element("calibration");
+            ce.setText(comp.calibration.getTerm());
+            timE.addContent(ce);
+        }
     }
 
     protected void addPolarizationElement(Polarization comp, Element parent) {
@@ -974,24 +1025,21 @@ public class ObservationWriter implements Serializable {
             return;
         }
 
-        Element e = getCaom2Element("polarization");
-        if (comp.states != null) {
+        Element polE = getCaom2Element("polarization");
+        if (!comp.getStates().isEmpty()) {
             Element pe = getCaom2Element("states");
-            for (PolarizationState s : comp.states) {
+            for (PolarizationState s : comp.getStates()) {
                 addElement("state", s.getValue(), pe);
             }
-            e.addContent(pe);
+            polE.addContent(pe);
         }
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
-            // String xsiType = caom2Namespace.getPrefix() + ":" +
-            // Integer.class.getSimpleName();
-            // ce.setAttribute("type", xsiType, xsiNamespace);
             ce.addContent(Long.toString(comp.dimension));
-            e.addContent(ce);
+            polE.addContent(ce);
         }
 
-        parent.addContent(e);
+        parent.addContent(polE);
     }
     
     protected void addCustomElement(CustomAxis comp, Element parent) {
@@ -1002,44 +1050,67 @@ public class ObservationWriter implements Serializable {
             return;
         }
 
-        Element e = getCaom2Element("custom");
+        Element cusE = getCaom2Element("custom");
+        parent.addContent(cusE);
+        
         Element cte = getCaom2Element("ctype");
         cte.setText(comp.getCtype());
-        e.addContent(cte);
-        if (comp.bounds != null) {
-            Element pe = getCaom2Element("bounds");
-            addNumberElement("lower", comp.bounds.getLower(), pe);
-            addNumberElement("upper", comp.bounds.getUpper(), pe);
-            e.addContent(pe);
-            if (!comp.bounds.getSamples().isEmpty()) {
-                Element ses = getCaom2Element("samples");
-                for (Interval si : comp.bounds.getSamples()) {
-                    Element se = getSampleElement(si);
-                    ses.addContent(se);
-                }
-                pe.addContent(ses);
-            }
+        cusE.addContent(cte);
+        
+        Element be = getIntervalElement("bounds", comp.getBounds());
+        cusE.addContent(be);
+
+        Element ses = getCaom2Element("samples");
+        for (Interval si : comp.getSamples()) {
+            Element ee = getIntervalElement("sample", si);
+            ses.addContent(ee);
         }
+        cusE.addContent(ses);
+        
         if (comp.dimension != null) {
             Element ce = getCaom2Element("dimension");
             ce.addContent(Long.toString(comp.dimension));
-            e.addContent(ce);
+            cusE.addContent(ce);
         }
-
-        parent.addContent(e);
     }
 
-    /**
-     * Builds a JDOM representation of an Telescope and adds it to the parent
-     * element.
-     *
-     * @param provenance
-     *            The Provenance to add to the parent.
-     * @param parent
-     *            The parent element for this child element.
-     * @param dateFormat
-     *            The IVOA DateFormat.
-     */
+    protected void addVisibilityElement(Visibility comp, Element parent) {
+        if (docVersion < 25) {
+            return;
+        }
+        if (comp == null) {
+            return;
+        }
+    
+        Element visE = getCaom2Element("visibility");
+        parent.addContent(visE);
+        
+        Element de = getIntervalElement("distance", comp.getDistance());
+        visE.addContent(de);
+        
+        addNumberElement("distributionEccentricity", comp.getDistributionEccentricity(), visE);
+        addNumberElement("distributionFill", comp.getDistributionFill(), visE);
+    }
+
+    protected void addObservableElement(Observable observable, Element parent) {
+        if (observable == null) {
+            return;
+        }
+        
+        Element obsE = getCaom2Element("observable");
+        parent.addContent(obsE);
+        
+        Element ucdE = getCaom2Element("ucd");
+        ucdE.setText(observable.getUCD().getTerm());
+        obsE.addContent(ucdE);
+        
+        if (observable.calibration != null) {
+            Element ce = getCaom2Element("calibration");
+            ce.setText(observable.calibration.getTerm());
+            obsE.addContent(ce);
+        }
+    }
+
     protected void addProvenanceElement(Provenance provenance, Element parent,
             DateFormat dateFormat) {
         if (provenance == null) {
@@ -1064,8 +1135,7 @@ public class ObservationWriter implements Serializable {
         parent.addContent(element);
     }
 
-    protected void addMetricsElement(Metrics metrics, Element parent,
-            DateFormat dateFormat) {
+    protected void addMetricsElement(Metrics metrics, Element parent) {
         if (metrics == null) {
             return;
         }
@@ -1087,8 +1157,7 @@ public class ObservationWriter implements Serializable {
      * @param parent
      * @param dateFormat
      */
-    protected void addQuaility(DataQuality dq, Element parent,
-            DateFormat dateFormat) {
+    protected void addQuality(DataQuality dq, Element parent) {
         if (docVersion < 21) {
             return; // DataQuality added in CAOM-2.1
         }
@@ -1138,15 +1207,15 @@ public class ObservationWriter implements Serializable {
      * @param dateFormat
      *            The IVOA DateFormat.
      */
-    protected void addInputsElement(Set<PlaneURI> inputs, Element parent,
+    protected void addInputsElement(Set<URI> inputs, Element parent,
             DateFormat dateFormat) {
         if (inputs == null || (inputs.isEmpty() && !writeEmptyCollections)) {
             return;
         }
 
         Element element = getCaom2Element("inputs");
-        for (PlaneURI input : inputs) {
-            addURIElement("planeURI", input.getURI(), element);
+        for (URI input : inputs) {
+            addURIElement("input", input, element);
         }
         parent.addContent(element);
     }
@@ -1197,6 +1266,8 @@ public class ObservationWriter implements Serializable {
             if (docVersion > 22) {
                 addURIElement("contentChecksum", artifact.contentChecksum, artifactElement);
             }
+            
+            addURIElement("descriptionID", artifact.descriptionID, artifactElement);
             
             addPartsElement(artifact.getParts(), artifactElement, dateFormat);
             element.addContent(artifactElement);

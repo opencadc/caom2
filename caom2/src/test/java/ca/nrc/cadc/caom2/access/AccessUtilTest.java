@@ -69,7 +69,7 @@ package ca.nrc.cadc.caom2.access;
 
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
@@ -99,8 +99,8 @@ public class AccessUtilTest {
     @Test
     public void testGetReleaseDate() {
         try {
-            Artifact data = new Artifact(URI.create("foo:bar/baz"), ProductType.SCIENCE, ReleaseType.DATA);
-            Artifact meta = new Artifact(URI.create("foo:bar/baz"), ProductType.PREVIEW, ReleaseType.META);
+            Artifact data = new Artifact(URI.create("foo:bar/baz"), DataLinkSemantics.THIS, ReleaseType.DATA);
+            Artifact meta = new Artifact(URI.create("foo:bar/baz"), DataLinkSemantics.PREVIEW, ReleaseType.META);
             
             final Date pastMetaRelease = new Date(System.currentTimeMillis() - 1800L);
             final Date futureMetaRelease = new Date(System.currentTimeMillis() + 1800L);
@@ -156,8 +156,8 @@ public class AccessUtilTest {
     @Test
     public void testGetArtifactAccess() {
         try {
-            Artifact data = new Artifact(URI.create("foo:bar/baz"), ProductType.SCIENCE, ReleaseType.DATA);
-            Artifact meta = new Artifact(URI.create("foo:bar/baz"), ProductType.PREVIEW, ReleaseType.META);
+            Artifact data = new Artifact(URI.create("foo:bar/baz"), DataLinkSemantics.THIS, ReleaseType.DATA);
+            Artifact meta = new Artifact(URI.create("foo:bar/baz"), DataLinkSemantics.PREVIEW, ReleaseType.META);
             
             Date pastMetaRelease = new Date(System.currentTimeMillis() - 1800L);
             Date futureMetaRelease = new Date(System.currentTimeMillis() + 1800L);
@@ -213,8 +213,8 @@ public class AccessUtilTest {
     @Test
     public void testArtifactAccessOverride() {
         try {
-            Artifact data = new Artifact(URI.create("foo:bar/baz"), ProductType.SCIENCE, ReleaseType.DATA);
-            Artifact meta = new Artifact(URI.create("foo:bar/baz"), ProductType.PREVIEW, ReleaseType.META);
+            Artifact data = new Artifact(URI.create("foo:bar/baz"), DataLinkSemantics.THIS, ReleaseType.DATA);
+            Artifact meta = new Artifact(URI.create("foo:bar/baz"), DataLinkSemantics.PREVIEW, ReleaseType.META);
             
             Date pastMetaRelease = new Date(System.currentTimeMillis() - 2000L);
             Date futureMetaRelease = new Date(System.currentTimeMillis() + 2000L);

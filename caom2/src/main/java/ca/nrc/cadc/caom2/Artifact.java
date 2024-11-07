@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.Date;
@@ -89,7 +90,7 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     // mutable contents
     private final Set<Part> parts = new TreeSet<>();
     private final Set<URI> contentReadGroups = new TreeSet<>();
-    private ProductType productType;
+    private DataLinkSemantics productType;
     private ReleaseType releaseType;
 
     // mutable state
@@ -97,8 +98,9 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
     public Long contentLength;
     public URI contentChecksum;
     public Date contentRelease;
+    public URI descriptionID;
 
-    public Artifact(URI uri, ProductType productType, ReleaseType releaseType) {
+    public Artifact(URI uri, DataLinkSemantics productType, ReleaseType releaseType) {
         CaomValidator.assertNotNull(Artifact.class, "uri", uri);
         CaomValidator.assertNotNull(Artifact.class, "productType", productType);
         CaomValidator.assertNotNull(Artifact.class, "releaseType", releaseType);
@@ -116,11 +118,11 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
         return uri;
     }
 
-    public ProductType getProductType() {
+    public DataLinkSemantics getProductType() {
         return productType;
     }
 
-    public void setProductType(ProductType productType) {
+    public void setProductType(DataLinkSemantics productType) {
         CaomValidator.assertNotNull(Artifact.class, "productType", productType);
         this.productType = productType;
     }

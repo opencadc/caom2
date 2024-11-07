@@ -104,12 +104,14 @@ public class Plane extends CaomEntity implements Comparable<Plane> {
     public Time time;
     public Polarization polarization;
     public CustomAxis custom;
+    public Visibility visibility;
     
     // local state
     public transient URI publisherID;
 
     public Plane(URI uri) {
         CaomValidator.assertNotNull(getClass(), "uri", uri);
+        CaomValidator.assertValidIdentifier(getClass(), "uri", uri); // TODO: require extension of Observation.uri?
         this.uri = uri;
     }
 

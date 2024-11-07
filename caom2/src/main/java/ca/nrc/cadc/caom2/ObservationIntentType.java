@@ -74,7 +74,7 @@ package ca.nrc.cadc.caom2;
  * @author pdowler
  */
 public enum ObservationIntentType implements CaomEnum<String> {
-    CALIBRATION("calibration"), SCIENCE("science");
+    CALIBRATION("calibration"), SCIENCE("science"), OUTREACH("outreach");
 
     private String value;
 

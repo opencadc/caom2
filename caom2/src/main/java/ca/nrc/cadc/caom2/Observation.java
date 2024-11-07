@@ -108,6 +108,7 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
         CaomValidator.assertNotNull(getClass(), "uri", uri);
         CaomValidator.assertNotNull(getClass(), "algorithm", algorithm);
         CaomValidator.assertValidPathComponent(getClass(), "collection", collection);
+        CaomValidator.assertValidIdentifier(getClass(), "uri", uri); // TODO: require uri contains collection?
         this.collection = collection;
         this.uri = uri;
         this.algorithm = algorithm;

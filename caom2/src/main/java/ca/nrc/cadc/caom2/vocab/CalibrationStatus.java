@@ -62,75 +62,48 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.vocab;
 
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Shape;
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.CaomEnum;
+import ca.nrc.cadc.caom2.VocabularyTerm;
+import java.net.URI;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class Position implements Serializable {
-    private Shape bounds;
-    private MultiShape samples;
+public class CalibrationStatus extends VocabularyTerm implements CaomEnum<String> {
+    private static final Logger log = Logger.getLogger(CalibrationStatus.class);
+
+    private static final URI CALSTATUS = URI.create("http://www.opencadc.org/caom2/CalibrationStatus");
     
-    public Shape minBounds;
-    public Dimension2D dimension;
-    public DoubleInterval maxAngularScale;
-    public Double resolution;
-    public DoubleInterval resolutionBounds;
-    public Double sampleSize;
-    public CalibrationStatus calibration;
+    public static final CalibrationStatus ABSOLUTE = new CalibrationStatus("absolute");
+    public static final CalibrationStatus NORMALIZED = new CalibrationStatus("normalized");
+    public static final CalibrationStatus RELATIVE = new CalibrationStatus("relative");
     
-    public Position(Shape bounds, MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.bounds = bounds;
-        this.samples = samples;
-    }
-
-    public void validate() {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-    }
-
-    public Shape getBounds() {
-        return bounds;
-    }
-
-    public void setBounds(Shape bounds) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        this.bounds = bounds;
-    }
-
-    public MultiShape getSamples() {
-        return samples;
-    }
-
-    public void setSamples(MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.samples = samples;
-    }
-
+    private static final CalibrationStatus[] VALUES = new CalibrationStatus[] {
+        ABSOLUTE, NORMALIZED, RELATIVE
+    };
     
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(bounds);
-        sb.append(",d=").append(dimension);
-        sb.append("]");
-        return sb.toString();
+    public static CalibrationStatus[] values() {
+        return VALUES;
+    }
+
+    private CalibrationStatus(String term) {
+        super(CALSTATUS, term, true);
+    }
+    
+    public static CalibrationStatus toValue(String s) {
+        for (CalibrationStatus d : VALUES) {
+            if (d.getValue().equals(s)) {
+                return d;
+            }
+        }
+    
+        throw new IllegalArgumentException("invalid value: " + s);
     }
 }

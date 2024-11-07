@@ -197,6 +197,6 @@ public class JsonWriterTest
         instances.setComplete(true);
         instances.setDepth(depth);
         instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getCompositeObservation();
+        return instances.getDerivedObservation();
     }
 }

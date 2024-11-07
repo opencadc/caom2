@@ -62,75 +62,27 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
-*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.vocab;
 
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Shape;
-import java.io.Serializable;
+import ca.nrc.cadc.caom2.VocabularyTerm;
+import java.net.URI;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class Position implements Serializable {
-    private Shape bounds;
-    private MultiShape samples;
+public class Tracking extends VocabularyTerm {
+    private static final Logger log = Logger.getLogger(Tracking.class);
+
+    public static final URI NAMESPACE = URI.create("https://ivoa.net/rdf/TelescopeTracking");
     
-    public Shape minBounds;
-    public Dimension2D dimension;
-    public DoubleInterval maxAngularScale;
-    public Double resolution;
-    public DoubleInterval resolutionBounds;
-    public Double sampleSize;
-    public CalibrationStatus calibration;
+    public static final Tracking SIDEREAL = new Tracking("sidereal");
     
-    public Position(Shape bounds, MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.bounds = bounds;
-        this.samples = samples;
-    }
-
-    public void validate() {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-    }
-
-    public Shape getBounds() {
-        return bounds;
-    }
-
-    public void setBounds(Shape bounds) {
-        CaomValidator.assertNotNull(getClass(), "bounds", bounds);
-        this.bounds = bounds;
-    }
-
-    public MultiShape getSamples() {
-        return samples;
-    }
-
-    public void setSamples(MultiShape samples) {
-        CaomValidator.assertNotNull(getClass(), "samples", samples);
-        this.samples = samples;
-    }
-
-    
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("[");
-        sb.append(bounds);
-        sb.append(",d=").append(dimension);
-        sb.append("]");
-        return sb.toString();
+    public Tracking(String term) {
+        super(NAMESPACE, term);
     }
 }

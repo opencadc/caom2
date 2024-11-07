@@ -69,16 +69,30 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.io.Serializable;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  *
  * @author pdowler
  */
 public class Polarization implements Serializable {
-    public SortedSet<PolarizationState> states;
+    private final SortedSet<PolarizationState> states = new TreeSet<>();
     public Long dimension;
+
+    public Polarization() {
+    }
+
+    public void validate() {
+        CaomValidator.assertNotEmpty(Polarization.class, "states", states);
+        CaomValidator.assertPositive(Polarization.class, "dimension ", dimension);
+    }
+
+    public SortedSet<PolarizationState> getStates() {
+        return states;
+    }
 
     @Override
     public String toString() {

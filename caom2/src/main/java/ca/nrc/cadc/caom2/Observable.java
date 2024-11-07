@@ -67,6 +67,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 
 /**
@@ -77,7 +78,7 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
 public class Observable {
     private final VocabularyTerm ucd;
     
-    public VocabularyTerm calibration;
+    public CalibrationStatus calibration;
     
     /**
      * Constructor. 
@@ -87,6 +88,10 @@ public class Observable {
     public Observable(VocabularyTerm ucd) { 
         CaomValidator.assertNotNull(Observable.class, "ucd", ucd);
         this.ucd = ucd;
+    }
+
+    public void validate() {
+        // ctor
     }
 
     /**

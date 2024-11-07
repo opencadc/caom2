@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import org.apache.log4j.Level;
@@ -110,17 +111,17 @@ public class ArtifactTest
         {
             URI uri = new URI("ad", "Stuff/Thing/thing1", null);
 
-            Artifact a = new Artifact(uri, ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact a = new Artifact(uri, DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             log.debug("created: " + a);
             
             Assert.assertNotNull(a.getURI());
             Assert.assertEquals(uri, a.getURI());
-            Assert.assertEquals(ProductType.AUXILIARY, a.getProductType());
+            Assert.assertEquals(DataLinkSemantics.AUXILIARY, a.getProductType());
             Assert.assertEquals(ReleaseType.DATA, a.getReleaseType());
             
             try
             {
-                a = new Artifact(null, ProductType.AUXILIARY, ReleaseType.DATA);
+                a = new Artifact(null, DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
                 Assert.fail("expected IllegalArgumentException for uri=null, got: " + a);
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
@@ -135,7 +136,7 @@ public class ArtifactTest
             
             try
             {
-                a = new Artifact(uri, ProductType.AUXILIARY, null);
+                a = new Artifact(uri, DataLinkSemantics.AUXILIARY, null);
                 Assert.fail("expected IllegalArgumentException for releaseType=null, got: " + a);
             }
             catch(IllegalArgumentException expected) { log.debug("expected: " + expected); }
@@ -153,9 +154,9 @@ public class ArtifactTest
     {
         try
         {
-            Artifact o1 = new Artifact(new URI("ad", "FOO/bar1", null), ProductType.AUXILIARY, ReleaseType.DATA);
-            Artifact o2 = new Artifact(new URI("ad", "FOO/bar2", null), ProductType.AUXILIARY, ReleaseType.DATA);
-            Artifact o2d = new Artifact(new URI("ad", "FOO/bar2", null), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact o1 = new Artifact(new URI("ad", "FOO/bar1", null), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
+            Artifact o2 = new Artifact(new URI("ad", "FOO/bar2", null), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
+            Artifact o2d = new Artifact(new URI("ad", "FOO/bar2", null), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             
             Assert.assertTrue(o1.equals(o1));
             
@@ -188,7 +189,7 @@ public class ArtifactTest
         try
         {
             URI uri = new URI("ad", "Stuff/Thing/thing1", null);
-            Artifact a = new Artifact(uri, ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact a = new Artifact(uri, DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             Assert.assertEquals(0, a.getParts().size());
 
             Part p1 = new Part(new Integer(1));

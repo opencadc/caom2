@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,15 +74,17 @@ package ca.nrc.cadc.caom2.xml;
  * @author pdowler
  */
 public final class XmlConstants {
-    public static final String CAOM2_0_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0";
+    //public static final String CAOM2_0_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.0";
 
-    public static final String CAOM2_1_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.1";
+    //public static final String CAOM2_1_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.1";
 
-    public static final String CAOM2_2_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2";
+    //public static final String CAOM2_2_NAMESPACE = "vos://cadc.nrc.ca!vospace/CADC/xml/CAOM/v2.2";
 
-    public static final String CAOM2_3_NAMESPACE = "http://www.opencadc.org/caom2/xml/v2.3";
+    //public static final String CAOM2_3_NAMESPACE = "http://www.opencadc.org/caom2/xml/v2.3";
     
     public static final String CAOM2_4_NAMESPACE = "http://www.opencadc.org/caom2/xml/v2.4";
+    
+    public static final String CAOM2_5_NAMESPACE = "http://www.opencadc.org/caom2/xml/v2.5";
 
     public static final String XMLSCHEMA = "http://www.w3.org/2001/XMLSchema-instance";
 

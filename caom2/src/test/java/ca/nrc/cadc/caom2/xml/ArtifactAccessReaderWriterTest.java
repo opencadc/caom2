@@ -68,7 +68,7 @@
 package ca.nrc.cadc.caom2.xml;
 
 import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.util.Log4jInit;
@@ -98,8 +98,8 @@ public class ArtifactAccessReaderWriterTest {
     @Test
     public void testMinimal() {
         try {
-            Artifact a = new Artifact(URI.create("foo:BAR/baz"), ProductType.SCIENCE, ReleaseType.DATA);
-            ArtifactAccess expected = new ArtifactAccess(a);
+            Artifact a = new Artifact(URI.create("foo:BAR/baz"), DataLinkSemantics.THIS, ReleaseType.DATA);
+            final ArtifactAccess expected = new ArtifactAccess(a);
             
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ArtifactAccessWriter aw = new ArtifactAccessWriter();
@@ -131,8 +131,8 @@ public class ArtifactAccessReaderWriterTest {
     @Test
     public void testRoundTrip() {
         try {
-            Artifact a = new Artifact(URI.create("foo:BAR/baz"), ProductType.SCIENCE, ReleaseType.DATA);
-            ArtifactAccess expected = new ArtifactAccess(a);
+            Artifact a = new Artifact(URI.create("foo:BAR/baz"), DataLinkSemantics.THIS, ReleaseType.DATA);
+            final ArtifactAccess expected = new ArtifactAccess(a);
             
             a.contentChecksum = URI.create("md5:d41d8cd98f00b204e9800998ecf8427e");
             a.contentLength = 0L;

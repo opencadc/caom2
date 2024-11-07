@@ -68,41 +68,63 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.DoubleInterval;
 
 /**
  *
  * @author pdowler
  */
 public class Visibility {
-    private final Interval<Double> distance;
-    private final Double distributionEccentricity;
-    private final Double distributionFill;
+    private DoubleInterval distance;
+    private Double distributionEccentricity;
+    private Double distributionFill;
     
-    public Visibility(Interval<Double> distance, double distributionEccentricity, double distributionFill) {
+    public Visibility(DoubleInterval distance, Double distributionEccentricity, Double distributionFill) {
+        CaomValidator.assertNotNull(getClass(), "distance", distance);
+        CaomValidator.assertNotNull(getClass(), "distributionEccentricity", distributionEccentricity);
+        CaomValidator.assertNotNull(getClass(), "distributionFill", distributionFill);
+        this.distance = distance;
+        this.distributionEccentricity = distributionEccentricity;
+        this.distributionFill = distributionFill;
+    }
+
+    public void validate() {
         CaomValidator.assertNotNull(getClass(), "distance", distance);
         CaomValidator.assertPositive(getClass(), "distributionEccentricity", distributionEccentricity);
         if (distributionFill <= 0.0 || distributionFill > 1.0) {
             throw new IllegalArgumentException(
                 Visibility.class.getSimpleName() + ": distributionFill must be in (0.0,1.0]");
         }
-        this.distance = distance;
-        this.distributionEccentricity = distributionEccentricity;
-        this.distributionFill = distributionFill;
     }
 
-    public Interval<Double> getDistance() {
+    public DoubleInterval getDistance() {
         return distance;
+    }
+
+    public void setDistance(DoubleInterval distance) {
+        CaomValidator.assertNotNull(getClass(), "distance", distance);
+        this.distance = distance;
     }
 
     public Double getDistributionEccentricity() {
         return distributionEccentricity;
     }
 
+    public void setDistributionEccentricity(Double distributionEccentricity) {
+        CaomValidator.assertNotNull(getClass(), "distributionEccentricity", distributionEccentricity);
+        this.distributionEccentricity = distributionEccentricity;
+    }
+
     public Double getDistributionFill() {
         return distributionFill;
     }
 
+    public void setDistributionFill(Double distributionFill) {
+        CaomValidator.assertNotNull(getClass(), "distributionFill", distributionFill);
+        this.distributionFill = distributionFill;
+    }
+
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

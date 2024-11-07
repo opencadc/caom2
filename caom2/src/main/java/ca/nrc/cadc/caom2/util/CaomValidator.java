@@ -210,6 +210,90 @@ public final class CaomValidator {
     }
     
     /**
+     * Numeric validation.
+     * 
+     * @param caller
+     * @param name
+     * @param test 
+     * @throws IllegalArgumentException 
+     */
+    public static void assertPositive(Class caller, String name, long test) {
+        if (test <= 0L) {
+            throw new IllegalArgumentException(
+                    caller.getSimpleName() + ": " + name + " must be > 0.0");
+        }
+    }
+    
+    public static void assertValidIdentifier(Class caller, String name, URI uri) {
+        String scheme = uri.getScheme();
+
+        if ("caom".equals(scheme)) {
+            assertValidCaomURI(caller, name, uri);
+            return;
+        }
+        if ("ivo".equals(scheme)) {
+            assertValidIvorn(caller, name, uri);
+            return;
+        }
+
+        throw new IllegalArgumentException(
+            caller.getSimpleName() + ": " + name + " scheme must be caom|ivo: " + uri.toASCIIString());
+    }
+
+    private static void assertValidCaomURI(Class caller, String name, URI uri) {
+        String auth = uri.getAuthority();
+        if (auth != null) {
+            throw new IllegalArgumentException(
+                caller.getSimpleName() + ": " + name + " caom scheme does not allow authority: " 
+                        + uri.toASCIIString());
+        }
+        String ssp = uri.getSchemeSpecificPart();
+        if (ssp == null) {
+            throw new IllegalArgumentException(
+                caller.getSimpleName() + ": " + name + " caom scheme requires scheme-specific part: " 
+                        + uri.toASCIIString());
+        }
+        String[] cop = ssp.split("/");
+        if (cop.length > 3) {
+            throw new IllegalArgumentException(
+                caller.getSimpleName() + ": " + name + " caom scheme requires 2-3 path components in scheme-specific part: " 
+                        + uri.toASCIIString());
+        }
+        if (cop.length > 1) {
+            String collection = cop[0];
+            String observationID = cop[1];
+            CaomValidator.assertNotNull(caller, "caom: {collection}", collection);
+            CaomValidator.assertValidPathComponent(caller, "caom: {collection}", collection);
+            CaomValidator.assertNotNull(caller, "caom: {observationID}", observationID);
+            CaomValidator.assertValidPathComponent(caller, "caom: {observationID}", observationID);
+        }
+        if (cop.length == 3) {
+            String productID = cop[2];
+            CaomValidator.assertNotNull(caller, "caom: {productID}", productID);
+            CaomValidator.assertValidPathComponent(caller, "caom: {productID}", productID);
+        }
+    }
+
+    private static void assertValidIvorn(Class caller, String name, URI uri) {
+        String path = uri.getPath();
+        String query = uri.getQuery();
+        if (path == null) {
+            throw new IllegalArgumentException(
+                caller.getSimpleName() + ": " + name + " ivo scheme requires a path: " 
+                        + uri.toASCIIString());
+        }
+        if (query == null) {
+            throw new IllegalArgumentException(
+                caller.getSimpleName() + ": " + name + " ivo scheme requires a query string: " 
+                        + uri.toASCIIString());
+        }
+        String[] cop = query.split("/");
+        for (String pc : cop) {
+            CaomValidator.assertValidPathComponent(caller, "ivo: path components in query", pc);
+        }
+    }
+
+    /**
      * Checksum URI validation.
      * 
      * @param uri 
@@ -263,12 +347,26 @@ public final class CaomValidator {
     private static void validatePlanes(Observation obs) throws InvalidPolygonException {
         for (Plane p : obs.getPlanes()) {
             if (p.position != null) {
-                if (p.position.getBounds() instanceof Polygon) {
-                    Polygon poly = (Polygon) p.position.getBounds();
-                    poly.validate();
-                }
+                p.position.validate();
             }
-            // TODO??
+            if (p.energy != null) {
+                p.energy.validate();
+            }
+            if (p.time != null) {
+                p.time.validate();
+            }
+            if (p.polarization != null) {
+                p.polarization.validate();
+            }
+            if (p.custom != null) {
+                p.custom.validate();
+            }
+            if (p.visibility != null) {
+                p.visibility.validate();
+            }
+            if (p.observable != null) {
+                p.observable.validate();
+            }
         }
     }
     

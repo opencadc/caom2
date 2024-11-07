@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -90,7 +91,7 @@ public class Part extends CaomEntity implements Comparable<Part> {
     private final String name;
 
     // mutable state
-    public ProductType productType;
+    public DataLinkSemantics productType;
 
     // mutable contents
     private final Set<Chunk> chunks = new TreeSet<Chunk>();

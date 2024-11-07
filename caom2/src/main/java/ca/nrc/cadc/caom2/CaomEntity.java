@@ -69,14 +69,16 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.util.FieldComparator;
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.util.HexUtil;
 import ca.nrc.cadc.util.UUIDComparator;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
@@ -89,7 +91,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.opencadc.persist.Entity;
@@ -121,6 +122,30 @@ public abstract class CaomEntity extends Entity {
 
     protected CaomEntity(UUID id) {
         super(id, ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES);
+    }
+
+    @Override
+    protected boolean isDataModelClass(Class c) {
+        // imported data model components
+        if (DoubleInterval.class.equals(c)) {
+            return true;
+        }
+        if (Point.class.equals(c)) {
+            return true;
+        }
+        if (Circle.class.equals(c)) {
+            return true;
+        }
+        if (Polygon.class.equals(c)) {
+            return true;
+        }
+        if (Shape.class.equals(c)) {
+            return true;
+        }
+        if (MultiShape.class.equals(c)) {
+            return true;
+        }
+        return super.isDataModelClass(c);
     }
 
     /**
@@ -324,9 +349,9 @@ public abstract class CaomEntity extends Entity {
         throw new UnsupportedOperationException(
                 "unexpected primitive/value type: " + o.getClass().getName());
     }
-    
+
     /**
-     * Compute new accumulated metadata checksum for this entity. The computed
+     * Compute accumulated metadata checksum for this entity. The computed
      * value is based on the current state of this entity and all child
      * entities. The value is returned without changing the stored value that is
      * accessed via the getAccumulatedMetaChecksum() method.
@@ -334,6 +359,98 @@ public abstract class CaomEntity extends Entity {
      * @param digest
      * @return
      */
+    public URI computeAccMetaChecksum(MessageDigest digest) {
+        try {
+            calcAccMetaChecksum(this.getClass(), this, digest);
+            byte[] accMetaChecksumBytes = digest.digest();
+            String accHexMetaChecksum = HexUtil.toHex(accMetaChecksumBytes);
+            String alg = digest.getAlgorithm().toLowerCase();
+            return new URI(alg, accHexMetaChecksum, null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(
+                    "Unable to create metadata checksum URI for "
+                            + this.getClass().getName(),
+                    e);
+        }
+    }
+
+    private void calcAccMetaChecksum(Class c, Object o, MessageDigest digest) {
+
+        // calculation order:
+        // 1. bytes of the metaChecksum of the entity
+        // 2. bytes of the accMetaChecksum of child entities accumulated in
+        // CaomEntity.id order
+        try {
+            // clone for use with child entities
+            MessageDigest md = MessageDigest.getInstance(digest.getAlgorithm());
+
+            // add this object's complete metadata
+            calcMetaChecksum(c, o, new Entity.MessageDigestWrapper(md));
+            digest.update(md.digest());
+            // call to digest also resets
+
+            SortedSet<Field> fields = getChildFields(c);
+            if (MCS_DEBUG) {
+                log.debug("calcAccMetaChecksum: " + c.getName() + " has "
+                        + fields.size() + " child fields");
+            }
+
+            for (Field f : fields) {
+                f.setAccessible(true);
+                Object fo = f.get(o);
+                if (fo != null) {
+                    if (MCS_DEBUG) {
+                        log.debug("calcAccMetaChecksum: value type is "
+                                + fo.getClass().getName());
+                    }
+                    if (fo instanceof Collection) {
+                        Set<CaomEntity> children = (Set<CaomEntity>) fo;
+                        SortedMap<UUID, byte[]> sorted = new TreeMap<>(new UUIDComparator());
+                        if (OVERRRIDE_CORRECT_UUID_SORT) {
+                            // this reverts to default java ordering of UUID which is wrong but
+                            // useful for diagnosing accMetaChecksum issues
+                            sorted = new TreeMap<>();
+                        }
+                        Iterator<CaomEntity> i = children.iterator();
+                        while (i.hasNext()) {
+                            CaomEntity ce = i.next();
+                            Class cc = ce.getClass();
+                            if (MCS_DEBUG) {
+                                log.debug("calculate: " + ce.getID());
+                            }
+                            calcAccMetaChecksum(cc, ce, md);
+                            byte[] bb = md.digest();
+                            // call to digest also resets
+                            sorted.put(ce.getID(), bb);
+                        }
+                        Iterator<Map.Entry<UUID, byte[]>> si = sorted.entrySet().iterator();
+                        while (si.hasNext()) {
+                            Map.Entry<UUID, byte[]> me = si.next();
+                            if (MCS_DEBUG) {
+                                log.debug("accumulate: " + me.getKey());
+                            }
+                            digest.update(me.getValue());
+                        }
+                    } else {
+                        throw new UnsupportedOperationException(
+                                "found single child field " + f.getName() + " in " + c.getName());
+                    }
+                }
+                // child sets are never null
+                // else if (SC_DEBUG) log.debug("skip: " + c.getName() + "." +
+                // f.getName());
+            }
+        } catch (IllegalAccessException bug) {
+            throw new RuntimeException(
+                    "BUG: Unable to calculate metaChecksum for class "
+                            + c.getName(),
+                    bug);
+        } catch (NoSuchAlgorithmException oops) {
+            throw new RuntimeException("BUG: Unable to clone MessageDigest "
+                    + digest.getAlgorithm(), oops);
+        }
+    }
+
     public URI computeAccMetaChecksumV1(MessageDigest digest) {
         try {
             calcAccMetaChecksumV1(this.getClass(), this, digest);
