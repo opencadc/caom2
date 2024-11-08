@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,7 +71,6 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -80,9 +79,9 @@ import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.dali.DoubleInterval;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -99,36 +98,6 @@ public final class Util {
     static double roundToNearest(double d) {
         return Math.floor(d + 0.5);
     }
-
-    public static DataLinkSemantics choseProductType(Set<Artifact> artifacts) {
-        DataLinkSemantics ret = null;
-        for (Artifact a : artifacts) {
-            if (DataLinkSemantics.SCIENCE.equals(a.getProductType())) {
-                return DataLinkSemantics.SCIENCE;
-            }
-            if (DataLinkSemantics.CALIBRATION.equals(a.getProductType())) {
-                ret = DataLinkSemantics.CALIBRATION;
-            }
-            for (Part p : a.getParts()) {
-                if (DataLinkSemantics.SCIENCE.equals(p.productType)) {
-                    return DataLinkSemantics.SCIENCE;
-                }
-                if (DataLinkSemantics.CALIBRATION.equals(p.productType)) {
-                    ret = DataLinkSemantics.CALIBRATION;
-                }
-                for (Chunk c : p.getChunks()) {
-                    if (DataLinkSemantics.SCIENCE.equals(c.productType)) {
-                        return DataLinkSemantics.SCIENCE;
-                    }
-                    if (DataLinkSemantics.CALIBRATION.equals(c.productType)) {
-                        ret = DataLinkSemantics.CALIBRATION;
-                    }
-                }
-            }
-        }
-        return ret;
-    }
-
 
     public static boolean useChunk(DataLinkSemantics atype, DataLinkSemantics ptype, DataLinkSemantics ctype, DataLinkSemantics matches) {
         if (matches == null) {
@@ -183,13 +152,13 @@ public final class Util {
 
         if (bounds != null) {
             // count number of distinct bins
-            List<Interval> bins = new ArrayList<Interval>();
+            List<DoubleInterval> bins = new ArrayList<DoubleInterval>();
             for (CoordRange1D cr : bounds.getSamples()) {
-                Interval si = new Interval(cr.getStart().pix, cr.getEnd().pix);
+                DoubleInterval si = new DoubleInterval(cr.getStart().pix, cr.getEnd().pix);
                 Util.mergeIntoList(si, bins, 0.0);
             }
             double ret = 0.0;
-            for (Interval si : bins) {
+            for (DoubleInterval si : bins) {
                 ret += Math.abs(si.getUpper() - si.getLower());
             }
             return ret;
@@ -238,9 +207,9 @@ public final class Util {
         return function.getRefCoord().pix + (val - refVal) / function.getDelta();
     }
 
-    // merge a Interval into a List of Interval
-    static void mergeIntoList(Interval si, List<Interval> samples, double unionScale) {
-        Interval snew = si;
+    // merge a DoubleInterval into a List of DoubleInterval
+    static void mergeIntoList(DoubleInterval si, List<DoubleInterval> samples, double unionScale) {
+        DoubleInterval snew = si;
 
         //log.debug("[mergeIntoList] " + si.lower + "," + si.upper + " ->  " + samples.size());
         if (samples.size() > 0) {
@@ -248,11 +217,11 @@ public final class Util {
             double a = si.getLower() - f;
             double b = si.getUpper() + f;
 
-            ArrayList<Interval> tmp = new ArrayList<Interval>(samples.size());
+            ArrayList<DoubleInterval> tmp = new ArrayList<DoubleInterval>(samples.size());
 
             // find intervals that overlap the new one, move from samples -> tmp
             for (int i = 0; i < samples.size(); i++) {
-                Interval s1 = (Interval) samples.get(i);
+                DoubleInterval s1 = (DoubleInterval) samples.get(i);
                 f = unionScale * (s1.getUpper() - s1.getLower());
                 double c = s1.getLower() - f;
                 double d = s1.getUpper() + f;
@@ -273,7 +242,7 @@ public final class Util {
             if (!tmp.isEmpty()) {
                 double lb = si.getLower();
                 double ub = si.getUpper();
-                for (Interval s : tmp) {
+                for (DoubleInterval s : tmp) {
                     if (lb > s.getLower()) {
                         lb = s.getLower();
                     }
@@ -281,13 +250,13 @@ public final class Util {
                         ub = s.getUpper();
                     }
                 }
-                snew = new Interval(lb, ub);
+                snew = new DoubleInterval(lb, ub);
             }
         }
         // insert new sub to preserve order
         boolean added = false;
         for (int i = 0; i < samples.size(); i++) {
-            Interval ss = samples.get(i);
+            DoubleInterval ss = samples.get(i);
             if (snew.getLower() < ss.getLower()) {
                 samples.add(i, snew);
                 added = true;
