@@ -76,7 +76,7 @@ import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
@@ -509,11 +509,11 @@ public class EnergyUtilTest {
             Plane plane;
             Energy actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.CALIBRATION);
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -553,12 +553,12 @@ public class EnergyUtilTest {
             Plane plane;
             Energy actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.SCIENCE);
 
             // add some cal artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -587,10 +587,10 @@ public class EnergyUtilTest {
 
     Plane getTestSetRange(int numA, int numP, int numC)
         throws URISyntaxException {
-        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+        return getTestSetRange(numA, numP, numC, DataLinkSemantics.SCIENCE);
     }
 
-    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
+    Plane getTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype)
         throws URISyntaxException {
         double px = 0.5;
         double sx = 400.0;
@@ -630,7 +630,7 @@ public class EnergyUtilTest {
         Plane plane = new Plane("foo");
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
@@ -658,7 +658,7 @@ public class EnergyUtilTest {
         Plane plane = new Plane("foo");
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));

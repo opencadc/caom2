@@ -71,7 +71,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.types.CartesianTransform;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.IllegalPolygonException;
@@ -122,7 +122,7 @@ public final class PositionUtil {
      */
     public static Position compute(Set<Artifact> artifacts)
         throws NoSuchKeywordException, WCSLibRuntimeException {
-        ProductType productType = Util.choseProductType(artifacts);
+        DataLinkSemantics productType = Util.choseProductType(artifacts);
         log.debug("compute: " + productType);
 
         Position p = new Position();
@@ -140,7 +140,7 @@ public final class PositionUtil {
         return p;
     }
 
-    public static Shape generateShape(Set<Artifact> artifacts, ProductType productType)
+    public static Shape generateShape(Set<Artifact> artifacts, DataLinkSemantics productType)
             throws NoSuchKeywordException {
         int num = 0;
         Chunk chunk = null;
@@ -182,7 +182,7 @@ public final class PositionUtil {
         return null;
     }
 
-    public static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, ProductType productType)
+    public static List<MultiPolygon> generatePolygons(Set<Artifact> artifacts, DataLinkSemantics productType)
         throws NoSuchKeywordException {
         List<MultiPolygon> polys = new ArrayList<MultiPolygon>();
         for (Artifact a : artifacts) {
@@ -220,7 +220,7 @@ public final class PositionUtil {
     }
 
     // TODO: change return type to Shape; if we find CoordCircle2D in the SpatialWCS we should return a Circle
-    public static Shape computeBounds(Set<Artifact> artifacts, ProductType productType)
+    public static Shape computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType)
         throws NoSuchKeywordException {
         Shape ret = generateShape(artifacts, productType);
         if (ret == null) {
@@ -239,7 +239,7 @@ public final class PositionUtil {
     }
 
     // this works for mosaic camera data: multiple parts with ~single scale wcs functions
-    static Dimension2D computeDimensionsFromWCS(Shape bounds, Set<Artifact> artifacts, ProductType productType)
+    static Dimension2D computeDimensionsFromWCS(Shape bounds, Set<Artifact> artifacts, DataLinkSemantics productType)
         throws NoSuchKeywordException {
         log.debug("[computeDimensionsFromWCS] " + bounds + " " + artifacts.size());
         if (bounds == null) {
@@ -362,7 +362,7 @@ public final class PositionUtil {
         return new Dimension2D(ix, iy);
     }
 
-    static Dimension2D computeDimensionsFromRange(Set<Artifact> artifacts, ProductType productType) {
+    static Dimension2D computeDimensionsFromRange(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // assume all the WCS come from a single data array, find min/max pixel values
         double x1 = Double.MAX_VALUE;
         double x2 = -1 * x1;
@@ -401,7 +401,7 @@ public final class PositionUtil {
         return new Dimension2D((long) dx, (long) dy);
     }
 
-    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeSampleSize(Set<Artifact> artifacts, DataLinkSemantics productType) {
         double totSampleSize = 0.0;
         double numPixels = 0.0;
         for (Artifact a : artifacts) {
@@ -427,7 +427,7 @@ public final class PositionUtil {
     }
 
     // resolution of SCIENCE data, mean is weighted by number of pixels
-    static Double computeResolution(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeResolution(Set<Artifact> artifacts, DataLinkSemantics productType) {
         double totResolution = 0.0;
         double numPixels = 0.0;
         for (Artifact a : artifacts) {
@@ -449,7 +449,7 @@ public final class PositionUtil {
         return null;
     }
 
-    static Boolean computeTimeDependent(Set<Artifact> artifacts, ProductType productType) {
+    static Boolean computeTimeDependent(Set<Artifact> artifacts, DataLinkSemantics productType) {
         boolean foundTD = false;
         boolean foundTI = false;
         for (Artifact a : artifacts) {

@@ -76,7 +76,7 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -126,7 +126,7 @@ public class PolarizationUtilTest {
             Assert.assertNull(pol.states);
             Assert.assertNull(pol.dimension);
 
-            plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             pol = PolarizationUtil.compute(plane.getArtifacts());
             Assert.assertNotNull(pol);
             Assert.assertNull(pol.states);
@@ -141,7 +141,7 @@ public class PolarizationUtilTest {
     public void testSkippableCompute() {
         log.debug("testSkippableCompute: START");
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES"));
             c.polarization = new PolarizationWCS(axis);
@@ -159,7 +159,7 @@ public class PolarizationUtilTest {
     @Test
     public void testIllegalValues() {
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -213,7 +213,7 @@ public class PolarizationUtilTest {
     @Test
     public void testSingleValueRange() {
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -245,7 +245,7 @@ public class PolarizationUtilTest {
     @Test
     public void testRangeIQU() {
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -277,7 +277,7 @@ public class PolarizationUtilTest {
     @Test
     public void testFunctionIQUV() {
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -310,7 +310,7 @@ public class PolarizationUtilTest {
     @Test
     public void testFunctionRR_LL() {
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -341,7 +341,7 @@ public class PolarizationUtilTest {
     @Test
     public void testFunctionVUQI() {
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -375,7 +375,7 @@ public class PolarizationUtilTest {
     public void testRangeFromCalibrationIQ() {
         log.debug("testRangeFromCalibrationIQ - START");
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.CALIBRATION);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.CALIBRATION);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -387,7 +387,7 @@ public class PolarizationUtilTest {
             c.polarization = w;
 
             // add some aux artifacts, should not effect result
-            Artifact at = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact at = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             plane.getArtifacts().add(at);
             Part pt = new Part("otherPart");
             at.getParts().add(pt);
@@ -422,7 +422,7 @@ public class PolarizationUtilTest {
     public void testRangeFromMixedIQ() {
         log.debug("testRangeFromCalibrationIQ - START");
         try {
-            Plane plane = dataGenerator.getTestPlane(ProductType.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -434,7 +434,7 @@ public class PolarizationUtilTest {
             c.polarization = w;
 
             // add some cal artifacts, should not effect result
-            Artifact at = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
+            Artifact at = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.CALIBRATION, ReleaseType.DATA);
             plane.getArtifacts().add(at);
             Part pt = new Part("otherPart");
             at.getParts().add(pt);

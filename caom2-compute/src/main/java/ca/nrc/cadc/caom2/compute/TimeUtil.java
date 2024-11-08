@@ -70,7 +70,7 @@ package ca.nrc.cadc.caom2.compute;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.SampledInterval;
@@ -112,7 +112,7 @@ public final class TimeUtil {
     }
 
     public static Time compute(Set<Artifact> artifacts) {
-        ProductType productType = Util.choseProductType(artifacts);
+        DataLinkSemantics productType = Util.choseProductType(artifacts);
         log.debug("compute: " + productType);
         Time t = new Time();
         if (productType != null) {
@@ -132,7 +132,7 @@ public final class TimeUtil {
     /**
      * Computes the union.
      */
-    static SampledInterval computeBounds(Set<Artifact> artifacts, ProductType productType) {
+    static SampledInterval computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) {
         double unionScale = 0.02;
         List<Interval> subs = new ArrayList<Interval>();
 
@@ -186,7 +186,7 @@ public final class TimeUtil {
      * @param productType the artifact ProductType
      * @return a new Polygon computed with the default union scale
      */
-    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeSampleSize(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // assumption: all pixels are distinct so we can just compute a weighted average
         double totSampleSize = 0.0;
         double numPixels = 0.0;
@@ -234,7 +234,7 @@ public final class TimeUtil {
      * @param productType the artifact ProductType
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType) {
+    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, DataLinkSemantics productType) {
         log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null) {
             return null;
@@ -286,7 +286,7 @@ public final class TimeUtil {
      * @param productType the artifact ProductType
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType) {
+    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // assumption: all   pixels are distinct so just add up the number of pixels
         double numPixels = 0;
         for (Artifact a : artifacts) {
@@ -319,7 +319,7 @@ public final class TimeUtil {
      * @param productType the artifact ProductType
      * @return exposure time in seconds
      */
-    static Double computeExposureTime(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeExposureTime(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
         // the chunk
@@ -353,7 +353,7 @@ public final class TimeUtil {
      * @param productType the artifact ProductType
      * @return exposure time in seconds
      */
-    static Double computeResolution(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeResolution(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
         // the chunk

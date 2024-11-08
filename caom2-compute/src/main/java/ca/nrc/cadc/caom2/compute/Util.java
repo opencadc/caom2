@@ -70,7 +70,7 @@ package ca.nrc.cadc.caom2.compute;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
@@ -100,28 +100,28 @@ public final class Util {
         return Math.floor(d + 0.5);
     }
 
-    public static ProductType choseProductType(Set<Artifact> artifacts) {
-        ProductType ret = null;
+    public static DataLinkSemantics choseProductType(Set<Artifact> artifacts) {
+        DataLinkSemantics ret = null;
         for (Artifact a : artifacts) {
-            if (ProductType.SCIENCE.equals(a.getProductType())) {
-                return ProductType.SCIENCE;
+            if (DataLinkSemantics.SCIENCE.equals(a.getProductType())) {
+                return DataLinkSemantics.SCIENCE;
             }
-            if (ProductType.CALIBRATION.equals(a.getProductType())) {
-                ret = ProductType.CALIBRATION;
+            if (DataLinkSemantics.CALIBRATION.equals(a.getProductType())) {
+                ret = DataLinkSemantics.CALIBRATION;
             }
             for (Part p : a.getParts()) {
-                if (ProductType.SCIENCE.equals(p.productType)) {
-                    return ProductType.SCIENCE;
+                if (DataLinkSemantics.SCIENCE.equals(p.productType)) {
+                    return DataLinkSemantics.SCIENCE;
                 }
-                if (ProductType.CALIBRATION.equals(p.productType)) {
-                    ret = ProductType.CALIBRATION;
+                if (DataLinkSemantics.CALIBRATION.equals(p.productType)) {
+                    ret = DataLinkSemantics.CALIBRATION;
                 }
                 for (Chunk c : p.getChunks()) {
-                    if (ProductType.SCIENCE.equals(c.productType)) {
-                        return ProductType.SCIENCE;
+                    if (DataLinkSemantics.SCIENCE.equals(c.productType)) {
+                        return DataLinkSemantics.SCIENCE;
                     }
-                    if (ProductType.CALIBRATION.equals(c.productType)) {
-                        ret = ProductType.CALIBRATION;
+                    if (DataLinkSemantics.CALIBRATION.equals(c.productType)) {
+                        ret = DataLinkSemantics.CALIBRATION;
                     }
                 }
             }
@@ -130,7 +130,7 @@ public final class Util {
     }
 
 
-    public static boolean useChunk(ProductType atype, ProductType ptype, ProductType ctype, ProductType matches) {
+    public static boolean useChunk(DataLinkSemantics atype, DataLinkSemantics ptype, DataLinkSemantics ctype, DataLinkSemantics matches) {
         if (matches == null) {
             return false;
         }

@@ -71,7 +71,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
@@ -103,7 +103,7 @@ public final class CustomAxisUtil {
     private CustomAxisUtil() {
     }
 
-    private static String getCtype(Set<Artifact> artifacts, ProductType productType) {
+    private static String getCtype(Set<Artifact> artifacts, DataLinkSemantics productType) {
         String firstCtype = null;
 
         for (Artifact a : artifacts) {
@@ -132,7 +132,7 @@ public final class CustomAxisUtil {
     }
 
     public static CustomAxis compute(Set<Artifact> artifacts) {
-        ProductType productType = Util.choseProductType(artifacts);
+        DataLinkSemantics productType = Util.choseProductType(artifacts);
         String axisCtype = getCtype(artifacts, productType);
 
         if (axisCtype != null) {
@@ -160,7 +160,7 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static SampledInterval computeBounds(Set<Artifact> artifacts, ProductType productType, String expectedCtype) {
+    static SampledInterval computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType, String expectedCtype) {
         double unionScale = 0.02;
         List<Interval> subs = new ArrayList<Interval>();
 
@@ -220,7 +220,7 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType, String expectedCtype) {
+    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, DataLinkSemantics productType, String expectedCtype) {
         log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null) {
             return null;
@@ -276,7 +276,7 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType, String expectedCtype) {
+    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, DataLinkSemantics productType, String expectedCtype) {
         // assumption: all   pixels are distinct so just add up the number of pixels
         double numPixels = 0;
 

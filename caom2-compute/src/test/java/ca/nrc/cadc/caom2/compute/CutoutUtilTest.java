@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.types.Circle;
 import ca.nrc.cadc.caom2.types.Interval;
@@ -288,7 +288,7 @@ public class CutoutUtilTest {
             c.observableAxis = 6;
             c.customAxis = 7;
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -378,7 +378,7 @@ public class CutoutUtilTest {
             c.position.getAxis().range = null;
             c.position.getAxis().bounds = null;
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -434,7 +434,7 @@ public class CutoutUtilTest {
             c.position.getAxis().function = wcsf;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -514,7 +514,7 @@ public class CutoutUtilTest {
             c.energy.getAxis().range = null;
             c.energy.getAxis().bounds = null;
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -571,7 +571,7 @@ public class CutoutUtilTest {
             c.timeAxis = 1;
             Assert.assertTrue("can cutout", CutoutUtil.canCutout(c));
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -701,7 +701,7 @@ public class CutoutUtilTest {
             c.observable.independent = s2;
             Assert.assertTrue(CutoutUtil.canObservableCutout(c));
             
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -820,7 +820,7 @@ public class CutoutUtilTest {
 
             c.custom.getAxis().range = null;
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -896,7 +896,7 @@ public class CutoutUtilTest {
             c.customAxis = 3;
             c.custom = dataGenerator.mkGoodCustomWCS();
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);
@@ -930,7 +930,7 @@ public class CutoutUtilTest {
             c.customAxis = 3;
             c.custom = dataGenerator.mkGoodCustomWCS();
 
-            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(new URI("ad", "FOO/bar", null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             Part p = new Part(0);
             a.getParts().add(p);
             p.getChunks().add(c);

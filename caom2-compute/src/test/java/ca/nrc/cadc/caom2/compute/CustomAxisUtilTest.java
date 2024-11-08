@@ -74,7 +74,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Interval;
@@ -114,7 +114,7 @@ public class CustomAxisUtilTest {
         try {
             // All chunks within artifact must have same ctype. Get one that has
             // mixed ctypes that are all valid
-            Plane plane = getMixedTestSetRange(1, 2, 6, ProductType.SCIENCE);
+            Plane plane = getMixedTestSetRange(1, 2, 6, DataLinkSemantics.SCIENCE);
 
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
@@ -129,7 +129,7 @@ public class CustomAxisUtilTest {
     @Test
     public void testInvalidCtype() {
         try {
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, "foo", "foo_unit");
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.SCIENCE, "foo", "foo_unit");
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
         } catch (IllegalArgumentException expected) {
@@ -143,7 +143,7 @@ public class CustomAxisUtilTest {
     @Test
     public void testInvalidCunit() {
         try {
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, TEST_RM_CTYPE, TEST_INVALID_CUNIT);
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.SCIENCE, TEST_RM_CTYPE, TEST_INVALID_CUNIT);
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
         } catch (IllegalArgumentException expected) {
@@ -159,7 +159,7 @@ public class CustomAxisUtilTest {
         try {
             // Normalization should happen with the alternate cunits,
             // compute should still pass
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, TEST_CTYPE, TEST_ALT_CUNIT);
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.SCIENCE, TEST_CTYPE, TEST_ALT_CUNIT);
             log.info("plane: " + plane);
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
         } catch (Exception unexpected) {
@@ -176,7 +176,7 @@ public class CustomAxisUtilTest {
         // Util.choseProductType90 function in the compute function, so it
         // should return a null
         try {
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.DARK);
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.DARK);
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.assertNull(ca);
         } catch (IllegalArgumentException expected) {
@@ -394,12 +394,12 @@ public class CustomAxisUtilTest {
             Plane plane;
             CustomAxis actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.SCIENCE);
 
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -431,12 +431,12 @@ public class CustomAxisUtilTest {
             Plane plane;
             CustomAxis actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.CALIBRATION);
 
             // add some aux artifacts, should not affect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -468,12 +468,12 @@ public class CustomAxisUtilTest {
             Plane plane;
             CustomAxis actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.SCIENCE);
 
             // add some CAL artifacts, should not effect result since SCIENCE above
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -496,15 +496,15 @@ public class CustomAxisUtilTest {
 
     Plane getTestSetRange(int numA, int numP, int numC)
         throws URISyntaxException {
-        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+        return getTestSetRange(numA, numP, numC, DataLinkSemantics.SCIENCE);
     }
 
-    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
+    Plane getTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype)
         throws URISyntaxException {
         return getTestSetRange(numA, numP, numC, ptype, TEST_CTYPE, TEST_CUNIT);
     }
 
-    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype, String ctype, String cunit)
+    Plane getTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype, String ctype, String cunit)
         throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
@@ -532,7 +532,7 @@ public class CustomAxisUtilTest {
         return plane;
     }
 
-    Plane getMixedTestSetRange(int numA, int numP, int numC, ProductType ptype)
+    Plane getMixedTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype)
         throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
@@ -570,14 +570,14 @@ public class CustomAxisUtilTest {
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        ProductType ptype;
+        DataLinkSemantics ptype;
         Plane plane = new Plane("foo");
         int n = 0;
         for (int a = 0; a < numA; a++) {
             if ((a % 2) == 0) {
-                ptype = ProductType.CALIBRATION;
+                ptype = DataLinkSemantics.CALIBRATION;
             } else {
-                ptype = ProductType.SCIENCE;
+                ptype = DataLinkSemantics.SCIENCE;
             }
             Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
@@ -607,7 +607,7 @@ public class CustomAxisUtilTest {
         Plane plane = new Plane("foo");
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
@@ -634,7 +634,7 @@ public class CustomAxisUtilTest {
         Plane plane = new Plane("foo");
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));

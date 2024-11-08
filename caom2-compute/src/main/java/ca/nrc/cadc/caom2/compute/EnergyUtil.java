@@ -73,7 +73,7 @@ import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.EnergyBand;
 import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.types.Interval;
 import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.util.EnergyConverter;
@@ -113,7 +113,7 @@ public final class EnergyUtil {
      */
     public static Energy compute(Set<Artifact> artifacts)
         throws NoSuchKeywordException, WCSLibRuntimeException {
-        ProductType productType = Util.choseProductType(artifacts);
+        DataLinkSemantics productType = Util.choseProductType(artifacts);
         log.debug("compute: " + productType);
 
         Energy e = new Energy();
@@ -137,7 +137,7 @@ public final class EnergyUtil {
     /**
      * Computes the union.
      */
-    static SampledInterval computeBounds(Set<Artifact> artifacts, ProductType productType)
+    static SampledInterval computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType)
         throws NoSuchKeywordException, WCSLibRuntimeException {
         double smooth = 0.02;
         List<Interval> subs = new ArrayList<Interval>();
@@ -193,7 +193,7 @@ public final class EnergyUtil {
      * @param productType
      * @return a new Polygon computed with the default union scale
      */
-    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType)
+    static Double computeSampleSize(Set<Artifact> artifacts, DataLinkSemantics productType)
         throws NoSuchKeywordException, WCSLibRuntimeException {
         double totSampleSize = 0.0;
         double numPixels = 0.0;
@@ -246,7 +246,7 @@ public final class EnergyUtil {
      * @return number of pixels (approximate)
      * @params productType
      */
-    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType)
+    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, DataLinkSemantics productType)
         throws NoSuchKeywordException {
         log.debug("computeDimensionFromWCS: " + bounds + " " + productType);
         if (bounds == null) {
@@ -315,7 +315,7 @@ public final class EnergyUtil {
      * @param productType
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType) {
+    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply add up the pixels from each chunk
         double numPixels = 0;
@@ -347,7 +347,7 @@ public final class EnergyUtil {
      * @param productType
      * @return resolving power
      */
-    static Double computeResolution(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeResolution(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
         // the chunk
@@ -373,7 +373,7 @@ public final class EnergyUtil {
         return null;
     }
 
-    static EnergyTransition computeTransition(Set<Artifact> artifacts, ProductType productType) {
+    static EnergyTransition computeTransition(Set<Artifact> artifacts, DataLinkSemantics productType) {
         EnergyTransition ret = null;
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
@@ -398,7 +398,7 @@ public final class EnergyUtil {
         return ret;
     }
 
-    static String computeBandpassName(Set<Artifact> artifacts, ProductType productType) {
+    static String computeBandpassName(Set<Artifact> artifacts, DataLinkSemantics productType) {
         String ret = null;
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
@@ -430,7 +430,7 @@ public final class EnergyUtil {
      * @param productType
      * @return rest wavelength in meters
      */
-    static Double computeRestWav(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeRestWav(Set<Artifact> artifacts, DataLinkSemantics productType) {
         double minW = Double.MAX_VALUE;
         double maxW = 0.0;
         boolean found = false;

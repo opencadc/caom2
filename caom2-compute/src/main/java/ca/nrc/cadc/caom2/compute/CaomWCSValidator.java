@@ -73,11 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.IllegalPolygonException;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Point;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
@@ -112,11 +108,11 @@ public class CaomWCSValidator {
         filterByProductType = "true".equals(System.getProperty(CaomWCSValidator.class.getName() + ".filterByProductType"));
     }
     
-    private static boolean typeFilter(ProductType t) {
+    private static boolean typeFilter(DataLinkSemantics t) {
         if (!filterByProductType) {
             return true;
         }
-        return t == null || ProductType.SCIENCE.equals(t) || ProductType.CALIBRATION.equals(t);
+        return t == null || DataLinkSemantics.THIS.equals(t) || DataLinkSemantics.CALIBRATION.equals(t);
     }
     
     /**

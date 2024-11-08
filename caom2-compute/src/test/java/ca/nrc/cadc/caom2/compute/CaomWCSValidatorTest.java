@@ -69,7 +69,7 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
@@ -112,7 +112,7 @@ public class CaomWCSValidatorTest {
         Artifact a = null;
 
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             CaomWCSValidator.validate(a);
@@ -150,7 +150,7 @@ public class CaomWCSValidatorTest {
     public void testValidWCS() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             // Populate all WCS with good values
@@ -172,7 +172,7 @@ public class CaomWCSValidatorTest {
     public void testNullAxis() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             c.naxis = null;
@@ -188,7 +188,7 @@ public class CaomWCSValidatorTest {
     public void testInvalidNullMetadata() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
             c.timeAxis = null;
             CaomWCSValidator.validate(a);

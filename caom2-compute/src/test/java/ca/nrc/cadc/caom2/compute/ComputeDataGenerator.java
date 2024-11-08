@@ -6,7 +6,7 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
@@ -61,7 +61,7 @@ public class ComputeDataGenerator {
         return testChunk;
     }
 
-    Plane getTestPlane(ProductType ptype)
+    Plane getTestPlane(DataLinkSemantics ptype)
         throws URISyntaxException {
         Plane plane = new Plane(ptype.getClass().getName());
         Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
@@ -72,13 +72,13 @@ public class ComputeDataGenerator {
         return plane;
     }
 
-    Chunk getTestChunk(ProductType ptype)
+    Chunk getTestChunk(DataLinkSemantics ptype)
         throws URISyntaxException {
         Plane testPlane = getTestPlane(ptype);
         return testPlane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
     }
 
-    Artifact getTestArtifact(ProductType ptype)
+    Artifact getTestArtifact(DataLinkSemantics ptype)
         throws URISyntaxException {
         Plane testPlane = getTestPlane(ptype);
         return testPlane.getArtifacts().iterator().next();

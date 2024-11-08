@@ -74,7 +74,7 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ProductType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.types.Interval;
@@ -166,7 +166,7 @@ public class TimeUtilTest {
         
         try {
             Plane plane = new Plane("foo");
-            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(a);
             Part p = new Part(1);
             a.getParts().add(p);
@@ -330,7 +330,7 @@ public class TimeUtilTest {
             final double expectedSS = 0.3;
 
             Plane plane = new Plane("foo");
-            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(a);
             Part p = new Part(1);
             a.getParts().add(p);
@@ -520,12 +520,12 @@ public class TimeUtilTest {
             Plane plane;
             Time actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.SCIENCE);
 
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -566,12 +566,12 @@ public class TimeUtilTest {
             Plane plane;
             Time actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.CALIBRATION);
 
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -611,12 +611,12 @@ public class TimeUtilTest {
             Plane plane;
             Time actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.SCIENCE);
 
             // add some CAL artifacts, should not effect result since SCIENCE above
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -731,10 +731,10 @@ public static double jd2mjd(double[] jd) {
 
     Plane getTestSetRange(int numA, int numP, int numC)
         throws URISyntaxException {
-        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+        return getTestSetRange(numA, numP, numC, DataLinkSemantics.SCIENCE);
     }
 
-    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
+    Plane getTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype)
         throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
@@ -770,7 +770,7 @@ public static double jd2mjd(double[] jd) {
         Plane plane = new Plane("foo");
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
@@ -797,7 +797,7 @@ public static double jd2mjd(double[] jd) {
         Plane plane = new Plane("foo");
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
