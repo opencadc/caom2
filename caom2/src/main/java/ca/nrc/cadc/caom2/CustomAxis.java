@@ -69,7 +69,6 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Interval;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,7 +101,7 @@ public class CustomAxis {
         return ctype;
     }
 
-    public Interval<Double> getBounds() {
+    public DoubleInterval getBounds() {
         return bounds;
     }
 
