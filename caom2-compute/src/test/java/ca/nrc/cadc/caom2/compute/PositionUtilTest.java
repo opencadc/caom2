@@ -221,7 +221,7 @@ public class PositionUtilTest {
             axis.range = new CoordRange2D(start, end);
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordRangeToPolygon: " + v);
             }
@@ -246,7 +246,7 @@ public class PositionUtilTest {
             axis.bounds = new CoordCircle2D(cen, 0.5);
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
 
-            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordCircleToPolygon: " + v);
             }
@@ -260,7 +260,7 @@ public class PositionUtilTest {
             cen = new ValueCoord2D(0.1, 3.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
 
-            poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordCircleToPolygon: " + v);
             }
@@ -277,7 +277,7 @@ public class PositionUtilTest {
             // circle at the pole
             cen = new ValueCoord2D(30.0, 89.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
-            poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             Assert.assertEquals("area at pole", area, poly.getArea(), 0.01);
             pcen = poly.getCenter();
             Assert.assertEquals("center at pole", 30.0, pcen.cval1, 0.01);
@@ -305,7 +305,7 @@ public class PositionUtilTest {
             axis.bounds = cp;
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testCoordPolygonToPolygon: " + v);
             }
@@ -335,7 +335,7 @@ public class PositionUtilTest {
             axis.bounds = cp;
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             Assert.fail("expected IllegalPolygonException, got: " + poly);
         } catch (IllegalPolygonException expected) {
             log.debug("caught expected: " + expected);
@@ -359,7 +359,7 @@ public class PositionUtilTest {
             cp.getVertices().add(new ValueCoord2D(10, 21));
             axis.bounds = cp;
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
-            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             Assert.fail("expected IllegalPolygonException, got: " + poly);
         } catch (IllegalPolygonException expected) {
             log.debug("caught expected: " + expected);
@@ -382,7 +382,7 @@ public class PositionUtilTest {
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testFunctionToPolygon: " + v);
             }
@@ -407,7 +407,7 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
-            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testFunctionToPolygon: " + v);
             }
@@ -428,7 +428,7 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 370), new RefCoord(512, 20)); // requires range reduction
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
-            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
             for (Vertex v : poly.getVertices()) {
                 log.debug("testFunctionToPolygon: " + v);
             }
@@ -460,7 +460,7 @@ public class PositionUtilTest {
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toPolygon(wcs, cs.swappedAxes);
+            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
 
             Assert.fail("expected WCSLibRuntimeException");
         } catch (WCSLibRuntimeException expected) {
@@ -482,7 +482,7 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
-            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
 
             Assert.fail("expected WCSLibRuntimeException");
         } catch (WCSLibRuntimeException expected) {
@@ -502,7 +502,7 @@ public class PositionUtilTest {
             CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
             SpatialWCS wcs = new SpatialWCS(axis);
             
-            MultiPolygon poly = PositionUtil.toICRSPolygon(wcs);
+            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
             
             Assert.assertNull("no polygon", poly);
         } catch (Exception unexpected) {

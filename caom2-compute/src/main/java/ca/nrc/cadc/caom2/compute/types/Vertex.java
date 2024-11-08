@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,89 +62,47 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2.compute;
+package ca.nrc.cadc.caom2.compute.types;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import org.apache.log4j.Logger;
-
+import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.dali.Point;
 /**
+ * internal code
+ * 
  * @author pdowler
  */
-public final class PolarizationUtil {
-    private static final Logger log = Logger.getLogger(PolarizationUtil.class);
+public class Vertex extends Point {
+    private SegmentType type;
 
-    private PolarizationUtil() {
+    public static final Vertex CLOSE = new Vertex(0, 0, SegmentType.CLOSE);
+
+    public static final String[] CTOR_UTYPES = { "cval1", "cval2", "type" };
+
+    public Vertex(double cval1, double cval2, SegmentType type) {
+        super(cval1, cval2);
+        CaomValidator.assertNotNull(Vertex.class, "type", type);
+        this.type = type;
     }
 
-    public static Polarization compute(Set<Artifact> artifacts) {
-        Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
-        DataLinkSemantics productType = DataLinkSemantics.THIS;
-        log.debug("compute: " + productType);
-        int numPixels = 0;
-        for (Artifact a : artifacts) {
-            for (Part p : a.getParts()) {
-                for (Chunk c : p.getChunks()) {
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                        if (c.polarization != null) {
-                            numPixels += Util.getNumPixels(c.polarization.getAxis());
-                            pol.addAll(wcsToStates(c.polarization));
-                        }
-                    }
-                }
-            }
-        }
-
-        Polarization p = new Polarization();
-        if (!pol.isEmpty()) {
-            p.getStates().addAll(pol);
-            p.dimension = (long) numPixels;
-        }
-        return p;
+    public SegmentType getType() {
+        return type;
     }
-    
-    static List<PolarizationState> wcsToStates(PolarizationWCS wcs) {
-        List<PolarizationState> pol = new ArrayList<PolarizationState>();
-        CoordRange1D range = wcs.getAxis().range;
-        CoordBounds1D bounds = wcs.getAxis().bounds;
-        CoordFunction1D function = wcs.getAxis().function;
-        if (range != null) {
-            int lb = (int) range.getStart().val;
-            int ub = (int) range.getEnd().val;
-            for (int i = lb; i <= ub; i++) {
-                pol.add(PolarizationState.toValue(i));
-            }
-        } else if (bounds != null) {
-            for (CoordRange1D cr : bounds.getSamples()) {
-                int lb = (int) cr.getStart().val;
-                int ub = (int) cr.getEnd().val;
-                for (int i = lb; i <= ub; i++) {
-                    pol.add(PolarizationState.toValue(i));
-                }
-            }
-        } else if (function != null) {
-            for (int i = 1; i <= function.getNaxis(); i++) {
-                double pix = (double) i;
-                int val = (int) Util.pix2val(function, pix);
-                pol.add(PolarizationState.toValue(val));
-            }
+
+    // NOTE: do not implement equals() method here; PolygonUtil assumes the
+    // Object impl
+
+    @Override
+    public String toString() {
+        if (SegmentType.CLOSE.equals(type)) {
+            return this.getClass().getSimpleName() + "[" + type.toString()
+                    + "]";
         }
-        return  pol;
+        return this.getClass().getSimpleName() + "[" + getLongitude() + "," + getLatitude() + ","
+                + type.toString() + "]";
     }
 }

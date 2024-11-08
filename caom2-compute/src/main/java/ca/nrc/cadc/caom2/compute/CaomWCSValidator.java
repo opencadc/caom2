@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.PolarizationState;
+import ca.nrc.cadc.caom2.compute.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
@@ -81,6 +82,10 @@ import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
@@ -161,7 +166,7 @@ public class CaomWCSValidator {
                 // Convert to polygon using native coordinate system
                 PositionUtil.CoordSys csys = PositionUtil.inferCoordSys(position);
                 Point center = null;
-                MultiPolygon mp = PositionUtil.toPolygon(position, csys.swappedAxes);
+                Shape mp = PositionUtil.toShape(position, csys.swappedAxes);
                 if (mp != null) {
                     center = mp.getCenter();
                 }
@@ -169,8 +174,8 @@ public class CaomWCSValidator {
                 if (center != null && position.getAxis().function != null) {
                     log.debug("center: " + center);
                     double[] coords = new double[2];
-                    coords[0] = center.cval1;
-                    coords[1] = center.cval2;
+                    coords[0] = center.getLongitude();
+                    coords[1] = center.getLatitude();
                     
                     WCSWrapper map = new WCSWrapper(position, 1, 2);
                     Transform transform = new Transform(map);
@@ -188,7 +193,7 @@ public class CaomWCSValidator {
         if (energy != null) {
             try {
                 CoordAxis1D energyAxis = energy.getAxis();
-                Interval si = null;
+                DoubleInterval si = null;
 
                 if (energyAxis.range != null) {
                     si = EnergyUtil.toInterval(energy, energyAxis.range);

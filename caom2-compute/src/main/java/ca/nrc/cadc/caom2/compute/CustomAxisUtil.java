@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2019.                            (c) 2019.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,14 +72,12 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SampledInterval;
 import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.CustomWCS;
+import ca.nrc.cadc.dali.DoubleInterval;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
@@ -131,26 +129,28 @@ public final class CustomAxisUtil {
         return firstCtype;
     }
 
+    static class ComputedBounds {
+        DoubleInterval bounds;
+        List<DoubleInterval> samples;
+    }
+
     public static CustomAxis compute(Set<Artifact> artifacts) {
-        DataLinkSemantics productType = Util.choseProductType(artifacts);
+        DataLinkSemantics productType = DataLinkSemantics.THIS;
         String axisCtype = getCtype(artifacts, productType);
 
-        if (axisCtype != null) {
-
-            CustomAxis c = new CustomAxis(axisCtype);
-
-            if (productType != null) {
-                c.bounds = computeBounds(artifacts, productType, axisCtype);
+        if (axisCtype != null && productType != null) {
+            ComputedBounds cb = computeBounds(artifacts, productType, axisCtype);
+            if (cb != null) {
+                CustomAxis c = new CustomAxis(axisCtype, cb.bounds);
+                c.getSamples().addAll(cb.samples);
                 c.dimension = computeDimensionFromRangeBounds(artifacts, productType, axisCtype);
                 if (c.dimension == null) {
-                    c.dimension = computeDimensionFromWCS(c.bounds, artifacts, productType, axisCtype);
+                    c.dimension = computeDimensionFromWCS(c.getBounds(), artifacts, productType, axisCtype);
                 }
+                return c;
             }
-            return c;
-        } else {
-            // no ctype found for chosen product type
-            return null;
         }
+        return null;
     }
 
     /**
@@ -160,9 +160,9 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static SampledInterval computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType, String expectedCtype) {
+    static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType, String expectedCtype) {
         double unionScale = 0.02;
-        List<Interval> subs = new ArrayList<Interval>();
+        List<DoubleInterval> subs = new ArrayList<>();
 
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
@@ -177,17 +177,17 @@ public final class CustomAxisUtil {
                             CoordBounds1D bounds = c.custom.getAxis().bounds;
                             CoordFunction1D function = c.custom.getAxis().function;
                             if (range != null) {
-                                Interval s = toInterval(c.custom, range);
+                                DoubleInterval s = toInterval(c.custom, range);
                                 log.debug("[computeBounds] range -> sub: " + s);
                                 Util.mergeIntoList(s, subs, unionScale);
                             } else if (bounds != null) {
                                 for (CoordRange1D cr : bounds.getSamples()) {
-                                    Interval s = toInterval(c.custom, cr);
+                                    DoubleInterval s = toInterval(c.custom, cr);
                                     log.debug("[computeBounds] bounds -> sub: " + s);
                                     Util.mergeIntoList(s, subs, unionScale);
                                 }
                             } else if (function != null) {
-                                Interval s = CustomAxisUtil.toInterval(c.custom, function);
+                                DoubleInterval s = CustomAxisUtil.toInterval(c.custom, function);
                                 log.debug("[computeBounds] function -> sub: " + s);
                                 Util.mergeIntoList(s, subs, unionScale);
                             }
@@ -203,11 +203,15 @@ public final class CustomAxisUtil {
         // compute the outer bounds of the sub-intervals
         double lb = Double.MAX_VALUE;
         double ub = Double.MIN_VALUE;
-        for (Interval sub : subs) {
+        for (DoubleInterval sub : subs) {
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
-        return new SampledInterval(lb, ub, subs);
+        
+        ComputedBounds ret = new ComputedBounds();
+        ret.bounds = new DoubleInterval(lb, ub);
+        ret.samples = subs;
+        return ret;
     }
 
 
@@ -220,7 +224,7 @@ public final class CustomAxisUtil {
      * @param productType
      * @return
      */
-    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, DataLinkSemantics productType, String expectedCtype) {
+    static Long computeDimensionFromWCS(DoubleInterval bounds, Set<Artifact> artifacts, DataLinkSemantics productType, String expectedCtype) {
         log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null) {
             return null;
@@ -314,7 +318,7 @@ public final class CustomAxisUtil {
      * @param r
      * @return
      */
-    static Interval toInterval(CustomWCS wcs, CoordRange1D r) {
+    static DoubleInterval toInterval(CustomWCS wcs, CoordRange1D r) {
         validateWCS(wcs);
 
         double np = Math.abs(r.getStart().pix - r.getEnd().pix);
@@ -325,7 +329,7 @@ public final class CustomAxisUtil {
             throw new IllegalArgumentException("invalid CoordRange1D: found " + np + " + pixels and delta = 0.0 in [" + a + "," + b + "]");
         }
 
-        return new Interval(Math.min(a, b), Math.max(a, b));
+        return new DoubleInterval(Math.min(a, b), Math.max(a, b));
     }
 
     /**
@@ -335,7 +339,7 @@ public final class CustomAxisUtil {
      * @param func
      * @return
      */
-    static Interval toInterval(CustomWCS wcs, CoordFunction1D func) {
+    static DoubleInterval toInterval(CustomWCS wcs, CoordFunction1D func) {
         validateWCS(wcs);
 
         if (func.getDelta() == 0.0 && func.getNaxis() > 1L) {
@@ -347,7 +351,7 @@ public final class CustomAxisUtil {
         double a = Util.pix2val(func, p1);
         double b = Util.pix2val(func, p2);
 
-        return new Interval(Math.min(a, b), Math.max(a, b));
+        return new DoubleInterval(Math.min(a, b), Math.max(a, b));
     }
 
     /**

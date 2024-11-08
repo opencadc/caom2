@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,18 +71,34 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
+import ca.nrc.cadc.caom2.compute.types.CartesianTransform;
+import ca.nrc.cadc.caom2.compute.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
+import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
+import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
 import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
+import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
+import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
+import ca.nrc.cadc.caom2.wcs.CoordRange2D;
+import ca.nrc.cadc.caom2.wcs.Dimension2D;
+import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.awt.geom.Point2D;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import jsky.coords.wcscon;
 import org.apache.log4j.Logger;
 
 /**
@@ -99,6 +115,7 @@ public final class PositionUtil {
         Shape bounds;
         MultiShape samples;
     }
+
     /**
      * Compute all possible positional metadata for the specified artifacts.
      *
@@ -125,52 +142,10 @@ public final class PositionUtil {
             return p;
         }
 
-        return p;
-    }
-
-    public static Shape generateShape(Set<Artifact> artifacts, DataLinkSemantics productType)
-            throws NoSuchKeywordException {
-        int num = 0;
-        Chunk chunk = null;
-        for (Artifact a : artifacts) {
-            log.debug("generatePolygons: " + a.getURI());
-            for (Part p : a.getParts()) {
-                log.debug("generatePolygons: " + a.getURI() + " " + p.getName());
-                for (Chunk c : p.getChunks()) {
-                    log.debug("generatePolygons: " + a.getURI() + " " + p.getName() + " " + c.getID());
-                    if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                        log.debug("generatePolygons: " + a.getURI() + " "
-                            + a.getProductType() + " " + p.productType + " " + c.productType);
-                        if (c.position != null) {
-                            num++;
-                            chunk = c;
-                        }
-                    } else {
-                        log.debug("generatePolygons SKIP: " + a.getURI() + " "
-                            + a.getProductType() + " " + p.productType + " " + c.productType);
-                    }
-                }
-            }
-        }
-        if (chunk == null) {
-            // no spatial
-            return null;
-        }
-        if (num > 1) {
-            // multiple, assume mosaic w/ polygons
-            return null;
-        }
-        if (chunk.position.getAxis().bounds != null) {
-            if (chunk.position.getAxis().bounds instanceof CoordCircle2D) {
-                CoordCircle2D cc =  (CoordCircle2D) chunk.position.getAxis().bounds;
-                return new Circle(new Point(cc.getCenter().coord1, cc.getCenter().coord2), cc.getRadius());
-            }
-            // handle CoordPolygon2D in generatePolygons
-        }
         return null;
     }
 
-    public static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) 
+    static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) 
             throws NoSuchKeywordException {
         List<Shape> samples = generateShapes(artifacts, productType);
         if (samples == null || samples.isEmpty()) {
@@ -186,8 +161,7 @@ public final class PositionUtil {
         return ret;
     }
 
-    public static List<Shape> generateShapes(Set<Artifact> artifacts, DataLinkSemantics productType)
-            throws NoSuchKeywordException {
+    static List<Shape> generateShapes(Set<Artifact> artifacts, DataLinkSemantics productType) {
         int num = 0;
         List<Shape> ret = new ArrayList<>();
         Chunk chunk = null;
@@ -202,6 +176,7 @@ public final class PositionUtil {
                             + a.getProductType() + " " + p.productType + " " + c.productType);
                         if (c.position != null) {
                             Shape s = generateShape(c.position);
+                            ret.add(s);
                         }
                     } else {
                         log.debug("generateShapes SKIP: " + a.getURI() + " "
@@ -215,7 +190,7 @@ public final class PositionUtil {
     }
     
     static Shape generateShape(SpatialWCS wcs) {
-        throw new UnsupportedOperationException();
+        return toShapeICRS(wcs);
     }
 
     static Shape combineShapes(List<Shape> shapes) {
@@ -302,7 +277,7 @@ public final class PositionUtil {
         CoordSys csys = inferCoordSys(sw);
         List<long[]> pixv = new ArrayList<long[]>();
         for (Point pt : points) {
-            double[] coords = new double[] {pt.cval1, pt.cval2};
+            double[] coords = new double[] {pt.getLongitude(), pt.getLatitude()};
             if (csys.swappedAxes) {
                 double tmp = coords[0];
                 coords[0] = coords[1];
@@ -320,7 +295,8 @@ public final class PositionUtil {
             }
             Transform.Result tr = transform.sky2pix(coords);
             long[] pv = new long[] {(long) tr.coordinates[0], (long) tr.coordinates[1]};
-            log.debug("[computeDimensionsFromWCS] " + pt.cval1 + "," + pt.cval2 + " -> " + pv[0] + "," + pv[1]);
+            log.debug("[computeDimensionsFromWCS] " + pt.getLongitude() + "," + pt.getLatitude() 
+                    + " -> " + pv[0] + "," + pv[1]);
             pixv.add(pv);
         }
         // find lengths of edges
@@ -448,44 +424,56 @@ public final class PositionUtil {
     }
 
 
-    static Shape toPolygon(SpatialWCS wcs, boolean swappedAxes)
-        throws NoSuchKeywordException {
+    static Shape toShape(SpatialWCS wcs, boolean swappedAxes) {
 
         CoordRange2D range = wcs.getAxis().range;
         CoordBounds2D bounds = wcs.getAxis().bounds;
         CoordFunction2D function = wcs.getAxis().function;
 
-        Shape poly = null;
-        if (bounds != null) {
-            if (bounds instanceof CoordPolygon2D) {
+        Shape ret = null;
+        if (bounds != null && bounds instanceof CoordCircle2D) {
+            CoordCircle2D cc = (CoordCircle2D) bounds;
+            if (swappedAxes) {
+                ret = new Circle(new Point(cc.getCenter().coord2, cc.getCenter().coord1), cc.getRadius());
+            } else {
+                ret = new Circle(new Point(cc.getCenter().coord1, cc.getCenter().coord2), cc.getRadius());
+            }
+            return ret;
+        }
+
+        try {
+            Polygon poly = null;
+            if (bounds != null && bounds instanceof CoordPolygon2D) {
                 CoordPolygon2D cp = (CoordPolygon2D) bounds;
                 poly = toPolygon(wcs, cp);
-            } else if (bounds instanceof CoordCircle2D) {
-                CoordCircle2D cc = (CoordCircle2D) bounds;
-                poly = new Circle(new Point(cc.getCenter().coord1, cc.getCenter().coord2), cc.getRadius());
-            } else {
+            } else if (bounds != null) {
                 throw new UnsupportedOperationException(bounds.getClass().getName() + " -> Polygon");
+            } else if (function != null) {
+                poly = toPolygon(wcs, function);
+            } else if (range != null) {
+                poly = toPolygon(wcs, range);
             }
-        } else if (function != null) {
-            poly = toPolygon(wcs, function);
-        } else if (range != null) {
-            poly = toPolygon(wcs, range);
-        }
-        if (poly != null) {
-            log.debug("[wcs.toPolygon] native " + poly);
-            for (Point v : poly.getVertices()) {
-                if (swappedAxes) {
-                    double tmp = v.cval1;
-                    v.cval1 = v.cval2;
-                    v.cval2 = tmp;
+            if (poly != null) {
+                log.debug("[wcs.toPolygon] native " + poly);
+                Polygon tmp = new Polygon();
+                for (Point v : poly.getVertices()) {
+                    Point sv = v;
+                    if (swappedAxes) {
+                        sv = new Point(v.getLatitude(), v.getLongitude());
+                    }
+                    rangeReduce(v);
+                    tmp.getVertices().add(sv);
                 }
-                rangeReduce(v);
+                tmp.validate();
+                ret = tmp;
             }
-            poly.validate();
+
+            log.debug("[toPolygon] normalised " + poly);
+            return ret;
+        } catch (InvalidPolygonException | NoSuchKeywordException ex) {
+            log.debug("failed to generate shape from WCS", ex);
         }
-        
-        log.debug("[toPolygon] normalised " + poly);
-        return poly;
+        return ret;
     }
     
     static Polygon toPolygon(SpatialWCS wcs, CoordRange2D cr)
@@ -527,8 +515,8 @@ public final class PositionUtil {
         
         Polygon tmp = new Polygon();
         Point tcen = trans.transform(circ.getCenter());
-        double x = tcen.cval1;
-        double y = tcen.cval2;
+        double x = tcen.getLongitude();
+        double y = tcen.getLatitude();
         double dy = circ.getRadius();
         double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
         tmp.getVertices().add(rangeReduce(new Point(x - dx, y - dy)));
@@ -547,7 +535,7 @@ public final class PositionUtil {
         double x2 = function.getDimension().naxis1 + 0.5;
         double y1 = 0.5;
         double y2 = function.getDimension().naxis2 + 0.5;
-        List<Vertex> pixCoords = new ArrayList<Vertex>();
+        List<Point> pixCoords = new ArrayList<>();
         pixCoords.add(new Point(x1, y1));
         pixCoords.add(new Point(x2, y1));
         pixCoords.add(new Point(x2, y2));
@@ -559,57 +547,60 @@ public final class PositionUtil {
         return ret;
     }
 
-    public static Polygon toICRSPolygon(SpatialWCS wcs)
-        throws NoSuchKeywordException {
+    static Shape toShapeICRS(SpatialWCS wcs) {
         CoordSys coordsys = inferCoordSys(wcs);
         if (!coordsys.supported) {
             return null;
         }
 
-        Polygon poly = toPolygon(wcs, coordsys.swappedAxes);
+        Shape shape = toShape(wcs, coordsys.swappedAxes);
 
-        if (poly != null) {
-            toICRS(coordsys, poly.getVertices());
-
-            Point c = poly.getCenter();
-            if (c == null || Double.isNaN(c.cval1) || Double.isNaN(c.cval2)) {
-                throw new IllegalPolygonException("computed polygon has invalid center: " + c);
+        if (shape != null) {
+            if (shape instanceof Circle) {
+                Circle circ = (Circle) shape;
+                Point icrsCenter = toICRS(coordsys, circ.getCenter());
+                shape = new Circle(icrsCenter, circ.getRadius());
             }
+            if (shape instanceof Polygon) {
+                Polygon poly = (Polygon) shape;
+                toICRS(coordsys, poly.getVertices()); // in-place transform
 
-            if (wcs.getAxis().function != null && wcs.getAxis().bounds == null) {
-                // toPolygon used the wcs function to compute polygon: enforce MAX_SANE_AREA
-                if (poly.getArea() > MAX_SANE_AREA) {
-                    throw new IllegalPolygonException("area too large: " + poly.getArea() + " sq. deg. -- assuming invalid WCS");
+                Point c = poly.getCenter();
+                if (c == null || Double.isNaN(c.getLongitude()) || Double.isNaN(c.getLatitude())) {
+                    throw new IllegalPolygonException("computed polygon has invalid center: " + c);
+                }
+
+                if (wcs.getAxis().function != null && wcs.getAxis().bounds == null) {
+                    // toPolygon used the wcs function to compute polygon: enforce MAX_SANE_AREA
+                    if (poly.getArea() > MAX_SANE_AREA) {
+                        throw new IllegalPolygonException("area too large: " + poly.getArea() + " sq. deg. -- assuming invalid WCS");
+                    }
                 }
             }
         }
 
-        log.debug("[wcs.toIRCSPolygon] icrs " + poly);
-        return poly;
+        log.debug("[toShapeICRS] " + shape);
+        return shape;
     }
 
-    /**
-     * Modify argument vertex so that coordinates are in [0,360] and [-90,90].
-     * 
-     * @param v
-     * @return the same vertex for convenience
-     */
-    public static Point rangeReduce(Point v) {
-        if (v.cval2 > 90.0) {
-            v.cval1 += 180.0;
-            v.cval2 = 180.0 - v.cval2;
+    static Point rangeReduce(Point v) {
+        double longitude = v.getLongitude();
+        double latitude = v.getLatitude();
+        if (latitude > 90.0) {
+            longitude += 180.0;
+            latitude = 180.0 - latitude;
         }
-        if (v.cval2 < -90.0) {
-            v.cval1 += 180.0;
-            v.cval2 = -180.0 - v.cval2;
+        if (latitude < -90.0) {
+            longitude += 180.0;
+            latitude = -180.0 - latitude;
         }
-        if (v.cval1 < 0) {
-            v.cval1 += 360.0;
+        if (longitude < 0) {
+            longitude += 360.0;
         }
-        if (v.cval1 > 360.0) {
-            v.cval1 -= 360.0;
+        if (longitude > 360.0) {
+            longitude -= 360.0;
         }
-        return v;
+        return new Point(longitude, latitude);
     }
 
     public static CoordSys inferCoordSys(SpatialWCS wcs) {
@@ -678,39 +669,60 @@ public final class PositionUtil {
         throws NoSuchKeywordException {
         double[] coords = new double[2];
 
+        List<Point> ret = new ArrayList<>(vertices.size());
         WCSWrapper map = new WCSWrapper(wcs, 1, 2);
         Transform transform = new Transform(map);
         Iterator<Point> i = vertices.iterator();
         while (i.hasNext()) {
             Point v = i.next();
-            coords[0] = v.cval1;
-            coords[1] = v.cval2;
+            coords[0] = v.getLongitude();
+            coords[1] = v.getLatitude();
             //log.debug("transform: " + v);
             Transform.Result tr = transform.pix2sky(coords);
             //log.debug("wcslib: " + coords[0] + "," + coords[1] + " -> " + tr.coordinates[0] + "," + tr.coordinates[1]);
-            v.cval1 = tr.coordinates[0];
-            v.cval2 = tr.coordinates[1];
+            Point p = new Point(tr.coordinates[0], tr.coordinates[1]);
+            ret.add(p);
         }
-        return vertices;
+        return ret;
+    }
+
+    public static Point toICRS(CoordSys cs, Point v) {
+        if (CoordSys.ICRS.equals(cs.name) || CoordSys.FK5.equals(cs.name)) {
+            return v;
+        }
+
+        Point2D p;
+        if (CoordSys.GAL.equals(cs.name)) {
+            p = wcscon.gal2fk5(new Point2D.Double(v.getLongitude(), v.getLatitude()));
+        } else if (CoordSys.FK4.equals(cs.name)) {
+            p = wcscon.fk425(new Point2D.Double(v.getLongitude(), v.getLatitude()));
+        } else {
+            throw new IllegalArgumentException("unexpected coordsys: " + cs.name);
+        }
+        return new Point(p.getX(), p.getY());
     }
 
     public static void toICRS(CoordSys cs, List<Point> vertices) {
+        if (CoordSys.ICRS.equals(cs.name) || CoordSys.FK5.equals(cs.name)) {
+            return;
+        }
+
         Point2D p;
         if (CoordSys.GAL.equals(cs.name)) {
             for (int i = 0; i < vertices.size(); i++) {
                 Point v = vertices.get(i);
-                p = wcscon.gal2fk5(new Point2D.Double(v.cval1, v.cval2));
-                v.cval1 = p.getX();
-                v.cval2 = p.getY();
+                p = wcscon.gal2fk5(new Point2D.Double(v.getLongitude(), v.getLatitude()));
+                Point r = new Point(p.getX(), p.getY());
+                vertices.set(i, r);
             }
         } else if (CoordSys.FK4.equals(cs.name)) {
             for (int i = 0; i < vertices.size(); i++) {
                 Point v = vertices.get(i);
-                p = wcscon.fk425(new Point2D.Double(v.cval1, v.cval2));
-                v.cval1 = p.getX();
-                v.cval2 = p.getY();
+                p = wcscon.fk425(new Point2D.Double(v.getLongitude(), v.getLatitude()));
+                Point r = new Point(p.getX(), p.getY());
+                vertices.set(i, r);
             }
-        } else if (!CoordSys.ICRS.equals(cs.name) && !CoordSys.FK5.equals(cs.name)) {
+        } else {
             throw new IllegalArgumentException("unexpected coordsys: " + cs.name);
         }
     }
