@@ -93,8 +93,8 @@ public class CalibrationStatus extends VocabularyTerm implements CaomEnum<String
         return VALUES;
     }
 
-    private CalibrationStatus(String term) {
-        super(CALSTATUS, term, true);
+    public CalibrationStatus(String term) {
+        super(CALSTATUS, term);
     }
     
     public static CalibrationStatus toValue(String s) {
@@ -104,6 +104,7 @@ public class CalibrationStatus extends VocabularyTerm implements CaomEnum<String
             }
         }
     
-        throw new IllegalArgumentException("invalid value: " + s);
+        // assume VEP and accept
+        return new CalibrationStatus(s);
     }
 }

@@ -158,7 +158,8 @@ public class ObservationReaderWriterTest {
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
-        Log4jInit.setLevel("org.opencadc.persist", Level.INFO);
+        //Log4jInit.setLevel("org.opencadc.persist", Level.DEBUG);
+        //org.opencadc.persist.Entity.MCS_DEBUG = true;
     }
 
     public ObservationReaderWriterTest() {
@@ -502,7 +503,7 @@ public class ObservationReaderWriterTest {
     }
 
     @Test
-    public void testMinimalComposite() {
+    public void testMinimalDerived() {
         try {
             for (int i = 1; i < 6; i++) {
                 log.info("testMinimalComposite: depth = " + i);
@@ -533,7 +534,7 @@ public class ObservationReaderWriterTest {
     }
 
     @Test
-    public void testCompleteComposite() {
+    public void testCompleteDerived() {
         try {
             for (int i = 1; i < 6; i++) {
                 log.info("testCompleteComposite: depth = " + i);

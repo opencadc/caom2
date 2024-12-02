@@ -74,7 +74,7 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
-import ca.nrc.cadc.caom2.DataProductType;
+import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
@@ -628,7 +628,7 @@ public class ObservationWriter {
         addNumberElement("geoLocationY", telescope.geoLocationY, element);
         addNumberElement("geoLocationZ", telescope.geoLocationZ, element);
         if (telescope.trackingMode != null) {
-            addElement("trackingMode", telescope.trackingMode.getTerm(), element);
+            addElement("trackingMode", telescope.trackingMode.getValue(), element);
         }
         if (docVersion < 23) {
             addStringListElement("keywords", telescope.getKeywords(), element);
@@ -782,7 +782,7 @@ public class ObservationWriter {
             }
             if (plane.dataProductType != null) {
                 if (docVersion < 23 && DataProductType.CATALOG.equals(plane.dataProductType)) {
-                    addElement("dataProductType", plane.dataProductType.getTerm(), planeElement);
+                    addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
                 } else {
                     addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
                 }
@@ -859,7 +859,7 @@ public class ObservationWriter {
 
         if (comp.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(comp.calibration.getTerm());
+            ce.setText(comp.calibration.getValue());
             posE.addContent(ce);
         }
     }
@@ -981,7 +981,7 @@ public class ObservationWriter {
 
         if (comp.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(comp.calibration.getTerm());
+            ce.setText(comp.calibration.getValue());
             nrgE.addContent(ce);
         }
     }
@@ -1031,7 +1031,7 @@ public class ObservationWriter {
         }
         if (comp.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(comp.calibration.getTerm());
+            ce.setText(comp.calibration.getValue());
             e.addContent(ce);
         }
     }
@@ -1144,12 +1144,12 @@ public class ObservationWriter {
         parent.addContent(obsE);
         
         Element ucdE = getCaom2Element("ucd");
-        ucdE.setText(observable.getUCD().getTerm());
+        ucdE.setText(observable.getUCD().getValue());
         obsE.addContent(ucdE);
         
         if (observable.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(observable.calibration.getTerm());
+            ce.setText(observable.calibration.getValue());
             obsE.addContent(ce);
         }
     }

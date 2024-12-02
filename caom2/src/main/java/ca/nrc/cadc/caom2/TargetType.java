@@ -86,7 +86,7 @@ public class TargetType extends VocabularyTerm implements CaomEnum<String> {
     }
     
     private TargetType(String value) {
-        super(CAOM, value, true);
+        super(CAOM, value);
     }
 
     public static TargetType toValue(String s) {

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,111 +67,97 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.vocab;
 
-import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.caom2.CaomEnum;
+import ca.nrc.cadc.caom2.VocabularyTerm;
 import java.net.URI;
-import java.util.Set;
-import java.util.TreeSet;
-import org.apache.log4j.Level;
+import java.net.URISyntaxException;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
- *
+ * An extensible vocabulary masquerading as an enumeration, or the other way
+ * around.
+ * 
  * @author pdowler
  */
-public class DataProductTypeTest 
-{
-    private static final Logger log = Logger.getLogger(DataProductTypeTest.class);
+public class DataProductType extends VocabularyTerm implements CaomEnum<String> {
+    private static final Logger log = Logger.getLogger(DataProductType.class);
 
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-    }
+    private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
 
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
-
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
+    /**
+     * ObsCore-1.0 image.
+     */
+    public static final DataProductType IMAGE = new DataProductType("image");
     
-    @Test
-    public void testRoundtrip()
-    {
-        try
-        {
-            for (DataProductType c : DataProductType.values())
-            {
-                log.debug("roundtrip: " + c);
-                String s = c.getValue();
-                DataProductType c2 = DataProductType.toValue(s);
-                log.info(c + " -> " + s + " -> " + c2);
-                Assert.assertEquals(c, c2);
+    /**
+     * ObsCore-1.0 spectrum.
+     */
+    public static final DataProductType SPECTRUM = new DataProductType("spectrum");
+    
+    /**
+     * ObsCore-1.0 timeseries.
+     */
+    public static final DataProductType TIMESERIES = new DataProductType("timeseries");
+    
+    /**
+     * ObsCore-1.0 visibility.
+     */
+    public static final DataProductType VISIBILITY = new DataProductType("visibility");
+    
+    /**
+     * ObsCore-1.0 event.
+     */
+    public static final DataProductType EVENT = new DataProductType("event");
+    
+    /**
+     * ObsCore-1.0 cube.
+     */
+    public static final DataProductType CUBE = new DataProductType("cube");
+    
+
+    /**
+     * ObsCore-1.1 measurements.
+     */
+    public static final DataProductType MEASUREMENTS = new DataProductType("measurements");
+    
+    /**
+     * ObsCore-1.1 sed.
+     */
+    public static final DataProductType SED = new DataProductType("sed");
+
+    /**
+     * VEP: catalog is a subclass of measurements.
+     */
+    public static final DataProductType CATALOG = new DataProductType("catalog");
+
+    public static final DataProductType[] values() {
+        return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
+                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENT };
+    }
+
+    private DataProductType(String value) {
+        super(OBSCORE, value);
+    }
+
+    private DataProductType(URI namespace, String value) {
+        super(namespace, value);
+    }
+
+    public static DataProductType toValue(String s) {
+        for (DataProductType d : values()) {
+            if (d.getValue().equals(s)) {
+                return d;
             }
-            
-            try 
-            {
-                DataProductType c = DataProductType.toValue("NoSuchType");
-                Assert.fail("expected IllegalArgumentException, got: " + c);
-            } 
-            catch(IllegalArgumentException expected) 
-            {
-                log.debug("caught expected exception: " + expected);
-            }
-            
-            
         }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
+
+        // compat:
+        if ("eventlist".equals(s)) {
+            return EVENT;
         }
-    }
-    
-    @Test
-    public void testRoundtripCompat()
-    {
-        try
-        {
-            DataProductType c = DataProductType.toValue("eventlist");
-            log.debug("roundtrip: " + c);
-            String s = c.getValue();
-            DataProductType c2 = DataProductType.toValue(s);
-            log.info(c + " -> " + s + " -> " + c2);
-            Assert.assertEquals(DataProductType.EVENT, c2);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testRoundtripCustom()
-    {
-        try
-        {
-            String s1 = "http://example.com/foo#bar";
-            DataProductType c2 = DataProductType.toValue(s1);
-            String s2 = c2.getValue();
-            log.info(s1 + " == " + s2);
-            Assert.assertEquals(s1, s2);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+
+        // assume VEP and accept
+        return new DataProductType(s);
     }
 }

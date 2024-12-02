@@ -69,6 +69,7 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.util.Date;

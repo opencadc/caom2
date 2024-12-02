@@ -69,8 +69,6 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.util.HexUtil;
-
 /**
  *
  * @author pdowler

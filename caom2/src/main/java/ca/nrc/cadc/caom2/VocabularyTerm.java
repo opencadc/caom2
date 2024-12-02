@@ -75,66 +75,39 @@ import java.net.URI;
  * @author pdowler
  */
 public abstract class VocabularyTerm {
-    // TODO: transient so not included in meta checksum? woulds allow vocabulary rename
-    //       would also need to drop base and always just wrap a simple term...
-    private final URI namespace;
+    // transient so not included in meta checksum
+    private final transient URI namespace;
+    
     private final String term;
-    private boolean base;
-
+    
     private VocabularyTerm() {
         this.namespace = null;
         this.term = null;
     }
 
     /**
-     * Constructor. This creates a term in the specified vocabulary namepsace
-     * with default base = false.
+     * Constructor. This creates a term in the specified vocabulary namespace.
      * 
      * @param namespace
      * @param term
      */
     protected VocabularyTerm(URI namespace, String term) {
-        this(namespace, term, false);
-    }
-
-    /**
-     * Constructor. This creates a term in the specified vocabulary namespace.
-     * If the value of base is false (default for convenience constructor) then
-     * the string value (from getValue()) will just be the namespace URI plus
-     * the term added as a fragment. If the value of base is true, then this is
-     * a term in a base vocabulary and the value will be just the term (without
-     * the namespace).
-     * 
-     * @param namespace
-     * @param term
-     * @param base
-     */
-    protected VocabularyTerm(URI namespace, String term, boolean base) {
         CaomValidator.assertNotNull(VocabularyTerm.class, "namespace", namespace);
         CaomValidator.assertNotNull(VocabularyTerm.class, "term", term);
         CaomValidator.assertValidPathComponent(VocabularyTerm.class, "term", term);
-        if (namespace.getFragment() != null) {
-            throw new IllegalArgumentException("vocabulary namespace cannot have a fragment");
+        if (namespace.getQuery() != null || namespace.getFragment() != null) {
+            throw new IllegalArgumentException("vocabulary namespace cannot have a query|fragment: " + namespace);
         }
         this.namespace = namespace;
         this.term = term;
-        this.base = base;
     }
 
     public URI getNamespace() {
         return namespace;
     }
 
-    public String getTerm() {
-        return term;
-    }
-
     public String getValue() {
-        if (base) {
-            return term;
-        }
-        URI tmp = URI.create(namespace.toASCIIString() + "#" + term);
-        return tmp.toASCIIString();
+        return term;
     }
 
     @Override
@@ -149,7 +122,7 @@ public abstract class VocabularyTerm {
 
     @Override
     public int hashCode() {
-        return getValue().hashCode();
+        return (namespace.toASCIIString() + "#" + term).hashCode();
     }
 
     @Override

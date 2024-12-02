@@ -87,7 +87,7 @@ public class Status extends VocabularyTerm implements CaomEnum<String> {
     }
     
     private Status(String value) {
-        super(CAOM, value, true);
+        super(CAOM, value);
     }
     
     private Status(URI ns, String term) {

@@ -73,33 +73,34 @@ import ca.nrc.cadc.caom2.CaomEnum;
 import ca.nrc.cadc.caom2.VocabularyTerm;
 import java.net.URI;
 import java.net.URISyntaxException;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
 public class DataLinkSemantics extends VocabularyTerm implements CaomEnum<String> {
-
-    //private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/ProductType");
+    private static final Logger log = Logger.getLogger(DataLinkSemantics.class);
+    
     private static final URI DATALINK_NS = URI.create("http://www.ivoa.net/rdf/datalink/core");
     
     // IVOA DataLink terms
-    public static DataLinkSemantics THIS = new DataLinkSemantics("this");
+    public static final DataLinkSemantics THIS = new DataLinkSemantics("this");
 
-    public static DataLinkSemantics AUXILIARY = new DataLinkSemantics("auxiliary");
-    public static DataLinkSemantics BIAS = new DataLinkSemantics("bias");
-    public static DataLinkSemantics CALIBRATION = new DataLinkSemantics("calibration");
-    public static DataLinkSemantics CODERIVED = new DataLinkSemantics("coderived");
-    public static DataLinkSemantics DARK = new DataLinkSemantics("dark");
-    public static DataLinkSemantics DOCUMENTATION = new DataLinkSemantics("documentation");
-    public static DataLinkSemantics ERROR = new DataLinkSemantics("error");
-    public static DataLinkSemantics FLAT = new DataLinkSemantics("flat");
-    public static DataLinkSemantics NOISE = new DataLinkSemantics("noise");
-    public static DataLinkSemantics PREVIEW = new DataLinkSemantics("preview");
-    public static DataLinkSemantics PREVIEW_IMAGE = new DataLinkSemantics("preview-image");
-    public static DataLinkSemantics PREVIEW_PLOT = new DataLinkSemantics("preview-plot");
-    public static DataLinkSemantics THUMBNAIL = new DataLinkSemantics("thumbnail");
-    public static DataLinkSemantics WEIGHT = new DataLinkSemantics("weight");
+    public static final DataLinkSemantics AUXILIARY = new DataLinkSemantics("auxiliary");
+    public static final DataLinkSemantics BIAS = new DataLinkSemantics("bias");
+    public static final DataLinkSemantics CALIBRATION = new DataLinkSemantics("calibration");
+    public static final DataLinkSemantics CODERIVED = new DataLinkSemantics("coderived");
+    public static final DataLinkSemantics DARK = new DataLinkSemantics("dark");
+    public static final DataLinkSemantics DOCUMENTATION = new DataLinkSemantics("documentation");
+    public static final DataLinkSemantics ERROR = new DataLinkSemantics("error");
+    public static final DataLinkSemantics FLAT = new DataLinkSemantics("flat");
+    public static final DataLinkSemantics NOISE = new DataLinkSemantics("noise");
+    public static final DataLinkSemantics PREVIEW = new DataLinkSemantics("preview");
+    public static final DataLinkSemantics PREVIEW_IMAGE = new DataLinkSemantics("preview-image");
+    public static final DataLinkSemantics PREVIEW_PLOT = new DataLinkSemantics("preview-plot");
+    public static final DataLinkSemantics THUMBNAIL = new DataLinkSemantics("thumbnail");
+    public static final DataLinkSemantics WEIGHT = new DataLinkSemantics("weight");
     
     // DataLink terms explicitly not included because they are not applicable to Artifact
     // counterpart
@@ -121,15 +122,11 @@ public class DataLinkSemantics extends VocabularyTerm implements CaomEnum<String
         return VALUES;
     }
 
-    private DataLinkSemantics(String term) {
-        super(DATALINK_NS, term, true);
+    public DataLinkSemantics(String term) {
+        super(DATALINK_NS, term);
     }
 
-    protected DataLinkSemantics(URI namespace, String term) {
-        super(namespace, term, false);
-    }
-
-    public static DataLinkSemantics toValue(String s) {
+    public static final DataLinkSemantics toValue(String s) {
         for (DataLinkSemantics d : VALUES) {
             if (d.getValue().equals(s)) {
                 return d;
@@ -140,19 +137,8 @@ public class DataLinkSemantics extends VocabularyTerm implements CaomEnum<String
         if ("science".equals(s)) {
             return THIS;
         }
-        // custom term
-        try {
-            URI u = new URI(s);
-            String t = u.getFragment();
-            if (t == null) {
-                throw new IllegalArgumentException(
-                        "invalid value (no term/fragment): " + s);
-            }
-            String[] ss = u.toASCIIString().split("#");
-            URI ns = new URI(ss[0]);
-            return new DataLinkSemantics(ns, t);
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException("invalid value: " + s, ex);
-        }
+
+        // assume VEP and accept
+        return new DataLinkSemantics(s);
     }
 }

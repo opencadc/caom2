@@ -67,10 +67,11 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.vocab;
 
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
+import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import java.util.Set;
 import java.util.TreeSet;
 import org.apache.log4j.Level;
@@ -82,9 +83,9 @@ import org.junit.Test;
  *
  * @author pdowler
  */
-public class ProductTypeTest 
+public class DataProductTypeTest 
 {
-    private static final Logger log = Logger.getLogger(ProductTypeTest.class);
+    private static final Logger log = Logger.getLogger(DataProductTypeTest.class);
 
     static
     {
@@ -110,25 +111,33 @@ public class ProductTypeTest
     {
         try
         {
-            for (DataLinkSemantics c : DataLinkSemantics.values())
+            for (DataProductType c : DataProductType.values())
             {
-                log.debug("testing: " + c);
+                log.debug("roundtrip: " + c);
                 String s = c.getValue();
-                DataLinkSemantics c2 = DataLinkSemantics.toValue(s);
+                DataProductType c2 = DataProductType.toValue(s);
+                log.info(c + " -> " + s + " -> " + c2);
                 Assert.assertEquals(c, c2);
             }
-            
-            try 
-            {
-                DataLinkSemantics c = DataLinkSemantics.toValue("NoSuchType");
-                Assert.fail("expected IllegalArgumentException, got: " + c);
-            } 
-            catch(IllegalArgumentException expected) 
-            {
-                log.debug("caught expected exception: " + expected);
-            }
-            
-            
+        }
+        catch(Exception unexpected)
+        {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testRoundtripCompat()
+    {
+        try
+        {
+            DataProductType c = DataProductType.toValue("eventlist");
+            log.debug("roundtrip: " + c);
+            String s = c.getValue();
+            DataProductType c2 = DataProductType.toValue(s);
+            log.info(c + " -> " + s + " -> " + c2);
+            Assert.assertEquals(DataProductType.EVENT, c2);
         }
         catch(Exception unexpected)
         {
@@ -142,9 +151,8 @@ public class ProductTypeTest
     {
         try
         {
-            // a datalink core extension we have not included yet
-            String s1 = "http://www.example.net/rdf/topic#flibble";
-            DataLinkSemantics c2 = DataLinkSemantics.toValue(s1);
+            String s1 = "bar";
+            DataProductType c2 = DataProductType.toValue(s1);
             String s2 = c2.getValue();
             log.info(s1 + " == " + s2);
             Assert.assertEquals(s1, s2);

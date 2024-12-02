@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,113 +65,67 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
-package ca.nrc.cadc.caom2;
+package ca.nrc.cadc.caom2.vocab;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
+import ca.nrc.cadc.util.Log4jInit;
+import java.util.Set;
+import java.util.TreeSet;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * An extensible vocabulary masquerading as an enumeration, or the other way
- * around.
- * 
+ *
  * @author pdowler
  */
-public class DataProductType extends VocabularyTerm implements CaomEnum<String> {
-    private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
-    private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/DataProductType");
+public class DataLinkSemanticsTest {
 
-    /**
-     * ObsCore-1.0 image.
-     */
-    public static final DataProductType IMAGE = new DataProductType("image");
-    
-    /**
-     * ObsCore-1.0 spectrum.
-     */
-    public static final DataProductType SPECTRUM = new DataProductType("spectrum");
-    
-    /**
-     * ObsCore-1.0 timeseries.
-     */
-    public static final DataProductType TIMESERIES = new DataProductType("timeseries");
-    
-    /**
-     * ObsCore-1.0 visibility.
-     */
-    public static final DataProductType VISIBILITY = new DataProductType("visibility");
-    
-    /**
-     * ObsCore-1.0 event.
-     */
-    public static final DataProductType EVENT = new DataProductType("event");
-    
-    /**
-     * Incorrect value from ObsCore WD that was actually used.
-     */
-    @Deprecated
-    private static final DataProductType EVENTLIST = new DataProductType("eventlist");
-    
-    /**
-     * ObsCore-1.0 cube.
-     */
-    public static final DataProductType CUBE = new DataProductType("cube");
-    
+    private static final Logger log = Logger.getLogger(DataLinkSemanticsTest.class);
 
-    /**
-     * ObsCore-1.1 measurements.
-     */
-    public static final DataProductType MEASUREMENTS = new DataProductType("measurements");
-    
-    /**
-     * ObsCore-1.1 sed.
-     */
-    public static final DataProductType SED = new DataProductType("sed");
-
-    /**
-     * CAOM catalog extension. Catalog is a subclass of measurements.
-     */
-    public static final DataProductType CATALOG = new DataProductType(CAOM, "catalog");
-
-    public static final DataProductType[] values() {
-        return new DataProductType[] { IMAGE, SPECTRUM, TIMESERIES, VISIBILITY,
-                                       CUBE, SED, MEASUREMENTS, CATALOG, EVENT };
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
     }
 
-    private DataProductType(String value) {
-        super(OBSCORE, value, true);
-    }
-
-    private DataProductType(URI namespace, String value) {
-        super(namespace, value);
-    }
-
-    public static DataProductType toValue(String s) {
-        for (DataProductType d : values()) {
-            if (d.getValue().equals(s)) {
-                return d;
-            }
-        }
-
-        // backwards compat
-        if (EVENTLIST.getValue().equals(s)) {
-            return EVENT; // correct term
-        }
-        
-        // custom term
+    @Test
+    public void testRoundtrip() {
         try {
-            URI u = new URI(s);
-            String t = u.getFragment();
-            if (t == null) {
-                throw new IllegalArgumentException(
-                        "invalid value (no term/fragment): " + s);
+            for (DataLinkSemantics c : DataLinkSemantics.values()) {
+                
+                String s = c.getValue();
+                DataLinkSemantics c2 = DataLinkSemantics.toValue(s);
+                log.info(c + " -> " + s + " -> " + c2);
+                Assert.assertEquals(c, c2);
             }
-            String[] ss = u.toASCIIString().split("#");
-            URI ns = new URI(ss[0]);
-            return new DataProductType(ns, t);
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException("invalid value: " + s, ex);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testRoundtripCustom() {
+        try {
+            // a datalink core extension we have not included yet
+            String s1 = "flibble";
+            DataLinkSemantics c2 = DataLinkSemantics.toValue(s1);
+            String s2 = c2.getValue();
+            log.info(s1 + " == " + s2);
+            Assert.assertEquals(s1, s2);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+
+        try {
+            String s1 = "http://www.example.net/rdf/topic#flibble";
+            DataLinkSemantics c2 = DataLinkSemantics.toValue(s1);
+            Assert.fail("expected IllegalArgumentException, got: " + c2);
+        } catch (IllegalArgumentException expected) {
+            log.info("caught expected: " + expected);
         }
     }
 }

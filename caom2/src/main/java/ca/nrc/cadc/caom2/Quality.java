@@ -86,7 +86,7 @@ public class Quality extends VocabularyTerm implements CaomEnum<String> {
     }
 
     private Quality(String value) {
-        super(CAOM, value, true);
+        super(CAOM, value);
     }
 
     public static Quality toValue(String s) {
