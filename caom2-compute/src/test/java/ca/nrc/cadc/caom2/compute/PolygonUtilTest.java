@@ -69,19 +69,11 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Vertex;
-import ca.nrc.cadc.caom2.wcs.Axis;
-import ca.nrc.cadc.caom2.wcs.Coord2D;
-import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
+import ca.nrc.cadc.caom2.compute.types.MultiPolygon;
+import ca.nrc.cadc.caom2.compute.types.SegmentType;
+import ca.nrc.cadc.caom2.compute.types.Vertex;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.util.Log4jInit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -141,8 +133,8 @@ public class PolygonUtilTest {
             Double area = actual.getArea();
 
             Assert.assertNotNull(center);
-            Assert.assertEquals(2.5, center.cval1, 0.01);
-            Assert.assertEquals(2.5, center.cval2, 0.01);
+            Assert.assertEquals(2.5, center.getLongitude(), 0.01);
+            Assert.assertEquals(2.5, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(7.0, area, 0.01);
@@ -184,8 +176,8 @@ public class PolygonUtilTest {
             Double area = actual.getArea();
 
             Assert.assertNotNull(center);
-            Assert.assertEquals(x + 4.0, center.cval1, 0.02);
-            Assert.assertEquals(4.0, center.cval2, 0.02);
+            Assert.assertEquals(x + 4.0, center.getLongitude(), 0.02);
+            Assert.assertEquals(4.0, center.getLatitude(), 0.02);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0, area, 0.02);
@@ -218,8 +210,8 @@ public class PolygonUtilTest {
             Point center = p1.getCenter();
             Double area = p1.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(2.5, center.cval1, 0.01);
-            Assert.assertEquals(2.5, center.cval2, 0.01);
+            Assert.assertEquals(2.5, center.getLongitude(), 0.01);
+            Assert.assertEquals(2.5, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0, area, 0.01);
@@ -230,8 +222,8 @@ public class PolygonUtilTest {
             center = actual.getCenter();
             area = actual.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(2.5, center.cval1, 0.01);
-            Assert.assertEquals(2.5, center.cval2, 0.01);
+            Assert.assertEquals(2.5, center.getLongitude(), 0.01);
+            Assert.assertEquals(2.5, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(9.0, area, 0.02);
@@ -267,8 +259,8 @@ public class PolygonUtilTest {
             Point center = union.getCenter();
             Double area = union.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(3.05, center.cval1, 0.01); // mid between 2 and 4.1
-            Assert.assertEquals(2.0, center.cval2, 0.01);
+            Assert.assertEquals(3.05, center.getLongitude(), 0.01); // mid between 2 and 4.1
+            Assert.assertEquals(2.0, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0, area, 0.01); // 4 + 4
@@ -278,13 +270,13 @@ public class PolygonUtilTest {
             Polygon actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNotNull(actual);
             log.info("testGetConcaveHullFromClose: " + actual);
-            Assert.assertEquals(4, actual.getPoints().size());
+            Assert.assertEquals(4, actual.getVertices().size());
 
             center = actual.getCenter();
             area = actual.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(3.05, center.cval1, 0.01); // mid between 2 and 4.1
-            Assert.assertEquals(2.0, center.cval2, 0.01);
+            Assert.assertEquals(3.05, center.getLongitude(), 0.01); // mid between 2 and 4.1
+            Assert.assertEquals(2.0, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0 + 2 * 0.1, area, 0.1); // 4 + 4 + gap
@@ -307,8 +299,8 @@ public class PolygonUtilTest {
             center = union.getCenter();
             area = union.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(3.01, center.cval1, 0.01);
-            Assert.assertEquals(2.5, center.cval2, 0.01);
+            Assert.assertEquals(3.01, center.getLongitude(), 0.01);
+            Assert.assertEquals(2.5, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0, area, 0.01); // 4 + 4
@@ -318,13 +310,13 @@ public class PolygonUtilTest {
             actual = PolygonUtil.getConcaveHull(union);
             Assert.assertNotNull(actual);
             log.debug("testGetConcaveHullFromClose: " + actual);
-            Assert.assertEquals(8, actual.getPoints().size());
+            Assert.assertEquals(8, actual.getVertices().size());
 
             center = actual.getCenter();
             area = actual.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(3.01, center.cval1, 0.01); // mid between 2 and 4.1
-            Assert.assertEquals(2.5, center.cval2, 0.01);
+            Assert.assertEquals(3.01, center.getLongitude(), 0.01); // mid between 2 and 4.1
+            Assert.assertEquals(2.5, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0 + 2 * 0.02, area, 0.1); // 4 + 4 + gap
@@ -360,8 +352,8 @@ public class PolygonUtilTest {
             Point center = union.getCenter();
             Double area = union.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(4.0, center.cval1, 0.01);
-            Assert.assertEquals(4.0, center.cval2, 0.01);
+            Assert.assertEquals(4.0, center.getLongitude(), 0.01);
+            Assert.assertEquals(4.0, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0, area, 0.02); // 4 + 4
@@ -402,8 +394,8 @@ public class PolygonUtilTest {
             Point center = union.getCenter();
             Double area = union.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(4.0, center.cval1, 0.01);
-            Assert.assertEquals(4.0, center.cval2, 0.01);
+            Assert.assertEquals(4.0, center.getLongitude(), 0.01);
+            Assert.assertEquals(4.0, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(8.0, area, 0.02); // 4 + 4
@@ -412,12 +404,12 @@ public class PolygonUtilTest {
 
             Polygon actual = PolygonUtil.getConvexHull(union);
             Assert.assertNotNull(actual);
-            Assert.assertEquals("convex hull num verts", 6, actual.getPoints().size());
+            Assert.assertEquals("convex hull num verts", 6, actual.getVertices().size());
             center = actual.getCenter();
             area = actual.getArea();
             Assert.assertNotNull(center);
-            Assert.assertEquals(4.0, center.cval1, 0.01);
-            Assert.assertEquals(4.0, center.cval2, 0.01);
+            Assert.assertEquals(4.0, center.getLongitude(), 0.01);
+            Assert.assertEquals(4.0, center.getLatitude(), 0.01);
 
             Assert.assertNotNull(area);
             Assert.assertEquals(20.0, area, 0.1); // 4 + 4 + 12

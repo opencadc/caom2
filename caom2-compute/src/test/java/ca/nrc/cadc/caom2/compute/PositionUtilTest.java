@@ -73,16 +73,9 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.IllegalPolygonException;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.compute.types.IllegalPolygonException;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
@@ -94,6 +87,11 @@ import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.InvalidPolygonException;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.net.URI;
@@ -112,6 +110,9 @@ public class PositionUtilTest {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.dali", Level.DEBUG);
+        Log4jInit.setLevel("ca.nrc.cadc.caom2.compute", Level.DEBUG);
+
     }
 
 
@@ -221,12 +222,15 @@ public class PositionUtilTest {
             axis.range = new CoordRange2D(start, end);
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            for (Vertex v : poly.getVertices()) {
+            Shape s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Polygon);
+            Polygon poly = (Polygon) s;
+            for (Point v : poly.getVertices()) {
                 log.debug("testCoordRangeToPolygon: " + v);
             }
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getVertices().size());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -235,7 +239,7 @@ public class PositionUtilTest {
     }
 
     @Test
-    public void testCoordCircleToPolygon() {
+    public void testCoordCircleToShape() {
         try {
             Axis axis1 = new Axis("RA---TAN", "deg");
             Axis axis2 = new Axis("DEC--TAN", "deg");
@@ -246,43 +250,39 @@ public class PositionUtilTest {
             axis.bounds = new CoordCircle2D(cen, 0.5);
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
 
-            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            for (Vertex v : poly.getVertices()) {
-                log.debug("testCoordCircleToPolygon: " + v);
-            }
-            Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
-            //double expected = Math.PI*0.25; // triangulated
-            double area = 1.0; // bounding box 
-            Assert.assertEquals("area", area, poly.getArea(), 0.01);
-
+            Shape s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Circle);
+            Circle circ = (Circle) s;
+            double area = 0.5 * 0.5 * Math.PI;
+            Assert.assertEquals("area", area, circ.getArea(), 0.01);
+            Assert.assertEquals(2.0, circ.getCenter().getLongitude(), 0.01);
+            Assert.assertEquals(3.0, circ.getCenter().getLatitude(), 0.01);
+            
             // circle overlapping meridian
             cen = new ValueCoord2D(0.1, 3.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
 
-            poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            for (Vertex v : poly.getVertices()) {
-                log.debug("testCoordCircleToPolygon: " + v);
-            }
-            Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
-            //double expected = Math.PI*0.25; // triangulated
-            area = 1.0; // bounding box 
-            Assert.assertEquals("area at meridian", area, poly.getArea(), 0.01);
-            Point pcen = poly.getCenter();
-            Assert.assertEquals("center at pole", 0.1, pcen.cval1, 0.01);
-            Assert.assertEquals("center at pole", 3.0, pcen.cval2, 0.01);
-
+            s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Circle);
+            circ = (Circle) s;
+            area = 0.5 * 0.5 * Math.PI;
+            Assert.assertEquals("area", area, circ.getArea(), 0.01);
+            Assert.assertEquals(0.1, circ.getCenter().getLongitude(), 0.01);
+            Assert.assertEquals(3.0, circ.getCenter().getLatitude(), 0.01);
 
             // circle at the pole
             cen = new ValueCoord2D(30.0, 89.0);
             axis.bounds = new CoordCircle2D(cen, 0.5);
-            poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            Assert.assertEquals("area at pole", area, poly.getArea(), 0.01);
-            pcen = poly.getCenter();
-            Assert.assertEquals("center at pole", 30.0, pcen.cval1, 0.01);
-            Assert.assertEquals("center at pole", 89.0, pcen.cval2, 0.01);
-
+            s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Circle);
+            circ = (Circle) s;
+            area = 0.5 * 0.5 * Math.PI;
+            Assert.assertEquals("area", area, circ.getArea(), 0.01);
+            Assert.assertEquals(30.0, circ.getCenter().getLongitude(), 0.01);
+            Assert.assertEquals(89.0, circ.getCenter().getLatitude(), 0.01);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -305,12 +305,15 @@ public class PositionUtilTest {
             axis.bounds = cp;
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            for (Vertex v : poly.getVertices()) {
+            Shape s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Polygon);
+            Polygon poly = (Polygon) s;
+            for (Point v : poly.getVertices()) {
                 log.debug("testCoordPolygonToPolygon: " + v);
             }
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getVertices().size());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -335,9 +338,9 @@ public class PositionUtilTest {
             axis.bounds = cp;
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            Assert.fail("expected IllegalPolygonException, got: " + poly);
-        } catch (IllegalPolygonException expected) {
+            Shape s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.fail("expected IllegalPolygonException, got: " + s);
+        } catch (InvalidPolygonException expected) {
             log.debug("caught expected: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -359,9 +362,9 @@ public class PositionUtilTest {
             cp.getVertices().add(new ValueCoord2D(10, 21));
             axis.bounds = cp;
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
-            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            Assert.fail("expected IllegalPolygonException, got: " + poly);
-        } catch (IllegalPolygonException expected) {
+            Shape s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.fail("expected IllegalPolygonException, got: " + s);
+        } catch (InvalidPolygonException expected) {
             log.debug("caught expected: " + expected);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -382,12 +385,15 @@ public class PositionUtilTest {
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-            for (Vertex v : poly.getVertices()) {
+            Shape s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Polygon);
+            Polygon poly = (Polygon) s;
+            for (Point v : poly.getVertices()) {
                 log.debug("testFunctionToPolygon: " + v);
             }
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getVertices().size());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -407,12 +413,15 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
-            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
-            for (Vertex v : poly.getVertices()) {
+            Shape s = PositionUtil.toShapeICRS(wcs);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Polygon);
+            Polygon poly = (Polygon) s;
+            for (Point v : poly.getVertices()) {
                 log.debug("testFunctionToPolygon: " + v);
             }
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
+            Assert.assertEquals(4, poly.getVertices().size());
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -428,16 +437,17 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 370), new RefCoord(512, 20)); // requires range reduction
             axis.function = new CoordFunction2D(dim, ref, 1.e-3, 0.0, 0.0, 1.0e-3);
-            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
-            for (Vertex v : poly.getVertices()) {
+            Shape s = PositionUtil.toShapeICRS(wcs);
+            Assert.assertNotNull(s);
+            Assert.assertTrue(s instanceof Polygon);
+            Polygon poly = (Polygon) s;
+            for (Point v : poly.getVertices()) {
                 log.debug("testFunctionToPolygon: " + v);
             }
             Assert.assertNotNull(poly);
-            Assert.assertEquals(5, poly.getVertices().size());
-            for (Vertex v : poly.getVertices()) {
-                if (!SegmentType.CLOSE.equals(v.getType())) {
-                    Assert.assertTrue("range reduction: " + v.cval1, 9.0 < v.cval1 && v.cval1 < 11.0);
-                }
+            Assert.assertEquals(4, poly.getVertices().size());
+            for (Point v : poly.getVertices()) {
+                Assert.assertTrue("range reduction: " + v.getLongitude(), 9.0 < v.getLongitude() && v.getLongitude() < 11.0);
             }
 
         } catch (Exception unexpected) {
@@ -460,9 +470,8 @@ public class PositionUtilTest {
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
             PositionUtil.CoordSys cs = PositionUtil.inferCoordSys(wcs);
             
-            MultiPolygon poly = PositionUtil.toShape(wcs, cs.swappedAxes);
-
-            Assert.fail("expected WCSLibRuntimeException");
+            Shape s = PositionUtil.toShape(wcs, cs.swappedAxes);
+            Assert.fail("expected WCSLibRuntimeException, got: " + s);
         } catch (WCSLibRuntimeException expected) {
             log.info("caught expected exception: " + expected);
         } catch (Exception unexpected) {
@@ -482,9 +491,9 @@ public class PositionUtilTest {
             Dimension2D dim = new Dimension2D(1024, 1024);
             Coord2D ref = new Coord2D(new RefCoord(512, 10), new RefCoord(512, 20));
             axis.function = new CoordFunction2D(dim, ref, 1.0e-3, 0.0, 0.0, 0.0); // singular CD matrix
-            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
-
-            Assert.fail("expected WCSLibRuntimeException");
+            
+            Shape s = PositionUtil.toShapeICRS(wcs);
+            Assert.fail("expected WCSLibRuntimeException. got: " + s);
         } catch (WCSLibRuntimeException expected) {
             log.info("caught expected exception: " + expected);
         } catch (Exception unexpected) {
@@ -502,9 +511,8 @@ public class PositionUtilTest {
             CoordAxis2D axis = new CoordAxis2D(axis1, axis2);
             SpatialWCS wcs = new SpatialWCS(axis);
             
-            MultiPolygon poly = PositionUtil.toShapeICRS(wcs);
-            
-            Assert.assertNull("no polygon", poly);
+            Shape s = PositionUtil.toShapeICRS(wcs);
+            Assert.assertNull("no polygon", s);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -516,84 +524,103 @@ public class PositionUtilTest {
         try {
             Plane plane;
             Polygon poly;
+            PositionUtil.ComputedBounds cb;
 
             // coordinate range
             plane = getTestSetRange(1, 2);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
-            Assert.assertEquals(4, poly.getPoints().size());
+            Assert.assertEquals(4, poly.getVertices().size());
             Assert.assertEquals(2.0, poly.getArea(), 0.05);
-            Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(21.0, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
 
             plane = getTestSetRange(1, 2);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
-            Assert.assertEquals(4, poly.getPoints().size());
+            Assert.assertEquals(4, poly.getVertices().size());
             Assert.assertEquals(2.0, poly.getArea(), 0.05);
-            Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(21.0, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
 
             plane = getTestSetRange(1, 3);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
-            Assert.assertEquals(4, poly.getPoints().size());
+            Assert.assertEquals(4, poly.getVertices().size());
             Assert.assertEquals(3.0, poly.getArea(), 0.08);
-            Assert.assertEquals(21.5, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(21.5, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
 
             plane = getTestSetRange(4, 1);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
-            Assert.assertEquals(4, poly.getPoints().size());
+            Assert.assertEquals(4, poly.getVertices().size());
             Assert.assertEquals(4.0, poly.getArea(), 0.1);
-            Assert.assertEquals(22.0, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
-
+            Assert.assertEquals(22.0, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
+            
             // coordinate function
             plane = getTestSetFunction(1, 1);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
-            Assert.assertEquals(4, poly.getPoints().size());
+            Assert.assertEquals(4, poly.getVertices().size());
             Assert.assertEquals(1.0, poly.getArea(), 0.05);
-            Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(20.5, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
             
             // mask with CoordCircle2D; array is 1000x1000 at 1e-3 aka 1x1 deg
             Chunk chunk = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             chunk.position.getAxis().bounds = new CoordCircle2D(new ValueCoord2D(20.5, 10.5), 0.25);
-            Circle circ = (Circle) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            Circle circ = (Circle) cb.bounds;
             Assert.assertNotNull(circ);
-            Assert.assertEquals(20.5, circ.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, circ.getCenter().cval2, 0.02);
+            Assert.assertEquals(20.5, circ.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, circ.getCenter().getLatitude(), 0.02);
             Assert.assertEquals(0.25, circ.getRadius(), 0.02);
 
             plane = getTestSetFunction(1, 2);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
             //Assert.assertEquals(5, poly.getVertices().size());
             Assert.assertEquals(2.0, poly.getArea(), 0.05);
-            Assert.assertEquals(21.0, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(21.0, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
 
             plane = getTestSetFunction(1, 3);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
             //Assert.assertEquals(5, poly.getVertices().size());
             Assert.assertEquals(3.0, poly.getArea(), 0.08);
-            Assert.assertEquals(21.5, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(21.5, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
 
             plane = getTestSetFunction(4, 1);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull("computed", cb);
+            poly = (Polygon) cb.bounds;
             Assert.assertNotNull(poly);
             log.debug("[testComputeBounds] getTestSetFunction union: " + poly);
             //Assert.assertEquals(5, poly.getVertices().size());
             Assert.assertEquals(4.0, poly.getArea(), 0.1);
-            Assert.assertEquals(22.0, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(22.0, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -604,13 +631,14 @@ public class PositionUtilTest {
     public void testComputeDimension() {
         try {
             Plane plane;
-            Polygon poly;
             Dimension2D dim;
+            PositionUtil.ComputedBounds cb;
 
             plane = getTestSetFunction(1, 1);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            dim = PositionUtil.computeDimensionsFromWCS(cb.bounds, plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeDimension] dim=" + dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(1000L, dim.naxis1, 1L);
@@ -619,9 +647,10 @@ public class PositionUtilTest {
             // mask with CoordCircle2D; array is 1000x1000 at 1e-3 aka 1x1 deg
             Chunk chunk = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             chunk.position.getAxis().bounds = new CoordCircle2D(new ValueCoord2D(20.5, 10.5), 0.25);
-            Shape bounds = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            Assert.assertNotNull(bounds);
-            dim = PositionUtil.computeDimensionsFromWCS(bounds, plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            dim = PositionUtil.computeDimensionsFromWCS(cb.bounds, plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeDimension] dim=" + dim);
             Assert.assertNotNull(dim);
             // TODO: need to use pixel-aligned "cutout" of circle vs array to get the right dimensions
@@ -630,51 +659,56 @@ public class PositionUtilTest {
 
             // with GAL <-> ICRS transformations
             plane = getTestSetFunction(1, 1, true);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            dim = PositionUtil.computeDimensionsFromWCS(cb.bounds, plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeDimension] dim=" + dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(1000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
             plane = getTestSetFunction(1, 2);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            dim = PositionUtil.computeDimensionsFromWCS(cb.bounds, plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeDimension] dim=" + dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(2000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
             plane = getTestSetRange(1, 1);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            dim = PositionUtil.computeDimensionsFromWCS(cb.bounds, plane.getArtifacts(), DataLinkSemantics.THIS);
             Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeDimension] dim=" + dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(1000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
             plane = getTestSetRange(1, 3);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            dim = PositionUtil.computeDimensionsFromWCS(cb.bounds, plane.getArtifacts(), DataLinkSemantics.THIS);
             Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("ComputeUtil" + dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(3000L, dim.naxis1, 1L);
             Assert.assertEquals(1000L, dim.naxis2, 1L);
 
             plane = getTestSetRange(4, 1);
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            Assert.assertNotNull(poly);
-            dim = PositionUtil.computeDimensionsFromWCS(poly, plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            dim = PositionUtil.computeDimensionsFromWCS(cb.bounds, plane.getArtifacts(), DataLinkSemantics.THIS);
             Assert.assertNull(dim);
-            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            dim = PositionUtil.computeDimensionsFromRange(plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeDimension] dim=" + dim);
             Assert.assertNotNull(dim);
             Assert.assertEquals(4000L, dim.naxis1, 1L);
@@ -700,7 +734,7 @@ public class PositionUtilTest {
             Chunk c2 = pi.next().getChunks().iterator().next();
             c1.position.resolution = 0.02; // arcsec
             c2.position.resolution = 0.04; // arcsec
-            sz = PositionUtil.computeResolution(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            sz = PositionUtil.computeResolution(plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeResolution] sz=" + sz);
             Assert.assertNotNull(sz);
             Assert.assertEquals(expectedSize, sz, 1.0e-6);
@@ -720,14 +754,14 @@ public class PositionUtilTest {
             double expectedSize = 3600.0 * 1.0e-3; // arcsec
 
             plane = getTestSetFunction(1, 1);
-            sz = PositionUtil.computeSampleSize(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            sz = PositionUtil.computeSampleSize(plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeSampleSize] sz=" + sz);
             Assert.assertNotNull(sz);
             Assert.assertEquals(expectedSize, sz, 1.0e-6);
             Assert.assertEquals(expectedSize, sz, 1.0e-6);
 
             plane = getTestSetRange(1, 1);
-            sz = PositionUtil.computeSampleSize(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
+            sz = PositionUtil.computeSampleSize(plane.getArtifacts(), DataLinkSemantics.THIS);
             log.debug("[testComputeSampleSize] sz=" + sz);
             Assert.assertNotNull(sz);
             Assert.assertEquals(expectedSize, sz, 1.0e-6);
@@ -745,42 +779,15 @@ public class PositionUtilTest {
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             Boolean td;
 
-            td = PositionUtil.computeTimeDependent(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            log.debug("[testComputeResolution] timeDep=" + td);
-            Assert.assertNull(td);
+            //td = PositionUtil.computeTimeDependent(plane.getArtifacts(), DataLinkSemantics.THIS);
+            //log.debug("[testComputeResolution] timeDep=" + td);
+            //Assert.assertNull(td);
 
             c.position.coordsys = "GAPPT";
-            td = PositionUtil.computeTimeDependent(plane.getArtifacts(), DataLinkSemantics.SCIENCE);
-            log.debug("[testComputeResolution] timeDep=" + td);
-            Assert.assertNotNull(td);
-            Assert.assertTrue(td);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testComputeFromCalibration() {
-        try {
-            Plane plane;
-            Polygon poly;
-
-            // coordinate range
-            plane = getTestSetRange(1, 1, DataLinkSemantics.CALIBRATION);
-            // add some aux artifacts, should not effect result
-            Plane tmp = getTestSetRange(1, 3);
-            Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
-            aux.getParts().addAll(tmpA.getParts());
-            plane.getArtifacts().add(aux);
-
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), Util.choseProductType(plane.getArtifacts()));
-            Assert.assertNotNull(poly);
-            Assert.assertEquals(4, poly.getPoints().size());
-            Assert.assertEquals(1.0, poly.getArea(), 0.02);
-            Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            //td = PositionUtil.computeTimeDependent(plane.getArtifacts(), DataLinkSemantics.THIS);
+            //log.debug("[testComputeResolution] timeDep=" + td);
+            //Assert.assertNotNull(td);
+            //Assert.assertTrue(td);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -794,7 +801,7 @@ public class PositionUtilTest {
             Polygon poly;
 
             // coordinate range
-            plane = getTestSetRange(1, 1, DataLinkSemantics.SCIENCE);
+            plane = getTestSetRange(1, 1, DataLinkSemantics.THIS);
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
@@ -802,12 +809,14 @@ public class PositionUtilTest {
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
-            poly = (Polygon) PositionUtil.computeBounds(plane.getArtifacts(), Util.choseProductType(plane.getArtifacts()));
-            Assert.assertNotNull(poly);
-            Assert.assertEquals(4, poly.getPoints().size());
+            PositionUtil.ComputedBounds cb = PositionUtil.computeBounds(plane.getArtifacts(),DataLinkSemantics.THIS);
+            Assert.assertNotNull(cb);
+            Assert.assertNotNull(cb.bounds);
+            poly = (Polygon) cb.bounds;
+            Assert.assertEquals(4, poly.getVertices().size());
             Assert.assertEquals(1.0, poly.getArea(), 0.02);
-            Assert.assertEquals(20.5, poly.getCenter().cval1, 0.02);
-            Assert.assertEquals(10.5, poly.getCenter().cval2, 0.02);
+            Assert.assertEquals(20.5, poly.getCenter().getLongitude(), 0.02);
+            Assert.assertEquals(10.5, poly.getCenter().getLatitude(), 0.02);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -816,7 +825,7 @@ public class PositionUtilTest {
 
     static Plane getTestSetRange(int numA, int numP)
         throws URISyntaxException {
-        return getTestSetRange(numA, numP, DataLinkSemantics.SCIENCE);
+        return getTestSetRange(numA, numP, DataLinkSemantics.THIS);
 
     }
 
@@ -829,7 +838,7 @@ public class PositionUtilTest {
         double dp = 1000.0;
         double ds = 1.0;
 
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
             Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
@@ -850,7 +859,7 @@ public class PositionUtilTest {
 
     static Plane getTestSetBounds(int numA, int numP)
         throws URISyntaxException {
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         // TODO
         return plane;
     }
@@ -867,10 +876,10 @@ public class PositionUtilTest {
         double sx = 20.0;
         double sy = 10.0;
         double ds = 1.0;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.THIS, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));

@@ -82,6 +82,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.dali.Shape;
@@ -613,11 +614,15 @@ public final class CutoutUtil {
         if (s == null) {
             return null;
         }
-        if (s instanceof Circle) {
-            return getPositionBounds(wcs, (Circle) s);
-        }
-        if (s instanceof Polygon) {
-            return getPositionBounds(wcs, (Polygon) s);
+        try {
+            if (s instanceof Circle) {
+                return getPositionBounds(wcs, (Circle) s);
+            }
+            if (s instanceof Polygon) {
+                return getPositionBounds(wcs, (Polygon) s);
+            }
+        } catch(InvalidPolygonException ex) {
+            throw new RuntimeException("BUG or CONTENT: generated invalid polygon whihc computing cutout", ex);
         }
         throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
     }
@@ -631,18 +636,8 @@ public final class CutoutUtil {
      *     or null if the circle does not intersect the WCS
      */
     static long[] getPositionBounds(SpatialWCS wcs, Circle c)
-        throws NoSuchKeywordException, WCSLibRuntimeException {
-        // convert the Circle -> Box ~ Polygon
-        // TODO: a WCS-aligned polygon would be better than an axis-aligned Box
-        double x = c.getCenter().getLongitude();
-        double y = c.getCenter().getLatitude();
-        double dy = c.getRadius();
-        double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-        Polygon poly = new Polygon();
-        poly.getVertices().add(PositionUtil.rangeReduce(new Point(x - dx, y - dy)));
-        poly.getVertices().add(PositionUtil.rangeReduce(new Point(x + dx, y - dy)));
-        poly.getVertices().add(PositionUtil.rangeReduce(new Point(x + dx, y + dy)));
-        poly.getVertices().add(PositionUtil.rangeReduce(new Point(x - dx, y + dy)));
+        throws NoSuchKeywordException, WCSLibRuntimeException, InvalidPolygonException {
+        Polygon poly = Circle.generatePolygonApproximation(c, 11);
         return getPositionBounds(wcs, poly);
     }
 
@@ -659,7 +654,7 @@ public final class CutoutUtil {
      *     or null if the circle does not intersect the WCS
      */
     static long[] getPositionBounds(SpatialWCS wcs, Polygon poly)
-        throws NoSuchKeywordException, WCSLibRuntimeException {
+        throws InvalidPolygonException, NoSuchKeywordException, WCSLibRuntimeException {
         PositionUtil.CoordSys coordsys = PositionUtil.inferCoordSys(wcs);
 
         // detect necessary conversion of target coords to native WCS coordsys
@@ -680,19 +675,21 @@ public final class CutoutUtil {
         // convert wcs/footprint to sky coords
         log.debug("computing footprint from wcs");
         Shape foot = PositionUtil.toShapeICRS(wcs);
-        log.debug("wcs shape: " + foot);
+        log.warn("wcs shape: " + foot);
         
         Polygon fpoly = null;
         if (foot instanceof Circle) {
-            fpoly = PositionUtil.toPolygon((Circle) foot);
+            fpoly = Circle.generatePolygonApproximation((Circle) foot, 11);
         } else {
             fpoly = (Polygon) foot;
         }
         
-        log.debug("input poly: " + poly);
+        log.warn("input poly: " + poly);
+        log.warn("wcs poly: " + fpoly);
 
         log.debug("computing poly INTERSECT footprint");
         Polygon npoly = PolygonUtil.intersection(poly, fpoly);
+        log.warn("input INTERSECT wcs: " + npoly);
         if (npoly == null) {
             log.debug("poly INTERSECT footprint == null");
             return null;
@@ -702,7 +699,7 @@ public final class CutoutUtil {
         // npoly is in ICRS
         if (gal || fk4) {
             // convert npoly to native coordsys, in place since we created a new npoly above
-            log.debug("converting poly to " + coordsys);
+            log.warn("converting intersection to " + coordsys.getName());
             //Point v : npoly.getVertices()
             for (int i = 0; i < npoly.getVertices().size(); i++) {
                 Point v = npoly.getVertices().get(i);
@@ -718,6 +715,7 @@ public final class CutoutUtil {
                 npoly.getVertices().set(i, r); // in-place
             }
         }
+        log.warn("sky cutout: " + npoly);
 
         // convert npoly to pixel coordinates and find min/max
         double x1 = Double.MAX_VALUE;
@@ -756,6 +754,7 @@ public final class CutoutUtil {
         // clipping
         long naxis1 = wcs.getAxis().function.getDimension().naxis1;
         long naxis2 = wcs.getAxis().function.getDimension().naxis2;
+        log.warn("doClip: " + naxis1 + "," + naxis2 + "," + ix1 + "," + ix2 + "," + iy1 + "," + iy2);
         return doPositionClipCheck(naxis1, naxis2, ix1, ix2, iy1, iy2);
     }
 

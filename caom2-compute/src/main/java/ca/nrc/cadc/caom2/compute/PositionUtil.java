@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Position;
 import ca.nrc.cadc.caom2.compute.types.CartesianTransform;
 import ca.nrc.cadc.caom2.compute.types.IllegalPolygonException;
+import ca.nrc.cadc.caom2.compute.types.MultiPolygon;
 import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
 import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
@@ -125,7 +126,7 @@ public final class PositionUtil {
      * @throws WCSLibRuntimeException
      */
     public static Position compute(Set<Artifact> artifacts)
-        throws NoSuchKeywordException, WCSLibRuntimeException {
+        throws NoSuchKeywordException, WCSLibRuntimeException, InvalidPolygonException {
         DataLinkSemantics productType = DataLinkSemantics.THIS;
         log.debug("compute: " + productType);
 
@@ -146,7 +147,7 @@ public final class PositionUtil {
     }
 
     static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) 
-            throws NoSuchKeywordException {
+            throws NoSuchKeywordException, InvalidPolygonException {
         List<Shape> samples = generateShapes(artifacts, productType);
         if (samples == null || samples.isEmpty()) {
             return null;
@@ -161,7 +162,7 @@ public final class PositionUtil {
         return ret;
     }
 
-    static List<Shape> generateShapes(Set<Artifact> artifacts, DataLinkSemantics productType) {
+    static List<Shape> generateShapes(Set<Artifact> artifacts, DataLinkSemantics productType) throws InvalidPolygonException {
         int num = 0;
         List<Shape> ret = new ArrayList<>();
         Chunk chunk = null;
@@ -176,7 +177,9 @@ public final class PositionUtil {
                             + a.getProductType() + " " + p.productType + " " + c.productType);
                         if (c.position != null) {
                             Shape s = generateShape(c.position);
-                            ret.add(s);
+                            if (s != null) {
+                                ret.add(s);
+                            }
                         }
                     } else {
                         log.debug("generateShapes SKIP: " + a.getURI() + " "
@@ -189,7 +192,7 @@ public final class PositionUtil {
         return ret;
     }
     
-    static Shape generateShape(SpatialWCS wcs) {
+    static Shape generateShape(SpatialWCS wcs) throws InvalidPolygonException {
         return toShapeICRS(wcs);
     }
 
@@ -212,10 +215,10 @@ public final class PositionUtil {
             }
         }
         // compute union
-        
-        // conpute convex hull
-        
-        throw new UnsupportedOperationException();
+        List<MultiPolygon> mps = PolygonUtil.convert(polys);
+        MultiPolygon combined = MultiPolygon.compose(mps);
+        Polygon outer = PolygonUtil.getOuterHull(combined);
+        return outer;
     }
 
     // this works for mosaic camera data: multiple parts with ~single scale wcs functions
@@ -424,7 +427,7 @@ public final class PositionUtil {
     }
 
 
-    static Shape toShape(SpatialWCS wcs, boolean swappedAxes) {
+    static Shape toShape(SpatialWCS wcs, boolean swappedAxes) throws InvalidPolygonException {
 
         CoordRange2D range = wcs.getAxis().range;
         CoordBounds2D bounds = wcs.getAxis().bounds;
@@ -470,7 +473,7 @@ public final class PositionUtil {
 
             log.debug("[toPolygon] normalised " + poly);
             return ret;
-        } catch (InvalidPolygonException | NoSuchKeywordException ex) {
+        } catch (NoSuchKeywordException ex) {
             log.debug("failed to generate shape from WCS", ex);
         }
         return ret;
@@ -488,6 +491,9 @@ public final class PositionUtil {
         ret.getVertices().add(new Point(x2, y1));
         ret.getVertices().add(new Point(x2, y2));
         ret.getVertices().add(new Point(x1, y2));
+        if (!ret.getCounterClockwise()) {
+            ret = Polygon.flip(ret);
+        }
         return ret;
     }
     
@@ -499,12 +505,13 @@ public final class PositionUtil {
             ValueCoord2D coord = i.next();
             ret.getVertices().add(new Point(coord.coord1, coord.coord2));
         }
+        if (!ret.getCounterClockwise()) {
+            ret = Polygon.flip(ret);
+        }
         return ret;
     }
     
-    // change this to toCircle(SpatialWCS wcs, CoordCircle2D cc), remove use from toPolygon(),
-    // and use directly in computeBounds
-    static Circle toPolygon(SpatialWCS wcs, CoordCircle2D cc)
+    static Circle toCircle(SpatialWCS wcs, CoordCircle2D cc)
         throws NoSuchKeywordException {
         Circle circ = new Circle(new Point(cc.getCenter().coord1, cc.getCenter().coord2), cc.getRadius());
         return circ;
@@ -544,10 +551,13 @@ public final class PositionUtil {
         
         Polygon ret = new Polygon();
         ret.getVertices().addAll(skyCoords);
+        if (!ret.getCounterClockwise()) {
+            ret = Polygon.flip(ret);
+        }
         return ret;
     }
 
-    static Shape toShapeICRS(SpatialWCS wcs) {
+    static Shape toShapeICRS(SpatialWCS wcs) throws InvalidPolygonException {
         CoordSys coordsys = inferCoordSys(wcs);
         if (!coordsys.supported) {
             return null;

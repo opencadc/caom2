@@ -104,16 +104,23 @@ public final class PolygonUtil {
     private static final double MAX_SCALE = 0.07;
     private static Logger log = Logger.getLogger(PolygonUtil.class);
 
-    public static Polygon toPolygon(Shape s) {
-        if (s == null) {
-            return null;
+    static MultiPolygon convert(Polygon in) {
+        MultiPolygon ret = new MultiPolygon();
+        SegmentType t = SegmentType.MOVE;
+        for (Point p : in.getVertices()) {
+            ret.getVertices().add(new Vertex(p.getLongitude(), p.getLatitude(), t));
+            t = SegmentType.LINE;
         }
-
-        if (s instanceof Polygon) {
-            return (Polygon) s;
+        ret.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        return ret;
+    }
+    
+    static List<MultiPolygon> convert(List<Polygon> ps) {
+        List<MultiPolygon> ret = new ArrayList<>(ps.size());
+        for (Polygon p : ps) {
+            ret.add(convert(p));
         }
-
-        throw new UnsupportedOperationException(s.getClass().getSimpleName() + " -> Polygon");
+        return ret;
     }
 
     /**
@@ -278,7 +285,7 @@ public final class PolygonUtil {
             Polygon ret = new Polygon();
             for (Vertex v : inter.getVertices()) {
                 if (!SegmentType.CLOSE.equals(v.getType())) {
-                    Point p = new Point(v.getLatitude(), v.getLongitude());
+                    Point p = new Point(v.getLongitude(), v.getLatitude());
                     ret.getVertices().add(p);
                 }
             }

@@ -69,6 +69,7 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import org.apache.log4j.Logger;
@@ -115,9 +116,7 @@ public class ComputeUtil {
     private static void computePosition(Plane p) {
         try {
             p.position = PositionUtil.compute(p.getArtifacts());
-        } catch (NoSuchKeywordException ex) {
-            throw new IllegalArgumentException("failed to compute Plane.position", ex);
-        } catch (WCSLibRuntimeException ex) {
+        } catch (InvalidPolygonException | NoSuchKeywordException | WCSLibRuntimeException ex) {
             throw new IllegalArgumentException("failed to compute Plane.position", ex);
         }
     }

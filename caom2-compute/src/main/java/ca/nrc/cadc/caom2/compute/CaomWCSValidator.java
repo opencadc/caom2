@@ -84,6 +84,7 @@ import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.wcs.Transform;
@@ -183,7 +184,7 @@ public class CaomWCSValidator {
                     log.debug("center pixels: " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 }
             } catch (NoSuchKeywordException | WCSLibRuntimeException 
-                    | UnsupportedOperationException | IllegalPolygonException ex) {
+                    | UnsupportedOperationException | InvalidPolygonException ex) {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
             }
         }

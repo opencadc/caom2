@@ -81,7 +81,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -111,12 +110,13 @@ public final class PolarizationUtil {
             }
         }
 
-        Polarization p = new Polarization();
         if (!pol.isEmpty()) {
+            Polarization p = new Polarization();
             p.getStates().addAll(pol);
             p.dimension = (long) numPixels;
+            return p;
         }
-        return p;
+        return null;
     }
     
     static List<PolarizationState> wcsToStates(PolarizationWCS wcs) {

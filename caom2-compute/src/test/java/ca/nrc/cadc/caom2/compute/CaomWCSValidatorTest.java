@@ -112,7 +112,7 @@ public class CaomWCSValidatorTest {
         Artifact a = null;
 
         try {
-            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             CaomWCSValidator.validate(a);
@@ -150,7 +150,7 @@ public class CaomWCSValidatorTest {
     public void testValidWCS() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             // Populate all WCS with good values
@@ -172,7 +172,7 @@ public class CaomWCSValidatorTest {
     public void testNullAxis() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             c.naxis = null;
@@ -188,7 +188,7 @@ public class CaomWCSValidatorTest {
     public void testInvalidNullMetadata() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(DataLinkSemantics.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
             c.timeAxis = null;
             CaomWCSValidator.validate(a);

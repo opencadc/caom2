@@ -6,8 +6,8 @@ import ca.nrc.cadc.caom2.EnergyTransition;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -24,10 +24,9 @@ import ca.nrc.cadc.caom2.wcs.Slice;
 import ca.nrc.cadc.caom2.wcs.SpatialWCS;
 import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.caom2.wcs.TemporalWCS;
-import org.apache.log4j.Logger;
-
 import java.net.URI;
 import java.net.URISyntaxException;
+import org.apache.log4j.Logger;
 
 /**
  * Created by jeevesh
@@ -63,7 +62,7 @@ public class ComputeDataGenerator {
 
     Plane getTestPlane(DataLinkSemantics ptype)
         throws URISyntaxException {
-        Plane plane = new Plane(ptype.getClass().getName());
+        Plane plane = new Plane(URI.create("caom:FOO/bar"));
         Artifact na = new Artifact(new URI("foo", "bar", null), ptype, ReleaseType.DATA);
         plane.getArtifacts().add(na);
         Part np = new Part("baz");

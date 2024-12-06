@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -71,28 +71,25 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Energy;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.Polarization;
 import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.ReleaseType;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
 import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
 import ca.nrc.cadc.caom2.wcs.CoordRange1D;
 import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.util.Iterator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.net.URI;
-import java.util.Iterator;
 
 /**
  * @author pdowler
@@ -120,17 +117,13 @@ public class PolarizationUtilTest {
     @Test
     public void testEmptyList() {
         try {
-            Plane plane = new Plane("foo");
+            Plane plane = new Plane(URI.create("caom:FOO/foo"));
             Polarization pol = PolarizationUtil.compute(plane.getArtifacts());
-            Assert.assertNotNull(pol);
-            Assert.assertNull(pol.states);
-            Assert.assertNull(pol.dimension);
+            Assert.assertNull(pol);
 
-            plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             pol = PolarizationUtil.compute(plane.getArtifacts());
-            Assert.assertNotNull(pol);
-            Assert.assertNull(pol.states);
-            Assert.assertNull(pol.dimension);
+            Assert.assertNull(pol);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -141,14 +134,14 @@ public class PolarizationUtilTest {
     public void testSkippableCompute() {
         log.debug("testSkippableCompute: START");
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             CoordAxis1D axis = new CoordAxis1D(new Axis("STOKES"));
             c.polarization = new PolarizationWCS(axis);
             
             Polarization p = PolarizationUtil.compute(plane.getArtifacts());
 
-            Assert.assertNull("no polarization states", p.states);
+            Assert.assertNull("no polarization states", p);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -159,7 +152,7 @@ public class PolarizationUtilTest {
     @Test
     public void testIllegalValues() {
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -213,7 +206,7 @@ public class PolarizationUtilTest {
     @Test
     public void testSingleValueRange() {
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -229,9 +222,9 @@ public class PolarizationUtilTest {
                 log.debug("testSingleValueRange: " + actual);
 
                 Assert.assertNotNull(actual);
-                Assert.assertNotNull(actual.states);
-                Assert.assertEquals(1, actual.states.size());
-                Assert.assertEquals(pol, actual.states.iterator().next());
+                Assert.assertNotNull(actual.getStates());
+                Assert.assertEquals(1, actual.getStates().size());
+                Assert.assertEquals(pol, actual.getStates().iterator().next());
                 Assert.assertNotNull(actual.dimension);
                 Assert.assertEquals(1, actual.dimension.intValue());
             }
@@ -245,7 +238,7 @@ public class PolarizationUtilTest {
     @Test
     public void testRangeIQU() {
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -260,9 +253,9 @@ public class PolarizationUtilTest {
             log.debug("testRangeIQU: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.states);
-            Assert.assertEquals(3, actual.states.size());
-            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertNotNull(actual.getStates());
+            Assert.assertEquals(3, actual.getStates().size());
+            Iterator<PolarizationState> iter = actual.getStates().iterator();
             Assert.assertEquals(PolarizationState.I, iter.next());
             Assert.assertEquals(PolarizationState.Q, iter.next());
             Assert.assertEquals(PolarizationState.U, iter.next());
@@ -277,7 +270,7 @@ public class PolarizationUtilTest {
     @Test
     public void testFunctionIQUV() {
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -291,9 +284,9 @@ public class PolarizationUtilTest {
             log.debug("testFunctionIQUV: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.states);
-            Assert.assertEquals(4, actual.states.size());
-            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertNotNull(actual.getStates());
+            Assert.assertEquals(4, actual.getStates().size());
+            Iterator<PolarizationState> iter = actual.getStates().iterator();
             Assert.assertEquals(PolarizationState.I, iter.next());
             Assert.assertEquals(PolarizationState.Q, iter.next());
             Assert.assertEquals(PolarizationState.U, iter.next());
@@ -310,7 +303,7 @@ public class PolarizationUtilTest {
     @Test
     public void testFunctionRR_LL() {
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -324,9 +317,9 @@ public class PolarizationUtilTest {
             log.debug("testFunctionRR_LL: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.states);
-            Assert.assertEquals(2, actual.states.size());
-            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertNotNull(actual.getStates());
+            Assert.assertEquals(2, actual.getStates().size());
+            Iterator<PolarizationState> iter = actual.getStates().iterator();
             Assert.assertEquals(PolarizationState.RR, iter.next());
             Assert.assertEquals(PolarizationState.LL, iter.next());
 
@@ -341,7 +334,7 @@ public class PolarizationUtilTest {
     @Test
     public void testFunctionVUQI() {
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -355,9 +348,9 @@ public class PolarizationUtilTest {
             log.debug("testFunctionRR_LL: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.states);
-            Assert.assertEquals(4, actual.states.size());
-            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertNotNull(actual.getStates());
+            Assert.assertEquals(4, actual.getStates().size());
+            Iterator<PolarizationState> iter = actual.getStates().iterator();
             Assert.assertEquals(PolarizationState.I, iter.next());
             Assert.assertEquals(PolarizationState.Q, iter.next());
             Assert.assertEquals(PolarizationState.U, iter.next());
@@ -403,15 +396,8 @@ public class PolarizationUtilTest {
 
             Polarization actual = PolarizationUtil.compute(plane.getArtifacts());
             log.debug("testRangeIQU: " + actual);
-
-            Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.states);
-            Assert.assertEquals(2, actual.states.size());
-            Iterator<PolarizationState> iter = actual.states.iterator();
-            Assert.assertEquals(PolarizationState.I, iter.next());
-            Assert.assertEquals(PolarizationState.Q, iter.next());
-            Assert.assertNotNull(actual.dimension);
-            Assert.assertEquals(2, actual.dimension.intValue());
+            Assert.assertNull(actual);
+            
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -422,7 +408,7 @@ public class PolarizationUtilTest {
     public void testRangeFromMixedIQ() {
         log.debug("testRangeFromCalibrationIQ - START");
         try {
-            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.SCIENCE);
+            Plane plane = dataGenerator.getTestPlane(DataLinkSemantics.THIS);
             // ouch :-)
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
 
@@ -451,9 +437,9 @@ public class PolarizationUtilTest {
             log.debug("testRangeIQU: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.states);
-            Assert.assertEquals(2, actual.states.size());
-            Iterator<PolarizationState> iter = actual.states.iterator();
+            Assert.assertNotNull(actual.getStates());
+            Assert.assertEquals(2, actual.getStates().size());
+            Iterator<PolarizationState> iter = actual.getStates().iterator();
             Assert.assertEquals(PolarizationState.I, iter.next());
             Assert.assertEquals(PolarizationState.Q, iter.next());
             Assert.assertNotNull(actual.dimension);
