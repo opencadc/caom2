@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2020.                            (c) 2020.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -84,14 +84,11 @@ public class MetadataCompute {
     }
     
     public void run() {
-        String ostr = obs.getCollection() + "/" + obs.getObservationID();
-        String cur = ostr;
+        String cur = null;
         try {
             for (Plane p : obs.getPlanes()) {
+                cur = p.getURI().toASCIIString();
                 ComputeUtil.clearTransientState(p);
-            }
-            for (Plane p : obs.getPlanes()) {
-                cur = ostr + "/" + p.getProductID();
                 ComputeUtil.computeTransientState(obs, p);
             }
         } catch (Error er) {

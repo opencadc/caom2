@@ -94,7 +94,7 @@ public final class CaomValidator {
      * @throws IllegalArgumentException
      * @throws InvalidPolygonException
      */
-    public static void validate(Observation obs) throws InvalidPolygonException {
+    public static void validate(Observation obs) {
         validateKeywords(obs);
         validatePlanes(obs);
         validateChecksumURIs(obs);
@@ -344,7 +344,7 @@ public final class CaomValidator {
         }
     }
 
-    private static void validatePlanes(Observation obs) throws InvalidPolygonException {
+    private static void validatePlanes(Observation obs) {
         for (Plane p : obs.getPlanes()) {
             if (p.position != null) {
                 p.position.validate();

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -112,7 +112,7 @@ public class ChecksumValidator implements Runnable {
     @Override
     public void run() {
         try {
-            log.info("read: " + obs.getCollection() + "/" + obs.getObservationID() + " :: " + obs.getAccMetaChecksum());
+            log.info("read: " + obs.getURI() + " :: " + obs.getAccMetaChecksum());
             log.info("depth: " + depth);
             
             StringBuilder cs = new StringBuilder();

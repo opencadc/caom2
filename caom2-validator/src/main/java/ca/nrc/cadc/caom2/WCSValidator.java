@@ -91,7 +91,7 @@ public class WCSValidator implements Runnable {
     public void run() {
         try {
             for (Plane p : obs.getPlanes()) {
-                out("validate: " + p.getProductID());
+                out("validate: " + p.getURI());
                 for (Artifact a : p.getArtifacts()) {
                     try {
                         out("validate: " + a.getURI());
