@@ -41,8 +41,7 @@ sourceSets {
     }
 }
 
-
-// Temporary work around for issue https://github.com/gradle/gradle/issues/881 -
+// Temporary work around for issue https://github.com/gradle/gradle/issues/881 - 
 // gradle not displaying fail build status when warnings reported -->
 
 tasks.withType(Checkstyle).each { checkstyleTask ->

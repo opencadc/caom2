@@ -10,10 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up JDK 11
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3
       with:
+        distribution: 'temurin'
         java-version: 11
   
     - name: build and test caom2
@@ -77,8 +78,34 @@ jobs:
     - name: build and test caom2-artifact-download
       run: cd caom2-artifact-download && ../gradlew --info clean build javadoc checkstyleMain             
 
+    - name: build and test caom2-tap
+      run: cd caom2-tap && ../gradlew clean build javadoc install
+
+    - name: build and test caom2-tap-server
+      run: cd caom2-tap-server && ../gradlew clean build javadoc install
+    
+    - name: build and test caom2-datalink-server
+      run: cd caom2-datalink-server && ../gradlew clean build javadoc install
+    
+    - name: build and test caom2-meta-server
+      run: cd caom2-meta-server && ../gradlew clean build javadoc install
+    
+    - name: build and test caom2-pkg-server
+      run: cd caom2-pkg-server && ../gradlew clean build javadoc install
+    
+    - name: build and test caom2-soda-server
+      run: cd caom2-soda-server && ../gradlew clean build javadoc install
+
+## applications
     - name: build and test icewind 
       run: cd icewind && ../gradlew --info clean build javadoc checkstyleMain
 
     - name: build and test torkeep 
-      run: cd torkeep && ../gradlew --info clean build javadoc checkstyleMain   
+      run: cd torkeep && ../gradlew --info clean build javadoc checkstyleMain
+      
+    - name: build and test argus 
+      run: cd argus && ../gradlew --info clean build javadoc checkstyleMain
+
+    - name: build and test bifrost 
+      run: cd bifrost && ../gradlew --info clean build javadoc checkstyleMain
+

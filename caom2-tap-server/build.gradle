@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'checkstyle'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+apply from: '../opencadc.gradle'
+
+sourceCompatibility = 1.8
+
+group = 'org.opencadc'
+
+version = '1.2.13'
+
+description = 'OpenCADC CAOM2 TAP server library'
+def git_url = 'https://github.com/opencadc/caom2service'
+
+dependencies {
+    compile 'org.opencadc:cadc-util:[1.8.4,2.0)'
+    compile 'org.opencadc:cadc-log:[1.0,)'
+    compile 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
+    compile 'org.opencadc:cadc-registry:[1.0,)'
+    compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
+    compile 'org.opencadc:cadc-dali:[1.1,)'
+    compile 'org.opencadc:cadc-dali-pg:[0.2,)'
+    compile 'org.opencadc:cadc-tap-server:[1.1.24,)'
+    compile 'org.opencadc:cadc-tap-server-pg:[1.1.0,)'
+    compile 'org.opencadc:cadc-tap-schema:[1.1.6,)'
+    compile 'org.opencadc:cadc-adql:[1.1.14,)'
+    compile 'org.opencadc:caom2:[2.4.8,)'
+    compile 'org.opencadc:caom2-artifact-resolvers:[1.2.3,)'
+    
+    compile 'org.opencadc:cadc-gms:[1.0.0,)'
+    compile 'org.opencadc:cadc-access-control:[1.1.1,2.0)'
+    
+    testCompile 'junit:junit:[4.0,5.0)'
+}
+
+mainClassName = 'ca.nrc.cadc.tap.tools.Main'
+
+
