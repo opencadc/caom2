@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.viz;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
+import java.net.URI;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -103,12 +104,17 @@ public class Main {
             }
 
             Log4jInit.setLevel("ca.nrc.cadc.caom2.viz", lvl);
-            Log4jInit.setLevel("ca.nrc.cadc.caom2.types", lvl);
+            Log4jInit.setLevel("ca.nrc.cadc.dali", lvl);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.wcs", lvl);
             Log4jInit.setLevel("ca.nrc.cadc.caom2.compute", lvl);
 
             
-            String productID = am.getValue("productID");
+            
+            URI planeURI = null;
+            String suri = am.getValue("uri");
+            if (suri != null) {
+                planeURI = new URI(suri);
+            }
             boolean recomp = am.isSet("r");
             boolean headless = am.isSet("headless");
             
@@ -121,10 +127,10 @@ public class Main {
             File f = new File(fname);
 
             if (headless) {
-                ComputeFromXML cu = new ComputeFromXML(f, productID);
+                ComputeFromXML cu = new ComputeFromXML(f, planeURI);
                 cu.doit();
             } else {
-                VizUnion vu = new VizUnion(f, productID, recomp);
+                VizUnion vu = new VizUnion(f, planeURI, recomp);
                 vu.doit();
             }
         } catch (Exception ex) {
@@ -134,8 +140,8 @@ public class Main {
 
     private static void usage() {
         System.out.println("usage: caom2-viz [-h|--help] (to see this message)");
-        System.out.println("usage: caom2-viz [-v|--verbose|-d|--debug] [--productID=<...>] <caom observation xml file>");
+        System.out.println("usage: caom2-viz [-v|--verbose|-d|--debug] [--uri=<...>] <caom observation xml file>");
         System.out.println("                 [-r] force recompute of plane position metadata");
-        System.out.println("                 [--productID=<caom plane productID>] (to view just that plane)");
+        System.out.println("                 [--uri=<caom plane identifier>] (to view just that plane)");
     }
 }

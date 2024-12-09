@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,18 +74,20 @@ import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ProductType;
 import ca.nrc.cadc.caom2.compute.PolygonUtil;
 import ca.nrc.cadc.caom2.compute.PositionUtil;
 import ca.nrc.cadc.caom2.compute.Util;
-import ca.nrc.cadc.caom2.types.CartesianTransform;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.compute.types.MultiPolygon;
+import ca.nrc.cadc.caom2.compute.types.SegmentType;
+import ca.nrc.cadc.caom2.compute.types.Vertex;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
+import ca.nrc.cadc.dali.CartesianTransform;
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -93,6 +95,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.io.File;
 import java.io.FileReader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -112,12 +115,12 @@ public class VizUnion {
     private static Logger log = Logger.getLogger(VizUnion.class);
 
     private final File obsFile;
-    private final String productID;
+    private final URI planeURI;
     private boolean forceRecompute = false;
 
-    public VizUnion(File obsFile, String productID, boolean forceRecompute) {
+    public VizUnion(File obsFile, URI planeURI, boolean forceRecompute) {
         this.obsFile = obsFile;
-        this.productID = productID;
+        this.planeURI = planeURI;
         this.forceRecompute = forceRecompute;
     }
 
@@ -130,8 +133,8 @@ public class VizUnion {
         Iterator<Plane> iter = o.getPlanes().iterator();
         while (!done && iter.hasNext()) {
             Plane p = iter.next();
-            log.info("found: " + p.getProductID());
-            if (productID == null || productID.equals(p.getProductID())) {
+            log.info("found: " + p.getURI());
+            if (planeURI == null || planeURI.equals(p.getURI())) {
                 doit(p);
             }
         }
@@ -140,43 +143,41 @@ public class VizUnion {
     private void doit(Plane plane)
         throws Exception {
         Shape bounds = null;
-        ProductType ptype = Util.choseProductType(plane.getArtifacts());
-        if (plane.position != null && plane.position.bounds != null && !forceRecompute) {
+        MultiShape samples = null;
+        if (plane.position != null && plane.position.getBounds() != null && !forceRecompute) {
             // use polygon from input file
-            bounds = (Polygon) plane.position.bounds;
+            bounds = plane.position.getBounds();
+            samples = plane.position.getSamples();
         } else {
             try {
-                log.info("recomputing union... " + ptype);
-                bounds = PositionUtil.computeBounds(plane.getArtifacts(), ptype);
+                log.info("recomputing union... ");
+                PositionUtil.ComputedBounds cb = PositionUtil.computeBounds(plane.getArtifacts(), DataLinkSemantics.THIS);
+                bounds = cb.bounds;
+                samples = cb.samples;
                 log.info("recomputing union... DONE");
             } catch (Exception ipe) {
                 log.warn("computeShape failed", ipe);
             }
         }
         if (bounds == null) {
-            log.error("could not compute union: " + plane.getProductID());
+            log.error("could not compute union: " + plane.getURI());
             return;
         } else {
             log.info("bounds: " + bounds);
             log.info("center: " + bounds.getCenter());
             log.info("area: " + bounds.getArea());
+            log.info("samples: " + samples.getShapes().size());
         }
             
-        if (bounds instanceof Polygon) {
-            Polygon poly = (Polygon) bounds;
-            DisplayPane dp = new DisplayPane();
-        
-            dp.setPlane(plane, poly);
-            JFrame f = new JFrame("CAOM-2.0 VizTest : " + plane.getProductID());
-            f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            f.getContentPane().add(dp);
-            f.pack();
-            f.setLocation(1000, 200);
-            f.setVisible(true);
-        } else {
-            log.warn("cannot display: " + bounds.getClass().getName());
-        }
-        
+        DisplayPane dp = new DisplayPane();
+
+        dp.setPlane(plane, bounds, samples);
+        JFrame f = new JFrame("CAOM-2.0 VizTest : " + plane.getURI());
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.getContentPane().add(dp);
+        f.pack();
+        f.setLocation(1000, 200);
+        f.setVisible(true);
     }
 
     static class DisplayPane extends JPanel {
@@ -192,33 +193,54 @@ public class VizUnion {
         }
 
 
-        public void setPlane(Plane plane, Polygon bounds)
+        public void setPlane(Plane plane, Shape bounds, MultiShape samples)
             throws Exception {
             
             viewer.clear();
             
-            ProductType ptype = Util.choseProductType(plane.getArtifacts());
-            
-            CartesianTransform trans = CartesianTransform.getTransform(bounds.getSamples());
-            setArtifacts(plane.getArtifacts(), trans, ptype);
+            CartesianTransform trans = CartesianTransform.getTransform(bounds);
 
-            MultiPolygon hull = new MultiPolygon();
-            SegmentType t = SegmentType.MOVE;
-            for (Point p : bounds.getPoints()) {
-                hull.getVertices().add(new Vertex(p.cval1, p.cval2, t));
-                t = SegmentType.LINE;
+            Shape tmp = trans.transform(bounds);
+            Polygon ptmp;
+            if (tmp instanceof Circle) {
+                Circle c = (Circle) tmp;
+                ptmp = Circle.generatePolygonApproximation(c, 21);
+            } else {
+                ptmp = (Polygon) tmp;
             }
-            hull.getVertices().add(Vertex.CLOSE);
-            renderPolygon(hull, trans, Color.RED, 4.0f, true);
+            
+            MultiPolygon hull = PolygonUtil.convert(ptmp);
+            GeneralPath gpa = renderPolygon(hull, Color.RED, 4.0f, true);
+            ptmp = null;
 
-            renderPolygon(bounds.getSamples(), trans, Color.BLUE, 1.0f, false);
+            log.info("render MultiShape: " + samples.getShapes().size());
+            int i = 0;
+            for (Shape s : samples.getShapes()) {
+                tmp = trans.transform(s);
+                if (tmp instanceof Circle) {
+                    Circle c = (Circle) tmp;
+                    ptmp = Circle.generatePolygonApproximation(c, 21);
+                } else {
+                    ptmp = (Polygon) tmp;
+                }
+                log.info("render sample: " + i++ + " " + ptmp);
+                MultiPolygon ms = PolygonUtil.convert(ptmp);
+                renderPolygon(ms, Color.BLUE, 1.0f, false);
+            }
 
+            if (!trans.isNull()) {
+                log.info("rendering with " + trans);
+                CartesianTransform vtrans = trans.getInverseTransform();
+                viewer.setTransform(vtrans);
+            }
+            
+            viewer.setPrefix("sky coordinates: ");
+            viewer.setFitShape(gpa);
             viewer.repaint();
         }
 
-        public void renderPolygon(MultiPolygon bounds, CartesianTransform trans, Color color, float thick, boolean showVerts) {
-            log.info("Polygon -> GeneralPath");
-            MultiPolygon tmp = trans.transform(bounds);
+        public GeneralPath renderPolygon(MultiPolygon tmp, Color color, float thick, boolean showVerts) {
+            log.debug("Polygon -> GeneralPath");
             GeneralPath gpa = PolygonUtil.toGeneralPath(tmp);
 
             double polySize = tmp.getSize(); //Math.max(box.width, box.height);
@@ -233,69 +255,21 @@ public class VizUnion {
                 double sz = 0.02 * polySize;
                 for (int i = 0; i < tmp.getVertices().size(); i++) {
                     Vertex v = tmp.getVertices().get(i);
-                    log.info("tmp vertex: " + v);
+                    log.debug("tmp vertex: " + v);
                     if (!SegmentType.CLOSE.equals(v.getType())) {
-                        java.awt.Shape s = new Ellipse2D.Double(v.cval1 - 0.5 * sz, v.cval2 - 0.5 * sz, sz, sz);
+                        java.awt.Shape s = new Ellipse2D.Double(v.getLongitude() - 0.5 * sz, v.getLatitude() - 0.5 * sz, sz, sz);
                         viewer.add(s, Color.BLACK, false);
                     }
                 }
 
                 Point c = tmp.getCenter();
-                log.info("tmp center: " + c.cval1 + "," + c.cval2);
+                log.info("tmp center: " + c.getLongitude() + "," + c.getLatitude());
                 log.info("tmp area: " + tmp.getArea());
-                java.awt.Shape s = new Ellipse2D.Double(c.cval1 - 0.5 * sz, c.cval2 - 0.5 * sz, sz, sz);
+                java.awt.Shape s = new Ellipse2D.Double(c.getLongitude() - 0.5 * sz, c.getLatitude() - 0.5 * sz, sz, sz);
                 viewer.add(s, color, true);
             }
-
-            if (!trans.isNull()) {
-                log.info("rendering with " + trans);
-                CartesianTransform vtrans = trans.getInverseTransform();
-                viewer.setTransform(vtrans);
-            }
-            viewer.setPrefix("sky coordinates: ");
-            viewer.setFitShape(gpa);
+            
+            return gpa;
         }
-
-        public void setArtifacts(Set<Artifact> artifacts, CartesianTransform trans, ProductType productType)
-            throws Exception {
-            List<MultiPolygon> comps = new ArrayList<MultiPolygon>();
-            int i = 0;
-            for (Artifact a : artifacts) {
-                for (Part p : a.getParts()) {
-                    for (Chunk c : p.getChunks()) {
-                        if (Util.useChunk(a.getProductType(), p.productType, c.productType, productType)) {
-                            if (c.position != null) {
-                                MultiPolygon poly = PositionUtil.toICRSPolygon(c.position);
-                                if (poly != null) {
-                                    comps.add(poly);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            renderComponents(comps, trans);
-        }
-
-        public void renderComponents(List<MultiPolygon> polys, CartesianTransform trans) {
-            ArrayList<GeneralPath> gpP = new ArrayList<GeneralPath>();
-            if (polys != null) {
-                log.info("Polygon[] -> GeneralPath");
-                for (MultiPolygon p : polys) {
-                    p = trans.transform(p);
-                    gpP.add(PolygonUtil.toGeneralPath(p));
-                }
-            }
-            log.info("rendering filled artifacts...");
-            for (GeneralPath gp : gpP) {
-                viewer.add(gp, Color.LIGHT_GRAY, true);
-            }
-
-            log.info("rendering artifact outlines...");
-            for (GeneralPath gp : gpP) {
-                viewer.add(gp, Color.GRAY, false);
-            }
-        }
-
     }
 }

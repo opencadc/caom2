@@ -104,7 +104,7 @@ public final class PolygonUtil {
     private static final double MAX_SCALE = 0.07;
     private static Logger log = Logger.getLogger(PolygonUtil.class);
 
-    static MultiPolygon convert(Polygon in) {
+    public static MultiPolygon convert(Polygon in) {
         MultiPolygon ret = new MultiPolygon();
         SegmentType t = SegmentType.MOVE;
         for (Point p : in.getVertices()) {

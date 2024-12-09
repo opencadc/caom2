@@ -112,9 +112,9 @@ public final class PositionUtil {
     private PositionUtil() {
     }
 
-    static class ComputedBounds {
-        Shape bounds;
-        MultiShape samples;
+    public static class ComputedBounds {
+        public Shape bounds;
+        public MultiShape samples;
     }
 
     /**
@@ -146,7 +146,7 @@ public final class PositionUtil {
         return null;
     }
 
-    static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) 
+    public static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) 
             throws NoSuchKeywordException, InvalidPolygonException {
         List<Shape> samples = generateShapes(artifacts, productType);
         if (samples == null || samples.isEmpty()) {
@@ -557,7 +557,8 @@ public final class PositionUtil {
         return ret;
     }
 
-    static Shape toShapeICRS(SpatialWCS wcs) throws InvalidPolygonException {
+    // caom2-viz
+    public static Shape toShapeICRS(SpatialWCS wcs) throws InvalidPolygonException {
         CoordSys coordsys = inferCoordSys(wcs);
         if (!coordsys.supported) {
             return null;

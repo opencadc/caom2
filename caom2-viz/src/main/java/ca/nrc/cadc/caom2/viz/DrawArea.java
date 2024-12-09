@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,7 +69,8 @@
 
 package ca.nrc.cadc.caom2.viz;
 
-import ca.nrc.cadc.caom2.types.CartesianTransform;
+import ca.nrc.cadc.dali.CartesianTransform;
+import ca.nrc.cadc.dali.Point;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -112,7 +113,12 @@ public class DrawArea extends JPanel {
     // write the user-space coordinates in the lower-left corner
     private java.awt.geom.Point2D ptSrc = new java.awt.Point();
     private java.awt.geom.Point2D ptDst = new java.awt.geom.Point2D.Double();
-    private ca.nrc.cadc.caom2.types.Point ptDisplay = new ca.nrc.cadc.caom2.types.Point();
+    private DisplayPoint ptDisplay = new DisplayPoint();
+
+    private static class DisplayPoint {
+        double cval1;
+        double cval2;
+    }
 
     public DrawArea(JLabel status, String statusPrefix, boolean sexiCoords) {
         super(true); // double-buffered
@@ -157,7 +163,10 @@ public class DrawArea extends JPanel {
         ptDisplay.cval1 = ptDst.getX();
         ptDisplay.cval2 = ptDst.getY();
         if (geomTransform != null) {
-            ptDisplay = geomTransform.transform(ptDisplay);
+            Point p = new Point(ptDisplay.cval1, ptDisplay.cval2);
+            p = geomTransform.transform(p);
+            ptDisplay.cval1 = p.getLongitude();
+            ptDisplay.cval2 = p.getLatitude();
         }
         if (sexiCoords) {
             //String[] s = CoordUtil.degreesToSexigessimal(ptDisplay.cval1, ptDisplay.cval1);
@@ -307,18 +316,6 @@ public class DrawArea extends JPanel {
         }
     }
     
-    /*
-    private void paintGrid(Graphics2D gc)
-    {
-        gc.setColor( Color.BLUE );
-        BasicStroke s = (BasicStroke) gc.getStroke();
-        float w = s.getLineWidth();
-        gc.setStroke(new BasicStroke(0.5f*w));
-        CoordSystemUtil.drawIntegralCoordinateGrid(gc, this, 10);
-        gc.setStroke(s); // reset
-    }
-    */
-
     class MouseHandler extends MouseAdapter {
         public void mousePressed(MouseEvent e) {
             // anything?

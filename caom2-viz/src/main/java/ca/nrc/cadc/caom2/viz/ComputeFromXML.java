@@ -75,6 +75,7 @@ import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URI;
 import org.apache.log4j.Logger;
 
 /**
@@ -84,11 +85,11 @@ public class ComputeFromXML {
     private static Logger log = Logger.getLogger(ComputeFromXML.class);
 
     private final File obsFile;
-    private final String productID;
+    private final URI planeURI;
 
-    public ComputeFromXML(File obsFile, String productID) {
+    public ComputeFromXML(File obsFile, URI planeURI) {
         this.obsFile = obsFile;
-        this.productID = productID;
+        this.planeURI = planeURI;
     }
 
     public void doit()
@@ -97,18 +98,18 @@ public class ComputeFromXML {
         Observation o = r.read(new FileInputStream(obsFile));
 
         for (Plane p : o.getPlanes()) {
-            String pid = p.getProductID();
-            if (productID == null || productID.equals(pid)) {
+            URI pid = p.getURI();
+            if (planeURI == null || planeURI.equals(pid)) {
                 log.info("plane: " + pid);
                 ComputeUtil.clearTransientState(p);
                 ComputeUtil.computeTransientState(o, p);
 
                 StringBuilder sb = new StringBuilder();
-                sb.append(p.getProductID()).append(": ");
+                sb.append(p.getURI()).append(": ");
                 sb.append("\nposition: ").append(p.position);
-                if (p.position != null && p.position.bounds != null) {
-                    sb.append("\n     center: ").append(p.position.bounds.getCenter());
-                    sb.append("\n       area: ").append(p.position.bounds.getArea());
+                if (p.position != null && p.position.getBounds() != null) {
+                    sb.append("\n     center: ").append(p.position.getBounds().getCenter());
+                    sb.append("\n       area: ").append(p.position.getBounds().getArea());
                     sb.append("\n dimensions: ").append(p.position.dimension);
                 }
                 sb.append("\nenergy : ").append(p.energy);
