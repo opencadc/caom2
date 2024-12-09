@@ -86,7 +86,7 @@ public class Position {
     
     public Shape minBounds;
     public Dimension2D dimension;
-    public DoubleInterval maxAngularScale;
+    public DoubleInterval maxRecoverableScale;
     public Double resolution;
     public DoubleInterval resolutionBounds;
     public Double sampleSize;

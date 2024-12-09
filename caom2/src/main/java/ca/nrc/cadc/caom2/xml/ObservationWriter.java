@@ -74,7 +74,6 @@ import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
-import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
@@ -99,6 +98,7 @@ import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.Visibility;
 import ca.nrc.cadc.caom2.util.CaomUtil;
+import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.wcs.Axis;
 import ca.nrc.cadc.caom2.wcs.Coord2D;
 import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
@@ -841,8 +841,8 @@ public class ObservationWriter {
             posE.addContent(ce);
         }
 
-        if (comp.maxAngularScale != null) {
-            Element me = getIntervalElement("maxANgularScale", comp.maxAngularScale);
+        if (comp.maxRecoverableScale != null) {
+            Element me = getIntervalElement("maxRecoverableScale", comp.maxRecoverableScale);
             posE.addContent(me);
         }
 

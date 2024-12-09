@@ -75,7 +75,6 @@ import ca.nrc.cadc.caom2.CalibrationLevel;
 import ca.nrc.cadc.caom2.CaomEntity;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
-import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
@@ -109,6 +108,7 @@ import ca.nrc.cadc.caom2.VocabularyTerm;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
+import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.vocab.Tracking;
 import ca.nrc.cadc.caom2.vocab.UCD;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -1047,6 +1047,13 @@ public class ObservationReader {
             // else
             // throw new ObservationParsingException("unsupported dimension
             // type: " + tval);
+        }
+        
+        cur = getChildElement("maxRecoverableScale", element, namespace, false);
+        if (cur != null) {
+            double lb = getChildTextAsDouble("lower", cur, namespace, false);
+            double ub = getChildTextAsDouble("upper", cur, namespace, false);
+            ret.maxRecoverableScale = new DoubleInterval(lb, ub);
         }
 
         ret.resolution = getChildTextAsDouble("resolution", element, namespace,

@@ -332,6 +332,7 @@
             <xs:element name="samples" type="caom2:MultiShape" minOccurs="1" maxOccurs="1"/>
             <xs:element name="minBounds" type="caom2:Shape" minOccurs="0" maxOccurs="1"/>
             <xs:element name="dimension" type="caom2:Dimension2D" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="maxRecoverableScale" type="caom2:Interval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="resolution" type="xs:double" minOccurs="0" maxOccurs="1"/>
             <xs:element name="resolutionBounds" type="caom2:Interval" minOccurs="0" maxOccurs="1"/>
             <xs:element name="sampleSize" type="xs:double" minOccurs="0" maxOccurs="1"/>

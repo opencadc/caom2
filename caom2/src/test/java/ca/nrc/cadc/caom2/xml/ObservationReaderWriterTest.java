@@ -945,7 +945,7 @@ public class ObservationReaderWriterTest {
             Assert.assertEquals(expected.dimension.naxis1, actual.dimension.naxis1);
             Assert.assertEquals(expected.dimension.naxis2, actual.dimension.naxis2);
         }
-        compare(expected.maxAngularScale, actual.maxAngularScale);
+        compare(expected.maxRecoverableScale, actual.maxRecoverableScale);
         compare(expected.resolution, actual.resolution);
         compare(expected.resolutionBounds, actual.resolutionBounds);
         compare(expected.sampleSize, actual.sampleSize);

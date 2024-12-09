@@ -399,6 +399,7 @@ public class Caom2TestInstances {
                 }
                 
                 p.position.dimension = new Dimension2D(1024, 2048);
+                p.position.maxRecoverableScale = new DoubleInterval(0.2, 0.4);
                 p.position.resolution = 0.05;
                 p.position.resolutionBounds = new DoubleInterval(0.04, 0.06);
                 p.position.sampleSize = 0.025;
