@@ -28,9 +28,8 @@ jobs:
     - name: build and test caom2-validator
       run: cd caom2-validator && ../gradlew --info clean build
 
-# not ported to caom25 yet
-#    - name: build and test caom2-viz
-#      run: cd caom2-viz && ../gradlew --info clean build
+    - name: build and test caom2-viz
+      run: cd caom2-viz && ../gradlew --info clean build
 
 # obsolete
 #    - name: build and test fits2caom2
