@@ -26,15 +26,12 @@ jobs:
     - name: build and test caom2-artifact-resolvers
       run: cd caom2-artifact-resolvers && ../gradlew --info clean assemble javadoc checkstyleMain install
 
-## no checkstyle for these utilities
-    - name: build and test fits2caom2
-      run: cd fits2caom2 && ../gradlew --info clean build javadoc install
+# OBSOLETE
+#    - name: build and test fits2caom2
+#      run: cd fits2caom2 && ../gradlew --info clean build javadoc install
 
     - name: build and test caom2-validator
       run: cd caom2-validator && ../gradlew --info clean build
-    
-    - name: build and test caom2-viz
-      run: cd caom2-viz && ../gradlew --info clean build
 ##
     - name: build and test caom2-access-control
       run: cd caom2-access-control && ../gradlew --info clean build javadoc checkstyleMain install
