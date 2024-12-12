@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.bifrost;
 
@@ -76,46 +76,44 @@ import java.util.Iterator;
  *
  * @author pdowler
  */
-public class CoordIterator implements Iterator<Double>
-{
+public class CoordIterator implements Iterator<Double> {
+
     private Iterator<Point> iter;
     private Point cur;
     private boolean cval1 = true;
 
-    public CoordIterator(Iterator<Point> vi)
-    {
+    public CoordIterator(Iterator<Point> vi) {
         this.iter = vi;
     }
 
     @Override
-    public boolean hasNext()
-    {
-        if ( cur == null && iter.hasNext())
-        {
+    public boolean hasNext() {
+        if (cur == null && iter.hasNext()) {
             cur = iter.next();
         }
-        if (cur == null)
+        if (cur == null) {
             return false;
+        }
 
         return true;
     }
 
     @Override
-    public Double next()
-    {
+    public Double next() {
         double ret = cur.cval2;
-        if (cval1)
+        if (cval1) {
             ret = cur.cval1;
+        }
         this.cval1 = !cval1;
-        if (cval1)
+        if (cval1) {
             cur = null;
+        }
         return ret;
     }
 
     // compile compat with older java versions
     @Override
-    public void remove()
-    {
+    public void remove() {
         throw new UnsupportedOperationException();
     }
 }

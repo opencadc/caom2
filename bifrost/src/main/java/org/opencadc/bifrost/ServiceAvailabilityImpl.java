@@ -95,7 +95,7 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
 
     private static final Logger log = Logger.getLogger(ServiceAvailabilityImpl.class);
 
-    private String UWSDS_TEST = "select jobID from uws.Job limit 1";
+    private static String UWSDS_TEST = "select jobID from uws.Job limit 1";
 
     public ServiceAvailabilityImpl() {
     }

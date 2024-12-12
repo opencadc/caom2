@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.bifrost;
 
@@ -80,20 +80,19 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class LinkQueryJobManager extends SimpleJobManager
-{
+public class LinkQueryJobManager extends SimpleJobManager {
+
     private static final Logger log = Logger.getLogger(LinkQueryJobManager.class);
 
     private static final Long MAX_EXEC_DURATION = 120L; // 2 minutes
     private static final Long MAX_DESTRUCTION = 3600L;
     private static final Long MAX_QUOTE = 120L;
 
-    public LinkQueryJobManager()
-    {
+    public LinkQueryJobManager() {
         super();
-        
+
         PostgresJobPersistence jobPersist = new PostgresJobPersistence(AuthenticationUtil.getIdentityManager());
-        
+
         JobExecutor jobExec = new SyncJobExecutor(jobPersist, CaomLinkQueryRunner.class);
 
         super.setJobPersistence(jobPersist);
