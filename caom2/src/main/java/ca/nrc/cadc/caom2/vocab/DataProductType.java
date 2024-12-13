@@ -84,7 +84,7 @@ import org.apache.log4j.Logger;
 public class DataProductType extends VocabularyTerm implements CaomEnum<String> {
     private static final Logger log = Logger.getLogger(DataProductType.class);
 
-    private static final URI OBSCORE = URI.create("http://www.ivoa.net/std/ObsCore");
+    private static final URI OBSCORE = URI.create("http://www.ivoa.net/rdf/product-type");
 
     /**
      * ObsCore-1.0 image.
