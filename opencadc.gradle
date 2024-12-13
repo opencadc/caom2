@@ -6,7 +6,18 @@ configurations {
 
 dependencies {
     testCompile 'com.puppycrawl.tools:checkstyle:8.2'
-    checkstyleDep 'org.opencadc:cadc-quality:[1.0,)'
+    checkstyleDep 'org.opencadc:cadc-quality:[1.0,2.0)'
+}
+
+sourceSets {
+    intTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+        }
+        resources.srcDir file('src/intTest/resources')
+	resources.srcDirs += new File(System.getenv('A') + '/test-certificates/')
+    }
 }
 
 checkstyle {

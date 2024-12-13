@@ -1,0 +1,442 @@
+swagger: '2.0'
+info:
+  version: '1.0'
+  title: torkeep CAOM Metadata Repository
+  description: >
+    The torkeep CAOM Metadata Repsitory is a CAOM metadata repository for use by developers
+    in developing and testing data metadata pipelines. Ths service is not intended 
+    for general use.
+
+    ### Authentication
+
+    The observations and deletions endpoints of this service support cookie and
+    client-certificate authentication. 
+    
+schemes:
+  - https
+basePath: '/torkeep'
+paths:
+  /observations:
+    get:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      summary: List collections
+      description: |
+        GET will produce a list of CAOM collections managed by this service.
+      schemes:
+        - https
+      produces:
+        - text/tab-separated-values
+      responses:
+        '200':
+          description: Successful response
+        '503':
+          description: Service busy
+  '/observations/{collection}':
+    get:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      description: >
+        GET will produce a unique list of caom2 observations for a particular
+        collection ordered by maxLastModified. The output is TSV (currently
+        without header line) with columns from the Observation instances:
+
+        collection observationID maxLastModified accMetaChecksum
+      summary: List observations
+      schemes:
+        - https
+      produces:
+        - text/tab-separated-values
+      parameters:
+        - in: path
+          name: collection
+          description: The collection to list
+          required: true
+          type: string
+        - in: query
+          name: maxrec
+          description: The maximum number of records to return.
+          required: false
+          type: integer
+        - in: query
+          name: start
+          description: The minimum last modified date (IVOA timestamp format).
+          required: false
+          type: string
+        - in: query
+          name: end
+          description: The maximum last modified date (IVOA timestamp format).
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+        '500':
+          description: Internal error
+        '503':
+          description: Service busy
+        default:
+          description: Unexpeced error
+  '/observations/{collection}/{observationID}':
+    get:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      description: |
+        GET retrieves the observation as a CAOM xml document. The current {Observation.accMetaChecksum} 
+        value is returned in the ETag response header (see If-Match header with updates).
+      summary: Get an observation
+      schemes:
+        - https
+      produces:
+        - text/xml
+      parameters:
+        - in: path
+          name: collection
+          description: The collection value
+          required: true
+          type: string
+        - in: path
+          name: observationID
+          description: The observationID value
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: >-
+            (bad request) with the text "invalid ObservationURI" if a valid
+            ObservationURI cannot be constructed from the requested path
+        '403':
+          description: (forbidden) if the caller does not have read permission
+        '404':
+          description: >-
+            (not found) if the specified collection does not exist or the
+            observation is not in the repository
+        '500':
+          description: Internal error
+        '503':
+          description: Service busy
+        default:
+          description: Unexpeced error
+    delete:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      description: >
+        DELETE removes an existing observation from the repository and will fail
+        (with a 404 "not found") if it does not exist.
+      summary: Delete an observation
+      schemes:
+        - https
+      parameters:
+        - in: path
+          name: collection
+          description: The collection value
+          required: true
+          type: string
+        - in: path
+          name: observationID
+          description: The observationID value
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful response
+        '404':
+          description: (not found)
+        '500':
+          description: Internal error
+        '503':
+          description: Service busy
+        default:
+          description: Unexpeced error
+    post:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      description: >
+        POST updates (replaces) an existing observation and will fail (with a
+        404 "not found") if it does not exist. The delivered content must be a
+        CAOM xml document.
+      summary: Modify an observation
+      consumes:
+        - text/xml
+      parameters:
+        - in: path
+          name: collection
+          description: The collection value
+          required: true
+          type: string
+        - in: path
+          name: observationID
+          description: The observationID value
+          required: true
+          type: string
+        - in: header
+          name: If-Match
+          type: string
+          description: >-
+            Make update conditional. Set the If-Match header to {Observation.accMetaChecksum}
+            (from previous GET); this ensures that the update only occurs if the persisted 
+            observation has not been updated by some other process since the GET.
+        - in: body
+          name: body
+          description: An updated observation object.
+          required: true
+          schema:
+            $ref: '#/definitions/Observation'
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: >-
+            (bad request) with the text "request path does not match
+            ObservationURI" if the path of URI in the document submitted does
+            not match the path in the URL to which the document was posted
+        '404':
+          description: Not Found
+        '412':
+          description: Precondition Failed (see If-Match header parameter above)
+        '413':
+          description: >-
+            413 (too large) if the size of the document exceeds the 500Kb
+            maximum imposed in this web service
+        '500':
+          description: Internal error
+        '503':
+          description: Service busy
+        default:
+          description: Unexpected error
+    put:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      description: >
+        PUT stores a new observation and will fail if it already exists. The
+        delivered content must be a CAOM xml document.
+      summary: Create a new observation
+      schemes:
+        - https
+      consumes:
+        - text/xml
+      parameters:
+        - in: path
+          name: collection
+          description: The collection value
+          required: true
+          type: string
+        - in: path
+          name: observationID
+          description: The observationID value
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: A new observation object.
+          required: true
+          schema:
+            $ref: '#/definitions/Observation'
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: >-
+            (bad request) with the text "request path does not match
+            ObservationURI" if the path of URI in the document submitted does
+            not match the path in the URL to which the document was posted
+        '404':
+          description: >-
+            (not found) only if the collection does not exist, - 400 (bad
+            request) with the text "invalid XML" if the submitted document is
+            not valid (well-formedness and schema validation),
+        '413':
+          description: >-
+            413 (too large) if the size of the document exceeds the 500Kb
+            maximum imposed in this web service
+        '500':
+          description: Internal error
+        '503':
+          description: Service busy
+        default:
+          description: Unexpected error
+  /deletions:
+    get:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      summary: List collections
+      description: |
+        GET will produce a list of CAOM collections managed by this service.
+      schemes:
+        - https
+      produces:
+        - text/tab-separated-values
+      responses:
+        '200':
+          description: Successful response
+        '503':
+          description: Service busy
+  '/deletions/{collection}':
+    get:
+      tags:
+        - 'torkeep CAOM Metadata Repository (ivo://cadc.nrc.ca/torkeep)'
+      description: >
+        GET will produce a summary listing of caom2 observations that have been
+        deleted from a particular collection. The output is TSV (currently
+        without header line) with columns from the DeletedObservation instances:
+
+
+        obsID collection observationID lastModified
+      summary: List deleted observations
+      schemes:
+        - https
+      produces:
+        - text/tab-separated-values
+      parameters:
+        - in: path
+          name: collection
+          description: The collection to list.
+          required: true
+          type: string
+        - in: query
+          name: maxrec
+          description: The maximum number of records to return.
+          required: false
+          type: integer
+        - in: query
+          name: start
+          description: The minimum last modified date (IVOA timestamp format).
+          required: false
+          type: string
+        - in: query
+          name: end
+          description: The maximum last modified date (IVOA timestamp format).
+          required: false
+          type: string
+      responses:
+        '200':
+          description: Successful response
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+        '500':
+          description: Internal error
+        '503':
+          description: Service busy
+        default:
+          description: Unexpected error
+  /availability:
+    get:
+      tags:
+        - 'Support Interfaces'
+      summary: VOSI Availability
+      description: >-
+        Indicates whether the service is operable and shows the reliability of
+        the service for extended and scheduled requests. If the query parameter
+        'detail=min' is used, a light weight heart beat test will be performed.
+        The heart beat test returns status 200 if the service is available.
+      parameters:
+        - name: detail
+          in: query
+          description: >-
+            specifies heart beat to be used to check for availability of this
+            service, the value 'min' must be used, otherwise the full
+            availability test will be performed
+          required: false
+          type: string
+      produces:
+        - text/xml
+      responses:
+        '200':
+          description: A VOSI availability document in XML.
+          schema:
+            $ref: '#/definitions/availability'
+        default:
+          description: Unexpected error
+  /capabilities:
+    get:
+      tags:
+        - 'Support Interfaces'
+      summary: VOSI Capabilities
+      description: |
+        Produces a document describing the capabilities of this service.
+      produces:
+        - text/xml
+      responses:
+        '200':
+          description: A VOResource capabilities document in XML.
+          schema:
+            $ref: '#/definitions/capabilities'
+        default:
+          description: Unexpected error
+definitions:
+  Observation:
+    type: object
+    xml:
+      namespace: 'http://www.opencadc.org/caom2/xml/v2.4'
+    description: >-
+      The Common Archive Observation Model (CAOM) is the core data model used
+      across all collections at the Canadian Astronomy Data Centre (CADC).
+  availability:
+    type: object
+    xml:
+      name: availability
+      namespace: 'http://www.ivoa.net/xml/VOSIAvailability/v1.0'
+      prefix: vosi
+    properties:
+      available:
+        type: boolean
+        xml:
+          attribute: true
+          prefix: vosi
+      note:
+        type: string
+        xml:
+          attribute: true
+          prefix: vosi
+  capabilities:
+    type: array
+    items:
+      $ref: '#/definitions/capability'
+    xml:
+      namespace: 'http://www.ivoa.net/xml/VOSICapabilities/v1.0'
+      prefix: vosi
+      wrapped: true
+  capability:
+    type: object
+    properties:
+      standardID:
+        type: string
+        format: uri
+        xml:
+          attribute: true
+      interface:
+        type: object
+        properties:
+          accessURL:
+            type: string
+            properties:
+              use:
+                type: string
+                xml:
+                  attribute: true
+          securityMethod:
+            type: string
+            properties:
+              standardID:
+                type: string
+                format: uri
+                xml:
+                  attribute: true
+  Error:
+    required:
+      - code
+      - message
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
