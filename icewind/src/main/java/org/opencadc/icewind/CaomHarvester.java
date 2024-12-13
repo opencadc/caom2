@@ -166,8 +166,14 @@ public class CaomHarvester implements Runnable {
                 
                 if (validateMode) {
                     ObservationValidator validator = new ObservationValidator(src, collection, dest, batchSize, numThreads, false);
+                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
+                            batchSize, numThreads, nochecksum);
+                    obsHarvester.setSkipped(skipMode, null);
                     try {
                         validator.run();
+                        if (validator.getNumMismatches() > 0) {
+                            obsHarvester.run(); // retry skipped
+                        }
                     } catch (TransientException ex) {
                         log.warn("validate " + src.getIdentifier(collection) + " FAIL", ex);
                     }

@@ -112,6 +112,7 @@ public class ObservationValidator extends Harvester {
     private boolean nochecksum = false;
     
     HarvestSkipURIDAO harvestSkip = null;
+    private int numMismatches = 0;
 
     public ObservationValidator(HarvestSource src, String collection, HarvestDestination dest, 
             Integer batchSize, int nthreads, boolean dryrun) {
@@ -152,12 +153,16 @@ public class ObservationValidator extends Harvester {
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
     }
 
+    public int getNumMismatches() {
+        return numMismatches;
+    }
+
     @Override
     public void run() {
         log.info("START VALIDATION: " + Observation.class.getSimpleName());
 
         Progress num = doit();
-
+        this.numMismatches = num.found;
         if (num.found > 0) {
             log.info("finished batch: " + num);
         }
