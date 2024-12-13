@@ -92,20 +92,22 @@ public class CaomHarvester implements Runnable {
     private static final Long DEFAULT_IDLE_TIME = 30000L;
 
     private final InitDatabase initdb;
-    private final HarvesterResource src;
-    private final HarvesterResource dest;
+    private final HarvestSource src;
+    private final HarvestDestination dest;
     private final List<String> collections;
     private final URI basePublisherID;
-    private final int batchSize;
-    private final int nthreads;
-    private final boolean full;
-    private final boolean skip;
-    private final boolean nochecksum;
-    private final boolean exitWhenComplete;
-    private final long maxIdle;
-
-    // hack option
+    
+    // optional
+    int batchSize;
+    int numThreads;
+    boolean exitWhenComplete = false;
+    long maxSleep;
+    boolean validateMode = false;
+    boolean skipMode = false;
     String retryErrorMessagePattern;
+    
+    // not used by main
+    private boolean nochecksum;
     
     /**
      * Harvest everything.
@@ -114,33 +116,17 @@ public class CaomHarvester implements Runnable {
      * @param dest destination resource (must be a server/database/schema)
      * @param collections list of collections to process
      * @param basePublisherID base to use in generating Plane publisherID values in destination database
-     * @param batchSize number of observations per batch (~memory consumption)
-     * @param nthreads max threads when harvesting from a service
-     * @param full full harvest of all source entities
-     * @param skip attempt retry of all skipped observations
-     * @param nochecksum disable metadata checksum comparison
-     * @param exitWhenComplete exit after processing each collection if true, else continuously loop
-     * @param maxIdle max sleep time in seconds between runs when running continuously
      */
-    public CaomHarvester(HarvesterResource src, HarvesterResource dest, List<String> collections,
-                         URI basePublisherID, int batchSize, int nthreads, boolean full, boolean skip,
-                         boolean nochecksum, boolean exitWhenComplete, long maxIdle) {
+    public CaomHarvester(HarvestSource src, List<String> collections, HarvestDestination dest, URI basePublisherID) {
         this.src = src;
-        this.dest = dest;
         this.collections = collections;
+        this.dest = dest;
         this.basePublisherID = basePublisherID;
-        this.batchSize = batchSize;
-        this.nthreads = nthreads;
-        this.full = full;
-        this.skip = skip;
-        this.nochecksum = nochecksum;
-        this.exitWhenComplete = exitWhenComplete;
-        this.maxIdle = maxIdle;
-
+        
         ConnectionConfig cc = new ConnectionConfig(null, null, dest.getUsername(), dest.getPassword(),
-                HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
         DataSource ds = DBUtil.getDataSource(cc);
-        this.initdb = new InitDatabase(ds, dest.getDatabase(), dest.getSchema());
+        this.initdb = new InitDatabase(ds, null, dest.getSchema());
     }
 
     @Override
@@ -176,31 +162,40 @@ public class CaomHarvester implements Runnable {
         while (!done) {
             int ingested = 0;
             for (String collection : collections) {
-                log.info(src.getIdentifier(collection) + " -> " + dest.getIdentifier(collection));
+                log.info(src.getIdentifier(collection) + " -> " + dest);
+                
+                if (validateMode) {
+                    ObservationValidator validator = new ObservationValidator(src, collection, dest, batchSize, numThreads, false);
+                    try {
+                        validator.run();
+                    } catch (TransientException ex) {
+                        log.warn("validate " + src.getIdentifier(collection) + " FAIL", ex);
+                    }
+                } else {
+                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
+                            batchSize, numThreads, nochecksum);
+                    obsHarvester.setSkipped(skipMode, retryErrorMessagePattern);
 
-                ObservationHarvester obsHarvester = new ObservationHarvester(src, dest, collection, basePublisherID, batchSize,
-                        nthreads, full, nochecksum);
-                obsHarvester.setSkipped(skip, retryErrorMessagePattern);
+                    DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, collection, dest);
+                    boolean initDel = init;
+                    if (!init) {
+                        // check if we have ever harvested before
+                        HarvestState hs = obsHarvester.harvestStateDAO.get(obsHarvester.source, obsHarvester.cname);
+                        initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
+                    }
 
-                DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, dest,
-                        collection, batchSize * 100);
-                boolean initDel = init;
-                if (!init) {
-                    // check if we have ever harvested before
-                    HarvestState hs = obsHarvester.harvestStateDAO.get(obsHarvester.source, obsHarvester.cname);
-                    initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
-                }
+                    try {
+                        // delete observations before harvest to avoid observationURI conflicts from delete+create
+                        obsDeleter.setInitHarvestState(initDel);
+                        obsDeleter.run();
 
-                try {
-                    // delete observations before harvest to avoid observationURI conflicts from delete+create
-                    obsDeleter.setInitHarvestState(initDel);
-                    obsDeleter.run();
-
-                    // harvest observations
-                    obsHarvester.run();
-                    ingested += obsHarvester.getIngested();
-                } catch (TransientException e) {
-                    ingested = 0;
+                        // harvest observations
+                        obsHarvester.run();
+                        ingested += obsHarvester.getIngested();
+                    } catch (TransientException ex) {
+                        log.warn("harvest " + src.getIdentifier(collection) + " FAIL", ex);
+                        ingested = 0;
+                    }
                 }
             }
 
@@ -211,7 +206,7 @@ public class CaomHarvester implements Runnable {
                 if (ingested > 0 || sleep == 0) {
                     sleep = DEFAULT_IDLE_TIME;
                 } else {
-                    sleep = Math.min(sleep * 2, maxIdle * 1000L);
+                    sleep = Math.min(sleep * 2, maxSleep * 1000L);
                 }
                 try {
                     log.info("idle sleep: " + (sleep / 1000L) + " sec");

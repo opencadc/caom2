@@ -120,7 +120,10 @@ public abstract class HarvestStateDAO {
 
     protected void init() {
         StringBuilder sb = new StringBuilder();
-        sb.append(database).append(".").append(schema).append(".");
+        if (database != null) {
+            sb.append(database).append(".");
+        }
+        sb.append(schema).append(".");
         if (fakeSchemaTablePrefix != null) {
             sb.append(fakeSchemaTablePrefix);
         }

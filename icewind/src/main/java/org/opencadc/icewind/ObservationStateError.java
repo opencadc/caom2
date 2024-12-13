@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,119 +62,45 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
+ *  $Revision: 5 $
+ *
  ************************************************************************
  */
 
 package org.opencadc.icewind;
 
-import java.net.URI;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.caom2.ObservationState;
 
-/**
- * Encapsulate the information about a source or destination for harvesting
- * instances.
- *
- * @author pdowler
- */
-public class HarvesterResource {
+public class ObservationStateError implements Comparable<ObservationStateError> {
 
-    private static final Logger log = Logger.getLogger(HarvesterResource.class);
+    private ObservationState obs = null;
+    private String error = null;
 
-    private String databaseServer;
-    private String database;
-    private String schema;
-    private String username;
-    private String password;
-    private URI resourceID;
-    private String jdbcUrl;
-    private final int resourceType;
-
-    public static final int SOURCE_DB = 0;
-    public static final int SOURCE_URI = 1;
-    public static final int SOURCE_UNKNOWN = -1;
-    public static final String POSTGRESQL_DRIVER = "org.postgresql.Driver";
-
-    /**
-     * Constructor for a JDBC url.
-     *
-     * @param jdbcUrl JDBC database url
-     * @param server database server
-     * @param database database name
-     * @param username database username
-     * @param password database password
-     * @param schema schema name
-     */
-    public HarvesterResource(String jdbcUrl, String server, String database, String username, String password,
-                             String schema) {
-        if (jdbcUrl == null || server == null || database == null || username == null || password == null
-                || schema == null) {
-            throw new IllegalArgumentException("args cannot be null");
-        }
-        this.jdbcUrl = jdbcUrl;
-        this.databaseServer = server;
-        this.database = database;
-        this.username = username;
-        this.password = password;
-        this.schema = schema;
-        this.resourceType = SOURCE_DB;
+    public ObservationStateError(ObservationState o, String e) {
+        obs = o;
+        error = e;
     }
 
-    public HarvesterResource(URI resourceID) {
-        if (resourceID == null) {
-            throw new IllegalArgumentException("resourceID arg cannot be null");
-        }
-        this.resourceID = resourceID;
-        this.resourceType = SOURCE_URI;
+    public ObservationState getObs() {
+        return obs;
     }
 
-    public String getIdentifier(String collection) {
-        if (resourceID != null) {
-            return resourceID.toASCIIString() + "?" + collection;
-        }
-        return databaseServer + "." + database + "." + schema + "?" + collection;
-    }
-
-    public String getJdbcUrl() {
-        return jdbcUrl;
-    }
-
-    public URI getResourceID() {
-        return resourceID;
-    }
-
-    public String getDatabaseServer() {
-        return databaseServer;
-    }
-
-    public String getDatabase() {
-        return database;
-    }
-
-    public String getSchema() {
-        return schema;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public int getResourceType() {
-        return resourceType;
+    public String getError() {
+        return error;
     }
 
     @Override
     public String toString() {
-        if (resourceType == SOURCE_URI) {
-            return this.resourceID.toASCIIString();
-        } else if (resourceType == SOURCE_DB) {
-            return this.databaseServer;
-        } else {
-            return "UNKNOWN";
+        String res = error;
+        if (obs != null) {
+            res += " : " + obs;
         }
+        return res;
+    }
+
+    @Override
+    public int compareTo(ObservationStateError o) {
+        return this.obs.getURI().compareTo(o.getObs().getURI());
     }
 
 }

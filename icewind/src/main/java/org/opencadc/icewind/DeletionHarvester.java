@@ -96,7 +96,8 @@ import org.apache.log4j.Logger;
 public class DeletionHarvester extends Harvester implements Runnable {
 
     private static final Logger log = Logger.getLogger(DeletionHarvester.class);
-
+    private static int DEFAULT_BATCH_SIZE = 100000;
+    
     private DeletedEntityDAO deletedDAO;
     private RepoClient repoClient;
     private ObservationDAO obsDAO;
@@ -114,9 +115,10 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @param collection the collection to process
      * @param batchSize ignored, always full list
      */
-    public DeletionHarvester(Class<?> entityClass, HarvesterResource src, HarvesterResource dest,
-                             String collection, int batchSize) {
-        super(entityClass, src, dest, collection, batchSize, false);
+    public DeletionHarvester(Class<?> entityClass, HarvestSource src,  String collection, 
+            HarvestDestination dest) {
+        super(entityClass, src, collection, dest);
+        setBatchSize(DEFAULT_BATCH_SIZE);
         init();
     }
 
@@ -143,22 +145,21 @@ public class DeletionHarvester extends Harvester implements Runnable {
         repoClient.setReadTimeout(120000);      // 2 min
         
         // destination
-        final String destDS = "jdbc/DeletionHarvester";
-        
+        final String destDS = DEST_DATASOURCE_NAME;
         Map<String, Object> destConfig = getConfigDAO(dest);
         try {
             DataSource cur = null;
             try {
                 cur = DBUtil.findJNDIDataSource(destDS);
             } catch (NamingException notInitialized) {
-                log.debug("JNDI not initialized yet... OK");
+                log.info("JNDI DataSource not initialized yet... OK");
             }
             if (cur == null) {
                 ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                    dest.getUsername(), dest.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
                 DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
             } else {
-                log.debug("found DataSource: " + destDS + " -- re-using");
+                log.info("found DataSource: " + destDS + " -- re-using");
             }
         } catch (NamingException e) {
             throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
@@ -209,7 +210,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
                 log.error("batched aborted");
             }
             go = (!num.abort && !num.done);
-            full = false; // do not start at min(lastModified) again
         }
         try {
             close();
@@ -263,10 +263,6 @@ public class DeletionHarvester extends Harvester implements Runnable {
 
             startDate = state.curLastModified;
             if (firstIteration) {
-                if (super.minDate != null) { // override state
-                    startDate = super.minDate;
-                }
-                endDate = super.maxDate;
                 // harvest up to a little in the past because the head of the
                 // sequence may be volatile
                 long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;

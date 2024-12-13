@@ -128,9 +128,10 @@ public class ObservationHarvester extends Harvester {
     private int ingested = 0;
     private String errorMessagePattern;
 
-    public ObservationHarvester(HarvesterResource src, HarvesterResource dest, String collection, URI basePublisherID,
-                                Integer batchSize, int nthreads, boolean full, boolean nochecksum) {
-        super(Observation.class, src, dest, collection, batchSize, full);
+    public ObservationHarvester(HarvestSource src, String collection, HarvestDestination dest, URI basePublisherID,
+                                Integer batchSize, int nthreads, boolean nochecksum) {
+        super(Observation.class, src, collection, dest);
+        setBatchSize(batchSize);
         this.basePublisherID = basePublisherID;
         this.nochecksum = nochecksum;
         init(nthreads);
@@ -156,21 +157,21 @@ public class ObservationHarvester extends Harvester {
         srcRepoClient.setReadTimeout(120000);      // 2 min
         
         // dest is always a database
-        final String destDS = "jdbc/ObservationHarvester";
+        final String destDS = DEST_DATASOURCE_NAME;
         Map<String, Object> destConfig = getConfigDAO(dest);
         try {
             DataSource cur = null;
             try {
                 cur = DBUtil.findJNDIDataSource(destDS);
             } catch (NamingException notInitialized) {
-                log.debug("JNDI not initialized yet... OK");
+                log.info("JNDI DataSource not initialized yet... OK");
             }
             if (cur == null) {
                 ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                    dest.getUsername(), dest.getPassword(), HarvesterResource.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
                 DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
             } else {
-                log.debug("found DataSource: " + destDS + " -- re-using");
+                log.info("found DataSource: " + destDS + " -- re-using");
             }
         } catch (NamingException e) {
             throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
@@ -180,12 +181,7 @@ public class ObservationHarvester extends Harvester {
         destConfig.put("basePublisherID", basePublisherID.toASCIIString());
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(destConfig);
-        if (src.getIdentifier(collection).equals(dest.getIdentifier(collection))) {
-            log.info("source = destination = " + dest.getIdentifier(collection) + ": setting origin=true");
-            destObservationDAO.setOrigin(true); // reproc in a single db should update timestamps
-        } else {
-            destObservationDAO.setOrigin(false); // copy as-is
-        }
+        destObservationDAO.setOrigin(false); // copy as-is
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
         
         if (srcRepoClient.isObsAvailable()) {
@@ -220,7 +216,6 @@ public class ObservationHarvester extends Harvester {
             if (num.found < batchSize / 2) {
                 go = false;
             }
-            full = false; // do not start at beginning again
         }
     }
 
@@ -273,12 +268,6 @@ public class ObservationHarvester extends Harvester {
             t = System.currentTimeMillis();
 
             if (firstIteration) {
-                if (full) {
-                    startDate = null;
-                } else if (super.minDate != null) {
-                    startDate = super.minDate;
-                }
-                endDate = super.maxDate;
                 if (!skipped) {
                     // harvest up to a little in the past because the head of
                     // the sequence may be volatile
@@ -575,11 +564,9 @@ public class ObservationHarvester extends Harvester {
                             log.info("put: " + skip);
                             harvestSkipDAO.put(skip);
 
-                            if (!src.getIdentifier(collection).equals(dest.getIdentifier(collection))) {
-                                // delete previous version of observation (if any)
-                                log.info("delete: " + ow.entity.observationState.getURI());
-                                destObservationDAO.delete(ow.entity.observationState.getURI());
-                            }
+                            // delete previous version of observation (if any)
+                            log.info("delete: " + ow.entity.observationState.getURI());
+                            destObservationDAO.delete(ow.entity.observationState.getURI());
 
                             log.debug("committing HarvestSkipURI transaction");
                             destObservationDAO.getTransactionManager().commitTransaction();
@@ -871,7 +858,7 @@ public class ObservationHarvester extends Harvester {
     @Override
     protected void initHarvestState(DataSource ds, Class c) {
         super.initHarvestState(ds, c);
-        this.harvestSkipDAO = new HarvestSkipURIDAO(ds, dest.getDatabase(), dest.getSchema());
+        this.harvestSkipDAO = new HarvestSkipURIDAO(ds, null, dest.getSchema());
     }
 
 }
