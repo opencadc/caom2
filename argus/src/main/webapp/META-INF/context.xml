@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+    <Resource name="jdbc/tapadm"
+              auth="Container"
+              type="javax.sql.DataSource"
+              factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" closeMethod="close"
+              minEvictableIdleTimeMillis="60000" timeBetweenEvictionRunsMillis="30000"
+              maxWait="20000"
+              initialSize="0"  minIdle="0" maxIdle="${org.opencadc.argus.tapadm.maxActive}" maxActive="${org.opencadc.argus.tapadm.maxActive}"
+              username="${org.opencadc.argus.tapadm.username}" password="${org.opencadc.argus.tapadm.password}"
+              driverClassName="org.postgresql.Driver" url="${org.opencadc.argus.tapadm.url}"
+              removeAbandoned="false"
+              testWhileIdle="true" testOnBorrow="true" validationQuery="select 123" />
+    <Resource name="jdbc/uws"
+              auth="Container"
+              type="javax.sql.DataSource"
+              factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" closeMethod="close"
+              minEvictableIdleTimeMillis="60000" timeBetweenEvictionRunsMillis="30000"
+              maxWait="20000"
+              initialSize="0" minIdle="0" maxIdle="${org.opencadc.argus.uws.maxActive}" maxActive="${org.opencadc.argus.uws.maxActive}"
+              username="${org.opencadc.argus.uws.username}" password="${org.opencadc.argus.uws.password}"
+              driverClassName="org.postgresql.Driver" url="${org.opencadc.argus.uws.url}"
+              removeAbandoned="false"
+              testOnBorrow="true" validationQuery="select 123" />
+    <!-- use default JNDI name for TAP query pool -->
+    <Resource name="jdbc/tapuser"
+              auth="Container"
+              type="javax.sql.DataSource"
+              factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" closeMethod="close"
+              minEvictableIdleTimeMillis="60000" timeBetweenEvictionRunsMillis="30000"
+              maxWait="20000"
+              initialSize="0" minIdle="0" maxIdle="${org.opencadc.argus.query.maxActive}" maxActive="${org.opencadc.argus.query.maxActive}"
+              username="${org.opencadc.argus.query.username}" password="${org.opencadc.argus.query.password}"
+              driverClassName="org.postgresql.Driver" url="${org.opencadc.argus.query.url}"
+              removeAbandoned="false"
+              testOnBorrow="true" validationQuery="select 123" />
+
+</Context>

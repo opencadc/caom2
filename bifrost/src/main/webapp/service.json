@@ -1,0 +1,186 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "bifrost",
+    "description": "## DataLink service for the Common Archive Observation Model (CAOM) Data Access\n\n",
+    "version": "1.0.1"
+  },
+  "schemes": [
+    "https"
+  ],
+  "basePath": "/bifrost",
+  "paths": {
+    "/links": {
+      "get": {
+        "summary": "IVOA DataLink v1.1",
+        "tags": [
+          "CAOM DataLink service"
+        ],
+        "description": "The linking of data discovery metadata to access to the data itself, further detailed metadata, related resources, and to services that perform operations of the data.\n",
+        "parameters": [
+          {
+            "name": "ID",
+            "in": "query",
+            "collectionFormat": "multi",
+            "description": "CAOM PublisherID from a data discovery service.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "RESPONSEFORMAT",
+            "in": "query",
+            "description": "Output format, application/x-votable+xml (default) or application/x-download-manifest+txt",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "RUNID",
+            "in": "query",
+            "description": "Arbitrary string (maximum length 64) that is attached to any logging of this request.",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "REQUEST",
+            "in": "query",
+            "description": "Get download links only (REQUEST=downloads-only)",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "application/x-votable+xml;content=datalink",
+          "application/x-download-manifest+txt"
+        ],
+        "responses": {
+          "200": {
+            "description": "A VOTable with one row per link (downloadable item or resource)."
+          },
+          "400": {
+            "description": "(bad request) with a VOTable and an INFO element with an error message."
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "503": {
+            "description": "Service too busy"
+          }
+        }
+      },
+      "post": {
+        "summary": "IVOA DataLink v1.1",
+        "tags": [
+          "CAOM DataLink service"
+        ],
+        "description": "The linking of data discovery metadata to access to the data itself, further detailed metadata, related resources, and to services that perform operations of the data.\n",
+        "parameters": [
+          {
+            "name": "ID",
+            "in": "query",
+            "collectionFormat": "multi",
+            "description": "CAOM PublisherID from a data discovery service.",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "RESPONSEFORMAT",
+            "in": "query",
+            "description": "Output format, application/x-votable+xml (default) or application/x-download-manifest+txt",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "RUNID",
+            "in": "query",
+            "description": "Arbitrary string (maximum length 64) that is attached to any logging of this request",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "REQUEST",
+            "in": "query",
+            "description": "get download links only (REQUEST=downloads-only)",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "application/x-votable+xml;content=datalink",
+          "application/x-download-manifest+txt"
+        ],
+        "responses": {
+          "200": {
+            "description": "A VOTable with one row per link (downloadable item or resource)"
+          },
+          "400": {
+            "description": "(bad request) with a VOTable and an INFO element with an error message"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "503": {
+            "description": "Service too busy"
+          }
+        }
+      }
+    },
+    "/availability": {
+      "get": {
+        "tags": [
+          "Support Interfaces"
+        ],
+        "summary": "VOSI Availability",
+        "description": "Indicates whether the service is operable and shows the reliability of the service for extended and scheduled requests. If the query parameter 'detail=min' is used, a light weight heart beat test will be performed. The heart beat test returns status 200 if the service is available.",
+        "parameters": [
+          {
+            "name": "detail",
+            "in": "query",
+            "description": "Specifies heart beat to be used to check for availability of this service, the value 'min' must be used, otherwise the full availability test will be performed",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "produces": [
+          "text/xml"
+        ],
+        "responses": {
+          "200": {
+            "description": "A VOSI availability document in XML.",
+            "schema": {
+              "$ref": "#/definitions/availability"
+            }
+          }
+        }
+      }
+    },
+    "/capabilities": {
+      "get": {
+        "summary": "VOSI Capabilities",
+        "tags": [
+          "Support Interfaces"
+        ],
+        "description": "Provides the service metadata in the form of a list of Capability descriptions.  Each of these descriptions is an \nXML element that:\n<ul>\n<li>states that the service provides a particular, IVOA-standard function;</li>\n<li>lists the interfaces for invoking that function;</li>\n<li>records any details of the implementation of the function that are not defined as default or constant in the standard for that function.</li>\n</ul>\n",
+        "produces": [
+          "text/xml"
+        ],
+        "responses": {
+          "200": {
+            "description": "A VOSI Capabilities document in XML."
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "503": {
+            "description": "Service too busy"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'checkstyle'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+sourceCompatibility = 1.8
+
+group = 'org.opencadc'
+
+mainClassName = 'ca.nrc.cadc.caom2.remove.Main'
+
+version = '1.1.3'
+ext {
+    // release number for building packages (rpm, deb, etc)
+    // when only library dependencies change
+    release = '1'
+}
+
+dependencies {
+    compile 'org.opencadc:cadc-util:[1.6,2.0)'
+    compile 'org.opencadc:caom2persistence:[2.4,2.5)'
+
+    runtime 'net.sourceforge.jtds:jtds:1.3.1'
+    runtime 'org.postgresql:postgresql:[42.2,43.0)'
+    
+    testCompile 'junit:junit:4.13'
+}
+
+apply from: '../opencadc.gradle'

@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+    <JarScanner scanClassPath="false" />
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+    <Resource name="jdbc/torkeep-caom2"
+        auth="Container"
+        type="javax.sql.DataSource"
+        factory="org.apache.tomcat.jdbc.pool.DataSourceFactory" closeMethod="close"
+        minEvictableIdleTimeMillis="60000" timeBetweenEvictionRunsMillis="30000"
+        maxWait="20000"
+        initialSize="0" minIdle="0" maxIdle="${org.opencadc.torkeep.caom2.maxActive}"
+        maxActive="${org.opencadc.torkeep.caom2.maxActive}"
+        username="${org.opencadc.torkeep.caom2.username}" password="${org.opencadc.torkeep.caom2.password}"
+        driverClassName="org.postgresql.Driver" url="${org.opencadc.torkeep.caom2.url}"
+        removeAbandoned="false"
+        testOnBorrow="true" validationQuery="select 123" />       
+
+</Context>
