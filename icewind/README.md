@@ -48,12 +48,17 @@ org.opencadc.icewind.caom.url=jdbc:postgresql://{server}/{database}
 # Base for generating Plane publisherID values
 org.opencadc.icewind.basePublisherID={uri}
 
-# (optional) exit after processing collections once
+# (optional) exit after processing each collection once
 #org.opencadc.icewind.exitWhenComplete=true
 
-# (optional) retry previously failed (skipped) observations
+# (optional mode) retry previously failed (skipped) observations
 # this mode always assumes exitWhenComplete=true
 org.opencadc.icewind.retrySkipped = true
+
+# (optional mode) validate remote and local observation sets for consistency
+# this mode always assumes exitWhenComplete=true
+# validate mode always assumes retrySkipped and performs retries after validation
+org.opencadc.icewind.validate = true
 ```
 
 The _caom_ database account owns and manages (create, alter, drop) CAOM database objects
@@ -88,6 +93,11 @@ the source; the _retrySkipped_ flag (optional) can be set to `true` to cause it 
 retry previously failed (skipped) observations listed in the `caom2.HarvestSkipURI`
 table. This mode always assumes _exitWhenComplete_ so it terminates after one pass
 through the list.
+
+The `icewind` _validate_ mode queries the _repoService_ and local database asnd compares the
+two sets of observations, identifies discrepancies (missed delete, missed observation, or 
+Observation.accMetaChecksum discrepancy) and schedules a retry by creating a new record
+in the `caom2.HarvestSkipURI` table.
 
 ### cadcproxy.pem (optional)
 This client certificate can be provided in /config directory. If present, it is used to 

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,97 +62,68 @@
  *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
  *                                       <http://www.gnu.org/licenses/>.
  *
- *  $Revision: 5 $
- *
  ************************************************************************
  */
 
 package org.opencadc.icewind;
 
-import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
-import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
-import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
-import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.date.DateUtil;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import javax.sql.DataSource;
+import java.net.URI;
 import org.apache.log4j.Logger;
 
 /**
- * 
+ * Encapsulate the information about a source or destination for harvesting
+ * instances.
+ *
  * @author pdowler
  */
-public abstract class Harvester implements Runnable {
+public class HarvestDestination {
 
-    private static final Logger log = Logger.getLogger(Harvester.class);
+    private static final Logger log = Logger.getLogger(HarvestDestination.class);
 
-    public static final String POSTGRESQL = "postgresql";
-    protected static final String DEST_DATASOURCE_NAME = "jdbc/DestinationDB";
-
-    protected String source;
-    protected String cname;
-    protected Class entityClass;
-    
-    protected int batchSize;
-    protected HarvestSource src;
-    protected String collection;
-    protected HarvestDestination dest;
-    protected HarvestStateDAO harvestStateDAO;
-
-    protected Harvester() {
-    }
-
-    protected Harvester(Class entityClass, HarvestSource src, String collection, HarvestDestination dest) {
-        this.entityClass = entityClass;
-        this.src = src;
-        this.collection = collection;
-        this.dest = dest;
-    }
-
-    public final void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
-
-    
-    protected Map<String, Object> getConfigDAO(HarvestDestination harvestResource) {
-        Map<String, Object> ret = new HashMap<>();
-        if (harvestResource.getJdbcUrl().contains(POSTGRESQL)) {
-            ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
-            ret.put("disableHashJoin", Boolean.TRUE);
-        } else {
-            throw new IllegalArgumentException("unknown SQL dialect: " + harvestResource);
-        }
-        ret.put("schema", harvestResource.getSchema());
-        
-        return ret;
-    }
+    private String schema;
+    private String username;
+    private String password;
+    private String jdbcUrl;
+    public static final String POSTGRESQL_DRIVER = "org.postgresql.Driver";
 
     /**
-     * @param ds
-     * DataSource from the destination DAO class
-     * @param c
-     * class being persisted via the destination DAO class
+     * Constructor for a JDBC url.
+     *
+     * @param jdbcUrl JDBC database url
+     * @param username database username
+     * @param password database password
+     * @param schema schema name
      */
-    protected void initHarvestState(DataSource ds, Class c) {
-        this.cname = c.getSimpleName();
-
-        log.debug("creating HarvestState tracker: " + cname + " in " + dest.getSchema());
-        this.harvestStateDAO = new PostgresqlHarvestStateDAO(ds, null, dest.getSchema());
-
-        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getSchema());
-
-        this.source = src.getIdentifier(collection).toASCIIString();
-    }
-
-    DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-
-    protected String format(Date d) {
-        if (d == null) {
-            return "null";
+    public HarvestDestination(String jdbcUrl, String username, String password, String schema) {
+        if (jdbcUrl == null || username == null || password == null || schema == null) {
+            throw new IllegalArgumentException("args cannot be null");
         }
-        return df.format(d);
+        this.jdbcUrl = jdbcUrl;
+        this.username = username;
+        this.password = password;
+        this.schema = schema;
     }
+
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    public String getSchema() {
+        return schema;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String toString() {
+        return  HarvestDestination.class.getSimpleName() + "[" + jdbcUrl + "]";
+    }
+    
+    
 }

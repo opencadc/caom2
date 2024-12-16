@@ -95,14 +95,14 @@ jobs:
 
 ## applications
     - name: build and test icewind 
-      run: cd icewind && ../gradlew --info clean build javadoc checkstyleMain
+      run: cd icewind && ../gradlew --info clean build checkstyleMain
 
     - name: build and test torkeep 
-      run: cd torkeep && ../gradlew --info clean build javadoc checkstyleMain
+      run: cd torkeep && ../gradlew --info clean build checkstyleMain
       
     - name: build and test argus 
-      run: cd argus && ../gradlew --info clean build javadoc checkstyleMain
+      run: cd argus && ../gradlew --info clean build checkstyleMain
 
     - name: build and test bifrost 
-      run: cd bifrost && ../gradlew --info clean build javadoc checkstyleMain
+      run: cd bifrost && ../gradlew --info clean build checkstyleMain
 

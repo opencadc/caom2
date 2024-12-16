@@ -78,6 +78,7 @@ import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -98,7 +99,8 @@ public class Main {
     private static final String CONFIG_PREFIX = Main.class.getPackage().getName();
     private static final String LOGGING_CONFIG_KEY = CONFIG_PREFIX + ".logging";
     
-    private static final String RETRY_SKIPPED_CONFIG_KEY = CONFIG_PREFIX + ".retrySkipped";
+    private static final String RETRY_MODE_CONFIG_KEY = CONFIG_PREFIX + ".retrySkipped";
+    private static final String VALIDATE_MODE_CONFIG_KEY = CONFIG_PREFIX + ".validate";
     private static final String RETRY_ERROR_PATTERN = CONFIG_PREFIX + ".retryErrorPattern";
     private static final String REPO_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".repoService";
     private static final String COLLECTION_CONFIG_KEY = CONFIG_PREFIX + ".collection";
@@ -152,35 +154,32 @@ public class Main {
                 Log4jInit.setLevel("ca.nrc.cadc.reg.client", loggingLevel);
             }
 
-            final String configuredSourceRepoService = props.getFirstPropertyValue(REPO_SERVICE_CONFIG_KEY);
-            final HarvesterResource sourceHarvestResource;
-            try {
-                sourceHarvestResource = new HarvesterResource(URI.create(configuredSourceRepoService));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                    String.format("%s - invalid repository service URI: %s reason: %s", REPO_SERVICE_CONFIG_KEY,
-                                  configuredSourceRepoService, e.getMessage()));
-            }
-
-            final String configuredDestinationUrl = props.getFirstPropertyValue(DB_URL_CONFIG_KEY);
-            String [] destinationServerDatabase = parseServerDatabase(configuredDestinationUrl);
-            final String destinationServer = destinationServerDatabase[0];
-            final String destinationDatabase = destinationServerDatabase[1];
-
-            final String configuredDestinationSchema = props.getFirstPropertyValue(DB_SCHEMA_CONFIG_KEY);
-            final String configuredDestinationUsername = props.getFirstPropertyValue(DB_USERNAME_CONFIG_KEY);
-            final String configuredDestinationPassword = props.getFirstPropertyValue(DB_PASSWORD_CONFIG_KEY);
-
-            final HarvesterResource destinationHarvestResource = new HarvesterResource(configuredDestinationUrl,
-                    destinationServer, destinationDatabase, configuredDestinationUsername,
-                    configuredDestinationPassword, configuredDestinationSchema);
-
+            // source
             final List<String> configuredCollections = props.getProperty(COLLECTION_CONFIG_KEY);
             if (configuredCollections.isEmpty()) {
                 throw new IllegalArgumentException(
                     String.format("%s must be configured with a minimum of one collection", COLLECTION_CONFIG_KEY));
             }
+            final URI configuredSourceRepoService;
+            String s = props.getFirstPropertyValue(REPO_SERVICE_CONFIG_KEY);
+            try {
+                configuredSourceRepoService = new URI(s);
+            } catch (URISyntaxException ex) {
+                throw new IllegalArgumentException(
+                        String.format("%s - invalid URI: %s because: %s", REPO_SERVICE_CONFIG_KEY, s, ex.getMessage()));
+            }
+            final HarvestSource sourceHarvestResource =
+                new HarvestSource(configuredSourceRepoService, configuredCollections);
 
+            // destination
+            final String configuredDestinationUrl = props.getFirstPropertyValue(DB_URL_CONFIG_KEY);
+            final String configuredDestinationSchema = props.getFirstPropertyValue(DB_SCHEMA_CONFIG_KEY);
+            final String configuredDestinationUsername = props.getFirstPropertyValue(DB_USERNAME_CONFIG_KEY);
+            final String configuredDestinationPassword = props.getFirstPropertyValue(DB_PASSWORD_CONFIG_KEY);
+            final HarvestDestination destinationHarvestResource = new HarvestDestination(configuredDestinationUrl,
+                    configuredDestinationUsername, configuredDestinationPassword, configuredDestinationSchema);
+
+            // publisherID generation
             String configuredBasePublisherIDUrl = props.getFirstPropertyValue(BASE_PUBLISHER_ID_CONFIG_KEY);
             if (!StringUtil.hasText(configuredBasePublisherIDUrl)) {
                 throw new IllegalArgumentException(String.format("%s - has no value", BASE_PUBLISHER_ID_CONFIG_KEY));
@@ -202,9 +201,10 @@ public class Main {
                                                                  BASE_PUBLISHER_ID_CONFIG_KEY, configuredBasePublisherIDUrl));
             }
 
+            // modes
             final boolean retrySkipped;
             final String errorMessagePattern;
-            final String configuredRetrySkipped = props.getFirstPropertyValue(RETRY_SKIPPED_CONFIG_KEY);
+            final String configuredRetrySkipped = props.getFirstPropertyValue(RETRY_MODE_CONFIG_KEY);
             if (configuredRetrySkipped == null) {
                 retrySkipped = false;
                 errorMessagePattern = null;
@@ -213,9 +213,17 @@ public class Main {
                 errorMessagePattern = props.getFirstPropertyValue(RETRY_ERROR_PATTERN);
             }
             
+            final boolean validateMode;
+            String configuredValidateMode = props.getFirstPropertyValue(VALIDATE_MODE_CONFIG_KEY);
+            if (configuredValidateMode == null) {
+                validateMode = false;
+            } else {
+                validateMode = Boolean.parseBoolean(configuredValidateMode);
+            }
+            
             final boolean exitWhenComplete;
             final String configuredExitWhenComplete = props.getFirstPropertyValue(EXIT_WHEN_COMPLETE_CONFIG_KEY);
-            if (retrySkipped) {
+            if (retrySkipped || validateMode) {
                 exitWhenComplete = true;
             } else if (configuredExitWhenComplete == null) {
                 exitWhenComplete = DEFAULT_EXIT_WHEN_COMPLETE;
@@ -230,21 +238,29 @@ public class Main {
             int batchSize = DEFAULT_BATCH_SIZE;
             if (configBatchSize != null) {
                 batchSize = Integer.parseInt(configBatchSize);
+                if (batchSize < 1) {
+                    throw new IllegalArgumentException("invalid batchSize: " + batchSize);
+                }
             }
             String configNumThreads = props.getFirstPropertyValue(BATCH_SIZE_CONFIG_KEY);
             int numThreads = 1 + batchSize / 10;
             if (configNumThreads != null) {
                 numThreads = Integer.parseInt(configNumThreads);
+                if (numThreads < 1) {
+                    throw new IllegalArgumentException("invalid numThreads: " + numThreads);
+                }
             }
 
-            // full=false: incremental harvest
-            final boolean full = false;
-            final boolean noChecksum = false;
-            CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, destinationHarvestResource,
-                    configuredCollections, basePublisherID, batchSize, numThreads,
-                                                        full, retrySkipped, noChecksum, exitWhenComplete, maxSleep);
+            CaomHarvester harvester = new CaomHarvester(sourceHarvestResource, configuredCollections, 
+                    destinationHarvestResource, basePublisherID);
+            harvester.batchSize = batchSize;
+            harvester.numThreads = numThreads;
+            harvester.maxSleep = maxSleep;
+            harvester.skipMode = retrySkipped;
+            harvester.validateMode = validateMode;
             harvester.retryErrorMessagePattern = errorMessagePattern;
-            
+            harvester.exitWhenComplete = exitWhenComplete;
+
             Subject subject = AuthenticationUtil.getAnonSubject();
             File cert = new File(CERTIFICATE_FILE_LOCATION);
             if (cert.exists()) {
