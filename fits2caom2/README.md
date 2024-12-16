@@ -1,5 +1,7 @@
 # fits2caom2
 
+## OBSOLETE: this code is no longer maintained
+
 This is a command-line tool that reads a FITS file and creates or updates a CAOM observation.
 
 The general usage is to run fits2caom2 once per plane: either create an observation with one plane or
