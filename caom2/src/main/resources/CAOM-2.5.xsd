@@ -15,6 +15,7 @@
                 <xs:sequence>
                     <xs:element name="collection" type="xs:string"/>
                     <xs:element name="uri" type="xs:anyURI"/>
+                    <xs:element name="uriBucket" type="xs:string"/>
                     <xs:element name="metaRelease" type="xs:string" minOccurs="0">
                         <xs:annotation>
                             <xs:documentation>
@@ -417,6 +418,7 @@
             <xs:extension base="caom2:CaomEntity">
                 <xs:sequence>
                     <xs:element name="uri" type="xs:anyURI"/>
+                    <xs:element name="uriBucket" type="xs:string"/>
                     <xs:element name="productType" type="xs:string"/>
                     <xs:element name="releaseType" type="caom2:ReleaseType"/>
                     

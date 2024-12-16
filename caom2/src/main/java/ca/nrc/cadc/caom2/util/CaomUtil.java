@@ -84,10 +84,14 @@ import ca.nrc.cadc.caom2.wcs.CoordRange2D;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.caom2.wcs.RefCoord;
 import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import ca.nrc.cadc.util.HexUtil;
 import ca.nrc.cadc.util.StringUtil;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -118,6 +122,29 @@ public class CaomUtil {
      * Polarization state separator from IVOA ObsCore-1.0 Data Model (B.6.6).
      */
     static final String POL_STATE_SEPARATOR = "/";
+
+    /**
+     * Compute a bucket key from the specified identifier. The bucket key is the
+     * first 3 hex characters of the SHA-1 of the UTF-8 encoded bytes of the 
+     * argument URI.
+     * 
+     * @param uri
+     * @return 3 character bucket string
+     */
+    public static String computeBucket(URI uri) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] bytes = uri.toASCIIString().trim().getBytes("UTF-8");
+            md.update(bytes);
+            byte[] sha = md.digest();
+            String hex = HexUtil.toHex(sha);
+            return hex.substring(0, 3);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new RuntimeException("BUG: failed to get instance of SHA-1", ex);
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException("BUG: failed to encode String in UTF-8", ex);
+        }
+    }
 
     // other projects can subclass this so all Util their methods are in a
     // single place

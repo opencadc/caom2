@@ -407,11 +407,14 @@ public class ObservationReader {
 
         String collection = getChildText("collection", root, namespace, false);
         String suri = null;
+        final String sub;
         if (rc.docVersion == 24) {
             String observationID = getChildText("observationID", root, namespace, true);
             suri = "caom:" + collection + "/" + observationID;
+            sub = null;
         } else {
             suri = getChildText("uri", root, namespace, true);
+            sub = getChildText("uriBucket", root, namespace, true);
         }
 
         URI obsURI = null;
@@ -424,6 +427,7 @@ public class ObservationReader {
                         + " because " + e.getMessage();
             }
         }
+        
         // Algorithm.
         Algorithm algorithm = getAlgorithm(root, namespace, rc);
 
@@ -438,6 +442,10 @@ public class ObservationReader {
             obs = new DerivedObservation(collection, obsURI, algorithm);
         } else {
             throw new ObservationParsingException("unexpected observation type: " + tval);
+        }
+        // verify inline vs computed uriBucket
+        if (sub != null && !obs.getUriBucket().equals(sub)) {
+            throw new ObservationParsingException("Observation.uriBucket: " + sub + " != " + obs.getUriBucket() + " (computed)");
         }
 
         // Observation children.
@@ -1535,6 +1543,7 @@ public class ObservationReader {
         while (it.hasNext()) {
             Element artifactElement = (Element) it.next();
             String uri = getChildText("uri", artifactElement, namespace, true);
+            String sub = getChildText("uriBucket", artifactElement, namespace, false); // 2.5+
 
             String pts = getChildText("productType", artifactElement, namespace, true);
             DataLinkSemantics productType = DataLinkSemantics.toValue(pts);
@@ -1548,6 +1557,10 @@ public class ObservationReader {
             } catch (URISyntaxException e) {
                 String error = "invalid Artifact.uri " + uri + " reasson: " + e.getMessage();
                 throw new ObservationParsingException(error, e);
+            }
+            // verify inline vs computed uriBucket
+            if (sub != null && !artifact.getUriBucket().equals(sub)) {
+                throw new ObservationParsingException("Artifact.uriBucket: " + sub + " != " + artifact.getUriBucket() + " (computed)");
             }
 
             artifact.contentType = getChildText("contentType", artifactElement,

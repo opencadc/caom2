@@ -430,6 +430,7 @@ public class ObservationWriter {
         } else {
             // 2.5+
             addElement("uri", obs.getURI().toASCIIString(), element);
+            addElement("uriBucket", obs.getUriBucket(), element);
         }
 
         // Observation elements.
@@ -1263,7 +1264,8 @@ public class ObservationWriter {
             Element artifactElement = getCaom2Element("artifact");
             addEntityAttributes(artifact, artifactElement, dateFormat);
             addURIElement("uri", artifact.getURI(), artifactElement);
-
+            addElement("uriBucket", artifact.getUriBucket(), artifactElement);
+            
             if (docVersion >= 22) {
                 addElement("productType", artifact.getProductType().getValue(),
                         artifactElement);

@@ -69,8 +69,9 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
 import java.net.URI;
 import java.util.Date;
 import java.util.Set;
@@ -86,6 +87,7 @@ import java.util.TreeSet;
 public class Artifact extends CaomEntity implements Comparable<Artifact> {
     // immutable state
     private final URI uri;
+    private final String uriBucket;
 
     // mutable contents
     private final Set<Part> parts = new TreeSet<>();
@@ -107,6 +109,7 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
         this.uri = uri;
         this.productType = productType;
         this.releaseType = releaseType;
+        this.uriBucket = CaomUtil.computeBucket(uri);
     }
 
     @Override
@@ -116,6 +119,10 @@ public class Artifact extends CaomEntity implements Comparable<Artifact> {
 
     public URI getURI() {
         return uri;
+    }
+
+    public String getUriBucket() {
+        return uriBucket;
     }
 
     public DataLinkSemantics getProductType() {

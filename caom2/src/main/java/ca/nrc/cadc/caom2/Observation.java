@@ -69,8 +69,13 @@
 
 package ca.nrc.cadc.caom2;
 
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.util.HexUtil;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Set;
 import java.util.SortedSet;
@@ -84,7 +89,8 @@ import java.util.TreeSet;
 public abstract class Observation extends CaomEntity implements Comparable<Observation> {
     // immutable
     private final String collection;
-    private final URI uri; 
+    private final URI uri;
+    private final String uriBucket;
     
     // mutable
     private Algorithm algorithm;
@@ -112,7 +118,9 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
         this.collection = collection;
         this.uri = uri;
         this.algorithm = algorithm;
+        this.uriBucket = CaomUtil.computeBucket(uri);
     }
+    
 
     @Override
     public String toString() {
@@ -125,6 +133,10 @@ public abstract class Observation extends CaomEntity implements Comparable<Obser
 
     public URI getURI() {
         return uri;
+    }
+
+    public String getUriBucket() {
+        return uriBucket;
     }
 
     public void setAlgorithm(Algorithm algorithm) {
