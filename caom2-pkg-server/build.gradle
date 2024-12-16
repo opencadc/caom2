@@ -16,7 +16,7 @@ group = 'org.opencadc'
 version = '1.8.3'
 
 description = 'OpenCADC CAOM2 package server library'
-def git_url = 'https://github.com/opencadc/caom2service'
+def git_url = 'https://github.com/opencadc/caom2'
 
 dependencies {
     compile 'org.apache.commons:commons-compress:[1.12,)'

@@ -19,7 +19,7 @@ group = 'org.opencadc'
 version = '1.8.2'
 
 description = 'OpenCADC CAOM2 TAP client library'
-def git_url = 'https://github.com/opencadc/caom2service'
+def git_url = 'https://github.com/opencadc/caom2'
 
 dependencies {
     compile 'org.opencadc:cadc-util:[1.6,2.0)'

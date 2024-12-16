@@ -17,7 +17,7 @@ group = 'org.opencadc'
 version = '1.1.6'
 
 description = 'OpenCADC CAOM repository test library'
-def git_url = 'https://github.com/opencadc/caom2db'
+def git_url = 'https://github.com/opencadc/caom2'
 
 dependencies {
     compile 'org.opencadc:cadc-util:[1.6,2.0)'
