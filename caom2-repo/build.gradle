@@ -20,7 +20,7 @@ group = 'org.opencadc'
 version = '1.4.8'
 
 description = 'OpenCADC CAOM repository client library'
-def git_url = 'https://github.com/opencadc/caom2db'
+def git_url = 'https://github.com/opencadc/caom2'
 
 
 mainClassName = 'ca.nrc.cadc.caom2.repo.client.Main'

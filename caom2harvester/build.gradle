@@ -23,7 +23,7 @@ ext {
 }
 
 description = 'OpenCADC CAOM metadata harvester application'
-def git_url = 'https://github.com/opencadc/caom2db'
+def git_url = 'https://github.com/opencadc/caom2'
 
 mainClassName = 'ca.nrc.cadc.caom2.harvester.Main'
 applicationDefaultJvmArgs = ['-Xms2048m','-Xmx8192m','-XX:OnOutOfMemoryError="kill -3 %p"']
