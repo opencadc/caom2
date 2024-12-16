@@ -67,41 +67,28 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
+import java.util.UUID;
+import org.apache.log4j.Logger;
 import org.opencadc.persist.Entity;
 
 /**
  *
  * @author pdowler
  */
-public class ArtifactDescription extends Entity {
+public class DeletedObservation extends Entity {
+    private static final Logger log = Logger.getLogger(DeletedObservation.class);
+
     private final URI uri;
-    private String description;
 
-    public ArtifactDescription(URI uri, String description) {
-        super(CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES);
-        CaomValidator.assertNotNull(ArtifactDescription.class, "uri", uri);
-        CaomValidator.assertNotNull(ArtifactDescription.class, "description", description);
+    /**
+     * Constructor for a deleted Observation record.
+     * 
+     * @param id the entity ID for the deleted entity
+     * @param uri the uri of the deleted entity (for logging purposes only)
+     */
+    public DeletedObservation(UUID id, URI uri) {
+        super(id, CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES);
         this.uri = uri;
-        this.description = description;
-    }
-
-    public URI getURI() {
-        return uri;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        CaomValidator.assertNotNull(getClass(), "description", description);
-        this.description = description;
-    }
-
-    @Override
-    public String toString() {
-        return ArtifactDescription.class.getSimpleName() + "[" + uri + "]";
     }
 }
