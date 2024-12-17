@@ -11,7 +11,7 @@ repositories {
     mavenLocal()
 }
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 
 group = 'org.opencadc'
 
@@ -24,7 +24,7 @@ dependencies {
     compile 'org.jdom:jdom2:2.0.6'
     
     compile 'org.opencadc:cadc-util:[1.11.6,)'
-    compile 'org.opencadc:cadc-dali:[1.2.19,)'
+    compile 'org.opencadc:cadc-dali:[1.2.20,)'
 
     testCompile 'junit:junit:4.13'
 }
