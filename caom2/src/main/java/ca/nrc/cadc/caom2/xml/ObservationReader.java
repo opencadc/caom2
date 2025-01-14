@@ -1341,7 +1341,7 @@ public class ObservationReader {
 
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null) {
-            pol.dimension = getChildTextAsLong("dimension", element, namespace, true);
+            pol.dimension = getChildTextAsInteger("dimension", element, namespace, true);
         }
 
         return pol;
@@ -1454,7 +1454,7 @@ public class ObservationReader {
         }
 
         String ucd = getChildText("ucd", element, namespace, true);
-        VocabularyTerm t = new UCD(ucd);
+        UCD t = new UCD(ucd);
         Observable ret = new Observable(t);
         String c = getChildText("calibration", element, namespace, false);
         if (c != null) {

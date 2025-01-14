@@ -67,8 +67,9 @@
 
 package ca.nrc.cadc.caom2;
 
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
+import ca.nrc.cadc.caom2.vocab.UCD;
 
 /**
  * Description of the observable (~pixel values) in a data product.
@@ -76,7 +77,7 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
  * @author pdowler
  */
 public class Observable {
-    private final VocabularyTerm ucd;
+    private final UCD ucd;
     
     public CalibrationStatus calibration;
     
@@ -85,7 +86,7 @@ public class Observable {
      * 
      * @param ucd UCD value
      */
-    public Observable(VocabularyTerm ucd) { 
+    public Observable(UCD ucd) { 
         CaomValidator.assertNotNull(Observable.class, "ucd", ucd);
         this.ucd = ucd;
     }
@@ -100,7 +101,7 @@ public class Observable {
      * 
      * @return the UCD
      */
-    public VocabularyTerm getUCD() {
+    public UCD getUCD() {
         return ucd;
     }
 

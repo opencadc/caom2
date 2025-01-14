@@ -79,7 +79,7 @@ import java.util.TreeSet;
  */
 public class Polarization {
     private final SortedSet<PolarizationState> states = new TreeSet<>();
-    public Long dimension;
+    public Integer dimension;
 
     public Polarization() {
     }

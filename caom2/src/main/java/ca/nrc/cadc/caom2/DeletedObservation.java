@@ -77,8 +77,6 @@ import org.opencadc.persist.Entity;
  * @author pdowler
  */
 public class DeletedObservation extends Entity {
-    private static final Logger log = Logger.getLogger(DeletedObservation.class);
-
     private final URI uri;
 
     /**
@@ -90,5 +88,14 @@ public class DeletedObservation extends Entity {
     public DeletedObservation(UUID id, URI uri) {
         super(id, CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES);
         this.uri = uri;
+    }
+
+    public URI getURI() {
+        return uri;
+    }
+
+    public String toString() {
+        return DeletedObservation.class.getSimpleName() + "["
+                + getID().toString() + "," + uri.toASCIIString() + "]";
     }
 }

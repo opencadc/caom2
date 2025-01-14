@@ -372,7 +372,7 @@ public class Caom2TestInstances {
                 p.polarization.getStates().add(PolarizationState.I);
                 p.polarization.getStates().add(PolarizationState.Q);
                 p.polarization.getStates().add(PolarizationState.U);
-                p.polarization.dimension = 3L;
+                p.polarization.dimension = p.polarization.getStates().size();
                 p.polarization.validate();
 
                 Shape s;
