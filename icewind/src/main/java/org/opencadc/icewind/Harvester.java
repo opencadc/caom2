@@ -142,8 +142,6 @@ public abstract class Harvester implements Runnable {
         log.debug("creating HarvestState tracker: " + cname + " in " + dest.getSchema());
         this.harvestStateDAO = new PostgresqlHarvestStateDAO(ds, null, dest.getSchema());
 
-        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getSchema());
-
         this.source = src.getIdentifier(collection).toASCIIString();
     }
 

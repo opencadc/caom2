@@ -182,7 +182,10 @@ public class ObservationHarvester extends Harvester {
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(destConfig);
         destObservationDAO.setOrigin(false); // copy as-is
+        
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
+        log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getSchema());
+        this.harvestSkipDAO = new HarvestSkipURIDAO(destObservationDAO.getDataSource(), null, dest.getSchema());
         
         if (srcRepoClient.isObsAvailable()) {
             ready = true;
@@ -834,31 +837,4 @@ public class ObservationHarvester extends Harvester {
             return o1.skip.getTryAfter().compareTo(o2.skip.getTryAfter());
         }
     }
-
-    /*
-     * private List<SkippedWrapperURI<ObservationState>> getSkippedState(Date
-     * start) { log.info("harvest window (skip): " + format(start) + " [" +
-     * batchSize + "]" + " source = " + source + " cname = " + cname);
-     * List<HarvestSkipURI> skip = harvestSkip.get(source, cname, start);
-     * 
-     * List<SkippedWrapperURI<ObservationState>> ret = new
-     * ArrayList<SkippedWrapperURI<ObservationState>>(skip.size()); for
-     * (HarvestSkipURI hs : skip) { ObservationState o = null;
-     * log.debug("getSkipped: " + hs.getSkipID()); log.debug("start: " + start);
-     * 
-     * ObservationResponse wr = srcObservationService.get(src.getCollection(),
-     * hs.getSkipID(), start);
-     * 
-     * if (wr != null && wr.getObservationState() != null) o =
-     * wr.getObservationState();
-     * 
-     * if (o != null) { ret.add(new SkippedWrapperURI<ObservationState>(o, hs));
-     * } } return ret; }
-     */
-    @Override
-    protected void initHarvestState(DataSource ds, Class c) {
-        super.initHarvestState(ds, c);
-        this.harvestSkipDAO = new HarvestSkipURIDAO(ds, null, dest.getSchema());
-    }
-
 }

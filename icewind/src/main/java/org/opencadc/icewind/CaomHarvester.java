@@ -125,7 +125,7 @@ public class CaomHarvester implements Runnable {
         
         ConnectionConfig cc = new ConnectionConfig(null, null, dest.getUsername(), dest.getPassword(),
                 HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
-        DataSource ds = DBUtil.getDataSource(cc);
+        DataSource ds = DBUtil.getDataSource(cc, true, true);
         this.initdb = new InitDatabase(ds, null, dest.getSchema());
     }
 
