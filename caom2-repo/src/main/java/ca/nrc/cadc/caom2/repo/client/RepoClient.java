@@ -709,7 +709,7 @@ public class RepoClient {
      * @return the query parameters associated to the collection
      */
     private String getCollectionParams(String inputCollection) {
-        String[] splitCollection = inputCollection.split("?", 2);
+        String[] splitCollection = inputCollection.split("\\?", 2);
         return splitCollection.length > 1 ? splitCollection[1] : null;
     }
 
@@ -717,7 +717,7 @@ public class RepoClient {
      * Retrieve the clean collection from a collection possibly defined with query parameters
      */
     private String getCollection(String inputCollection) {
-        return inputCollection.split("?")[0];
+        return inputCollection.split("\\?")[0];
     }
 
 }
