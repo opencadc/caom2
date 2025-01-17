@@ -107,15 +107,15 @@ public class ObservationValidator extends Harvester {
     private ObservationDAO srcObservationDAO;
     private ObservationDAO destObservationDAO;
     private boolean dryrun = false;
-    
+
     // unused
     private boolean nochecksum = false;
-    
+
     HarvestSkipURIDAO harvestSkip = null;
     private int numMismatches = 0;
 
-    public ObservationValidator(HarvestSource src, String collection, HarvestDestination dest, 
-            Integer batchSize, int nthreads, boolean dryrun) {
+    public ObservationValidator(HarvestSource src, String collection, HarvestDestination dest,
+                                Integer batchSize, int nthreads, boolean dryrun) {
         super(Observation.class, src, collection, dest);
         setBatchSize(batchSize);
         this.dryrun = dryrun;
@@ -137,7 +137,7 @@ public class ObservationValidator extends Harvester {
             }
             if (cur == null) {
                 ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                        dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
                 DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
             } else {
                 log.info("found DataSource: " + destDS + " -- re-using");
@@ -201,16 +201,16 @@ public class ObservationValidator extends Harvester {
             log.info("getObservationList: " + src.getIdentifier(collection));
             List<ObservationState> tmpSrcState = srcObservationService.getObservationList(collection, null, null, null);
             log.debug("found: " + tmpSrcState.size());
-            
+
             Set<ObservationState> srcState = new TreeSet<>(compStateUri);
             srcState.addAll(tmpSrcState);
             tmpSrcState = null; // GC
             log.info("source set - found: " + srcState.size());
-            
+
             log.info("getObservationList: " + dest + " " + collection);
             List<ObservationState> tmpDstState = destObservationDAO.getObservationList(collection, null, null, null);
             log.debug("found: " + tmpDstState.size());
-            
+
             Set<ObservationState> dstState = new TreeSet<>(compStateUri);
             dstState.addAll(tmpDstState);
             tmpDstState = null; // GC

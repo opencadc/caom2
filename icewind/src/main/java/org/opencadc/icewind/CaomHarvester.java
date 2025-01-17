@@ -96,7 +96,7 @@ public class CaomHarvester implements Runnable {
     private final HarvestDestination dest;
     private final List<String> collections;
     private final URI basePublisherID;
-    
+
     // optional
     int batchSize;
     int numThreads;
@@ -105,10 +105,10 @@ public class CaomHarvester implements Runnable {
     boolean validateMode = false;
     boolean skipMode = false;
     String retryErrorMessagePattern;
-    
+
     // not used by main
     private boolean nochecksum;
-    
+
     /**
      * Harvest everything.
      *
@@ -122,7 +122,7 @@ public class CaomHarvester implements Runnable {
         this.collections = collections;
         this.dest = dest;
         this.basePublisherID = basePublisherID;
-        
+
         ConnectionConfig cc = new ConnectionConfig(null, null, dest.getUsername(), dest.getPassword(),
                 HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
         DataSource ds = DBUtil.getDataSource(cc, true, true);
@@ -139,7 +139,7 @@ public class CaomHarvester implements Runnable {
         } catch (Throwable t) {
             throw new RuntimeException("FATAL - failed to load WCSLib JNI binding", t);
         }
-        
+
         // make sure erfa can be loaded
         try {
             log.info("loading org.opencadc.erfa.ERFALib");
@@ -163,10 +163,10 @@ public class CaomHarvester implements Runnable {
             int ingested = 0;
             for (String collection : collections) {
                 log.info(src.getIdentifier(collection) + " -> " + dest);
-                
+
                 if (validateMode) {
                     ObservationValidator validator = new ObservationValidator(src, collection, dest, batchSize, numThreads, false);
-                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
+                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID,
                             batchSize, numThreads, nochecksum);
                     obsHarvester.setSkipped(skipMode, null);
                     try {
@@ -178,7 +178,7 @@ public class CaomHarvester implements Runnable {
                         log.warn("validate " + src.getIdentifier(collection) + " FAIL", ex);
                     }
                 } else {
-                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
+                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID,
                             batchSize, numThreads, nochecksum);
                     obsHarvester.setSkipped(skipMode, retryErrorMessagePattern);
 

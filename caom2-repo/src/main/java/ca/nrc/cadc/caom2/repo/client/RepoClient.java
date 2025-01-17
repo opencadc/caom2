@@ -315,7 +315,8 @@ public class RepoClient {
         return readObservationStateList(new ObservationStateListReader(), collection, start, end, maxrec);
     }
 
-    public List<ObservationResponse> getList(String collection, Date startDate, Date end, Integer numberOfObservations) throws InterruptedException,
+    public List<ObservationResponse> getList(String collection, Date startDate, Date end,
+                                             Integer numberOfObservations) throws InterruptedException,
             ExecutionException {
 
         // startDate = null;
@@ -459,6 +460,10 @@ public class RepoClient {
     }
 
     private List<ObservationState> readObservationStateList(ObservationStateListReader transformer, String collection, Date start, Date end, Integer maxrec) {
+        // For HLSPs, inputCollection=HLSP?telescope={mission}
+        // Extract the additional query parameters for the collection and include them in the request
+        String collection = getCollection(inputCollection);
+        String collectionParams = getCollectionParams(inputCollection);
 
         List<ObservationState> accList = new ArrayList<>();
         boolean tooBigRequest = maxrec == null || maxrec > DEFAULT_BATCH_SIZE;
@@ -487,7 +492,10 @@ public class RepoClient {
             if (end != null) {
                 surl = surl + "&end=" + df.format(end);
             }
-            log.debug("URL: " + surl);
+
+            if (collectionParams != null) {
+                surl = surl + "&" + collectionParams;
+            }
 
             URL url;
             try {
@@ -583,6 +591,11 @@ public class RepoClient {
 
     private List<DeletedObservation> readDeletedEntityList(DeletionListReader transformer, String collection, Date start, Date end, Integer maxrec) {
 
+        // For HLSPs, inputCollection=HLSP?telescope={mission}
+        // Extract the additional query parameters for the collection and include them in the request
+        String collection = getCollection(inputCollection);
+        String collectionParams = getCollectionParams(inputCollection);
+
         List<DeletedObservation> accList = new ArrayList<>();
         List<DeletedObservation> partialList = null;
         boolean tooBigRequest = maxrec == null || maxrec > DEFAULT_BATCH_SIZE;
@@ -611,7 +624,10 @@ public class RepoClient {
             if (end != null) {
                 surl = surl + "&end=" + df.format(end);
             }
-            log.debug("URL: " + surl);
+
+            if (collectionParams != null) {
+                surl = surl + "&" + collectionParams;
+            }
 
             URL url;
             try {
@@ -686,4 +702,22 @@ public class RepoClient {
         }
         return partialList;
     }
+
+    /**
+     * Retrieve the query parameters associated to the collection
+     * @param inputCollection
+     * @return the query parameters associated to the collection
+     */
+    private String getCollectionParams(String inputCollection) {
+        String[] splitCollection = inputCollection.split("?", 2);
+        return splitCollection.length > 1 ? splitCollection[1] : null;
+    }
+
+    /**
+     * Retrieve the clean collection from a collection possibly defined with query parameters
+     */
+    private String getCollection(String inputCollection) {
+        return inputCollection.split("?")[0];
+    }
+
 }
