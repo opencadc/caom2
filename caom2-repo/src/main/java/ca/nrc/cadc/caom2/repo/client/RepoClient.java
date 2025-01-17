@@ -459,7 +459,7 @@ public class RepoClient {
         }
     }
 
-    private List<ObservationState> readObservationStateList(ObservationStateListReader transformer, String collection, Date start, Date end, Integer maxrec) {
+    private List<ObservationState> readObservationStateList(ObservationStateListReader transformer, String inputCollection, Date start, Date end, Integer maxrec) {
         // For HLSPs, inputCollection=HLSP?telescope={mission}
         // Extract the additional query parameters for the collection and include them in the request
         String collection = getCollection(inputCollection);
@@ -589,7 +589,7 @@ public class RepoClient {
         }
     }
 
-    private List<DeletedObservation> readDeletedEntityList(DeletionListReader transformer, String collection, Date start, Date end, Integer maxrec) {
+    private List<DeletedObservation> readDeletedEntityList(DeletionListReader transformer, String inputCollection, Date start, Date end, Integer maxrec) {
 
         // For HLSPs, inputCollection=HLSP?telescope={mission}
         // Extract the additional query parameters for the collection and include them in the request
