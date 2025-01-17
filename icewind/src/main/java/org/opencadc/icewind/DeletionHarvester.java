@@ -97,7 +97,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
 
     private static final Logger log = Logger.getLogger(DeletionHarvester.class);
     private static int DEFAULT_BATCH_SIZE = 100000;
-
+    
     private DeletedEntityDAO deletedDAO;
     private RepoClient repoClient;
     private ObservationDAO obsDAO;
@@ -115,8 +115,8 @@ public class DeletionHarvester extends Harvester implements Runnable {
      * @param collection the collection to process
      * @param batchSize ignored, always full list
      */
-    public DeletionHarvester(Class<?> entityClass, HarvestSource src,  String collection,
-                             HarvestDestination dest) {
+    public DeletionHarvester(Class<?> entityClass, HarvestSource src,  String collection, 
+            HarvestDestination dest) {
         super(entityClass, src, collection, dest);
         setBatchSize(DEFAULT_BATCH_SIZE);
         init();
@@ -143,7 +143,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
         // TODO: make these configurable
         repoClient.setConnectionTimeout(18000); // 18 sec
         repoClient.setReadTimeout(120000);      // 2 min
-
+        
         // destination
         final String destDS = DEST_DATASOURCE_NAME;
         Map<String, Object> destConfig = getConfigDAO(dest);
@@ -156,7 +156,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             }
             if (cur == null) {
                 ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                        dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
                 DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
             } else {
                 log.info("found DataSource: " + destDS + " -- re-using");
@@ -274,7 +274,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
             }
             firstIteration = false;
             log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
-
+            
             List<DeletedObservation> entityList = null;
             String source = null;
             if (deletedDAO != null) {

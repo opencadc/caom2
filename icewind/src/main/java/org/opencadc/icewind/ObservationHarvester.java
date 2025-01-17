@@ -145,7 +145,7 @@ public class ObservationHarvester extends Harvester {
     public void setErrorMessagePattern(String errorMessagePattern) {
         this.errorMessagePattern = errorMessagePattern;
     }
-
+    
     public int getIngested() {
         return this.ingested;
     }
@@ -155,7 +155,7 @@ public class ObservationHarvester extends Harvester {
         // TODO: make these configurable
         srcRepoClient.setConnectionTimeout(18000); // 18 sec
         srcRepoClient.setReadTimeout(120000);      // 2 min
-
+        
         // dest is always a database
         final String destDS = DEST_DATASOURCE_NAME;
         Map<String, Object> destConfig = getConfigDAO(dest);
@@ -168,7 +168,7 @@ public class ObservationHarvester extends Harvester {
             }
             if (cur == null) {
                 ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                        dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
                 DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
             } else {
                 log.info("found DataSource: " + destDS + " -- re-using");
@@ -182,11 +182,11 @@ public class ObservationHarvester extends Harvester {
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(destConfig);
         destObservationDAO.setOrigin(false); // copy as-is
-
+        
         initHarvestState(destObservationDAO.getDataSource(), Observation.class);
         log.debug("creating HarvestSkip tracker: " + cname + " in " + dest.getSchema());
         this.harvestSkipDAO = new HarvestSkipURIDAO(destObservationDAO.getDataSource(), null, dest.getSchema());
-
+        
         if (srcRepoClient.isObsAvailable()) {
             ready = true;
         } else {
@@ -332,7 +332,7 @@ public class ObservationHarvester extends Harvester {
 
                 String skipMsg = null;
 
-
+                
                 if (destObservationDAO.getTransactionManager().isOpen()) {
                     throw new RuntimeException("BUG: found open transaction at start of next observation");
                 }
@@ -503,7 +503,7 @@ public class ObservationHarvester extends Harvester {
                     log.debug("exception during harvest", oops);
                     skipMsg = null;
                     String str = oops.toString();
-
+                    
                     if (str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
                         log.error("CONTENT PROBLEM - duplicate observation: " + ow.entity.observationState.getURI());
                         ret.handled++;
@@ -625,7 +625,7 @@ public class ObservationHarvester extends Harvester {
             throw new RuntimeException("MD5 digest algorithm not available");
         }
     }
-
+    
     private void detailedChecksumDiagnostics(Observation obs) {
         // code yanked from caom2-validator
         try {
@@ -685,7 +685,7 @@ public class ObservationHarvester extends Harvester {
             URI observationCS = obs.computeMetaChecksum(digest);
             cs.append("\nobservation: ").append(obs.getID()).append(" ");
             compare(cs, obs.getMetaChecksum(), observationCS);
-
+            
             if (acc) {
                 URI observationACS = obs.computeAccMetaChecksum(digest);
                 acs.append("\nobservation: ").append(obs.getID()).append(" ");
@@ -701,7 +701,7 @@ public class ObservationHarvester extends Harvester {
             log.warn("default charset: " + Charset.defaultCharset().displayName());
             ObservationWriter ow = new ObservationWriter();
             ow.write(obs, System.out);
-
+            
         } catch (Exception oops) {
             log.error("failure during detailedChecksumDiagnostics", oops);
         }
@@ -720,7 +720,7 @@ public class ObservationHarvester extends Harvester {
             sb.append(" [MISMATCH]");
         }
     }
-
+    
     private String computeTreeSize(Observation o) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
