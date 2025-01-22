@@ -242,17 +242,15 @@ public class ObservationRemover implements Runnable {
 
     private Progress deleteObservations() {
         Progress ret = new Progress();
-
-        List<ObservationState> obsList;
         if (obsDAO != null) {
             try {
-                obsList = obsDAO.getObservationList(target.getCollection(), null, null, batchSize);
+                List<ObservationState> obsList = obsDAO.getObservationList(target.getCollection(), null, null, batchSize);
                 ret.found = obsList.size();
 
                 for (ObservationState obsState : obsList) {
-                    ObservationURI obsURI = obsState.getURI();
-                    obsDAO.delete(obsURI);
-                    log.info("removed: observation: " + obsURI.toString());
+                    log.debug("removing " + obsState.getURI() + " aka " + obsState.getID());
+                    obsDAO.delete(obsState.getID());
+                    log.info("removed: observation: " + obsState.getURI());
                     ret.removed++;
                 }
 
@@ -277,6 +275,7 @@ public class ObservationRemover implements Runnable {
                 ret.found = obsList.size();
 
                 for (DeletedObservation o : obsList) {
+                    log.debug("removing " + o.getURI().getURI());
                     deletedDAO.delete(o);
                     log.info("removed: DeletedObservation: " + o);
                     ret.removed++;
