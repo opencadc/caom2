@@ -592,9 +592,8 @@ public class RepoClient {
     private List<DeletedObservation> readDeletedEntityList(DeletionListReader transformer, String inputCollection, Date start, Date end, Integer maxrec) {
 
         // For HLSPs, inputCollection=HLSP?telescope={mission}
-        // Extract the additional query parameters for the collection and include them in the request
+        // Extract the collection only, as the deleted observation endpoint cannot support extra params
         String collection = getCollection(inputCollection);
-        String collectionParams = getCollectionParams(inputCollection);
 
         List<DeletedObservation> accList = new ArrayList<>();
         List<DeletedObservation> partialList = null;
@@ -623,10 +622,6 @@ public class RepoClient {
             }
             if (end != null) {
                 surl = surl + "&end=" + df.format(end);
-            }
-
-            if (collectionParams != null) {
-                surl = surl + "&" + collectionParams;
             }
 
             URL url;
