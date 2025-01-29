@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -85,8 +85,6 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import java.net.URI;
@@ -103,8 +101,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.BadSqlGrammarException;
@@ -157,27 +153,7 @@ public class ObservationHarvester extends Harvester {
         srcRepoClient.setReadTimeout(120000);      // 2 min
         
         // dest is always a database
-        final String destDS = DEST_DATASOURCE_NAME;
         Map<String, Object> destConfig = getConfigDAO(dest);
-        try {
-            DataSource cur = null;
-            try {
-                cur = DBUtil.findJNDIDataSource(destDS);
-            } catch (NamingException notInitialized) {
-                log.info("JNDI DataSource not initialized yet... OK");
-            }
-            if (cur == null) {
-                ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
-                DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
-            } else {
-                log.info("found DataSource: " + destDS + " -- re-using");
-            }
-        } catch (NamingException e) {
-            throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
-                    dest, e.getMessage()), e);
-        }
-        destConfig.put("jndiDataSourceName", destDS);
         destConfig.put("basePublisherID", basePublisherID.toASCIIString());
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(destConfig);
@@ -619,7 +595,7 @@ public class ObservationHarvester extends Harvester {
             log.debug("validateChecksum: " + o.getURI() + " -- " + computeTreeSize(o) + " -- " + o.getAccMetaChecksum() + " vs " + calculatedChecksum);
             if (!calculatedChecksum.equals(o.getAccMetaChecksum())) {
                 //detailedChecksumDiagnostics(o);
-                throw new MismatchedChecksumException("Observation.accMetaChecksum mismatch");
+                throw new MismatchedChecksumException("mismatched accMetaChecksum (harvest)");
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("MD5 digest algorithm not available");

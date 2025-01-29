@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -106,8 +106,8 @@ public class CaomHarvester implements Runnable {
     boolean skipMode = false;
     String retryErrorMessagePattern;
     
-    // not used by main
-    private boolean nochecksum;
+    // no longer used
+    private final boolean nochecksum = false;
     
     /**
      * Harvest everything.
@@ -166,26 +166,39 @@ public class CaomHarvester implements Runnable {
                 
                 if (validateMode) {
                     ObservationValidator validator = new ObservationValidator(src, collection, dest, batchSize, numThreads, false);
-                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
-                            batchSize, numThreads, nochecksum);
-                    obsHarvester.setSkipped(skipMode, null);
                     try {
                         validator.run();
                         if (validator.getNumMismatches() > 0) {
+                            ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
+                                batchSize, numThreads, nochecksum);
+                            obsHarvester.setSkipped(true, null);
                             obsHarvester.run(); // retry skipped
                         }
                     } catch (TransientException ex) {
                         log.warn("validate " + src.getIdentifier(collection) + " FAIL", ex);
                     }
-                } else {
+                } else if (skipMode) {
                     ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
                             batchSize, numThreads, nochecksum);
-                    obsHarvester.setSkipped(skipMode, retryErrorMessagePattern);
+                    obsHarvester.setSkipped(true, retryErrorMessagePattern);
+                    
+                    try {
+                        obsHarvester.run();
+                        ingested += obsHarvester.getIngested();
+                    } catch (TransientException ex) {
+                        log.warn("harvest " + src.getIdentifier(collection) + " FAIL", ex);
+                        ingested = 0;
+                    }
+                } else {
+                    // incremental mode
+                    ObservationHarvester obsHarvester = new ObservationHarvester(src, collection, dest, basePublisherID, 
+                            batchSize, numThreads, nochecksum);
+                    obsHarvester.setSkipped(false, null);
 
                     DeletionHarvester obsDeleter = new DeletionHarvester(DeletedObservation.class, src, collection, dest);
                     boolean initDel = init;
                     if (!init) {
-                        // check if we have ever harvested before
+                        // check if we have ever harvested before to avoid harvesting old deletions
                         HarvestState hs = obsHarvester.harvestStateDAO.get(obsHarvester.source, obsHarvester.cname);
                         initDel = (hs.curID == null && hs.curLastModified == null); // never harvested
                     }
@@ -195,7 +208,6 @@ public class CaomHarvester implements Runnable {
                         obsDeleter.setInitHarvestState(initDel);
                         obsDeleter.run();
 
-                        // harvest observations
                         obsHarvester.run();
                         ingested += obsHarvester.getIngested();
                     } catch (TransientException ex) {
