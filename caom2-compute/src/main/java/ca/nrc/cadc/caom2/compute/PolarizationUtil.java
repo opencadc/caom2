@@ -113,7 +113,7 @@ public final class PolarizationUtil {
         if (!pol.isEmpty()) {
             Polarization p = new Polarization();
             p.getStates().addAll(pol);
-            p.dimension = (long) numPixels;
+            p.dimension = numPixels;
             return p;
         }
         return null;
