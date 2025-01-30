@@ -70,6 +70,7 @@ package ca.nrc.cadc.caom2;
 import java.net.URI;
 import java.security.MessageDigest;
 import org.apache.log4j.Logger;
+import org.opencadc.persist.Entity;
 
 /**
  *
@@ -114,7 +115,9 @@ public class ChecksumValidator implements Runnable {
         try {
             log.info("read: " + obs.getURI() + " :: " + obs.getAccMetaChecksum());
             log.info("depth: " + depth);
-            
+            if (log.isDebugEnabled()) {
+                Entity.MCS_DEBUG = true;
+            }
             StringBuilder cs = new StringBuilder();
             StringBuilder acs = new StringBuilder();
             MessageDigest digest = MessageDigest.getInstance("MD5");
@@ -184,6 +187,8 @@ public class ChecksumValidator implements Runnable {
             }
         } catch (Exception ex) {
             log.error("unexpected exception", ex);
+        } finally {
+            Entity.MCS_DEBUG = true;
         }
         if (fail) {
             throw new IllegalStateException("checksum mismatch");

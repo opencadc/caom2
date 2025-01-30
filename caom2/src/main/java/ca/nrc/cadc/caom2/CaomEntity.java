@@ -105,7 +105,7 @@ public abstract class CaomEntity extends Entity {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     
     // Entity metaChecksum algorithm setup: DO NOT CHANGE
-    static final boolean ENTITY_TRUNCATE_DATES = true;
+    static final boolean ENTITY_TRUNCATE_DATES = false; // was true but trying falase for 2.5
     static final boolean ENTITY_DIGEST_FIELD_NAMES = true;
     
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();

@@ -72,11 +72,8 @@ package ca.nrc.cadc.caom2.xml;
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.CalibrationLevel;
-import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.CustomAxis;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.DataQuality;
 import ca.nrc.cadc.caom2.DerivedObservation;
 import ca.nrc.cadc.caom2.Energy;
@@ -105,6 +102,9 @@ import ca.nrc.cadc.caom2.TargetType;
 import ca.nrc.cadc.caom2.Telescope;
 import ca.nrc.cadc.caom2.Time;
 import ca.nrc.cadc.caom2.Visibility;
+import ca.nrc.cadc.caom2.vocab.CalibrationStatus;
+import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
+import ca.nrc.cadc.caom2.vocab.DataProductType;
 import ca.nrc.cadc.caom2.vocab.Tracking;
 import ca.nrc.cadc.caom2.vocab.UCD;
 import ca.nrc.cadc.caom2.wcs.Axis;
@@ -517,6 +517,7 @@ public class Caom2TestInstances {
             Chunk chunk = new Chunk();
             if (complete) {
                 chunk.metaProducer = URI.create("test:chunk/rountrip-1.0");
+                chunk.productType = DataLinkSemantics.THIS;
                 chunk.naxis = 5;
                 chunk.positionAxis1 = 1;
                 chunk.positionAxis2 = 2;
@@ -587,6 +588,7 @@ public class Caom2TestInstances {
             time.resolution = 2.0;
             time.timesys = "UTC";
             time.trefpos = "TOPOCENTER";
+            time.mjdref = 50000.0;
         }
         return time;
     }
