@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
+import ca.nrc.cadc.caom2.vocab.Tracking;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -86,7 +87,7 @@ public class Telescope {
     public Double geoLocationX;
     public Double geoLocationY;
     public Double geoLocationZ;
-    public VocabularyTerm trackingMode;
+    public Tracking trackingMode;
     
     // mutable contents
     private final Set<String> keywords = new TreeSet<String>();

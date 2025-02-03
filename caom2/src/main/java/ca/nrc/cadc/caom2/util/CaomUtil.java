@@ -109,9 +109,9 @@ public class CaomUtil {
     private static Logger log = Logger.getLogger(CaomUtil.class);
 
     /**
-     * Separator for string lists. This is used for lists of URIs.
+     * Separator for list of URIs.
      */
-    static final String STRING_LIST_SEPARATOR = " ";
+    static final String URI_LIST_SEPARATOR = " ";
 
     /**
      * Separator for keyword list serialisation (CAOM-2.3 reserved character).
@@ -325,7 +325,7 @@ public class CaomUtil {
         while (i.hasNext()) {
             sb.append(i.next().toASCIIString());
             if (i.hasNext()) {
-                sb.append(STRING_LIST_SEPARATOR);
+                sb.append(URI_LIST_SEPARATOR);
             }
         }
         return sb.toString();
@@ -339,7 +339,7 @@ public class CaomUtil {
         if (val.length() == 0) {
             return;
         }
-        String[] ss = val.split(STRING_LIST_SEPARATOR);
+        String[] ss = val.split(URI_LIST_SEPARATOR);
         for (String s : ss) {
             try {
                 URI uri = new URI(s);
@@ -349,7 +349,7 @@ public class CaomUtil {
             }
         }
     }
-
+    
     public static String encodeCoordRange1D(CoordRange1D cr) {
         if (cr == null) {
             return null;

@@ -85,4 +85,11 @@ public class Tracking extends VocabularyTerm {
     public Tracking(String term) {
         super(NAMESPACE, term);
     }
+
+    public static final Tracking toValue(String s) {
+        if (SIDEREAL.getValue().equals(s)) {
+            return SIDEREAL;
+        }
+        return new Tracking(s);
+    }
 }
