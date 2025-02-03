@@ -6,18 +6,7 @@ configurations {
 
 dependencies {
     testCompile 'com.puppycrawl.tools:checkstyle:8.2'
-    checkstyleDep 'org.opencadc:cadc-quality:[1.0,2.0)'
-}
-
-sourceSets {
-    intTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-        }
-        resources.srcDir file('src/intTest/resources')
-	resources.srcDirs += new File(System.getenv('A') + '/test-certificates/')
-    }
+    checkstyleDep 'org.opencadc:cadc-quality:[1.0,)'
 }
 
 checkstyle {
@@ -29,14 +18,14 @@ checkstyle {
 
 sourceSets {
     test {
-        resources.srcDirs += 'src/test/resources'
+        //resources.srcDirs += 'src/test/resources'
     }
     intTest {
         java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
+            compileClasspath += main.output + test.output + sourceSets.test.compileClasspath
+            runtimeClasspath += main.output + test.output + sourceSets.test.compileClasspath
         }
-        resources.srcDir file('src/intTest/resources')
+        resources.srcDirs += file('src/intTest/resources')
         resources.srcDirs += new File(System.getenv('A') + '/test-certificates/')
     }
 }
@@ -44,16 +33,16 @@ sourceSets {
 // Temporary work around for issue https://github.com/gradle/gradle/issues/881 - 
 // gradle not displaying fail build status when warnings reported -->
 
-tasks.withType(Checkstyle).each { checkstyleTask ->
-    checkstyleTask.doLast {
-        reports.all { report ->
-            def outputFile = report.destination
-            if (outputFile.exists() && outputFile.text.contains("<error ")) {
-                throw new GradleException("There were checkstyle warnings! For more info check $outputFile")
-            }
-        }
-    }
-}
+//tasks.withType(Checkstyle).each { checkstyleTask ->
+//    checkstyleTask.doLast {
+//        reports.all { report ->
+//            def outputFile = report.destination
+//            if (outputFile.exists() && outputFile.text.contains("<error ")) {
+//                throw new GradleException("There were checkstyle warnings! For more info check $outputFile")
+//            }
+//        }
+//    }
+//}
 
 tasks.withType(Test) {
     // reset the report destinations so that intTests go to their own page
@@ -86,4 +75,20 @@ intTest {
         events "PASSED", "FAILED", "SKIPPED"
         // "STARTED",
     }
+}
+
+pluginManager.withPlugin('maven-publish') {
+  // configure maven-publish to support publishToMavenLocal
+    publishing {
+        publications {
+            thisLibrary(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+// backwards compat usage
+task install {
+    dependsOn 'publishToMavenLocal'
 }

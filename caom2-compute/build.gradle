@@ -1,6 +1,5 @@
 plugins {
-    id 'java'
-    id 'maven'
+    id 'java-library'
     id 'maven-publish'
     id 'checkstyle'
 }
@@ -9,6 +8,8 @@ repositories {
     mavenCentral()
     mavenLocal()
 }
+
+apply from: '../opencadc.gradle'
 
 sourceCompatibility = 11
 
@@ -20,13 +21,11 @@ description = 'OpenCADC CAOM compute library'
 def git_url = 'https://github.com/opencadc/caom2'
 
 dependencies {
-    compile 'org.opencadc:cadc-util:[1.6,2.0)'
-    compile 'org.opencadc:caom2:[2.5.0,2.6)'
-    compile 'org.opencadc:cadc-wcs:[2.0,3.0)'
-    compile 'org.opencadc:jsky:[1.0,2.0)'
-    compile 'org.opencadc:cadc-erfa:[1.0,2.0)'
+    implementation 'org.opencadc:cadc-util:[1.6,2.0)'
+    implementation 'org.opencadc:caom2:[2.5.0,2.6)'
+    implementation 'org.opencadc:cadc-wcs:[2.0,3.0)'
+    implementation 'org.opencadc:jsky:[1.0,2.0)'
+    implementation 'org.opencadc:cadc-erfa:[1.0,2.0)'
 
-    testCompile 'junit:junit:[4.13.1,5.0)'
+    testImplementation 'junit:junit:[4.13.1,5.0)'
 }
-
-apply from: '../opencadc.gradle'
