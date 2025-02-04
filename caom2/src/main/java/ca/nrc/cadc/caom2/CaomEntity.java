@@ -105,8 +105,9 @@ public abstract class CaomEntity extends Entity {
     private static final Logger log = Logger.getLogger(CaomEntity.class);
     
     // Entity metaChecksum algorithm setup: DO NOT CHANGE
-    static final boolean ENTITY_TRUNCATE_DATES = false; // was true but trying falase for 2.5
+    static final boolean ENTITY_TRUNCATE_DATES = false; // was true but trying false for 2.5
     static final boolean ENTITY_DIGEST_FIELD_NAMES = true;
+    static final boolean ENTITY_DIGEST_FIELD_NAMES_LOWER = true;
     
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     static boolean MCS_DEBUG = false; // way to much debug when true
@@ -117,11 +118,11 @@ public abstract class CaomEntity extends Entity {
     private transient URI accMetaChecksum;
     
     protected CaomEntity() {
-        super(ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES);
+        super(ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES, ENTITY_DIGEST_FIELD_NAMES_LOWER);
     }
 
     protected CaomEntity(UUID id) {
-        super(id, ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES);
+        super(id, ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES, ENTITY_DIGEST_FIELD_NAMES_LOWER);
     }
 
     @Override

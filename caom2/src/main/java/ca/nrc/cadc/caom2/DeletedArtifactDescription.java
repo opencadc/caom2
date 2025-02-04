@@ -86,7 +86,8 @@ public class DeletedArtifactDescription extends Entity {
      * @param uri the uri of the deleted entity (for logging purposes only)
      */
     public DeletedArtifactDescription(UUID id, URI uri) {
-        super(id, CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES);
+        super(id, CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES,
+                CaomEntity.ENTITY_DIGEST_FIELD_NAMES_LOWER);
         this.uri = uri;
     }
 

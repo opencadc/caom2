@@ -69,12 +69,13 @@ package ca.nrc.cadc.caom2;
 
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import java.net.URI;
+import org.opencadc.persist.PrimitiveWrapper;
 
 /**
  *
  * @author pdowler
  */
-public abstract class VocabularyTerm {
+public abstract class VocabularyTerm implements PrimitiveWrapper {
     // transient so not included in meta checksum
     private final transient URI namespace;
     

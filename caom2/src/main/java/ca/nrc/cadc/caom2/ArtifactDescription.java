@@ -80,7 +80,8 @@ public class ArtifactDescription extends Entity {
     private String description;
 
     public ArtifactDescription(URI uri, String description) {
-        super(CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES);
+        super(CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES,
+                CaomEntity.ENTITY_DIGEST_FIELD_NAMES_LOWER);
         CaomValidator.assertNotNull(ArtifactDescription.class, "uri", uri);
         CaomValidator.assertNotNull(ArtifactDescription.class, "description", description);
         this.uri = uri;
