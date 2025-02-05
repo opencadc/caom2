@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<caom2:Observation xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="caom2:DerivedObservation" caom2:id="3e3695d9-bf09-432e-878b-2443ef545927" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:1f2c33f3e641ceb761a0a2f09d5cb17a" caom2:accMetaChecksum="md5:45fc93e0230e42e12e4ca4eca3091f65" caom2:metaProducer="test:observation/rountrip-1.0">
+<caom2:Observation xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="caom2:DerivedObservation" caom2:id="8f63a058-493e-4ffa-aae6-09a08d04f416" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:8ddca5217301adc6eb0b5032e0072341" caom2:accMetaChecksum="md5:d134245176bc3e26f0228e95d798fc4f" caom2:metaProducer="test:observation/rountrip-1.0">
   <caom2:collection>TEST</caom2:collection>
   <caom2:uri>caom:TEST/observationID</caom2:uri>
   <caom2:uriBucket>7c1</caom2:uriBucket>
-  <caom2:metaRelease>2025-02-04T21:41:07.206</caom2:metaRelease>
+  <caom2:metaRelease>2025-02-05T00:12:21.039</caom2:metaRelease>
   <caom2:metaReadGroups>
     <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
     <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
@@ -76,14 +76,14 @@
     <caom2:photometric>true</caom2:photometric>
   </caom2:environment>
   <caom2:planes>
-    <caom2:plane caom2:id="1c361554-5233-48cb-8d49-ef3915574233" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:d5cd2855b3a6705d23e62f832276cd1a" caom2:accMetaChecksum="md5:7f001c591a25b73b14afc7180530a1a6" caom2:metaProducer="test:plane/rountrip-1.0">
+    <caom2:plane caom2:id="260cd599-f96e-4955-bd75-9e9b1fb8417c" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:abee4f7aaded9591ec484c65216a6c2c" caom2:accMetaChecksum="md5:ce023b1fc6869243aaaaf6f77014e7d8" caom2:metaProducer="test:plane/rountrip-1.0">
       <caom2:uri>caom:collection/observation/plane0</caom2:uri>
-      <caom2:metaRelease>2025-02-04T21:41:07.206</caom2:metaRelease>
+      <caom2:metaRelease>2025-02-05T00:12:21.039</caom2:metaRelease>
       <caom2:metaReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
       </caom2:metaReadGroups>
-      <caom2:dataRelease>2025-02-04T21:41:07.206</caom2:dataRelease>
+      <caom2:dataRelease>2025-02-05T00:12:21.039</caom2:dataRelease>
       <caom2:dataReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -97,7 +97,7 @@
         <caom2:producer>provenanceProducer</caom2:producer>
         <caom2:runID>provenanceRunID</caom2:runID>
         <caom2:reference>http://foo/bar</caom2:reference>
-        <caom2:lastExecuted>2025-02-04T21:41:07.206</caom2:lastExecuted>
+        <caom2:lastExecuted>2025-02-05T00:12:21.039</caom2:lastExecuted>
         <caom2:keywords>
           <caom2:keyword>keyword1</caom2:keyword>
           <caom2:keyword>keyword2</caom2:keyword>
@@ -298,12 +298,12 @@
         <caom2:distributionFill>0.85</caom2:distributionFill>
       </caom2:visibility>
       <caom2:artifacts>
-        <caom2:artifact caom2:id="04c11503-5f46-4d95-b6ee-69c9878a07f5" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:d1909a29235318a1c8ea756af311a178" caom2:accMetaChecksum="md5:1dc6840cab05a796b2ad0712fec8cfa1" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="7a005821-d052-4583-bc7c-4a736e76ff6e" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:ac00978abd43b7687063cd5a3585b3c1" caom2:accMetaChecksum="md5:4ccfa9a866370f32def260875afa03c4" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar0</caom2:uri>
           <caom2:uriBucket>109</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-02-04T21:41:07.206</caom2:contentRelease>
+          <caom2:contentRelease>2025-02-05T00:12:21.039</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -313,11 +313,11 @@
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:descriptionID>desc:TEST/science-ready-data</caom2:descriptionID>
           <caom2:parts>
-            <caom2:part caom2:id="93c64d0c-b1ed-492b-8e5f-752211242da3" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:b7f1a59c6f13b26c8634f0789db8f8dd" caom2:accMetaChecksum="md5:bba3298fd61ab84eeb6a45a7469a95ae" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="f5a014f7-f7a7-406f-b273-b8aa0855e1b5" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:b794394c7d612851743334b99fe81b9e" caom2:accMetaChecksum="md5:2279d873915b8ae090bdf1e8b9f205c3" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="e4066ed7-2c28-4214-9a9d-b9632ecced07" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:4c6ec07536196b78f9aa7676a6415143" caom2:accMetaChecksum="md5:176bb3f268516e4491948e93408a5dc0" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="17e4342d-8723-4db8-969e-08802d1b743c" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:7989c563c4344134245f44bcda16214d" caom2:accMetaChecksum="md5:82fd1159a420cda9613c1e7d63a2d159" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -622,7 +622,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="2bbdf3d1-dace-4d24-bd65-9a3849f65854" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:b3f16bb21c800b00ceeb8cd406d5d8d2" caom2:accMetaChecksum="md5:a2d25b46407ea4d40e854b20570be443" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="686e26a3-f2bd-4f56-9682-0ffc3a05ea6c" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:03affd5ef0f930b43b73b6b41025d6d6" caom2:accMetaChecksum="md5:c2de6486a88515a0cbe0d242836de235" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -929,11 +929,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="c087a4a4-7323-4ac0-9073-4d2a8cae5524" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:732b2017dce851f6c7fc1441644c87e5" caom2:accMetaChecksum="md5:49e70ab04dcf287a4733fad60c1caab8" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="a83c9c79-cf96-4916-bd58-d2946777aba2" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:72445d8953e588f9bf5cad3344381345" caom2:accMetaChecksum="md5:0e32b9730aa217ab6a316ad18b17e519" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="d910467a-83a6-4cb5-91da-e7edf52adec6" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:3f20aa7b518a35cc0cc35d3e32a92ed7" caom2:accMetaChecksum="md5:e2e06cf23116dab30c81a144c10c5504" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="aa08923a-9164-4dab-b716-fc5983e2177f" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:5abd5b164e28871608edd34ae44fbb44" caom2:accMetaChecksum="md5:a49240b1bac10a35959292241009bf7b" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -1238,7 +1238,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="7d9b3c53-2e49-4554-a101-aaba8f13ffd4" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:334a0cb386b0385cf2f28d947384afb4" caom2:accMetaChecksum="md5:a2b94f323e2f1794767cb6b9e19f3254" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="4e74d66a-e049-4761-86a2-febd34bc8236" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:bc2cd69832df6abdcd871c1667bc1fe7" caom2:accMetaChecksum="md5:8d35d31e2deb23d7d491b0ac844bef49" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -1547,12 +1547,12 @@
             </caom2:part>
           </caom2:parts>
         </caom2:artifact>
-        <caom2:artifact caom2:id="b27d816d-be8c-4706-a9ac-4689458c0482" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:a5f9bf32ec02b41e6cc9c0952cd86dcb" caom2:accMetaChecksum="md5:eab499e4d176002cfdb11919de74c46f" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="10ea6e23-d9e5-4593-8c5a-421c1422a694" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:461725a95a7cd3c41526e937193b7e7b" caom2:accMetaChecksum="md5:b5a8beb7c06a963da48ff61f9861cb62" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar1</caom2:uri>
           <caom2:uriBucket>6de</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-02-04T21:41:07.206</caom2:contentRelease>
+          <caom2:contentRelease>2025-02-05T00:12:21.039</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -1562,11 +1562,11 @@
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:descriptionID>desc:TEST/science-ready-data</caom2:descriptionID>
           <caom2:parts>
-            <caom2:part caom2:id="321cf3f4-5099-4293-b9de-c0fb6a09b0f7" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:0b1ea3f9c063e14deecd834bd11ba63a" caom2:accMetaChecksum="md5:1d23fb927b99dd211afceb6a7a2585bd" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="2d80cb20-b3ea-4b11-af60-0db3132e0a9a" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:1e1cc62a09c1f41a491980ac371e68a2" caom2:accMetaChecksum="md5:9a4cca618230ae34027094c84d9fff89" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="80797151-c25e-4b00-b39a-2c73e031258d" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:b45b9202db88e0a9f7c174faf36aafb1" caom2:accMetaChecksum="md5:eda3f141d9b6df90b5d186d06422758e" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="ad446f7a-e87e-42fa-8f39-85201e1f8db2" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:19fb66736426281b4b753bb3d7502e2e" caom2:accMetaChecksum="md5:5ddec67c038d0b6f973c05e81636799d" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -1871,7 +1871,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="c40ad323-d88a-40eb-82e7-3bfc36227e9e" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:8315f6ed3d97c7e11b7387a543f82b56" caom2:accMetaChecksum="md5:a1d5e6ef5663b0a41c9f85fe413f4cfd" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="170e55bc-4b31-4ba0-8f06-f9fd0722ffda" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:df93a1c25b53fd7e6573077a1fdbe67b" caom2:accMetaChecksum="md5:88479a5c16e4b5f0bc11708419e0d352" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -2178,11 +2178,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="dae0c9a5-de05-4c59-a488-cee871b578af" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:bd4ecc5783854bae3a40dbde3478f822" caom2:accMetaChecksum="md5:c25fa6d683fde76bac67c38f6f2f0859" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="9a94b07e-462a-49ab-b885-630c070cff8a" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:46113dbb96f6bbc183a73ec99d0c4de3" caom2:accMetaChecksum="md5:dbbaa514ee62bf3bef9a35118c6f6655" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="d5572869-6868-4f7d-9226-fa4339a9e004" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:792ffc146cdaa7b3e726dd4d64a78177" caom2:accMetaChecksum="md5:dddacc3fdb0b42243abc2cb37e314726" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="d81597ec-d436-4f1b-84e0-8f9c61d7a292" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:30515cd994c512c2f6d4857ed44b6da0" caom2:accMetaChecksum="md5:9af77b0dbec1d3c2b647a4d970059b36" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -2487,7 +2487,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="33baced2-dd07-427c-859c-5ad7d614a7c7" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:71784ec713606c8704e1c7ae60b3368b" caom2:accMetaChecksum="md5:3e0c6682430e37c5ad96f8e5f2622087" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="47e5fb7a-aaab-45d0-ae34-7685bf11c65b" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:a4fea16c83d894d6ff0f6bd6f8d546df" caom2:accMetaChecksum="md5:831f9ecec16d6ab06c02d7571ac3f00d" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -2798,14 +2798,14 @@
         </caom2:artifact>
       </caom2:artifacts>
     </caom2:plane>
-    <caom2:plane caom2:id="3ecddc07-31a2-41f7-8ff2-ab35b3cdcf97" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:d4c8732fd7a74c646380cd5536fba53c" caom2:accMetaChecksum="md5:5a952d0a841a04599f1e3dd5badd8eb5" caom2:metaProducer="test:plane/rountrip-1.0">
+    <caom2:plane caom2:id="3f002e2d-4309-4aa8-962c-7a002892bf87" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:f9d586a3c5d99def1bf3591dfe8e2b9f" caom2:accMetaChecksum="md5:8fb1ba53463442d0af82dee79fcdfa4a" caom2:metaProducer="test:plane/rountrip-1.0">
       <caom2:uri>caom:collection/observation/plane1</caom2:uri>
-      <caom2:metaRelease>2025-02-04T21:41:07.206</caom2:metaRelease>
+      <caom2:metaRelease>2025-02-05T00:12:21.039</caom2:metaRelease>
       <caom2:metaReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
       </caom2:metaReadGroups>
-      <caom2:dataRelease>2025-02-04T21:41:07.206</caom2:dataRelease>
+      <caom2:dataRelease>2025-02-05T00:12:21.039</caom2:dataRelease>
       <caom2:dataReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -2819,7 +2819,7 @@
         <caom2:producer>provenanceProducer</caom2:producer>
         <caom2:runID>provenanceRunID</caom2:runID>
         <caom2:reference>http://foo/bar</caom2:reference>
-        <caom2:lastExecuted>2025-02-04T21:41:07.206</caom2:lastExecuted>
+        <caom2:lastExecuted>2025-02-05T00:12:21.039</caom2:lastExecuted>
         <caom2:keywords>
           <caom2:keyword>keyword1</caom2:keyword>
           <caom2:keyword>keyword2</caom2:keyword>
@@ -2993,12 +2993,12 @@
         <caom2:distributionFill>0.85</caom2:distributionFill>
       </caom2:visibility>
       <caom2:artifacts>
-        <caom2:artifact caom2:id="36ab235b-952e-40bd-9165-1cb79e51dba6" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:cf71d044e1511c66dd0f531e994cf461" caom2:accMetaChecksum="md5:1a728da54918fcfd4b7ac6c9fe09f8ee" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="ab8f079a-3b8c-4e6c-8e0d-ebd8c232090c" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:6217a91a9516a6148e47349d1a386203" caom2:accMetaChecksum="md5:2a85399411c421271a3f288defc0cbf4" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar0</caom2:uri>
           <caom2:uriBucket>109</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-02-04T21:41:07.206</caom2:contentRelease>
+          <caom2:contentRelease>2025-02-05T00:12:21.039</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -3008,11 +3008,11 @@
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:descriptionID>desc:TEST/science-ready-data</caom2:descriptionID>
           <caom2:parts>
-            <caom2:part caom2:id="e3bb8bc2-a31f-4fbd-9fed-7d694716a4b6" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:ca330df49f17bd06f3516e9fc77f375d" caom2:accMetaChecksum="md5:7dba34137bbd45feae286f30374a413e" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="28e0b130-f25b-4af8-94ec-ed48582aa878" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:5c43e061d121ade9952bbda4ea52d8bb" caom2:accMetaChecksum="md5:2248b3aec0a77f231adab28b6b93b434" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="c2de5a9b-e6a9-47c1-bc8e-c7404030a494" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:68945831a042c3d3b471331cd7f52f1e" caom2:accMetaChecksum="md5:d6c47d0b5d4f05fecee0d9b6cfa82778" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="b611b225-fef3-4fe3-8426-f97959a06ffc" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:84530789d83a933427fbf2520be8eabd" caom2:accMetaChecksum="md5:6357fcab22fbb268aba4a5000346b81c" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -3317,7 +3317,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="e575adea-49dd-453c-91ea-f526d2b41008" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:094c2ae2fda9da5a6163b7c0636f41cb" caom2:accMetaChecksum="md5:a65e6ff9849e6a22d1d4a8b43570eddf" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="1ed1732a-e4b9-4dd9-ae53-b6b5d71e9396" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:e9024f981cfda9fc49370e19be0bb3ed" caom2:accMetaChecksum="md5:e67fa30f00fe32e2d5a8fe519cb5fc90" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -3624,11 +3624,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="fd5e74de-ab47-42a8-9e2a-c44f9b4d59b5" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:900d95110a38c1b025e20be7203949d2" caom2:accMetaChecksum="md5:306fde02fc1c7e31a3adf7ecfbf093f3" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="24f2bc19-143c-4525-b4d1-405936003348" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:74f6c9adf52f33366ed5b370882389ff" caom2:accMetaChecksum="md5:0f5bdb51c34f3502f3388418aa4b72e3" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="4189ec2a-8ef1-4afa-b42a-536ca6cdb179" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:c28522845e5c196488194d8e7c52bbb0" caom2:accMetaChecksum="md5:9c8b5340a363138211fc09ccde936869" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="2c33b9d4-6f4e-4a46-a23a-0c8a191652a8" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:5535cedb9f72f0c6144e1af8011ac10f" caom2:accMetaChecksum="md5:5bc57b937d82db32564e29f429062541" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -3933,7 +3933,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="4d90bff5-486a-47cd-a2d0-a105b9901c05" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:5d467eb82ea7971dc5156350cae49d63" caom2:accMetaChecksum="md5:65ad962aa246798c96326b509ee11567" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="5240d0f0-2087-4e6f-ad7e-7a9bddb10b68" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:a1ba1478bd75fc1a970cbfa754809351" caom2:accMetaChecksum="md5:03d3649781168df304d77e222e777542" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -4242,12 +4242,12 @@
             </caom2:part>
           </caom2:parts>
         </caom2:artifact>
-        <caom2:artifact caom2:id="eae46c93-9579-4c40-9a40-33917146b248" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:7da2c2ffd6e5aa84736cd97c5241a4e2" caom2:accMetaChecksum="md5:318f31bee16aa300af2df49822d186d0" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="92760012-0019-43d9-8614-03676ebbe1fe" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:00468405aea9dab15dfb280d45874f96" caom2:accMetaChecksum="md5:c95343352ecf723bb1c3d49bad262883" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar1</caom2:uri>
           <caom2:uriBucket>6de</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-02-04T21:41:07.206</caom2:contentRelease>
+          <caom2:contentRelease>2025-02-05T00:12:21.039</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -4257,11 +4257,11 @@
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:descriptionID>desc:TEST/science-ready-data</caom2:descriptionID>
           <caom2:parts>
-            <caom2:part caom2:id="a838bff9-2d85-4bd8-a920-271bf9213927" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:ad0f155e5ec358046ae6ca1fe57c5409" caom2:accMetaChecksum="md5:05f1b600a07fd8bfe4693c6ef4656eef" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="d0f4c744-80a3-43f4-a4d7-c8a11998a50a" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:68beec1432645e964b4348b158406ec9" caom2:accMetaChecksum="md5:04485f76a51cf3a4f405b38c367fc0e0" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x0</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="d11cb8d6-bde6-45d8-bfc0-210bfcf30013" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:998d9d532d52f7fe817a464f104071d2" caom2:accMetaChecksum="md5:f20dd2f90b069912d645e41ae21de00b" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="8f3f1a15-72e8-4309-b8c1-d8bd1d750545" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:1c55a0205962eb9ebf8e5ed00203fed1" caom2:accMetaChecksum="md5:d2bf64d8a18d74dc2943cfcee0669c02" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -4566,7 +4566,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="ec8b4243-d1ac-43a2-8835-4c7390a7a7b8" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:df73f022b1ecea6b7d21024a009da7f5" caom2:accMetaChecksum="md5:120b191a4036cfd6d7b96941df517b96" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="a5ff1319-c36e-4220-a1fe-cc79ef3a5d7b" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:7517b2c929bd45b4ca2b62707c298d22" caom2:accMetaChecksum="md5:a3628deb9f06645a731d9e0f6d42066c" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -4873,11 +4873,11 @@
                 </caom2:chunk>
               </caom2:chunks>
             </caom2:part>
-            <caom2:part caom2:id="1472b8d4-2bdf-4e98-aaa6-0d4fb03c8532" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:ce2d9a6c3620f7fdd925c63ac4f4b656" caom2:accMetaChecksum="md5:6114c8b02e505a3a692e4631ff913e69" caom2:metaProducer="test:part/rountrip-1.0">
+            <caom2:part caom2:id="1c3e246c-ae4d-41d7-85b5-56469ee86dbb" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:de4e0c9ec9008433fcc2aa74327659ce" caom2:accMetaChecksum="md5:e92a7f2185488d930bdae6ad81450a43" caom2:metaProducer="test:part/rountrip-1.0">
               <caom2:name>x1</caom2:name>
               <caom2:productType>this</caom2:productType>
               <caom2:chunks>
-                <caom2:chunk caom2:id="9c0c8d4a-65b0-4a55-9b6b-7dd8f8ef6be9" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:e76e4e6f3b75cd0fdd6370113fabc402" caom2:accMetaChecksum="md5:adbec0c668045f83cbc9b4b3252c049f" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="9c426b0c-4889-4a0c-8acc-08599a8d9a91" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:68209ecb74701f79750ee64215ddd51a" caom2:accMetaChecksum="md5:8d046254ebe51be06eb5233d60e40ced" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
@@ -5182,7 +5182,7 @@
                     </caom2:axis>
                   </caom2:custom>
                 </caom2:chunk>
-                <caom2:chunk caom2:id="154d643d-1ced-43cf-b86c-e9970c5e5591" caom2:lastModified="2025-02-04T21:41:07.240" caom2:maxLastModified="2025-02-04T21:41:09.240" caom2:metaChecksum="md5:f7b9f86a0647713a28177168daab1196" caom2:accMetaChecksum="md5:35ae2cdc383740b33a2112c5766f5579" caom2:metaProducer="test:chunk/rountrip-1.0">
+                <caom2:chunk caom2:id="dc50647e-cce9-40f8-bcbf-31387ea06f44" caom2:lastModified="2025-02-05T00:12:21.071" caom2:maxLastModified="2025-02-05T00:12:23.071" caom2:metaChecksum="md5:59c7a1b276f44022eed4390df25eaff9" caom2:accMetaChecksum="md5:0b646ed76c3068817dbee3814f9c6404" caom2:metaProducer="test:chunk/rountrip-1.0">
                   <caom2:productType>this</caom2:productType>
                   <caom2:naxis>5</caom2:naxis>
                   <caom2:observableAxis>6</caom2:observableAxis>
