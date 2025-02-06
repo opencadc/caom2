@@ -76,7 +76,7 @@ import org.opencadc.persist.Entity;
  *
  * @author pdowler
  */
-public class DeletedArtifactDescription extends Entity {
+public class DeletedArtifactDescriptionEvent extends Entity {
     private final URI uri;
 
     /**
@@ -85,7 +85,7 @@ public class DeletedArtifactDescription extends Entity {
      * @param id the entity ID for the deleted entity
      * @param uri the uri of the deleted entity (for logging purposes only)
      */
-    public DeletedArtifactDescription(UUID id, URI uri) {
+    public DeletedArtifactDescriptionEvent(UUID id, URI uri) {
         super(id, CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES,
                 CaomEntity.ENTITY_DIGEST_FIELD_NAMES_LOWER);
         this.uri = uri;
@@ -96,7 +96,7 @@ public class DeletedArtifactDescription extends Entity {
     }
 
     public String toString() {
-        return DeletedArtifactDescription.class.getSimpleName() + "["
+        return DeletedArtifactDescriptionEvent.class.getSimpleName() + "["
                 + getID().toString() + "," + uri.toASCIIString() + "]";
     }
 }
