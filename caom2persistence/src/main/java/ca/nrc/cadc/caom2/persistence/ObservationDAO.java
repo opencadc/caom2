@@ -645,11 +645,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         return ret;
     }
 
-    /**
-     * Delete a stored observation by URI.
-     *
-     * @param uri
-     */
+    /*
     @Deprecated
     public void delete(ObservationURI uri) {
         if (uri == null) {
@@ -657,7 +653,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
         deleteImpl(null, uri);
     }
-
+    */
+    
     public void delete(UUID id) {
         if (id == null) {
             throw new IllegalArgumentException("id arg cannot be null");
