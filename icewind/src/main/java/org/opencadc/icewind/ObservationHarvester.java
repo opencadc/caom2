@@ -775,22 +775,11 @@ public class ObservationHarvester extends Harvester {
 
     private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) throws ExecutionException, InterruptedException {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
+        harvestSkipDAO.errorMessagePattern = errorMessagePattern;
         List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null, batchSize);
 
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
 
-        /*
-        if (srcObservationDAO != null) {
-            for (HarvestSkipURI hs : skip) {
-                log.debug("getSkipped: " + hs.getSkipID());
-                ObservationURI ouri = new ObservationURI(hs.getSkipID());
-                ObservationResponse wr = srcObservationDAO.getObservationResponse(ouri);
-                log.debug("response: " + wr);
-                ret.add(new SkippedWrapperURI<ObservationResponse>(wr, hs));
-            }
-        } else {
-        */
-        // srcObservationService
         List<ObservationURI> listUris = new ArrayList<>();
         for (HarvestSkipURI hs : skip) {
             log.debug("getSkipped: " + hs.getSkipID());
@@ -804,7 +793,7 @@ public class ObservationHarvester extends Harvester {
             o.observationState.maxLastModified = hs.getTryAfter(); // overwrite bogus value from RepoClient
             ret.add(new SkippedWrapperURI<>(o, hs));
         }
-        //}
+
         // re-order so we process in tryAfter order
         Collections.sort(ret, new SkipWrapperComparator());
         return ret;

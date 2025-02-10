@@ -645,24 +645,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         return ret;
     }
 
-    /*
-    @Deprecated
-    public void delete(ObservationURI uri) {
-        if (uri == null) {
-            throw new IllegalArgumentException("uri arg cannot be null");
-        }
-        deleteImpl(null, uri);
-    }
-    */
-    
     public void delete(UUID id) {
-        if (id == null) {
-            throw new IllegalArgumentException("id arg cannot be null");
-        }
-        deleteImpl(id, null);
-    }
-
-    private void deleteImpl(UUID id, ObservationURI uri) {
         if (readOnly) {
             throw new UnsupportedOperationException("delete in readOnly mode");
         }
@@ -674,12 +657,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         boolean txnOpen = false;
         try {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            String sql = null;
-            if (id != null) {
-                sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
-            } else {
-                sql = gen.getSelectSQL(uri, SQLGenerator.MAX_DEPTH, true);
-            }
+            String sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, true);
             log.debug("DELETE: " + sql);
             ObservationSkeleton dirtyRead;
             if (id != null) {
@@ -708,13 +686,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             }
             
             if (skel != null) {
-                if (uri == null) {
-                    uri = getState(id).getURI(); // null state not possible
-                }
-                if (id == null) {
-                    id = skel.id;
-                }
-                
+                ObservationURI uri = getState(id).getURI();
                 DeletedObservation de = new DeletedObservation(id, uri);
                 deletedDAO.put(de, jdbc);
                 delete(skel, jdbc);
