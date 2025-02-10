@@ -73,9 +73,14 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
+import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
+import ca.nrc.cadc.date.DateUtil;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -109,6 +114,7 @@ public class ObservationValidator extends Harvester {
     
     HarvestSkipURIDAO harvestSkip = null;
     private int numMismatches = 0;
+    private Date lastHarvested = null;
 
     public ObservationValidator(HarvestSource src, String collection, HarvestDestination dest, 
             Integer batchSize, int nthreads, boolean dryrun) {
@@ -152,10 +158,12 @@ public class ObservationValidator extends Harvester {
         int mismatch = 0;
         int known = 0;
         int added = 0;
+        int numMissedHarvest = 0;
 
         @Override
         public String toString() {
-            return found + " mismatches: " + mismatch + " known: " + known + " new: " + added;
+            return found + " mismatches: " + mismatch + " known: " + known + " new: " + added
+                    + " missed: " + numMissedHarvest;
         }
     }
 
@@ -177,6 +185,17 @@ public class ObservationValidator extends Harvester {
             final Set<ObservationState> srcState = new TreeSet<>(compStateUri);
             final Set<ObservationState> dstState = new TreeSet<>(compStateUri);
             
+            HarvestStateDAO stateDAO = new PostgresqlHarvestStateDAO(destObservationDAO.getDataSource(), 
+                    null, dest.getSchema());
+            log.info("checking current harvest state: " + src.getIdentifier(collection));
+            HarvestState state = stateDAO.get(src.getIdentifier(collection).toASCIIString(), Observation.class.getSimpleName());
+            if (state != null) {
+                this.lastHarvested = state.curLastModified;
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                log.info("current harvest state: " + df.format(lastHarvested));
+            } else {
+                log.info("current harvest state: " + null);
+            }
             log.info("getObservationList: " + src.getIdentifier(collection));
             List<ObservationState> tmpSrcState = srcObservationService.getObservationList(collection, null, null, null);
             log.info("found: " + tmpSrcState.size() + " sorting...");
@@ -236,6 +255,9 @@ public class ObservationValidator extends Harvester {
                                 if (skip == null) {
                                     skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), tryAfter, skipMsg);
                                     ret.added++;
+                                    if (tryAfter.before(lastHarvested)) {
+                                        ret.numMissedHarvest++;
+                                    }
                                 } else {
                                     putSkip = false; // avoid lastModified update for no change
                                     ret.known++;

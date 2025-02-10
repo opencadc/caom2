@@ -116,7 +116,7 @@ public class ObservationHarvester extends Harvester {
     private final URI basePublisherID;
     private final boolean nochecksum;
     private RepoClient srcRepoClient;
-    private ObservationDAO srcObservationDAO;
+    //private ObservationDAO srcObservationDAO;
     private ObservationDAO destObservationDAO;
     private HarvestSkipURIDAO harvestSkipDAO;
     private boolean skipped;
@@ -266,11 +266,11 @@ public class ObservationHarvester extends Harvester {
             } else {
                 log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
                 List<ObservationResponse> obsList;
-                if (srcObservationDAO != null) {
-                    obsList = srcObservationDAO.getList(collection, startDate, endDate, batchSize + 1);
-                } else {
-                    obsList = srcRepoClient.getList(collection, startDate, endDate, batchSize + 1);
-                }
+                //if (srcObservationDAO != null) {
+                //    obsList = srcObservationDAO.getList(collection, startDate, endDate, batchSize + 1);
+                //} else {
+                obsList = srcRepoClient.getList(collection, startDate, endDate, batchSize + 1);
+                //}
                 entityList = wrap(obsList);
             }
 
@@ -390,11 +390,14 @@ public class ObservationHarvester extends Harvester {
                         }
                     } else if (skipped) {
                         // o == null
-                        if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
+                        if (ow.entity.error instanceof ResourceNotFoundException) {
                             // observation not obtainable from source == missed deletion
-                            ObservationURI uri = new ObservationURI(hs.getSkipID());
-                            log.info("delete: " + uri);
-                            destObservationDAO.delete(uri);
+                            ObservationURI uri = new ObservationURI(ow.skip.getSkipID());
+                            ObservationState cur = destObservationDAO.getState(uri);
+                            if (cur != null) {
+                                log.info("delete: " + cur.getURI() + " aka " + cur.id);
+                                destObservationDAO.delete(cur.id);
+                            }
                             log.info("delete: " + hs.getClass().getSimpleName() + "[" + hs.getSkipID() + "]");
                             harvestSkipDAO.delete(hs);
                         } else {
@@ -407,11 +410,13 @@ public class ObservationHarvester extends Harvester {
                             state.curLastModified = ow.entity.observationState.maxLastModified;
                             state.curID = null; // unknown
                         }
-                        //if (srcObservationDAO != null || ow.entity.error instanceof ResourceNotFoundException) {
-                        if (ow.entity.error instanceof ResourceNotFoundException) {
-                            ObservationURI uri = ow.entity.observationState.getURI();
-                            log.info("delete: " + uri);
-                            destObservationDAO.delete(uri);
+                        if (ow.entity.error instanceof ResourceNotFoundException
+                                && ow.entity.observationState != null) {
+                            ObservationState cur = destObservationDAO.getState(ow.entity.observationState.getURI());
+                            if (cur != null) {
+                                log.info("delete: " + cur.getURI() + " aka " + cur.id);
+                                destObservationDAO.delete(cur.id);
+                            }
                             if (hs != null) {
                                 log.info("delete: " + hs + " " + format(hs.getLastModified()));
                                 harvestSkipDAO.delete(hs);
@@ -544,8 +549,13 @@ public class ObservationHarvester extends Harvester {
                             harvestSkipDAO.put(skip);
 
                             // delete previous version of observation (if any)
-                            log.info("delete: " + ow.entity.observationState.getURI());
-                            destObservationDAO.delete(ow.entity.observationState.getURI());
+                            if (ow.entity.observationState != null) {
+                                ObservationState cur = destObservationDAO.getState(ow.entity.observationState.getURI());
+                                if (cur != null) {
+                                    log.info("delete: " + cur.getURI() + " aka " + cur.id);
+                                    destObservationDAO.delete(cur.id);
+                                }
+                            }
 
                             log.debug("committing HarvestSkipURI transaction");
                             destObservationDAO.getTransactionManager().commitTransaction();
@@ -769,6 +779,7 @@ public class ObservationHarvester extends Harvester {
 
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
 
+        /*
         if (srcObservationDAO != null) {
             for (HarvestSkipURI hs : skip) {
                 log.debug("getSkipped: " + hs.getSkipID());
@@ -778,21 +789,22 @@ public class ObservationHarvester extends Harvester {
                 ret.add(new SkippedWrapperURI<ObservationResponse>(wr, hs));
             }
         } else {
-            // srcObservationService
-            List<ObservationURI> listUris = new ArrayList<>();
-            for (HarvestSkipURI hs : skip) {
-                log.debug("getSkipped: " + hs.getSkipID());
-                listUris.add(new ObservationURI(hs.getSkipID()));
-            }
-            List<ObservationResponse> listResponses = srcRepoClient.get(listUris);
-            log.warn("getSkipped: " + skip.size() + " HarvestSkipURI -> " + listResponses.size() + " ObservationResponse");
-
-            for (ObservationResponse o : listResponses) {
-                HarvestSkipURI hs = findSkip(o.observationState.getURI().getURI(), skip);
-                o.observationState.maxLastModified = hs.getTryAfter(); // overwrite bogus value from RepoClient
-                ret.add(new SkippedWrapperURI<>(o, hs));
-            }
+        */
+        // srcObservationService
+        List<ObservationURI> listUris = new ArrayList<>();
+        for (HarvestSkipURI hs : skip) {
+            log.debug("getSkipped: " + hs.getSkipID());
+            listUris.add(new ObservationURI(hs.getSkipID()));
         }
+        List<ObservationResponse> listResponses = srcRepoClient.get(listUris);
+        log.warn("getSkipped: " + skip.size() + " HarvestSkipURI -> " + listResponses.size() + " ObservationResponse");
+
+        for (ObservationResponse o : listResponses) {
+            HarvestSkipURI hs = findSkip(o.observationState.getURI().getURI(), skip);
+            o.observationState.maxLastModified = hs.getTryAfter(); // overwrite bogus value from RepoClient
+            ret.add(new SkippedWrapperURI<>(o, hs));
+        }
+        //}
         // re-order so we process in tryAfter order
         Collections.sort(ret, new SkipWrapperComparator());
         return ret;
