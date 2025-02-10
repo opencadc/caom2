@@ -265,12 +265,7 @@ public class ObservationHarvester extends Harvester {
                 entityList = getSkipped(startDate);
             } else {
                 log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
-                List<ObservationResponse> obsList;
-                //if (srcObservationDAO != null) {
-                //    obsList = srcObservationDAO.getList(collection, startDate, endDate, batchSize + 1);
-                //} else {
-                obsList = srcRepoClient.getList(collection, startDate, endDate, batchSize + 1);
-                //}
+                List<ObservationResponse> obsList = srcRepoClient.getList(collection, startDate, endDate, batchSize + 1);
                 entityList = wrap(obsList);
             }
 
@@ -392,7 +387,7 @@ public class ObservationHarvester extends Harvester {
                         // o == null
                         if (ow.entity.error instanceof ResourceNotFoundException) {
                             // observation not obtainable from source == missed deletion
-                            ObservationURI uri = new ObservationURI(ow.skip.getSkipID());
+                            ObservationURI uri = new ObservationURI(hs.getSkipID());
                             ObservationState cur = destObservationDAO.getState(uri);
                             if (cur != null) {
                                 log.info("delete: " + cur.getURI() + " aka " + cur.id);
