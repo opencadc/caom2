@@ -267,12 +267,12 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                     if (samplesObject instanceof ca.nrc.cadc.dali.DoubleInterval[]) {
                         ca.nrc.cadc.dali.DoubleInterval[] smps = (ca.nrc.cadc.dali.DoubleInterval[]) samplesObject;
                         for (ca.nrc.cadc.dali.DoubleInterval si : smps) {
-                            plane.energy.bounds.getSamples().add(new Interval(si.getLower(), si.getUpper()));
+                            plane.time.bounds.getSamples().add(new Interval(si.getLower(), si.getUpper()));
                         }
                     } else {
                         double[] smps = (double[]) samplesObject;
                         for (int i = 0; i < smps.length; i += 2) {
-                            plane.energy.bounds.getSamples().add(new Interval(smps[i], smps[i + 1]));
+                            plane.time.bounds.getSamples().add(new Interval(smps[i], smps[i + 1]));
                         }
                     }
                 } else {
