@@ -97,7 +97,33 @@ public class IntervalFormat extends AbstractResultSetFormat {
     @Override
     public Object extract(ResultSet resultSet, int columnIndex)
             throws SQLException {
-        return resultSet.getString(columnIndex);
+        String s = resultSet.getString(columnIndex);
+        if (s == null) {
+            return null;
+        }
+        
+        log.debug("extract: " + s);
+        PgInterval pgi = new PgInterval();
+        if (intervalArray) {
+            return pgi.getIntervalArray(s);
+        }
+        
+        try {
+            DoubleInterval i = pgi.getInterval(s);
+            return i;
+        } catch (RuntimeException ex) {
+            String msg = ex.getMessage();
+            if (msg.startsWith("BUG:") && msg.endsWith("values for DoubleInterval")) {
+                // work-around for some values that are interval[] in the 
+                // caom2 energy_bounds and time_bounds columns
+                DoubleInterval[] i = pgi.getIntervalArray(s);
+                Double lb = i[0].getLower();
+                Double ub = i[i.length - 1].getUpper();
+                DoubleInterval val = new DoubleInterval(lb, ub);
+                return val;
+            }
+            throw ex;
+        }
     }
 
     @Override
@@ -105,31 +131,14 @@ public class IntervalFormat extends AbstractResultSetFormat {
         if (object == null) {
             return "";
         }
-        if (object instanceof String) {
-            String s = (String) object;
-            log.debug("in: " + s);
-            PgInterval pgi = new PgInterval();
-            if (intervalArray) {
-                DoubleInterval[] i = pgi.getIntervalArray(s);
-                return afmt.format(i);
-            } else {
-                try {
-                    DoubleInterval i = pgi.getInterval(s);
-                    return fmt.format(i);
-                } catch (RuntimeException ex) {
-                    String msg = ex.getMessage();
-                    if (msg.startsWith("BUG:") && msg.endsWith("values for DoubleInterval")) {
-                        // work-around for some values that are interval[] in the 
-                        // caom2 energy_bounds and time_bounds columns
-                        DoubleInterval[] i = pgi.getIntervalArray(s);
-                        Double lb = i[0].getLower();
-                        Double ub = i[i.length - 1].getUpper();
-                        DoubleInterval val = new DoubleInterval(lb, ub);
-                        return fmt.format(val);
-                    }
-                    throw ex;
-                }
-            }
+        log.debug("format: " + object + " type " + object.getClass().getName());
+        if (object instanceof DoubleInterval[]) {
+            DoubleInterval[] v = (DoubleInterval[]) object;
+            return afmt.format(v);
+        }
+        if (object instanceof DoubleInterval) {
+            DoubleInterval v = (DoubleInterval) object;
+            return fmt.format(v);
         }
         // this might help debugging more than a throw
         return object.toString();

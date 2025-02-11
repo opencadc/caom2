@@ -718,7 +718,7 @@ public abstract class AbstractObservationDAOTest
                         testEqual(orig, retrieved);
                         
                         //txnManager.startTransaction();
-                        dao.delete(orig.getURI());
+                        dao.delete(orig.getID());
                         //txnManager.commitTransaction();
 
                         Observation deleted = dao.get(orig.getURI());
@@ -767,7 +767,7 @@ public abstract class AbstractObservationDAOTest
                     testEqual(orig, retrieved);
 
                     //txnManager.startTransaction();
-                    dao.delete(orig.getURI());
+                    dao.delete(orig.getID());
                     //txnManager.commitTransaction();
 
                     Observation deleted = dao.get(orig.getURI());
@@ -924,7 +924,7 @@ public abstract class AbstractObservationDAOTest
                 }
 
                 //txnManager.startTransaction();
-                dao.delete(orig.getURI());
+                dao.delete(orig.getID());
                 //txnManager.commitTransaction();
 
                 Observation deleted = dao.get(orig.getURI());
@@ -1016,7 +1016,7 @@ public abstract class AbstractObservationDAOTest
                 testEqual(orig, ret3);
                         
                 //txnManager.startTransaction();
-                dao.delete(orig.getURI());
+                dao.delete(orig.getID());
                 //txnManager.commitTransaction();
 
                 Observation deleted = dao.get(orig.getURI());
@@ -1093,7 +1093,7 @@ public abstract class AbstractObservationDAOTest
                 Assert.assertEquals("no simpMembers", 0, simpMembers);
             }
             
-            dao.delete(simp.getURI());
+            dao.delete(simp.getID());
 
             Observation deleted = dao.get(simp.getURI());
             Assert.assertNull("deleted", deleted);
@@ -1213,11 +1213,11 @@ public abstract class AbstractObservationDAOTest
             Assert.assertEquals(o5.getURI(), obs.get(2).observation.getURI());
 
             //txnManager.startTransaction();
-            dao.delete(o1.getURI());
-            dao.delete(o2.getURI());
-            dao.delete(o3.getURI());
-            dao.delete(o4.getURI());
-            dao.delete(o5.getURI());
+            dao.delete(o1.getID());
+            dao.delete(o2.getID());
+            dao.delete(o3.getID());
+            dao.delete(o4.getID());
+            dao.delete(o5.getID());
             //txnManager.commitTransaction();
 
         }

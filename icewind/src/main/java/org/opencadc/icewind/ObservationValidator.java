@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2024.                            (c) 2024.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,11 +73,14 @@ import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.ObservationState;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURI;
 import ca.nrc.cadc.caom2.harvester.state.HarvestSkipURIDAO;
+import ca.nrc.cadc.caom2.harvester.state.HarvestState;
+import ca.nrc.cadc.caom2.harvester.state.HarvestStateDAO;
+import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.date.DateUtil;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -87,7 +90,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -104,7 +106,6 @@ public class ObservationValidator extends Harvester {
     private static Logger log = Logger.getLogger(ObservationValidator.class);
 
     private RepoClient srcObservationService;
-    private ObservationDAO srcObservationDAO;
     private ObservationDAO destObservationDAO;
     private boolean dryrun = false;
     
@@ -113,6 +114,7 @@ public class ObservationValidator extends Harvester {
     
     HarvestSkipURIDAO harvestSkip = null;
     private int numMismatches = 0;
+    private Date lastHarvested = null;
 
     public ObservationValidator(HarvestSource src, String collection, HarvestDestination dest, 
             Integer batchSize, int nthreads, boolean dryrun) {
@@ -126,27 +128,7 @@ public class ObservationValidator extends Harvester {
         this.srcObservationService = new RepoClient(src.getResourceID(), nthreads);
 
         // dest is always a database
-        final String destDS = DEST_DATASOURCE_NAME;
         Map<String, Object> destConfig = getConfigDAO(dest);
-        try {
-            DataSource cur = null;
-            try {
-                cur = DBUtil.findJNDIDataSource(destDS);
-            } catch (NamingException notInitialized) {
-                log.info("JNDI DataSource not initialized yet... OK");
-            }
-            if (cur == null) {
-                ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
-                DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
-            } else {
-                log.info("found DataSource: " + destDS + " -- re-using");
-            }
-        } catch (NamingException e) {
-            throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
-                    dest, e.getMessage()), e);
-        }
-        destConfig.put("jndiDataSourceName", destDS);
         this.destObservationDAO = new ObservationDAO();
         destObservationDAO.setConfig(destConfig);
         destObservationDAO.setOrigin(false); // copy as-is
@@ -176,10 +158,12 @@ public class ObservationValidator extends Harvester {
         int mismatch = 0;
         int known = 0;
         int added = 0;
+        int numMissedHarvest = 0;
 
         @Override
         public String toString() {
-            return found + " mismatches: " + mismatch + " known: " + known + " new: " + added;
+            return found + " mismatches: " + mismatch + " known: " + known + " new: " + added
+                    + " missed: " + numMissedHarvest;
         }
     }
 
@@ -198,23 +182,47 @@ public class ObservationValidator extends Harvester {
             timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
+            final Set<ObservationState> srcState = new TreeSet<>(compStateUri);
+            final Set<ObservationState> dstState = new TreeSet<>(compStateUri);
+            
+            HarvestStateDAO stateDAO = new PostgresqlHarvestStateDAO(destObservationDAO.getDataSource(), 
+                    null, dest.getSchema());
+            log.info("checking current harvest state: " + src.getIdentifier(collection));
+            HarvestState state = stateDAO.get(src.getIdentifier(collection).toASCIIString(), Observation.class.getSimpleName());
+            if (state != null) {
+                this.lastHarvested = state.curLastModified;
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                log.info("current harvest state: " + df.format(lastHarvested));
+            } else {
+                log.info("current harvest state: " + null);
+            }
             log.info("getObservationList: " + src.getIdentifier(collection));
             List<ObservationState> tmpSrcState = srcObservationService.getObservationList(collection, null, null, null);
-            log.debug("found: " + tmpSrcState.size());
-            
-            Set<ObservationState> srcState = new TreeSet<>(compStateUri);
-            srcState.addAll(tmpSrcState);
-            tmpSrcState = null; // GC
-            log.info("source set - found: " + srcState.size());
-            
+            log.info("found: " + tmpSrcState.size() + " sorting...");
+            // manually copy to allow GC
+            Iterator<ObservationState> siter = tmpSrcState.iterator();
+            while (siter.hasNext()) {
+                ObservationState s = siter.next();
+                srcState.add(s);
+                siter.remove();
+            }
+            //srcState.addAll(tmpSrcState);
+            tmpSrcState = null; // was GC, now empty
+            log.info("source set: " + srcState.size());
+
             log.info("getObservationList: " + dest + " " + collection);
             List<ObservationState> tmpDstState = destObservationDAO.getObservationList(collection, null, null, null);
-            log.debug("found: " + tmpDstState.size());
-            
-            Set<ObservationState> dstState = new TreeSet<>(compStateUri);
-            dstState.addAll(tmpDstState);
-            tmpDstState = null; // GC
-            log.info("destination set - found: " + dstState.size());
+            log.info("found: " + tmpDstState.size() + " sorting...");
+            // manually copy to allow GC
+            Iterator<ObservationState> diter = tmpDstState.iterator();
+            while (diter.hasNext()) {
+                ObservationState s = diter.next();
+                dstState.add(s);
+                diter.remove();
+            }
+            //dstState.addAll(tmpDstState);
+            tmpDstState = null; // was GC, now empty
+            log.info("destination set: " + dstState.size());
 
             Set<ObservationStateError> errlist = calculateErroneousObservationStates(srcState, dstState);
 
@@ -238,7 +246,7 @@ public class ObservationValidator extends Harvester {
                 try {
                     if (!dryrun) {
                         if (o != null) {
-                            skipMsg = o.toString();
+                            skipMsg = o.getError();
                             try {
                                 log.debug("starting HarvestSkipURI transaction");
                                 boolean putSkip = true;
@@ -247,13 +255,16 @@ public class ObservationValidator extends Harvester {
                                 if (skip == null) {
                                     skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), tryAfter, skipMsg);
                                     ret.added++;
+                                    if (tryAfter.before(lastHarvested)) {
+                                        ret.numMissedHarvest++;
+                                    }
                                 } else {
                                     putSkip = false; // avoid lastModified update for no change
                                     ret.known++;
                                 }
 
                                 if (destObservationDAO.getTransactionManager().isOpen()) {
-                                    throw new RuntimeException("BUG: found open trasnaction at start of next observation");
+                                    throw new RuntimeException("BUG: found open transaction at start of next observation");
                                 }
                                 log.debug("starting transaction");
                                 destObservationDAO.getTransactionManager().startTransaction();
@@ -323,10 +334,13 @@ public class ObservationValidator extends Harvester {
     }
 
     private Set<ObservationStateError> calculateErroneousObservationStates(Set<ObservationState> srcState, Set<ObservationState> dstState) {
-        Set<ObservationStateError> listErroneous = new TreeSet<ObservationStateError>(compError);
-        Set<ObservationState> listCorrect = new TreeSet<ObservationState>(compStateSum);
+        Set<ObservationStateError> listErroneous = new TreeSet<>(compError);
+        Set<ObservationState> listCorrect = new TreeSet<>(compStateSum);
         Iterator<ObservationState> iterSrc = srcState.iterator();
         Iterator<ObservationState> iterDst = dstState.iterator();
+        
+        // TODO: implement a merge join of the two iterators and only accumulate the list of errors to return
+        
         while (iterSrc.hasNext()) {
             ObservationState os = iterSrc.next();
             if (!dstState.contains(os)) {
@@ -346,7 +360,7 @@ public class ObservationValidator extends Harvester {
                     listErroneous.add(ose);
                 }
             } else if (!nochecksum && !listCorrect.contains(os)) {
-                ObservationStateError ose = new ObservationStateError(os, "mismatched accMetaChecksum");
+                ObservationStateError ose = new ObservationStateError(os, "mismatched accMetaChecksum (validate)");
                 log.info("************************ adding mismatched accMetaChecksum: " + os.getURI());
                 if (!listErroneous.contains(ose)) {
                     listErroneous.add(ose);

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -74,10 +74,13 @@ import ca.nrc.cadc.caom2.harvester.state.PostgresqlHarvestStateDAO;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.db.ConnectionConfig;
+import ca.nrc.cadc.db.DBUtil;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
@@ -116,7 +119,6 @@ public abstract class Harvester implements Runnable {
         this.batchSize = batchSize;
     }
 
-    
     protected Map<String, Object> getConfigDAO(HarvestDestination harvestResource) {
         Map<String, Object> ret = new HashMap<>();
         if (harvestResource.getJdbcUrl().contains(POSTGRESQL)) {
@@ -126,6 +128,26 @@ public abstract class Harvester implements Runnable {
             throw new IllegalArgumentException("unknown SQL dialect: " + harvestResource);
         }
         ret.put("schema", harvestResource.getSchema());
+        
+        try {
+            DataSource cur = null;
+            try {
+                cur = DBUtil.findJNDIDataSource(DEST_DATASOURCE_NAME);
+            } catch (NamingException notInitialized) {
+                log.info("JNDI DataSource not initialized yet... OK");
+            }
+            if (cur == null) {
+                ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
+                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
+                DBUtil.createJNDIDataSource(DEST_DATASOURCE_NAME, destConnectionConfig);
+            } else {
+                log.info("found DataSource: " + DEST_DATASOURCE_NAME + " -- re-using");
+            }
+        } catch (NamingException e) {
+            throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
+                    dest, e.getMessage()), e);
+        }
+        ret.put("jndiDataSourceName", DEST_DATASOURCE_NAME);
         
         return ret;
     }
