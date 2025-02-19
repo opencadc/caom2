@@ -70,12 +70,12 @@
 package org.opencadc.torkeep;
 
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.util.ObservationState;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.rest.InlineContentHandler;
+import java.net.URI;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.db.ObservationDAO;
 
 /**
  *
@@ -89,7 +89,7 @@ public class PutAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        ObservationURI uri = getObservationURI();
+        URI uri = getObservationURI();
         log.debug("START: " + uri);
 
         checkWritePermission();
@@ -103,15 +103,21 @@ public class PutAction extends RepoAction {
             throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
         }
 
+        validate(obs);
+
         ObservationDAO dao = getDAO();
+        // TODO: allow PUT to update? replace?
         ObservationState s = dao.getState(obs.getID());
+        if (s == null) {
+            s = dao.getState(obs.getURI());
+        }
         
         if (s != null) {
             throw new ResourceAlreadyExistsException("already exists: " + uri);
         }
 
-        validate(obs);
-        
+        assignPublisherID(obs);
+
         dao.put(obs);
 
         log.debug("DONE: " + uri);

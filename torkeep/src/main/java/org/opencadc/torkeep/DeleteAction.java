@@ -69,12 +69,11 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.util.ObservationState;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-
+import java.net.URI;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.db.ObservationDAO;
 
 /**
  *
@@ -88,7 +87,7 @@ public class DeleteAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        ObservationURI uri = getObservationURI();
+        URI uri = getObservationURI();
         log.debug("START: " + uri);
 
         checkWritePermission();
@@ -100,6 +99,7 @@ public class DeleteAction extends RepoAction {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
+        // TODO: obtain lock, reate DeletedObservationEvent, use txn
         dao.delete(state.getID());
 
         log.debug("DONE: " + uri);

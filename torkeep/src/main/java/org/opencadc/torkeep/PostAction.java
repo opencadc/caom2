@@ -70,14 +70,14 @@
 package org.opencadc.torkeep;
 
 import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
+import ca.nrc.cadc.caom2.util.ObservationState;
+import ca.nrc.cadc.net.PreconditionFailedException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import java.net.URI;
 import java.net.URISyntaxException;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.db.ObservationDAO;
 
 /**
  *
@@ -91,7 +91,7 @@ public class PostAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        ObservationURI uri = getObservationURI();
+        URI uri = getObservationURI();
         log.debug("START: " + uri);
 
         checkWritePermission();
@@ -101,20 +101,15 @@ public class PostAction extends RepoAction {
             throw new IllegalArgumentException("invalid input: " + uri + " but no observation document in body");
         }
 
+        // allow rename: same ID but change Observation.uri?
+        // rationale: you can modify Plane.uri ...
         if (!uri.equals(obs.getURI())) {
             throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
-        }
-
-        ObservationDAO dao = getDAO();
-        ObservationState s = dao.getState(obs.getID());
-
-        if (s == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
         }
         
         validate(obs);
         
-        URI expectedMetaChecksum = null;
+        final URI expectedMetaChecksum;
         String condition = syncInput.getHeader("If-Match");
         if (condition != null) {
             condition = condition.trim();
@@ -123,10 +118,44 @@ public class PostAction extends RepoAction {
             } catch (URISyntaxException ex) {
                 throw new IllegalArgumentException("invalid If-Match value: " + condition, ex);
             }
+        } else {
+            expectedMetaChecksum = null;
         }
 
-        dao.put(obs, expectedMetaChecksum);
+        ObservationDAO dao = getDAO();
+        
+        ObservationState s = null;
+        try {
+            // TODO: start txn
+            if (expectedMetaChecksum != null) {
+                // TODO: obtain lock and check vs state here
+                s = dao.getState(obs.getID());
+                if (s != null && !s.accMetaChecksum.equals(expectedMetaChecksum)) {
+                    throw new PreconditionFailedException(obs.getURI() + " checksum " + s.accMetaChecksum 
+                            + " does not match condition " + expectedMetaChecksum);
+                }
+            } else {
+                s = dao.getState(obs.getID());
+                
+            }
+            if (s == null) {
+                throw new ResourceNotFoundException("not found: " + uri);
+            }
 
+            assignPublisherID(obs);
+
+            dao.put(obs);
+            // TODO: commit txn
+        } catch (PreconditionFailedException ex) {
+            // TODO: rollback
+            throw ex;
+        } catch (Exception ex) {
+            // TODO: rollback
+            throw new RuntimeException("failed to store observation " + obs.getURI(), ex);
+        } finally {
+            // TODO: check for open txn and rollback
+        }
+        
         log.debug("DONE: " + uri);
     }
 
