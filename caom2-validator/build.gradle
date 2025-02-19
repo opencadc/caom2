@@ -18,11 +18,11 @@ version = '2.5.0'
 mainClassName = "ca.nrc.cadc.caom2.Main"
 
 dependencies {
-    compile 'org.jdom:jdom2:2.0.6'
+    implementation 'org.jdom:jdom2:2.0.6'
     
-    compile 'org.opencadc:cadc-util:[1.6,2.0)'
-    compile 'org.opencadc:caom2:[2.5,2.6)'
-    compile 'org.opencadc:caom2-compute:[2.5,2.6)'
+    implementation 'org.opencadc:cadc-util:[1.12.0,2.0)'
+    implementation 'org.opencadc:caom2:[2.5,2.6)'
+    implementation 'org.opencadc:caom2-compute:[2.5,2.6)'
 }
 
 apply from: '../opencadc.gradle'
