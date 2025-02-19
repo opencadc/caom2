@@ -109,7 +109,7 @@ public class ArtifactDescriptionDAOTest {
             throws Exception {
         try {
             DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", "cadctest");
+            ConnectionConfig cc = dbrc.getConnectionConfig(TestUtil.TEST_SERVER, TestUtil.TEST_DB);
             DBUtil.createJNDIDataSource("jdbc/caom2-db-test", cc);
             
             Map<String, Object> config = new TreeMap<String, Object>();

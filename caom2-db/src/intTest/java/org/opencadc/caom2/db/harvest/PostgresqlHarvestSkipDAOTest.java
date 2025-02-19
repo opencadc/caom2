@@ -90,6 +90,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.db.TestUtil;
 import org.opencadc.caom2.db.version.InitDatabase;
 
 /**
@@ -112,16 +113,14 @@ public class PostgresqlHarvestSkipDAOTest {
 
     public PostgresqlHarvestSkipDAOTest()
             throws Exception {
-
-        this.database = "cadctest";
         DBConfig dbrc = new DBConfig();
-        ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
-        this.dataSource = DBUtil.getDataSource(cc);
+        ConnectionConfig cc = dbrc.getConnectionConfig(TestUtil.TEST_SERVER, TestUtil.TEST_DB);
+        this.dataSource = DBUtil.getDataSource(cc, true, true);
 
-        InitDatabase init = new InitDatabase(dataSource, "cadctest", schema);
+        InitDatabase init = new InitDatabase(dataSource, null, schema);
         init.doInit();
 
-        String sql = "DELETE FROM " + database + "." + schema + ".HarvestSkip";
+        String sql = "DELETE FROM " + schema + ".HarvestSkip";
         log.debug("cleanup: " + sql);
         dataSource.getConnection().createStatement().execute(sql);
     }

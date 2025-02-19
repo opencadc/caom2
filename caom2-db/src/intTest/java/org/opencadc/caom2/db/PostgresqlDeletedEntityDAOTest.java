@@ -89,9 +89,9 @@ public class PostgresqlDeletedEntityDAOTest extends AbstractDeletedEntityDAOTest
 
     public PostgresqlDeletedEntityDAOTest()
             throws Exception {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
+        super(PostgreSQLGenerator.class, TestUtil.TEST_SERVER, TestUtil.TEST_DB, schema);
 
-        InitDatabase init = new InitDatabase(super.doeDAO.getDataSource(), "cadctest", schema);
+        InitDatabase init = new InitDatabase(super.doeDAO.getDataSource(), null, schema);
         init.doInit();
     }
 }

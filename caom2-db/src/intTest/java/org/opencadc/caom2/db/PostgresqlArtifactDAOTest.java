@@ -81,9 +81,9 @@ public class PostgresqlArtifactDAOTest extends AbstractArtifactDAOTest {
     static String schema = "caom2";
 
     public PostgresqlArtifactDAOTest() throws Exception {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
+        super(PostgreSQLGenerator.class, TestUtil.TEST_SERVER, TestUtil.TEST_DB, schema);
 
-        InitDatabase init = new InitDatabase(super.dao.getDataSource(), "cadctest", schema);
+        InitDatabase init = new InitDatabase(super.dao.getDataSource(), null, schema);
         init.doInit();
     }
 }

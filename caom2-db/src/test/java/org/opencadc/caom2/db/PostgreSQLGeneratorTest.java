@@ -69,7 +69,6 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.db.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
@@ -91,7 +90,7 @@ public class PostgreSQLGeneratorTest {
     static String schema = "caom2";
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2.db", Level.DEBUG);
 
         String testSchema = UtilTest.getTestSchema();
         if (testSchema != null) {
@@ -99,7 +98,7 @@ public class PostgreSQLGeneratorTest {
         }
     }
 
-    PostgreSQLGenerator gen = new PostgreSQLGenerator("cadctest", schema);
+    PostgreSQLGenerator gen = new PostgreSQLGenerator(null, schema);
 
     //@Test
     public void testTemplate() {

@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.caom2.db.harvest;
 
@@ -80,20 +80,20 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.db.TestUtil;
 import org.opencadc.caom2.db.version.InitDatabase;
 
 /**
  *
  * @author pdowler
  */
-public class PostgresqlHarvestStateDAOTest
-{
+public class PostgresqlHarvestStateDAOTest {
+
     private static final Logger log = Logger.getLogger(PostgresqlHarvestStateDAOTest.class);
 
     static String schema = "caom2";
 
-    static
-    {
+    static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.harvester", Level.INFO);
     }
 
@@ -101,59 +101,47 @@ public class PostgresqlHarvestStateDAOTest
     String database;
 
     public PostgresqlHarvestStateDAOTest()
-        throws Exception
-    {
-        this.database = "cadctest";
+            throws Exception {
         DBConfig dbrc = new DBConfig();
-        ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
-        this.dataSource = DBUtil.getDataSource(cc);
+        ConnectionConfig cc = dbrc.getConnectionConfig(TestUtil.TEST_SERVER, TestUtil.TEST_DB);
+        this.dataSource = DBUtil.getDataSource(cc, true, true);
 
-        InitDatabase init = new InitDatabase(dataSource, "cadctest", schema);
+        InitDatabase init = new InitDatabase(dataSource, null, schema);
         init.doInit();
 
-        String sql = "DELETE FROM " + database + "." + schema + ".HarvestState";
+        String sql = "DELETE FROM " + schema + ".HarvestState";
         log.info("cleanup: " + sql);
         dataSource.getConnection().createStatement().execute(sql);
     }
 
     //@Test
-    public void testTemplate()
-    {
-        try
-        {
+    public void testTemplate() {
+        try {
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testGet()
-    {
-        try
-        {
+    public void testGet() {
+        try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testGet", Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertEquals("testGet", s.getSource());
             Assert.assertEquals(Integer.class.getName(), s.getEntityClassName());
             Assert.assertNull(s.curLastModified);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
-    public void testPutGetDelete()
-    {
-        try
-        {
+    public void testPutGetDelete() {
+        try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testGet", Integer.class.getName());
             Assert.assertNotNull(s);
@@ -161,7 +149,7 @@ public class PostgresqlHarvestStateDAOTest
             Assert.assertEquals(Integer.class.getName(), s.getEntityClassName());
             Assert.assertNull(s.curLastModified);
             Assert.assertNull(s.id); // not actually stored in DB
-            
+
             s.curLastModified = new Date();
             s.curID = UUID.randomUUID();
             dao.put(s);
@@ -172,13 +160,13 @@ public class PostgresqlHarvestStateDAOTest
             Assert.assertEquals(s.curID, actual.curID);
             Assert.assertEquals(s.curLastModified, actual.curLastModified);
             Assert.assertNotNull(s.id); // persisted
-            
+
             try {
                 dao.delete(s);
             } catch (IllegalArgumentException expected) {
                 log.info("caught expected: " + expected);
             }
-        
+
             dao.delete(actual);
             s = dao.get("testGet", Integer.class.getName());
             Assert.assertNotNull(s);
@@ -186,20 +174,15 @@ public class PostgresqlHarvestStateDAOTest
             Assert.assertEquals(Integer.class.getName(), s.getEntityClassName());
             Assert.assertNull(s.curLastModified);
             Assert.assertNull(s.id); // no longer stored in DB
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
 
     @Test
-    public void testInsertID()
-    {
-        try
-        {
+    public void testInsertID() {
+        try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertID", Integer.class.getName());
             Assert.assertNotNull(s);
@@ -212,19 +195,15 @@ public class PostgresqlHarvestStateDAOTest
             Assert.assertNotNull(s2);
             Assert.assertNull(s2.curLastModified);
             Assert.assertEquals(s.id, s2.id);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testInsertDate()
-    {
-        try
-        {
+    public void testInsertDate() {
+        try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testInsertDate", Integer.class.getName());
             Assert.assertEquals("testInsertDate", s.getSource());
@@ -237,19 +216,15 @@ public class PostgresqlHarvestStateDAOTest
             HarvestState s2 = dao.get("testInsertDate", Integer.class.getName());
             Assert.assertNotNull(s2);
             Assert.assertEquals(s.curLastModified, s2.curLastModified);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testUpdateID()
-    {
-        try
-        {
+    public void testUpdateID() {
+        try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateID", Integer.class.getName());
             Assert.assertNotNull(s);
@@ -271,19 +246,15 @@ public class PostgresqlHarvestStateDAOTest
             Assert.assertNull(s3.curLastModified);
             Assert.assertEquals(s.id, s3.id);
 
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testUpdateDate()
-    {
-        try
-        {
+    public void testUpdateDate() {
+        try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
             HarvestState s = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertEquals("testUpdateDate", s.getSource());
@@ -304,9 +275,7 @@ public class PostgresqlHarvestStateDAOTest
             HarvestState s3 = dao.get("testUpdateDate", Integer.class.getName());
             Assert.assertNotNull(s3);
             Assert.assertEquals(s.curLastModified, s3.curLastModified);
-        }
-        catch(Exception unexpected)
-        {
+        } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }

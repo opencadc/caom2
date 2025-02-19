@@ -583,7 +583,6 @@ public class SQLGenerator {
         sb.append(getObservationSelect(depth, skeleton));
         sb.append(" WHERE ");
         sb.append(alias);
-        // TODO: use uri column directly in future
         sb.append(".").append("uri").append(" = ").append(literal(uri));
         String orderBy = getOrderColumns(depth);
         if (skeleton) {
@@ -629,15 +628,11 @@ public class SQLGenerator {
     protected StringBuilder getSelectSQL(Class clz) {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
-        String[] cols = columnMap.get(clz);
-        for (int c = 0; c < cols.length; c++) {
-            if (c > 0) {
-                sb.append(",");
-            }
-            sb.append(cols[c]);
-        }
+        sb.append(getColumns(clz));
         sb.append(" FROM ");
         sb.append(getTable(clz));
+        sb.append(" AS ");
+        sb.append(getAlias(clz));
         
         return sb;
     }

@@ -99,7 +99,7 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest {
 
     static {
         log = Logger.getLogger(PostgresqlObservationDAOTest.class);
-        Log4jInit.setLevel("org.opencadc.caom2.db", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2.db", Level.DEBUG);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
 
@@ -111,10 +111,10 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest {
 
     public PostgresqlObservationDAOTest()
             throws Exception {
-        super(PostgreSQLGenerator.class, "CAOM2_PG_TEST", "cadctest", schema);
+        super(PostgreSQLGenerator.class, TestUtil.TEST_SERVER, TestUtil.TEST_DB, schema);
 
         log.info("calling InitDatabase...");
-        InitDatabase init = new InitDatabase(dao.getDataSource(), "cadctest", schema);
+        InitDatabase init = new InitDatabase(dao.getDataSource(), null, schema);
         init.doInit();
         log.info("calling InitDatabase... OK");
     }

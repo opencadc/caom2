@@ -77,7 +77,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opencadc.caom2.db.UtilTest;
+import org.opencadc.caom2.db.TestUtil;
 
 /**
  *
@@ -102,7 +102,7 @@ public class InitDatabaseTest {
             database = "cadctest";
 
             DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig("CAOM2_PG_TEST", database);
+            ConnectionConfig cc = dbrc.getConnectionConfig(TestUtil.TEST_SERVER, TestUtil.TEST_DB);
             dataSource = DBUtil.getDataSource(cc, true, false);
         } catch (Exception ex) {
             log.error("failed to init DataSource", ex);
@@ -114,7 +114,7 @@ public class InitDatabaseTest {
         try {
             // TODO: nuke all tables and re-create
             // for now: create || upgrade || idempotent
-            InitDatabase init = new InitDatabase(dataSource, database, schema);
+            InitDatabase init = new InitDatabase(dataSource, null, schema);
             init.doInit();
 
             // TODO: verify that tables were created with test queries
@@ -130,7 +130,7 @@ public class InitDatabaseTest {
         try {
             // TODO: create previous version  of tables and upgrade... sounds complicated
             // for now: create || upgrade || idempotent
-            InitDatabase init = new InitDatabase(dataSource, database, schema);
+            InitDatabase init = new InitDatabase(dataSource, null, schema);
             init.doInit();
 
             // TODO: verify that tables were created with test queries
