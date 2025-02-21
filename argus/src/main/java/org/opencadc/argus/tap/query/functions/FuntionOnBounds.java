@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,72 +62,69 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus;
+package org.opencadc.argus.tap.query.functions;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import javax.sql.DataSource;
-import org.apache.log4j.Logger;
-import org.opencadc.argus.tap.InitCaomTapSchemaContent;
+import java.util.List;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.schema.Column;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
- *
- * @author pdowler
+ * 
+ * @author zhangsa
+ * 
  */
-public class ArgusInitAction extends InitAction {
+public abstract class FuntionOnBounds extends Function
+{
+    // these values work for caom1 and caom2
+    public static String[] POSITION_BOUNDS = { "position_bounds", "s_region" };
+    public static String POSITION_BOUNDS_CENTER = "position_bounds_center";
+    public static String POSITION_BOUNDS_AREA = "position_bounds_area";
+    
+    protected Column column;
+    
+    protected boolean onPositionBounds = false;
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
-    
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
-        }
-        this.enableMaterialisedViews = enableMV;
+    public FuntionOnBounds(Function adqlFunction)
+    {
+        super();
+        setParameters(adqlFunction.getParameters());
+        convertParameters();
     }
 
-    @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
+    public void setOnPositionBounds(boolean onPositionBounds)
+    {
+        this.onPositionBounds = onPositionBounds;
+    }
 
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
+    public boolean isOnPositionBounds()
+    {
+        return onPositionBounds;
+    }
+
+    public Expression getExpression()
+    {
+        return column;
+    }
+    
+    @SuppressWarnings("unchecked")
+    protected void convertParameters()
+    {
+        List<Expression> expressions = getParameters().getExpressions();
+        Expression expression = expressions.get(0);
+        onPositionBounds = false;
+        if (expression instanceof Column)
+        {
+            column = (Column) expression;
+            String columnName = column.getColumnName();
+            for (String s : POSITION_BOUNDS)
+                onPositionBounds = onPositionBounds || columnName.equalsIgnoreCase(s);
         }
     }
+
 }

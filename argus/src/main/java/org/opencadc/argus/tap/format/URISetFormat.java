@@ -63,71 +63,58 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus;
+package org.opencadc.argus.tap.format;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import javax.sql.DataSource;
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.apache.log4j.Logger;
-import org.opencadc.argus.tap.InitCaomTapSchemaContent;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
  *
  * @author pdowler
  */
-public class ArgusInitAction extends InitAction {
+public class URISetFormat extends  AbstractResultSetFormat {
+    private static final Logger log = Logger.getLogger(URISetFormat.class);
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
-    
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
-        }
-        this.enableMaterialisedViews = enableMV;
+    private final String delim;
+
+    public URISetFormat(String delim) {
+        this.delim = delim;
     }
 
     @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
-
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
+    public Object extract(ResultSet rs, int i) throws SQLException {
+        // text[] to String[] to Set<URI>
+        // c&p from caom2-db:
+        Object o = rs.getObject(i);
+        if (o == null) {
+            return null;
         }
+        if (o instanceof Array) {
+            Array a = (Array) o;
+            String[] ao = (String[]) a.getArray();
+            return ao;
+        }
+        throw new IllegalStateException("unexpected jdbc type: " + o.getClass().getName());
+    }
+
+    @Override
+    public String format(Object o) {
+        if (o == null) {
+            return "";
+        }
+        String[] vals = (String[]) o;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < vals.length; i++) {
+            sb.append(vals[i]);
+            if (i + 1 < vals.length) {
+                sb.append(delim);
+            }
+        }
+        return sb.toString();
     }
 }

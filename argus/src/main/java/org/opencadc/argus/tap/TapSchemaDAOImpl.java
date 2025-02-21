@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,27 +62,39 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
  */
 
-package org.opencadc.argus;
+package org.opencadc.argus.tap;
 
-import ca.nrc.cadc.tap.BasicUploadManager;
-import ca.nrc.cadc.tap.upload.UploadLimits;
+import ca.nrc.cadc.tap.schema.FunctionDesc;
+import ca.nrc.cadc.tap.schema.TapDataType;
+import ca.nrc.cadc.tap.schema.TapSchemaDAO;
+import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class UploadManagerImpl extends BasicUploadManager {
+public class TapSchemaDAOImpl extends TapSchemaDAO {
 
-    private static final UploadLimits UPL;
+    private static final Logger log = Logger.getLogger(TapSchemaDAOImpl.class);
 
-    static {
-        UPL = new UploadLimits(32 * 1024L * 1024L); // 32 MiB
+    public TapSchemaDAOImpl() {
+        super();
     }
 
-    public UploadManagerImpl() {
-        super(UPL);
+    @Override
+    protected List<FunctionDesc> getFunctionDescs() {
+        List<FunctionDesc> ret = super.getFunctionDescs();
+
+        ret.add(new FunctionDesc("RANGE_S2D", new TapDataType("double", "4", "range")));
+        ret.add(new FunctionDesc("now", TapDataType.TIMESTAMP));
+        ret.add(new FunctionDesc("split_part", TapDataType.STRING));
+
+        return ret;
     }
 }

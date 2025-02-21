@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,72 +62,77 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
  */
 
-package org.opencadc.argus;
+package org.opencadc.argus.tap.format;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import javax.sql.DataSource;
+import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.postgresql.PgInterval;
+import ca.nrc.cadc.dali.util.DoubleIntervalArrayFormat;
+import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.apache.log4j.Logger;
-import org.opencadc.argus.tap.InitCaomTapSchemaContent;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
  *
  * @author pdowler
  */
-public class ArgusInitAction extends InitAction {
+public class IntervalFormat extends AbstractResultSetFormat {
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
-    
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
-        }
-        this.enableMaterialisedViews = enableMV;
+    private static final Logger log = Logger.getLogger(IntervalFormat.class);
+
+    private DoubleIntervalFormat fmt = new DoubleIntervalFormat();
+    private DoubleIntervalArrayFormat afmt = new DoubleIntervalArrayFormat();
+    private boolean intervalArray;
+
+    public IntervalFormat(boolean intervalArray) {
+        this.intervalArray = intervalArray;
     }
 
     @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
-
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
-        }
+    public Object extract(ResultSet resultSet, int columnIndex)
+            throws SQLException {
+        return resultSet.getString(columnIndex);
     }
+
+    @Override
+    public String format(Object object) {
+        if (object == null) {
+            return "";
+        }
+        if (object instanceof String) {
+            String s = (String) object;
+            log.debug("in: " + s);
+            PgInterval pgi = new PgInterval();
+            if (intervalArray) {
+                DoubleInterval[] i = pgi.getIntervalArray(s);
+                return afmt.format(i);
+            } else {
+                try {
+                    DoubleInterval i = pgi.getInterval(s);
+                    return fmt.format(i);
+                } catch (RuntimeException ex) {
+                    String msg = ex.getMessage();
+                    if (msg.startsWith("BUG:") && msg.endsWith("values for DoubleInterval")) {
+                        // work-around for some values that are interval[] in the 
+                        // caom2 energy_bounds and time_bounds columns
+                        DoubleInterval[] i = pgi.getIntervalArray(s);
+                        Double lb = i[0].getLower();
+                        Double ub = i[i.length - 1].getUpper();
+                        DoubleInterval val = new DoubleInterval(lb, ub);
+                        return fmt.format(val);
+                    }
+                    throw ex;
+                }
+            }
+        }
+        // this might help debugging more than a throw
+        return object.toString();
+    }
+
 }

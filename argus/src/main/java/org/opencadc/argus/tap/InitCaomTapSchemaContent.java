@@ -63,71 +63,70 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus;
+package org.opencadc.argus.tap;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
+import ca.nrc.cadc.db.version.InitDatabase;
+import java.net.URL;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
-import org.opencadc.argus.tap.InitCaomTapSchemaContent;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
- *
+ * This class automates adding/updating the description of CAOM tables and views
+ * in the tap_schema. This class assumes that it can re-use the tap_schema.ModelVersion
+ * table (usually created by InitDatabaseTS in cadc-tap-schema library) and does
+ * not try to create it.  The init includes base CAOM tables and IVOA views (ObsCore++),
+ * but <em>does not include</em> aggregate (simple or materialised) views. The service
+ * operator must create simple views manually or implement a mechanism to create and
+ * update materialised views periodically.
+ * 
  * @author pdowler
  */
-public class ArgusInitAction extends InitAction {
+public class InitCaomTapSchemaContent extends InitDatabase {
+    private static final Logger log = Logger.getLogger(InitCaomTapSchemaContent.class);
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
+    public static final String MODEL_NAME = "caom2-schema";
+    public static final String MODEL_VERSION = "2.5.0-d";
+
+    // the SQL is tightly coupled to cadc-tap-schema table names (for TAP-1.1)
+    static String[] BASE_SQL = new String[] {
+        "caom2.tap_schema_content11.sql",
+        //"ivoa.tap_schema_content11.sql"
+    };
+
+    // upgrade is normally the same as create since SQL is idempotent
+    static String[] BASE_EXTRA_SQL = new String[] {
+        "caom2.tap_schema_content11.sql",
+        //"caom2.tap_schema_content11-extra.sql",
+        //"ivoa.tap_schema_content11.sql"
+    };
     
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
+    /**
+     * Constructor. The schema argument is used to query the ModelVersion table
+     * as {schema}.ModelVersion.
+     * 
+     * @param dataSource connection with write permission to tap_schema tables
+     * @param database database name (should be null if not needed in SQL)
+     * @param schema schema name (usually tap_schema)
+     * @param extras add tap_schema content for extra tables (materialised views)
+     */
+    public InitCaomTapSchemaContent(DataSource dataSource, String database, String schema, boolean extras) {
+        // use MODELVERSION/extras so changing extras will cause a recreate
+        // eg 1.2.13/false <-> 1.2.13/true
+        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION + "/" + extras);
+        String[] src = BASE_SQL;
+        if (extras) {
+            src = BASE_EXTRA_SQL;
         }
-        this.enableMaterialisedViews = enableMV;
+        for (String s : src) {
+            createSQL.add(s);
+            upgradeSQL.add(s);
+        }
     }
-
+    
     @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
-
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
-        }
+    protected URL findSQL(String fname) {
+        return InitCaomTapSchemaContent.class.getClassLoader().getResource("sql/" + fname);
     }
 }

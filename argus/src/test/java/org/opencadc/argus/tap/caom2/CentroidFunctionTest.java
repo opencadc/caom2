@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2009.                            (c) 2009.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*
+*                                       
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*
+*                                       
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*
+*                                       
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*
+*                                       
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*
+*                                       
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,72 +62,105 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 4 $
+*
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus;
+package org.opencadc.argus.tap.caom2;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import javax.sql.DataSource;
+import org.opencadc.argus.tap.query.CaomRegionConverter;
+import ca.nrc.cadc.tap.TapQuery;
+import ca.nrc.cadc.tap.schema.TapSchema;
+import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.uws.Parameter;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
-import org.opencadc.argus.tap.InitCaomTapSchemaContent;
+import org.junit.Assert;
+import org.junit.Test;
+import org.opencadc.argus.tap.CaomAdqlQuery;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
+ * test predicate function converter in CAOM context
+ * 
+ * @author Sailor Zhang
  *
- * @author pdowler
  */
-public class ArgusInitAction extends InitAction {
+public class CentroidFunctionTest
+{
+    private static Logger log = Logger.getLogger(CentroidFunctionTest.class);
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
+    public String _query;
+    public String _expected = "";
+    public String _sql;
+
+    private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
     
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
-        }
-        this.enableMaterialisedViews = enableMV;
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.tap.caom", org.apache.log4j.Level.INFO);
     }
 
-    @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
-
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
+    private class TestQuery extends CaomAdqlQuery
+    {
+        protected void init()
+        {
+            super.navigatorList.add(new CaomRegionConverter(caomTapSchema));
         }
+    }
+
+    private void run()
+    {
+        try
+        {
+            Parameter para = new Parameter("QUERY", _query);
+            List<Parameter> paramList = new ArrayList<Parameter>();
+            paramList.add(para);
+
+            TapQuery tapQuery = new TestQuery();
+            TestUtil.job.getParameterList().addAll(paramList);
+            tapQuery.setJob(TestUtil.job);
+            _sql = tapQuery.getSQL();
+            log.info("    input: " + _query);
+            log.info("   result: " + _sql);
+        }
+        finally
+        {
+            TestUtil.job.getParameterList().clear();
+        }
+    }
+
+    private String prepareToCompare(String str)
+    {
+        String ret = str.trim();
+        ret = ret.replaceAll("\\s+", " ");
+        return ret.toLowerCase();
+    }
+
+    private void assertContain()
+    {
+        Assert.assertTrue(_sql.toLowerCase().indexOf(_expected.toLowerCase()) > 0);
+    }
+
+    @Test
+    public void testCentroidOnly()
+    {
+        _expected = "SELECT TOP 1 aa.position_bounds_center FROM caom2.Plane AS aa WHERE aa.position_bounds IS NOT NULL";
+        _expected = prepareToCompare(_expected);
+        _query = "select top 1 centroid(aa.position_bounds) from caom2.Plane aa where aa.position_bounds is not null";
+        run();
+        log.info(" expected: " + _expected);
+        Assert.assertEquals(_expected, prepareToCompare(_sql));
+    }
+
+    @Test
+    public void testCentroidCoords()
+    {
+        _expected = "SELECT TOP 1 degrees(long(position_bounds_center)), degrees(lat(position_bounds_center)) FROM caom2.Plane WHERE position_bounds IS NOT NULL";
+        _expected = prepareToCompare(_expected);
+        _query = "select top 1 coord1(centroid(position_bounds)), coord2(centroid(position_bounds)) from caom2.Plane where position_bounds is not null";
+        run();
+        log.info(" expected: " + _expected);
+        Assert.assertEquals(_expected, prepareToCompare(_sql));
     }
 }

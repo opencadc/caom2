@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,71 +67,82 @@
 ************************************************************************
  */
 
-package ca.nrc.cadc.tap.caom2;
+package org.opencadc.argus.tap.caom2;
 
+import org.opencadc.argus.tap.format.DataLinkURLFormat;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.net.NetUtil;
+import ca.nrc.cadc.util.Log4jInit;
+import static ca.nrc.cadc.uws.JobAttribute.JOB_ID;
 import java.net.URI;
 import java.net.URL;
-
+import java.security.PrivilegedExceptionAction;
+import javax.security.auth.Subject;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
-import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
-import ca.nrc.cadc.dali.util.Format;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
-import java.net.URISyntaxException;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * Formatter to handle converting a caom2.Artifact.uri to an accessURL.
  *
  * @author pdowler
  */
-public class ArtifactURI2URLFormat implements Format<Object> {
+public class DataLinkURLFormatterTest {
 
-    private static final Logger log = Logger.getLogger(ArtifactURI2URLFormat.class);
+    private static Logger log = Logger.getLogger(DataLinkURLFormatterTest.class);
 
-    private String jobID;
-    private CaomArtifactResolver caomArtifactResolver;
-
-    private ArtifactURI2URLFormat() {
+    static {
+        Log4jInit.setLevel("ca.nrc.cadc.tap.caom2", Level.INFO);
     }
 
-    public ArtifactURI2URLFormat(String jobID) {
-        if (jobID == null) {
-            throw new IllegalArgumentException("null jobID");
+    String columnID = "pubid";
+    URI uri = URI.create("ivo://opencadc.org/collection?product");
+
+    @Test
+    public final void testNull() {
+        log.debug("testNull");
+
+        try {
+            Subject s = new Subject();
+            s.getPublicCredentials().add(AuthMethod.ANON);
+            String surl = Subject.doAs(s, new FormatAction(null));
+            log.info("datalink URL: " + surl);
+            Assert.assertNotNull(surl);
+            Assert.assertEquals("", surl);
+        } catch (Exception unexpected) {
+            log.error("unexpected exception: ", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
-        this.jobID = jobID;
-        this.caomArtifactResolver = new CaomArtifactResolver();
-        caomArtifactResolver.setRunID(jobID);
     }
 
-    @Override
-    public Object parse(String s) {
-        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
+    @Test
+    public final void testNotNull() {
+        log.debug("testNotNull");
+
+        try {
+            Subject s = new Subject();
+            s.getPublicCredentials().add(AuthMethod.ANON);
+            String surl = Subject.doAs(s, new FormatAction(uri.toASCIIString()));
+            Assert.assertNotNull(surl);
+            log.info("datalink URL: " + surl);
+            Assert.assertEquals(uri.toASCIIString(), surl); // fall through
+        } catch (Exception unexpected) {
+            log.error("unexpected exception: ", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
     }
 
-    @Override
-    public String format(Object object) {
-        log.debug("format: " + object + "," + jobID);
-        if (object == null) {
-            return "";
-        }
-        if (object instanceof String) {
-            try {
-                URI uri = new URI((String) object);
-                return caomArtifactResolver.getURL(uri).toExternalForm();
-            } catch (URISyntaxException ex) {
-                throw new RuntimeException("invalid content: " + ArtifactURI2URLFormat.class.getCanonicalName()
-                        + " expects a storage URI ", ex);
-            } catch (Exception ex) {
-                throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
-                        + " expects a storage URI ", ex);
-            }
-        } else {
-            throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
-                    + " expects a (String) storage URI, got: " + object.getClass().getName());
+    private static class FormatAction implements PrivilegedExceptionAction<String> {
+
+        String val;
+
+        FormatAction(String val) {
+            this.val = val;
         }
 
+        public String run() throws Exception {
+            DataLinkURLFormat formatter = new DataLinkURLFormat();
+            return formatter.format(val);
+        }
     }
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -63,71 +63,104 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus;
+package org.opencadc.argus.tap.format;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import javax.sql.DataSource;
+
+import ca.nrc.cadc.stc.CoordPair;
+import ca.nrc.cadc.stc.Frame;
+import ca.nrc.cadc.stc.STC;
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
+import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
-import org.opencadc.argus.tap.InitCaomTapSchemaContent;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
- *
+ * Format a position_bounds value as xtype="region".
+ * 
  * @author pdowler
  */
-public class ArgusInitAction extends InitAction {
+public class PositionBoundsRegionFormat extends AbstractResultSetFormat {
+    private static final Logger log = Logger.getLogger(PositionBoundsRegionFormat.class);
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
+    private DoubleArrayFormat daf = new DoubleArrayFormat();
     
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
-        }
-        this.enableMaterialisedViews = enableMV;
+    public PositionBoundsRegionFormat() { 
     }
 
+    /**
+     * Takes a ResultSet and column index of the position_bounds_points
+     * and returns a polymorphic STC-S String.
+     *
+     * @param resultSet containing the position_bounds_points column.
+     * @param columnIndex index of the column in the ResultSet.
+     * @return STC Polygon
+     * @throws SQLException if there is an error accessing the ResultSet.
+     */
     @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
+    public Object extract(ResultSet resultSet, int columnIndex)
+            throws SQLException {
+        Object o = daf.extract(resultSet, columnIndex);
+        return getRegion(o);
+    }
 
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
+    /**
+     * Takes a String representation of the spoly
+     * and returns a STC-S Polygon String.
+     *
+     * @param object to format.
+     * @return STC-S Polygon String of the spoly.
+     * @throws IllegalArgumentException if the object is not a String, or if
+     * the String cannot be parsed.
+     */
+    @Override
+    public String format(Object object) {
+        if (object == null) {
+            return "";
         }
+        return STC.format((ca.nrc.cadc.stc.Region) object);
+    }
+
+    ca.nrc.cadc.stc.Region getRegion(Object object) {
+        if (object == null) {
+            return null;
+        }
+
+        if (object instanceof java.sql.Array) {
+            try {
+                java.sql.Array array = (java.sql.Array) object;
+                object = array.getArray();
+            } catch (SQLException e) {
+                throw new IllegalArgumentException("Error accessing array data for " + object.getClass().getCanonicalName(), e);
+            }
+        }
+
+        if (object instanceof Double[]) {
+            Double[] arr = (Double[]) object;
+            double[] tmp = new double[arr.length];
+            for (int i = 0; i < arr.length; i++) {
+                tmp[i] = arr[i]; // unbox
+            }
+            object = tmp;
+        }
+
+        if (object instanceof double[]) {
+            double[] coords = (double[]) object;
+            if (coords.length == 3) {
+                return new ca.nrc.cadc.stc.Circle(Frame.ICRS, null, null, coords[0], coords[1], coords[2]);
+            } else {
+                List<CoordPair> coordPairs = new ArrayList<CoordPair>();
+                for (int i = 0; i < coords.length; i += 2) {
+                    coordPairs.add(new CoordPair(coords[i], coords[i + 1]));
+                }
+                return new ca.nrc.cadc.stc.Polygon(Frame.ICRS, null, null, coordPairs);
+            }
+        }
+        
+        throw new IllegalArgumentException(object.getClass().getCanonicalName() + " not supported.");
     }
 }
