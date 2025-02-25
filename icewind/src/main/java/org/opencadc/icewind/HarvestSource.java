@@ -95,7 +95,7 @@ public class HarvestSource {
     }
 
     public URI getIdentifier(String collection) {
-        return URI.create(resourceID + "?" + collection);
+        return URI.create(resourceID + "?" + collection.replaceAll("\\?","&"));
     }
 
     @Override

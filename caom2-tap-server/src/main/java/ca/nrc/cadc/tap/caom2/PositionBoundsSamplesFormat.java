@@ -95,15 +95,11 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
 
     @Override
     public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
-        return daf.extract(resultSet, columnIndex);
-    }
-
-    @Override
-    public String format(Object o) {
-        if (o == null) {
-            return "";
+        double[] arr = (double[]) daf.extract(resultSet, columnIndex);
+        if (arr == null) {
+            return null;
         }
-        double[] arr = daf.unwrap(o);
+        
         MultiPolygon mp = new MultiPolygon();
         // caom2 MP has longitude,latitide,segmentType
         Polygon poly = new Polygon();
@@ -118,7 +114,20 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
                 poly.getVertices().add(new Point(cv1, cv2));
             }
         }
+        return mp;
+    }
+
+    @Override
+    public String format(Object o) {
+        if (o == null) {
+            return "";
+        }
         
-        return mpf.format(mp);
+        if (o instanceof MultiPolygon) {
+            MultiPolygon mp = (MultiPolygon) o;
+            return mpf.format(mp);
+        }
+        // might help debug
+        return o.toString();
     }
 }

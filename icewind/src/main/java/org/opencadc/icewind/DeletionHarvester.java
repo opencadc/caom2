@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2023.                            (c) 2023.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -76,16 +76,12 @@ import ca.nrc.cadc.caom2.harvester.state.HarvestState;
 import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.db.TransactionManager;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 
 /**
@@ -145,27 +141,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
         repoClient.setReadTimeout(120000);      // 2 min
         
         // destination
-        final String destDS = DEST_DATASOURCE_NAME;
         Map<String, Object> destConfig = getConfigDAO(dest);
-        try {
-            DataSource cur = null;
-            try {
-                cur = DBUtil.findJNDIDataSource(destDS);
-            } catch (NamingException notInitialized) {
-                log.info("JNDI DataSource not initialized yet... OK");
-            }
-            if (cur == null) {
-                ConnectionConfig destConnectionConfig = new ConnectionConfig(null, null,
-                    dest.getUsername(), dest.getPassword(), HarvestDestination.POSTGRESQL_DRIVER, dest.getJdbcUrl());
-                DBUtil.createJNDIDataSource(destDS, destConnectionConfig);
-            } else {
-                log.info("found DataSource: " + destDS + " -- re-using");
-            }
-        } catch (NamingException e) {
-            throw new IllegalStateException(String.format("Error creating destination JNDI datasource for %s reason: %s",
-                    dest, e.getMessage()));
-        }
-        destConfig.put("jndiDataSourceName", destDS);
         this.obsDAO = new ObservationDAO();
         obsDAO.setConfig(destConfig);
         this.txnManager = obsDAO.getTransactionManager();
@@ -174,7 +150,7 @@ public class DeletionHarvester extends Harvester implements Runnable {
         if (repoClient.isDelAvailable()) {
             ready = true;
         } else {
-            log.warn("Not available deletion endpoint in " + repoClient.toString());
+            log.warn("No available deletion endpoint in " + repoClient.toString());
         }
     }
 

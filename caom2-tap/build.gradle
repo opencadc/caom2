@@ -12,11 +12,11 @@ repositories {
 
 apply from: '../opencadc.gradle'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 
 group = 'org.opencadc'
 
-version = '1.8.2'
+version = '1.8.3'
 
 description = 'OpenCADC CAOM2 TAP client library'
 def git_url = 'https://github.com/opencadc/caom2'
