@@ -1,7 +1,6 @@
 configurations {
     checkstyleDep
     intTestImplementation.extendsFrom testImplementation
-    //intTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
@@ -17,13 +16,9 @@ checkstyle {
 }
 
 sourceSets {
-    test {
-        //resources.srcDirs += 'src/test/resources'
-    }
     intTest {
         java {
             compileClasspath += main.output + test.output
-            //runtimeClasspath += sourceSets.main.runtimeClasspath 
             runtimeClasspath += compileClasspath
         }
         resources.srcDirs += file('src/intTest/resources')

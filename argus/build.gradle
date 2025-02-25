@@ -29,7 +29,7 @@ sourceSets.test {
 }
 
 dependencies {
-    implementation 'org.opencadc:cadc-util:[1.6.1,2.0)'
+    implementation 'org.opencadc:cadc-util:[1.12.1,2.0)'
     implementation 'org.opencadc:cadc-registry:[1.5.0,)'
     implementation 'org.opencadc:cadc-gms:[1.0.0,)'
     implementation 'org.opencadc:cadc-dali:[1.2.12,)'

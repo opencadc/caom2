@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -68,6 +68,11 @@
 package org.opencadc.argus.tap.format;
 
 
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.dali.util.ShapeFormat;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
 import java.sql.ResultSet;
@@ -75,23 +80,45 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 /**
- * Format a position_bounds value as xtype="caom2:shape".
+ * Format a position_bounds value as xtype="shape".
  * 
  * @author pdowler
  */
 public class PositionBoundsShapeFormat extends AbstractResultSetFormat {
     private static final Logger log = Logger.getLogger(PositionBoundsShapeFormat.class);
 
-    private DoubleArrayFormat daf = new DoubleArrayFormat();
+    private final ShapeFormat sfmt = new ShapeFormat();
+    private final DoubleArrayFormat daf = new DoubleArrayFormat();
      
     public PositionBoundsShapeFormat() { 
     }
     
+    /**
+     * Takes a ResultSet and column index of the position_bounds_points
+     * and returns a polymorphic DALI shape value.
+     *
+     * @param resultSet containing the position_bounds_points column.
+     * @param columnIndex index of the column in the ResultSet.
+     * @return DALI Shape
+     * @throws SQLException if there is an error accessing the ResultSet.
+     */
     @Override
     public Object extract(ResultSet resultSet, int columnIndex)
             throws SQLException {
-        // extract and return double[]
-        return daf.extract(resultSet, columnIndex);
+        double[] dd = (double[]) daf.extract(resultSet, columnIndex);
+        if (dd.length == 3) {
+            return new Circle(new Point(dd[0], dd[1]), dd[2]);
+        } 
+        if (dd.length >= 6) {
+            Polygon poly = new Polygon();
+            for (int i = 0; i < dd.length; i += 2) {
+                Point p = new Point(dd[i], dd[i + 1]);
+                poly.getVertices().add(p);
+            }
+            return poly;
+        }
+        
+        throw new RuntimeException("CONTENT: unexpected position_bounds length: " + dd.length); 
     }
 
     @Override
@@ -99,22 +126,7 @@ public class PositionBoundsShapeFormat extends AbstractResultSetFormat {
         if (o == null) {
             return "";
         }
-
-        double[] dd = daf.unwrap(o);
-        StringBuilder sb = new StringBuilder();
-        
-        if (dd.length == 3) {
-            sb.append("circle ");
-        } else if (dd.length >= 6) {
-            sb.append("polygon ");
-        } else {
-            throw new RuntimeException("CONTENT: unexpected position_bounds length: " + dd.length); 
-        }
-
-        sb.append(daf.format(dd));
-        
-        return sb.toString();
+        Shape s = (Shape) o;
+        return sfmt.format(s);
     }
-    
-    
 }

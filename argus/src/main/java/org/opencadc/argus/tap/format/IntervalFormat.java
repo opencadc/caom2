@@ -70,16 +70,12 @@
 package org.opencadc.argus.tap.format;
 
 import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.util.DoubleIntervalArrayFormat;
 import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.db.mappers.JdbcMapUtil;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
