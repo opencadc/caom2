@@ -67,18 +67,18 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.EnergyBand;
-import ca.nrc.cadc.caom2.EnergyTransition;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.util.EnergyConverter;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Energy;
+import org.opencadc.caom2.EnergyBand;
+import org.opencadc.caom2.EnergyTransition;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.util.EnergyConverter;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.CoordBounds1D;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.WCSKeywords;

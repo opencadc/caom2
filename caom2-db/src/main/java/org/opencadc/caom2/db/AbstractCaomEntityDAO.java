@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.CaomEntity;
+import org.opencadc.caom2.CaomEntity;
 import org.opencadc.caom2.db.skel.Skeleton;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

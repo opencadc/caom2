@@ -67,7 +67,7 @@
 
 package org.opencadc.caom2.db.mappers;
 
-import ca.nrc.cadc.caom2.util.ObservationState;
+import org.opencadc.caom2.util.ObservationState;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.apache.log4j.Logger;

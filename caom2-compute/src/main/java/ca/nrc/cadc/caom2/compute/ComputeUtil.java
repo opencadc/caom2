@@ -67,8 +67,8 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Plane;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Plane;
 import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;

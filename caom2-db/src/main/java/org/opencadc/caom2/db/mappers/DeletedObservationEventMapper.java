@@ -67,8 +67,8 @@
 
 package org.opencadc.caom2.db.mappers;
 
-import ca.nrc.cadc.caom2.DeletedObservationEvent;
-import ca.nrc.cadc.caom2.util.CaomUtil;
+import org.opencadc.caom2.DeletedObservationEvent;
+import org.opencadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
 import java.sql.ResultSet;

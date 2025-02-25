@@ -67,7 +67,7 @@
 
 package org.opencadc.caom2.db.mappers;
 
-import ca.nrc.cadc.caom2.util.ObservationState;
+import org.opencadc.caom2.util.ObservationState;
 import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
 import java.sql.ResultSet;

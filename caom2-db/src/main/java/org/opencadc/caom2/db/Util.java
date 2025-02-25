@@ -69,10 +69,10 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
 import ca.nrc.cadc.db.mappers.JdbcMapUtil;
 import java.net.URI;
 import java.sql.ResultSet;

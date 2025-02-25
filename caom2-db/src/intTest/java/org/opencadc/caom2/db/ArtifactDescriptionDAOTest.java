@@ -69,9 +69,9 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.ArtifactDescription;
-import ca.nrc.cadc.caom2.DeletedArtifactDescriptionEvent;
-import ca.nrc.cadc.caom2.DeletedObservationEvent;
+import org.opencadc.caom2.ArtifactDescription;
+import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
+import org.opencadc.caom2.DeletedObservationEvent;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;

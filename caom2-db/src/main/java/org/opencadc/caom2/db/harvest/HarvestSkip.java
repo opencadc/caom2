@@ -69,8 +69,8 @@
 
 package org.opencadc.caom2.db.harvest;
 
-import ca.nrc.cadc.caom2.util.CaomUtil;
-import ca.nrc.cadc.caom2.util.CaomValidator;
+import org.opencadc.caom2.util.CaomUtil;
+import org.opencadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;

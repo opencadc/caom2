@@ -69,8 +69,8 @@ package org.opencadc.torkeep;
 
 
 import ca.nrc.cadc.auth.RunnableAction;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.SimpleObservation;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.SimpleObservation;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;

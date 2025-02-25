@@ -67,23 +67,23 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Position;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Position;
 import ca.nrc.cadc.caom2.compute.types.CartesianTransform;
 import ca.nrc.cadc.caom2.compute.types.IllegalPolygonException;
 import ca.nrc.cadc.caom2.compute.types.MultiPolygon;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
-import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
-import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
-import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
-import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.CoordAxis2D;
+import org.opencadc.caom2.wcs.CoordBounds2D;
+import org.opencadc.caom2.wcs.CoordCircle2D;
+import org.opencadc.caom2.wcs.CoordFunction2D;
+import org.opencadc.caom2.wcs.CoordPolygon2D;
+import org.opencadc.caom2.wcs.CoordRange2D;
+import org.opencadc.caom2.wcs.Dimension2D;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.ValueCoord2D;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.dali.MultiShape;

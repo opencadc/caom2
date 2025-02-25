@@ -69,8 +69,8 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.util.ObservationState;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.util.ObservationState;
 import ca.nrc.cadc.net.PreconditionFailedException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.rest.InlineContentHandler;

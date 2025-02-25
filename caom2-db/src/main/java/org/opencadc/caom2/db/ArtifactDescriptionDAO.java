@@ -67,7 +67,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.ArtifactDescription;
+import org.opencadc.caom2.ArtifactDescription;
 import ca.nrc.cadc.io.ResourceIterator;
 import java.net.URI;
 import java.util.Date;

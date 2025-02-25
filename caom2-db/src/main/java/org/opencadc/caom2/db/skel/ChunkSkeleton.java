@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2.db.skel;
 
-import ca.nrc.cadc.caom2.Chunk;
+import org.opencadc.caom2.Chunk;
 
 /**
  *

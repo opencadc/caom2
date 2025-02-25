@@ -67,7 +67,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.util.CaomUtil;
+import org.opencadc.caom2.util.CaomUtil;
 import java.security.MessageDigest;
 import java.util.Date;
 import java.util.UUID;

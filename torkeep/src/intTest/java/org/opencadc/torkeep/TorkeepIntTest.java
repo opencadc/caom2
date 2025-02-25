@@ -69,20 +69,20 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.CalibrationLevel;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Instrument;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationIntentType;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2.SimpleObservation;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.vocab.DataProductType;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.CalibrationLevel;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Instrument;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.ObservationIntentType;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.ReleaseType;
+import org.opencadc.caom2.SimpleObservation;
+import org.opencadc.caom2.util.CaomValidator;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.vocab.DataProductType;
+import org.opencadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.BufferedWriter;

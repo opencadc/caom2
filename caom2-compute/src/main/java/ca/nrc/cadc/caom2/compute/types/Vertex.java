@@ -69,7 +69,7 @@
 
 package ca.nrc.cadc.caom2.compute.types;
 
-import ca.nrc.cadc.caom2.util.CaomValidator;
+import org.opencadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.dali.Point;
 /**
  * internal code

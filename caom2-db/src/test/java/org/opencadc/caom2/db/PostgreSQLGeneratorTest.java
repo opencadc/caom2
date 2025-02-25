@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.Observation;
+import org.opencadc.caom2.Observation;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.text.DateFormat;

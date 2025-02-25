@@ -69,13 +69,13 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.DeletedArtifactDescriptionEvent;
-import ca.nrc.cadc.caom2.DeletedObservationEvent;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
+import org.opencadc.caom2.DeletedObservationEvent;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.util.UUID;

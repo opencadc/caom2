@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.Chunk;
+import org.opencadc.caom2.Chunk;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.db.skel.Skeleton;
 import org.opencadc.persist.Entity;

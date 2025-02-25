@@ -69,7 +69,7 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.util.ObservationState;
+import org.opencadc.caom2.util.ObservationState;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import java.net.URI;
 import org.apache.log4j.Logger;

@@ -67,19 +67,19 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.util.EnergyConverter;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.CustomWCS;
-import ca.nrc.cadc.caom2.wcs.ObservableAxis;
-import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.PolarizationState;
+import org.opencadc.caom2.util.EnergyConverter;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.CustomWCS;
+import org.opencadc.caom2.wcs.ObservableAxis;
+import org.opencadc.caom2.wcs.PolarizationWCS;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.InvalidPolygonException;

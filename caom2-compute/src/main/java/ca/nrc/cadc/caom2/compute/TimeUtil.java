@@ -67,15 +67,15 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.vocab.DataLinkSemantics;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Time;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.CoordBounds1D;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.dali.DoubleInterval;
 import java.util.ArrayList;
 import java.util.Arrays;

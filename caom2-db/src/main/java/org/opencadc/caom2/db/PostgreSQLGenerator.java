@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
+import org.opencadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.MultiShape;

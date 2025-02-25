@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2.db.skel;
 
-import ca.nrc.cadc.caom2.Part;
+import org.opencadc.caom2.Part;
 import java.util.ArrayList;
 import java.util.List;
 

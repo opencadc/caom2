@@ -69,9 +69,9 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.util.ObservationState;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.util.ObservationState;
+import org.opencadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.io.ResourceIterator;

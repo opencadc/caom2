@@ -69,8 +69,8 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Plane;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Plane;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;

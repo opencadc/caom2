@@ -69,13 +69,13 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.Plane;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
+import org.opencadc.caom2.util.CaomValidator;
+import org.opencadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;

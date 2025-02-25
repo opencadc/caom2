@@ -69,16 +69,16 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds2D;
-import ca.nrc.cadc.caom2.wcs.CoordCircle2D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
-import ca.nrc.cadc.caom2.wcs.CoordPolygon2D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.caom2.wcs.ValueCoord2D;
 
+import org.opencadc.caom2.wcs.CoordBounds1D;
+import org.opencadc.caom2.wcs.CoordBounds2D;
+import org.opencadc.caom2.wcs.CoordCircle2D;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordFunction2D;
+import org.opencadc.caom2.wcs.CoordPolygon2D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.CoordRange2D;
+import org.opencadc.caom2.wcs.ValueCoord2D;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
