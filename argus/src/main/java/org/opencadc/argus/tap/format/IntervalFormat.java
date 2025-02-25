@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,9 +73,13 @@ import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.util.DoubleIntervalArrayFormat;
 import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.db.mappers.JdbcMapUtil;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
@@ -97,7 +101,24 @@ public class IntervalFormat extends AbstractResultSetFormat {
     @Override
     public Object extract(ResultSet resultSet, int columnIndex)
             throws SQLException {
-        return resultSet.getString(columnIndex);
+        // extract Interval or Interval[]
+        double[] a = JdbcMapUtil.getDoubleArray(resultSet, columnIndex);
+        if (a == null) {
+            return null;
+        }
+        if (intervalArray) {
+            DoubleInterval[] ret = new DoubleInterval[a.length / 2];
+            for (int i = 0; i < a.length; i += 2) {
+                double lb = a[i];
+                double ub = a[i + 1];
+                ret[i / 2] = new DoubleInterval(lb, ub);
+            }
+            return ret;
+        }
+        if (a.length == 2) {
+            return new DoubleInterval(a[0], a[1]);
+        }
+        throw new IllegalStateException("array length " + a.length + " invalid for Interval");
     }
 
     @Override
@@ -105,31 +126,13 @@ public class IntervalFormat extends AbstractResultSetFormat {
         if (object == null) {
             return "";
         }
-        if (object instanceof String) {
-            String s = (String) object;
-            log.debug("in: " + s);
-            PgInterval pgi = new PgInterval();
-            if (intervalArray) {
-                DoubleInterval[] i = pgi.getIntervalArray(s);
-                return afmt.format(i);
-            } else {
-                try {
-                    DoubleInterval i = pgi.getInterval(s);
-                    return fmt.format(i);
-                } catch (RuntimeException ex) {
-                    String msg = ex.getMessage();
-                    if (msg.startsWith("BUG:") && msg.endsWith("values for DoubleInterval")) {
-                        // work-around for some values that are interval[] in the 
-                        // caom2 energy_bounds and time_bounds columns
-                        DoubleInterval[] i = pgi.getIntervalArray(s);
-                        Double lb = i[0].getLower();
-                        Double ub = i[i.length - 1].getUpper();
-                        DoubleInterval val = new DoubleInterval(lb, ub);
-                        return fmt.format(val);
-                    }
-                    throw ex;
-                }
-            }
+        if (object instanceof DoubleInterval) {
+            DoubleInterval di = (DoubleInterval) object;
+            return fmt.format(di);
+        }
+        if (object instanceof DoubleInterval[]) {
+            DoubleInterval[] di = (DoubleInterval[]) object;
+            return afmt.format(di);
         }
         // this might help debugging more than a throw
         return object.toString();
