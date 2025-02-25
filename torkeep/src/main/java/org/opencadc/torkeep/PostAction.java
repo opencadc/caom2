@@ -127,19 +127,17 @@ public class PostAction extends RepoAction {
         ObservationState s = null;
         try {
             // TODO: start txn
+            // TODO: obtain lock and check vs state here
+            s = dao.getState(obs.getID());
+            if (s == null) {
+                throw new ResourceNotFoundException("not found: observation " + obs.getID() + " aka " + obs.getURI()); 
+            }
+
             if (expectedMetaChecksum != null) {
-                // TODO: obtain lock and check vs state here
-                s = dao.getState(obs.getID());
-                if (s != null && !s.accMetaChecksum.equals(expectedMetaChecksum)) {
+                if (!s.accMetaChecksum.equals(expectedMetaChecksum)) {
                     throw new PreconditionFailedException(obs.getURI() + " checksum " + s.accMetaChecksum 
                             + " does not match condition " + expectedMetaChecksum);
                 }
-            } else {
-                s = dao.getState(obs.getID());
-                
-            }
-            if (s == null) {
-                throw new ResourceNotFoundException("not found: " + uri);
             }
 
             assignPublisherID(obs);
@@ -147,6 +145,9 @@ public class PostAction extends RepoAction {
             dao.put(obs);
             // TODO: commit txn
         } catch (PreconditionFailedException ex) {
+            // TODO: rollback
+            throw ex;
+        } catch (ResourceNotFoundException ex) {
             // TODO: rollback
             throw ex;
         } catch (Exception ex) {
