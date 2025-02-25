@@ -69,30 +69,22 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.db.mappers.TimestampRowMapper;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.db.DatabaseTransactionManager;
 import ca.nrc.cadc.db.TransactionManager;
-import java.io.IOException;
+import ca.nrc.cadc.db.mappers.TimestampRowMapper;
 import java.lang.reflect.Constructor;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
-import java.util.TreeMap;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Base DAO class with common setup.

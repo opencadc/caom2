@@ -69,12 +69,12 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.Chunk;
 import ca.nrc.cadc.caom2.Observation;
 import ca.nrc.cadc.caom2.Part;
 import ca.nrc.cadc.caom2.Plane;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.util.ObservationState;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ResourceIterator;
@@ -88,6 +88,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import org.opencadc.caom2.db.skel.ArtifactSkeleton;
 import org.opencadc.caom2.db.skel.ChunkSkeleton;
 import org.opencadc.caom2.db.skel.ObservationSkeleton;
@@ -558,8 +559,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
     private void updateEntity(Observation entity, ObservationSkeleton s, Date now) {
         if (origin && s != null) {
             // keep timestamps from database
-            Util.assignLastModified(entity, s.lastModified, "lastModified");
-            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(entity, s.lastModified, "lastModified");
+            CaomUtil.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         // check for added or modified
@@ -577,8 +578,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
         // new or changed
         MessageDigest digest = getDigest();
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
         if (s == null || s.metaChecksum == null) {
@@ -587,7 +588,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
-            Util.assignLastModified(entity, now, "lastModified");
+            CaomUtil.assignLastModified(entity, now, "lastModified");
         }
 
         boolean accDelta = false;
@@ -597,14 +598,14 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
         }
         if (accDelta && (origin || entity.getMaxLastModified() == null)) {
-            Util.assignLastModified(entity, now, "maxLastModified");
+            CaomUtil.assignLastModified(entity, now, "maxLastModified");
         }
     }
 
     private void updateEntity(Plane entity, PlaneSkeleton s, Date now) {
         if (origin && s != null) {
-            Util.assignLastModified(entity, s.lastModified, "lastModified");
-            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(entity, s.lastModified, "lastModified");
+            CaomUtil.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         for (Artifact artifact : entity.getArtifacts()) {
@@ -621,8 +622,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
         // new or changed
         MessageDigest digest = getDigest();
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
         if (s == null || s.metaChecksum == null) {
@@ -631,7 +632,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
-            Util.assignLastModified(entity, now, "lastModified");
+            CaomUtil.assignLastModified(entity, now, "lastModified");
         }
 
         boolean accDelta = false;
@@ -641,14 +642,14 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
         }
         if (accDelta && (origin || entity.getMaxLastModified() == null)) {
-            Util.assignLastModified(entity, now, "maxLastModified");
+            CaomUtil.assignLastModified(entity, now, "maxLastModified");
         }
     }
 
     private void updateEntity(Artifact entity, ArtifactSkeleton s, Date now) {
         if (origin && s != null) {
-            Util.assignLastModified(entity, s.lastModified, "lastModified");
-            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(entity, s.lastModified, "lastModified");
+            CaomUtil.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         for (Part part : entity.getParts()) {
@@ -665,8 +666,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
         // new or changed
         MessageDigest digest = getDigest();
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
         if (s == null || s.metaChecksum == null) {
@@ -675,7 +676,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
-            Util.assignLastModified(entity, now, "lastModified");
+            CaomUtil.assignLastModified(entity, now, "lastModified");
         }
 
         boolean accDelta = false;
@@ -685,14 +686,14 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
         }
         if (accDelta && (origin || entity.getMaxLastModified() == null)) {
-            Util.assignLastModified(entity, now, "maxLastModified");
+            CaomUtil.assignLastModified(entity, now, "maxLastModified");
         }
     }
 
     private void updateEntity(Part entity, PartSkeleton s, Date now) {
         if (origin && s != null) {
-            Util.assignLastModified(entity, s.lastModified, "lastModified");
-            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(entity, s.lastModified, "lastModified");
+            CaomUtil.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         for (Chunk chunk : entity.getChunks()) {
@@ -717,8 +718,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
         // new or changed
         MessageDigest digest = getDigest();
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
         if (s == null || s.metaChecksum == null) {
@@ -727,7 +728,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
-            Util.assignLastModified(entity, now, "lastModified");
+            CaomUtil.assignLastModified(entity, now, "lastModified");
         }
 
         boolean accDelta = false;
@@ -737,20 +738,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
         }
         if (accDelta && (origin || entity.getMaxLastModified() == null)) {
-            Util.assignLastModified(entity, now, "maxLastModified");
+            CaomUtil.assignLastModified(entity, now, "maxLastModified");
         }
     }
 
     private void updateEntity(Chunk entity, ChunkSkeleton s, Date now) {
         if (origin && s != null) {
-            Util.assignLastModified(entity, s.lastModified, "lastModified");
-            Util.assignLastModified(entity, s.maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(entity, s.lastModified, "lastModified");
+            CaomUtil.assignLastModified(entity, s.maxLastModified, "maxLastModified");
         }
 
         // new or changed
         MessageDigest digest = getDigest();
-        Util.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
-        Util.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeMetaChecksum(digest), "metaChecksum");
+        CaomUtil.assignMetaChecksum(entity, entity.computeAccMetaChecksum(digest), "accMetaChecksum");
 
         boolean delta = false;
         if (s == null || s.metaChecksum == null) {
@@ -759,7 +760,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             delta = !entity.getMetaChecksum().equals(s.metaChecksum);
         }
         if (delta && (origin || entity.getLastModified() == null)) {
-            Util.assignLastModified(entity, now, "lastModified");
+            CaomUtil.assignLastModified(entity, now, "lastModified");
         }
 
         boolean accDelta = false;
@@ -769,7 +770,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
             accDelta = !entity.getAccMetaChecksum().equals(s.accMetaChecksum);
         }
         if (accDelta && (origin || entity.getMaxLastModified() == null)) {
-            Util.assignLastModified(entity, now, "maxLastModified");
+            CaomUtil.assignLastModified(entity, now, "maxLastModified");
         }
     }
 }

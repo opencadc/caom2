@@ -704,15 +704,15 @@ public abstract class AbstractObservationDAOTest {
                 testEqual(orig, ret1);
 
                 // the lastModified timestamps are maintained by the DAO, so lets set them to null here
-                Util.assignLastModified(ret1, null, "lastModified");
+                CaomUtil.assignLastModified(ret1, null, "lastModified");
                 for (Plane p : ret1.getPlanes()) {
-                    Util.assignLastModified(p, null, "lastModified");
+                    CaomUtil.assignLastModified(p, null, "lastModified");
                     for (Artifact a : p.getArtifacts()) {
-                        Util.assignLastModified(a, null, "lastModified");
+                        CaomUtil.assignLastModified(a, null, "lastModified");
                         for (Part pa : a.getParts()) {
-                            Util.assignLastModified(pa, null, "lastModified");
+                            CaomUtil.assignLastModified(pa, null, "lastModified");
                             for (Chunk c : pa.getChunks()) {
-                                Util.assignLastModified(c, null, "lastModified");
+                                CaomUtil.assignLastModified(c, null, "lastModified");
                             }
                         }
                     }
@@ -752,15 +752,15 @@ public abstract class AbstractObservationDAOTest {
                 if (i > 1) {
                     // test setting lastModified on observation when it is only force-updated for maxLastModified
                     // the lastModified timestamps are maintained by the DAO, so lets set them to null here
-                    Util.assignLastModified(ret1, null, "lastModified");
+                    CaomUtil.assignLastModified(ret1, null, "lastModified");
                     for (Plane p : ret1.getPlanes()) {
-                        Util.assignLastModified(p, null, "lastModified");
+                        CaomUtil.assignLastModified(p, null, "lastModified");
                         for (Artifact a : p.getArtifacts()) {
-                            Util.assignLastModified(a, null, "lastModified");
+                            CaomUtil.assignLastModified(a, null, "lastModified");
                             for (Part pa : a.getParts()) {
-                                Util.assignLastModified(pa, null, "lastModified");
+                                CaomUtil.assignLastModified(pa, null, "lastModified");
                                 for (Chunk c : pa.getChunks()) {
-                                    Util.assignLastModified(c, null, "lastModified");
+                                    CaomUtil.assignLastModified(c, null, "lastModified");
                                 }
                             }
                         }
@@ -936,7 +936,7 @@ public abstract class AbstractObservationDAOTest {
             log.info("verified: " + c);
 
             Observation simp = new SimpleObservation(comp.getCollection(), comp.getURI(), SimpleObservation.EXPOSURE);
-            Util.assignID(simp, comp.getID());
+            CaomUtil.assignID(simp, comp.getID());
 
             log.debug("put: simp");
             dao.put(simp);
@@ -966,11 +966,12 @@ public abstract class AbstractObservationDAOTest {
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             TransactionManager txnManager = dao.getTransactionManager();
-            if (txnManager.isOpen())
+            if (txnManager.isOpen()) {
                 try {
-                txnManager.rollbackTransaction();
-            } catch (Throwable t) {
-                log.error("failed to rollback transaction", t);
+                    txnManager.rollbackTransaction();
+                } catch (Throwable t) {
+                    log.error("failed to rollback transaction", t);
+                }
             }
             Assert.fail("unexpected exception: " + unexpected);
         }
@@ -1814,25 +1815,25 @@ public abstract class AbstractObservationDAOTest {
         
         ret.getPlanes().addAll(orig.getPlanes());
         for (Plane p : ret.getPlanes()) {
-            Util.assignLastModified(p, null, "lastModified");
-            Util.assignLastModified(p, null, "maxLastModified");
-            Util.assignMetaChecksum(p, null, "metaChecksum");
-            Util.assignMetaChecksum(p, null, "accMetaChecksum");
+            CaomUtil.assignLastModified(p, null, "lastModified");
+            CaomUtil.assignLastModified(p, null, "maxLastModified");
+            CaomUtil.assignMetaChecksum(p, null, "metaChecksum");
+            CaomUtil.assignMetaChecksum(p, null, "accMetaChecksum");
             for (Artifact a : p.getArtifacts()) {
-                Util.assignLastModified(a, null, "lastModified");
-                Util.assignLastModified(a, null, "maxLastModified");
-                Util.assignMetaChecksum(a, null, "metaChecksum");
-                Util.assignMetaChecksum(a, null, "accMetaChecksum");
+                CaomUtil.assignLastModified(a, null, "lastModified");
+                CaomUtil.assignLastModified(a, null, "maxLastModified");
+                CaomUtil.assignMetaChecksum(a, null, "metaChecksum");
+                CaomUtil.assignMetaChecksum(a, null, "accMetaChecksum");
                 for (Part part : a.getParts()) {
-                    Util.assignLastModified(part, null, "lastModified");
-                    Util.assignLastModified(part, null, "maxLastModified");
-                    Util.assignMetaChecksum(part, null, "metaChecksum");
-                    Util.assignMetaChecksum(part, null, "accMetaChecksum");
+                    CaomUtil.assignLastModified(part, null, "lastModified");
+                    CaomUtil.assignLastModified(part, null, "maxLastModified");
+                    CaomUtil.assignMetaChecksum(part, null, "metaChecksum");
+                    CaomUtil.assignMetaChecksum(part, null, "accMetaChecksum");
                     for (Chunk c : part.getChunks()) {
-                        Util.assignLastModified(c, null, "lastModified");
-                        Util.assignLastModified(c, null, "maxLastModified");
-                        Util.assignMetaChecksum(c, null, "metaChecksum");
-                        Util.assignMetaChecksum(c, null, "accMetaChecksum");
+                        CaomUtil.assignLastModified(c, null, "lastModified");
+                        CaomUtil.assignLastModified(c, null, "maxLastModified");
+                        CaomUtil.assignMetaChecksum(c, null, "metaChecksum");
+                        CaomUtil.assignMetaChecksum(c, null, "accMetaChecksum");
                     }
                     if (depth < 5) {
                         part.getChunks().clear();

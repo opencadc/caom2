@@ -75,7 +75,6 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
-import org.apache.log4j.Logger;
 import org.opencadc.caom2.db.Util;
 import org.springframework.jdbc.core.RowMapper;
 

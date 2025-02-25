@@ -68,6 +68,7 @@
 package org.opencadc.caom2.db.mappers;
 
 import ca.nrc.cadc.caom2.DeletedObservationEvent;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
 import java.sql.ResultSet;
@@ -105,8 +106,8 @@ public class DeletedObservationEventMapper implements RowMapper<DeletedObservati
         UUID id = Util.getUUID(rs, col++);
         DeletedObservationEvent ret = new DeletedObservationEvent(id, uri);
         ret.metaProducer = metaProducer;
-        Util.assignLastModified(ret, lastModified, "lastModified");
-        Util.assignMetaChecksum(ret, metaChecksum, "metaChecksum");
+        CaomUtil.assignLastModified(ret, lastModified, "lastModified");
+        CaomUtil.assignMetaChecksum(ret, metaChecksum, "metaChecksum");
         log.debug("found: " + ret);
         return ret;
     }

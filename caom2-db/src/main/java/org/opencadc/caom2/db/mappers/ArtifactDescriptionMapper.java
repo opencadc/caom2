@@ -68,6 +68,7 @@
 package org.opencadc.caom2.db.mappers;
 
 import ca.nrc.cadc.caom2.ArtifactDescription;
+import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
 import java.sql.ResultSet;
@@ -104,15 +105,15 @@ public class ArtifactDescriptionMapper implements RowMapper<ArtifactDescription>
         ArtifactDescription ret = new ArtifactDescription(uri, description);
 
         Date lastModified = Util.getDate(rs, col++, utcCalendar);
-        Util.assignLastModified(ret, lastModified, "lastModified");
+        CaomUtil.assignLastModified(ret, lastModified, "lastModified");
 
         URI metaChecksum = Util.getURI(rs, col++);
-        Util.assignMetaChecksum(ret, metaChecksum, "metaChecksum");
+        CaomUtil.assignMetaChecksum(ret, metaChecksum, "metaChecksum");
 
         ret.metaProducer = Util.getURI(rs, col++);
 
         UUID id = Util.getUUID(rs, col++);
-        Util.assignID(ret, id);
+        CaomUtil.assignID(ret, id);
 
         log.debug("found: " + ret);
         return ret;

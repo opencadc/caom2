@@ -69,8 +69,6 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.db.mappers.TimestampRowMapper;
-import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import ca.nrc.cadc.caom2.Algorithm;
 import ca.nrc.cadc.caom2.Artifact;
 import ca.nrc.cadc.caom2.ArtifactDescription;
@@ -138,8 +136,8 @@ import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.db.mappers.TimestampRowMapper;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -160,6 +158,7 @@ import org.apache.log4j.Logger;
 import org.opencadc.caom2.db.mappers.ArtifactDescriptionMapper;
 import org.opencadc.caom2.db.mappers.DeletedArtifactDescriptionEventMapper;
 import org.opencadc.caom2.db.mappers.DeletedObservationEventMapper;
+import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateMapper;
 import org.opencadc.caom2.db.skel.ArtifactSkeleton;
@@ -1766,7 +1765,7 @@ public class SQLGenerator {
 
             //polarization
             if (plane.polarization != null) {
-                safeSetString(sb, ps, col++, Util.encodeStates(plane.polarization.getStates()));
+                safeSetString(sb, ps, col++, CaomUtil.encodeStates(plane.polarization.getStates()));
                 safeSetInteger(sb, ps, col++, plane.polarization.dimension);
             } else {
                 safeSetString(sb, ps, col++, null);
@@ -2068,7 +2067,7 @@ public class SQLGenerator {
                 col += safeSet(sb, ps, col, chunk.position.getAxis().range);
 
                 // bounds
-                safeSetString(sb, ps, col++, Util.encodeCoordBounds2D(chunk.position.getAxis().bounds));
+                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds2D(chunk.position.getAxis().bounds));
 
                 // function
                 col += safeSet(sb, ps, col, chunk.position.getAxis().function);
@@ -2111,7 +2110,7 @@ public class SQLGenerator {
                 //range
                 col += safeSet(sb, ps, col, chunk.energy.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.energy.getAxis().bounds));
+                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.energy.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.energy.getAxis().function);
 
@@ -2173,7 +2172,7 @@ public class SQLGenerator {
                 //range
                 col += safeSet(sb, ps, col, chunk.time.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.time.getAxis().bounds));
+                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.time.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.time.getAxis().function);
                 // other fields
@@ -2214,7 +2213,7 @@ public class SQLGenerator {
                 //range
                 col += safeSet(sb, ps, col, chunk.polarization.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.polarization.getAxis().bounds));
+                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.polarization.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.polarization.getAxis().function);
             } else {
@@ -2244,7 +2243,7 @@ public class SQLGenerator {
                 //range
                 col += safeSet(sb, ps, col, chunk.custom.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, Util.encodeCoordBounds1D(chunk.custom.getAxis().bounds));
+                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.custom.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.custom.getAxis().function);
             } else {
@@ -3151,18 +3150,18 @@ public class SQLGenerator {
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            Util.assignLastModified(o, lastModified, "lastModified");
-            Util.assignLastModified(o, maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(o, lastModified, "lastModified");
+            CaomUtil.assignLastModified(o, maxLastModified, "maxLastModified");
 
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
-            Util.assignMetaChecksum(o, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(o, accMetaChecksum, "accMetaChecksum");
+            CaomUtil.assignMetaChecksum(o, metaChecksum, "metaChecksum");
+            CaomUtil.assignMetaChecksum(o, accMetaChecksum, "accMetaChecksum");
             o.metaProducer = Util.getURI(rs, col++);
 
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: observation.id = " + id);
-            Util.assignID(o, id);
+            CaomUtil.assignID(o, id);
 
             return o;
         }
@@ -3393,7 +3392,7 @@ public class SQLGenerator {
             log.debug("polarization.states: " + polStr);
             if (polStr != null) {
                 p.polarization = new Polarization();
-                Util.decodeStates(polStr, p.polarization.getStates());
+                CaomUtil.decodeStates(polStr, p.polarization.getStates());
                 p.polarization.dimension = Util.getInteger(rs, col++);
                 log.debug("polarization.dimension: " + p.polarization.dimension);
             } else {
@@ -3432,18 +3431,18 @@ public class SQLGenerator {
             
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            Util.assignLastModified(p, lastModified, "lastModified");
-            Util.assignLastModified(p, maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(p, lastModified, "lastModified");
+            CaomUtil.assignLastModified(p, maxLastModified, "maxLastModified");
 
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
-            Util.assignMetaChecksum(p, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
+            CaomUtil.assignMetaChecksum(p, metaChecksum, "metaChecksum");
+            CaomUtil.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
             p.metaProducer = Util.getURI(rs, col++);
 
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: plane.id = " + id);
-            Util.assignID(p, id);
+            CaomUtil.assignID(p, id);
 
             return p;
         }
@@ -3517,18 +3516,18 @@ public class SQLGenerator {
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            Util.assignLastModified(a, lastModified, "lastModified");
-            Util.assignLastModified(a, maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(a, lastModified, "lastModified");
+            CaomUtil.assignLastModified(a, maxLastModified, "maxLastModified");
 
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
-            Util.assignMetaChecksum(a, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(a, accMetaChecksum, "accMetaChecksum");
+            CaomUtil.assignMetaChecksum(a, metaChecksum, "metaChecksum");
+            CaomUtil.assignMetaChecksum(a, accMetaChecksum, "accMetaChecksum");
             a.metaProducer = Util.getURI(rs, col++);
 
             UUID id = Util.getUUID(rs, col++);
             log.debug("found artifact.id = " + id);
-            Util.assignID(a, id);
+            CaomUtil.assignID(a, id);
 
             return a;
         }
@@ -3588,18 +3587,18 @@ public class SQLGenerator {
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            Util.assignLastModified(p, lastModified, "lastModified");
-            Util.assignLastModified(p, maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(p, lastModified, "lastModified");
+            CaomUtil.assignLastModified(p, maxLastModified, "maxLastModified");
 
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
-            Util.assignMetaChecksum(p, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
+            CaomUtil.assignMetaChecksum(p, metaChecksum, "metaChecksum");
+            CaomUtil.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
             p.metaProducer = Util.getURI(rs, col++);
             
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: part.id = " + id);
-            Util.assignID(p, id);
+            CaomUtil.assignID(p, id);
 
             return p;
         }
@@ -3681,7 +3680,7 @@ public class SQLGenerator {
                         new Coord2D(new RefCoord(start1pix, start1val), new RefCoord(start2pix, start2val)),
                         new Coord2D(new RefCoord(end1pix, end1val), new RefCoord(end2pix, end2val)));
             }
-            CoordBounds2D posbounds = Util.decodeCoordBounds2D(rs.getString(col++));
+            CoordBounds2D posbounds = CaomUtil.decodeCoordBounds2D(rs.getString(col++));
             CoordFunction2D posfunction = null; //Util.decodeCoordFunction2D(rs.getString(col++));
             Long naxis1 = Util.getLong(rs, col++);
             Long naxis2 = Util.getLong(rs, col++);
@@ -3733,7 +3732,7 @@ public class SQLGenerator {
                 enrange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
             }
 
-            CoordBounds1D enbounds = Util.decodeCoordBounds1D(rs.getString(col++));
+            CoordBounds1D enbounds = CaomUtil.decodeCoordBounds1D(rs.getString(col++));
             CoordFunction1D enfunction = null; //Util.decodeCoordFunction1D(rs.getString(col++));
             Long naxis = Util.getLong(rs, col++);
             Double pix = Util.getDouble(rs, col++);
@@ -3791,7 +3790,7 @@ public class SQLGenerator {
                 trange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
             }
 
-            CoordBounds1D tbounds = Util.decodeCoordBounds1D(rs.getString(col++));
+            CoordBounds1D tbounds = CaomUtil.decodeCoordBounds1D(rs.getString(col++));
             CoordFunction1D tfunction = null; // Util.decodeCoordFunction1D(rs.getString(col++));
             naxis = Util.getLong(rs, col++);
             pix = Util.getDouble(rs, col++);
@@ -3836,7 +3835,7 @@ public class SQLGenerator {
                 prange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
             }
 
-            CoordBounds1D pbounds = Util.decodeCoordBounds1D(rs.getString(col++));
+            CoordBounds1D pbounds = CaomUtil.decodeCoordBounds1D(rs.getString(col++));
             CoordFunction1D pfunction = null; // Util.decodeCoordFunction1D(rs.getString(col++));
             naxis = Util.getLong(rs, col++);
             pix = Util.getDouble(rs, col++);
@@ -3871,7 +3870,7 @@ public class SQLGenerator {
                 crange = new CoordRange1D(new RefCoord(pix1, val1), new RefCoord(pix2, val2));
             }
 
-            CoordBounds1D cbounds = Util.decodeCoordBounds1D(rs.getString(col++));
+            CoordBounds1D cbounds = CaomUtil.decodeCoordBounds1D(rs.getString(col++));
             CoordFunction1D cfunction = null; // Util.decodeCoordFunction1D(rs.getString(col++));
             naxis = Util.getLong(rs, col++);
             pix = Util.getDouble(rs, col++);
@@ -3913,18 +3912,18 @@ public class SQLGenerator {
 
             Date lastModified = Util.getDate(rs, col++, utcCalendar);
             Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            Util.assignLastModified(c, lastModified, "lastModified");
-            Util.assignLastModified(c, maxLastModified, "maxLastModified");
+            CaomUtil.assignLastModified(c, lastModified, "lastModified");
+            CaomUtil.assignLastModified(c, maxLastModified, "maxLastModified");
 
             URI metaChecksum = Util.getURI(rs, col++);
             URI accMetaChecksum = Util.getURI(rs, col++);
-            Util.assignMetaChecksum(c, metaChecksum, "metaChecksum");
-            Util.assignMetaChecksum(c, accMetaChecksum, "accMetaChecksum");
+            CaomUtil.assignMetaChecksum(c, metaChecksum, "metaChecksum");
+            CaomUtil.assignMetaChecksum(c, accMetaChecksum, "accMetaChecksum");
             c.metaProducer = Util.getURI(rs, col++);
             
             UUID id = Util.getUUID(rs, col++);
             log.debug("found: chunk.id = " + id);
-            Util.assignID(c, id);
+            CaomUtil.assignID(c, id);
 
             return c;
         }
