@@ -110,8 +110,10 @@ public abstract class CaomEntity extends Entity {
     static final boolean ENTITY_DIGEST_FIELD_NAMES_LOWER = true;
     
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
-    static boolean MCS_DEBUG = false; // way to much debug when true
-    static boolean OVERRRIDE_CORRECT_UUID_SORT = false; 
+    
+    // debug features used by caom2-validator
+    public static boolean MCS_DEBUG = false; // way to much debug when true
+    public static boolean OVERRRIDE_CORRECT_UUID_SORT = false; 
 
     // state but not part of meta checksum
     private transient Date maxLastModified;
