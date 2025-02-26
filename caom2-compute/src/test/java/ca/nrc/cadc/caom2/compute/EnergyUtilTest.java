@@ -69,6 +69,15 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.Energy;
@@ -86,16 +95,6 @@ import org.opencadc.caom2.wcs.CoordFunction1D;
 import org.opencadc.caom2.wcs.CoordRange1D;
 import org.opencadc.caom2.wcs.RefCoord;
 import org.opencadc.caom2.wcs.SpectralWCS;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * @author pdowler
@@ -371,11 +370,11 @@ public class EnergyUtilTest {
     public void testGetBoundsWaveBounds() {
         try {
             SpectralWCS wcs = getTestBounds(false, 0.5, 400, 2000.0, 0.1); // [400,600] in two samples [400,466][534,600]
-            DoubleInterval all = new DoubleInterval(300e-9, 800e-9);
-            DoubleInterval none = new DoubleInterval(700e-9, 900e-9);
-            DoubleInterval gap = new DoubleInterval(480e-9, 520e-9);
-            DoubleInterval cut = new DoubleInterval(420e-9, 440e-9);
-            DoubleInterval clip = new DoubleInterval(300e-9, 500e-9);
+            Interval<Double> all = new Interval<Double>(300e-9, 800e-9);
+            Interval<Double> none = new Interval<Double>(700e-9, 900e-9);
+            Interval<Double> gap = new Interval<Double>(480e-9, 520e-9);
+            Interval<Double> cut = new Interval<Double>(420e-9, 440e-9);
+            Interval<Double> clip = new Interval<Double>(300e-9, 500e-9);
 
             long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
@@ -408,9 +407,9 @@ public class EnergyUtilTest {
     public void testGetBoundsWaveFunc() {
         try {
             SpectralWCS wcs = getTestFunction(false, 0.5, 400, 2000.0, 0.1); // [400,600]
-            DoubleInterval all = new DoubleInterval(300e-9, 800e-9);
-            DoubleInterval none = new DoubleInterval(700e-9, 900e-9);
-            DoubleInterval cut = new DoubleInterval(450e-9, 550e-9);
+            Interval<Double> all = new Interval<Double>(300e-9, 800e-9);
+            Interval<Double> none = new Interval<Double>(700e-9, 900e-9);
+            Interval<Double> cut = new Interval<Double>(450e-9, 550e-9);
 
             long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
@@ -434,9 +433,9 @@ public class EnergyUtilTest {
     public void testGetBoundsFreqBounds() {
         try {
             SpectralWCS wcs = getTestFreqBounds(false, 0.5, 10.0, 1000.0, 0.1); // [10-110] MHz in [1,333][666,1000]
-            DoubleInterval all = new DoubleInterval(2.5, 60.0);
-            DoubleInterval none = new DoubleInterval(1.0, 2.0);
-            DoubleInterval cut = new DoubleInterval(2.8, 3.2);
+            Interval<Double> all = new Interval<Double>(2.5, 60.0);
+            Interval<Double> none = new Interval<Double>(1.0, 2.0);
+            Interval<Double> cut = new Interval<Double>(2.8, 3.2);
 
             long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);
@@ -461,9 +460,9 @@ public class EnergyUtilTest {
     public void testGetBoundsFreqFunc() {
         try {
             SpectralWCS wcs = getTestFreqFunction(false, 0.5, 10.0, 1000.0, 0.1); // [10-110] MHz
-            DoubleInterval all = new DoubleInterval(2.5, 60.0);
-            DoubleInterval none = new DoubleInterval(1.0, 2.0);
-            DoubleInterval cut = new DoubleInterval(4.283, 7.5);
+            Interval<Double> all = new Interval<Double>(2.5, 60.0);
+            Interval<Double> none = new Interval<Double>(1.0, 2.0);
+            Interval<Double> cut = new Interval<Double>(4.283, 7.5);
 
             long[] allPix = CutoutUtil.getEnergyBounds(wcs, all);
             Assert.assertNotNull(allPix);

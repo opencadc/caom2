@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2;
 
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Shape;
 import org.opencadc.caom2.util.CaomValidator;
@@ -86,9 +86,9 @@ public class Position {
     
     public Shape minBounds;
     public Dimension2D dimension;
-    public DoubleInterval maxRecoverableScale;
+    public Interval<Double> maxRecoverableScale;
     public Double resolution;
-    public DoubleInterval resolutionBounds;
+    public Interval<Double> resolutionBounds;
     public Double sampleSize;
     public CalibrationStatus calibration;
     

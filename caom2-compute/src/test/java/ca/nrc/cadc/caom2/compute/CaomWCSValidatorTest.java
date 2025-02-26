@@ -67,6 +67,13 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
+import java.net.URISyntaxException;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.vocab.DataLinkSemantics;
@@ -81,13 +88,6 @@ import org.opencadc.caom2.wcs.RefCoord;
 import org.opencadc.caom2.wcs.SpatialWCS;
 import org.opencadc.caom2.wcs.SpectralWCS;
 import org.opencadc.caom2.wcs.TemporalWCS;
-import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
-import java.net.URISyntaxException;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 
 /**

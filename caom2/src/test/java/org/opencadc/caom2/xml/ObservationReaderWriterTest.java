@@ -69,6 +69,32 @@
 
 package org.opencadc.caom2.xml;
 
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.CaomEntity;
 import org.opencadc.caom2.Chunk;
@@ -120,32 +146,6 @@ import org.opencadc.caom2.wcs.SpatialWCS;
 import org.opencadc.caom2.wcs.SpectralWCS;
 import org.opencadc.caom2.wcs.TemporalWCS;
 import org.opencadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.util.Log4jInit;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  *
@@ -1074,16 +1074,16 @@ public class ObservationReaderWriterTest {
         }
     }
 
-    protected void compare(List<DoubleInterval> expected, List<DoubleInterval> actual) {
+    protected void compare(List<Interval<Double>> expected, List<Interval<Double>> actual) {
         Assert.assertEquals(expected.size(), actual.size());
-        Iterator<DoubleInterval> ei = expected.iterator();
-        Iterator<DoubleInterval> ai = actual.iterator();
+        Iterator<Interval<Double>> ei = expected.iterator();
+        Iterator<Interval<Double>> ai = actual.iterator();
         while (ei.hasNext()) {
             compare(ei.next(), ai.next());
         }
     }
 
-    protected void compare(DoubleInterval expected, DoubleInterval actual) {
+    protected void compare(Interval<Double> expected, Interval<Double> actual) {
         if (expected == null && actual == null) {
             return;
         }

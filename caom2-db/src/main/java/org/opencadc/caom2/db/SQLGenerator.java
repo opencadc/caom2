@@ -69,6 +69,30 @@
 
 package org.opencadc.caom2.db;
 
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.db.mappers.TimestampRowMapper;
+import java.net.URI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
+import org.apache.log4j.Logger;
 import org.opencadc.caom2.Algorithm;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.ArtifactDescription;
@@ -104,6 +128,18 @@ import org.opencadc.caom2.TargetType;
 import org.opencadc.caom2.Telescope;
 import org.opencadc.caom2.Time;
 import org.opencadc.caom2.Visibility;
+import org.opencadc.caom2.db.mappers.ArtifactDescriptionMapper;
+import org.opencadc.caom2.db.mappers.DeletedArtifactDescriptionEventMapper;
+import org.opencadc.caom2.db.mappers.DeletedObservationEventMapper;
+import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
+import org.opencadc.caom2.db.mappers.ObservationStateExtractor;
+import org.opencadc.caom2.db.mappers.ObservationStateMapper;
+import org.opencadc.caom2.db.skel.ArtifactSkeleton;
+import org.opencadc.caom2.db.skel.ChunkSkeleton;
+import org.opencadc.caom2.db.skel.ObservationSkeleton;
+import org.opencadc.caom2.db.skel.PartSkeleton;
+import org.opencadc.caom2.db.skel.PlaneSkeleton;
+import org.opencadc.caom2.db.skel.Skeleton;
 import org.opencadc.caom2.util.CaomUtil;
 import org.opencadc.caom2.util.ObservationState;
 import org.opencadc.caom2.vocab.CalibrationStatus;
@@ -131,42 +167,6 @@ import org.opencadc.caom2.wcs.Slice;
 import org.opencadc.caom2.wcs.SpatialWCS;
 import org.opencadc.caom2.wcs.SpectralWCS;
 import org.opencadc.caom2.wcs.TemporalWCS;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.db.mappers.TimestampRowMapper;
-import java.net.URI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.text.DateFormat;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
-import org.apache.log4j.Logger;
-import org.opencadc.caom2.db.mappers.ArtifactDescriptionMapper;
-import org.opencadc.caom2.db.mappers.DeletedArtifactDescriptionEventMapper;
-import org.opencadc.caom2.db.mappers.DeletedObservationEventMapper;
-import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
-import org.opencadc.caom2.db.mappers.ObservationStateExtractor;
-import org.opencadc.caom2.db.mappers.ObservationStateMapper;
-import org.opencadc.caom2.db.skel.ArtifactSkeleton;
-import org.opencadc.caom2.db.skel.ChunkSkeleton;
-import org.opencadc.caom2.db.skel.ObservationSkeleton;
-import org.opencadc.caom2.db.skel.PartSkeleton;
-import org.opencadc.caom2.db.skel.PlaneSkeleton;
-import org.opencadc.caom2.db.skel.Skeleton;
 import org.opencadc.persist.Entity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -2597,27 +2597,27 @@ public class SQLGenerator {
         throw new UnsupportedOperationException();
     }
 
-    protected void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<DoubleInterval> val)
+    protected void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
-    protected void extractIntervalList(ResultSet rc, int col, List<DoubleInterval> vals)
+    protected void extractIntervalList(ResultSet rc, int col, List<Interval<Double>> vals)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, DoubleInterval val)
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
     
-    protected DoubleInterval getInterval(ResultSet rs, int col)
+    protected Interval<Double> getInterval(ResultSet rs, int col)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
 
-    protected List<DoubleInterval> getIntervalList(ResultSet rs, int col)
+    protected List<Interval<Double>> getIntervalList(ResultSet rs, int col)
             throws SQLException {
         throw new UnsupportedOperationException();
     }
@@ -3312,7 +3312,7 @@ public class SQLGenerator {
             }
             
             // energy
-            DoubleInterval eb = getInterval(rs, col++);
+            Interval<Double> eb = getInterval(rs, col++);
             if (eb != null) {
                 Energy nrg = new Energy(eb);
                 log.debug("energy_bounds: " + eb);
@@ -3358,7 +3358,7 @@ public class SQLGenerator {
             }
             
             // time
-            DoubleInterval tb = getInterval(rs, col++);
+            Interval<Double> tb = getInterval(rs, col++);
             if (tb != null) {
                 Time tim = new Time(tb);
                 extractIntervalList(rs, col++, tim.getSamples());
@@ -3403,7 +3403,7 @@ public class SQLGenerator {
             String cct = rs.getString(col++);
             if (cct != null) {
                 log.debug("custom.ctype: " + cct);
-                DoubleInterval cb = getInterval(rs, col++);
+                Interval<Double> cb = getInterval(rs, col++);
                 p.custom = new CustomAxis(cct, cb);
                 extractIntervalList(rs, col++, p.custom.getSamples());
                 p.custom.dimension = Util.getLong(rs, col++);
@@ -3413,7 +3413,7 @@ public class SQLGenerator {
             }
             
             // visibility
-            DoubleInterval uvd = getInterval(rs, col++);
+            Interval<Double> uvd = getInterval(rs, col++);
             if (uvd != null) {
                 log.debug("visibility.distance: " + uvd);
                 Double ecc = rs.getDouble(col++);

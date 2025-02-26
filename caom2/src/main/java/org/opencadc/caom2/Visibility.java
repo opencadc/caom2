@@ -67,7 +67,7 @@
 
 package org.opencadc.caom2;
 
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import org.opencadc.caom2.util.CaomValidator;
 
 /**
@@ -75,11 +75,11 @@ import org.opencadc.caom2.util.CaomValidator;
  * @author pdowler
  */
 public class Visibility {
-    private DoubleInterval distance;
+    private Interval<Double> distance;
     private Double distributionEccentricity;
     private Double distributionFill;
     
-    public Visibility(DoubleInterval distance, Double distributionEccentricity, Double distributionFill) {
+    public Visibility(Interval<Double> distance, Double distributionEccentricity, Double distributionFill) {
         CaomValidator.assertNotNull(getClass(), "distance", distance);
         CaomValidator.assertNotNull(getClass(), "distributionEccentricity", distributionEccentricity);
         CaomValidator.assertNotNull(getClass(), "distributionFill", distributionFill);
@@ -97,11 +97,11 @@ public class Visibility {
         }
     }
 
-    public DoubleInterval getDistance() {
+    public Interval<Double> getDistance() {
         return distance;
     }
 
-    public void setDistance(DoubleInterval distance) {
+    public void setDistance(Interval<Double> distance) {
         CaomValidator.assertNotNull(getClass(), "distance", distance);
         this.distance = distance;
     }

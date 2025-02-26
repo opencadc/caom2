@@ -70,7 +70,7 @@
 package org.opencadc.caom2;
 
 import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
@@ -128,7 +128,7 @@ public abstract class CaomEntity extends Entity {
     @Override
     protected boolean isDataModelClass(Class c) {
         // imported data model components
-        if (DoubleInterval.class.equals(c)) {
+        if (Interval.class.equals(c)) {
             return true;
         }
         if (Point.class.equals(c)) {

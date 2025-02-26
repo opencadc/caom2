@@ -69,20 +69,6 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.Part;
-import org.opencadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.compute.types.IllegalPolygonException;
-import org.opencadc.caom2.vocab.DataLinkSemantics;
-import org.opencadc.caom2.wcs.CoordAxis1D;
-import org.opencadc.caom2.wcs.CoordRange1D;
-import org.opencadc.caom2.wcs.CustomWCS;
-import org.opencadc.caom2.wcs.PolarizationWCS;
-import org.opencadc.caom2.wcs.SpatialWCS;
-import org.opencadc.caom2.wcs.SpectralWCS;
-import org.opencadc.caom2.wcs.TemporalWCS;
-import ca.nrc.cadc.dali.DoubleInterval;
 import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.dali.Point;
@@ -92,6 +78,18 @@ import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.util.TreeMap;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.PolarizationState;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.CoordAxis1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.CustomWCS;
+import org.opencadc.caom2.wcs.PolarizationWCS;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.wcs.TemporalWCS;
 
 /**
  * Created by jeevesh
@@ -194,7 +192,7 @@ public class CaomWCSValidator {
         if (energy != null) {
             try {
                 CoordAxis1D energyAxis = energy.getAxis();
-                DoubleInterval si = null;
+                Interval<Double> si = null;
 
                 if (energyAxis.range != null) {
                     si = EnergyUtil.toInterval(energy, energyAxis.range);

@@ -69,9 +69,9 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.wcs.Dimension2D;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
@@ -89,9 +89,9 @@ import java.sql.Types;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.wcs.Dimension2D;
 import org.postgresql.geometric.PGpolygon;
 import org.postgresql.util.PGobject;
 
@@ -400,7 +400,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, DoubleInterval val) 
+    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val) 
             throws SQLException {
         if (val == null) {
             ps.setNull(col, Types.ARRAY);
@@ -425,18 +425,18 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected DoubleInterval getInterval(ResultSet rs, int col) throws SQLException {
+    protected Interval<Double> getInterval(ResultSet rs, int col) throws SQLException {
         double[] vals = Util.getDoubleArray(rs, col);
         if (vals == null) {
             return null;
         }
         if (vals.length == 2) {
-            return new DoubleInterval(vals[0], vals[1]);
+            return new Interval<Double>(vals[0], vals[1]);
         }
         throw new IllegalStateException("array length " + vals.length + " invalid for Interval");
     }
 
-    protected void safeSetIntervalOptimization(StringBuilder sb, PreparedStatement ps, int col, DoubleInterval val)
+    protected void safeSetIntervalOptimization(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -446,7 +446,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         } else {
             log.debug("[safeSetInterval] in: " + val);
             PgInterval pgi = new PgInterval();
-            PGpolygon poly = pgi.generatePolygon2D(new ca.nrc.cadc.dali.DoubleInterval(val.getLower(), val.getUpper()));
+            PGpolygon poly = pgi.generatePolygon2D(new ca.nrc.cadc.dali.Interval<Double>(val.getLower(), val.getUpper()));
             ps.setObject(col, poly);
             if (sb != null) {
                 sb.append(poly.getValue());
@@ -456,7 +456,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<DoubleInterval> subs)
+    protected void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> subs)
             throws SQLException {
         if (subs == null || subs.isEmpty()) {
             ps.setNull(col, Types.ARRAY);
@@ -468,7 +468,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         
         Double[] dval = new Double[2 * subs.size()];
         int i = 0;
-        for (DoubleInterval inter : subs) {
+        for (Interval<Double> inter : subs) {
             dval[i] = inter.getLower();
             dval[i + 1] = inter.getUpper();
             i += 2;
@@ -486,7 +486,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void extractIntervalList(ResultSet rs, int col, List<DoubleInterval> vals) throws SQLException {
+    protected void extractIntervalList(ResultSet rs, int col, List<Interval<Double>> vals) throws SQLException {
         double[] coords = Util.getDoubleArray(rs, col);
         if (coords == null) {
             return;
@@ -496,12 +496,12 @@ public class PostgreSQLGenerator extends SQLGenerator {
             double cval1 = coords[i];
             double cval2 = coords[i + 1];
 
-            DoubleInterval di = new DoubleInterval(cval1, cval2);
+            Interval<Double> di = new Interval<Double>(cval1, cval2);
             vals.add(di);
         }
     }
 
-    protected void safeSetIntervalListOptimization(StringBuilder sb, PreparedStatement ps, int col, List<DoubleInterval> subs)
+    protected void safeSetIntervalListOptimization(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> subs)
             throws SQLException {
         if (subs == null || subs.isEmpty()) {
             ps.setObject(col, null);
@@ -510,10 +510,11 @@ public class PostgreSQLGenerator extends SQLGenerator {
             }
         } else {
             log.debug("[safeSetSubIntervalList] in: " + subs.size() + " Intervals");
+            // cadc-dali-pg still uses concrete DoubleInterval class
             DoubleInterval[] dis = new DoubleInterval[subs.size()];
             int i = 0;
-            for (DoubleInterval si : subs) {
-                dis[i++] = si;
+            for (Interval<Double> si : subs) {
+                dis[i++] = new DoubleInterval(si.getLower(), si.getUpper());
             }
             PgInterval pgi = new PgInterval();
             PGpolygon poly = pgi.generatePolygon2D(dis);

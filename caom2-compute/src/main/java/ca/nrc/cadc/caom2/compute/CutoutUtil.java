@@ -67,21 +67,8 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.Part;
-import org.opencadc.caom2.PolarizationState;
-import org.opencadc.caom2.util.EnergyConverter;
-import org.opencadc.caom2.wcs.CoordFunction1D;
-import org.opencadc.caom2.wcs.CoordRange1D;
-import org.opencadc.caom2.wcs.CustomWCS;
-import org.opencadc.caom2.wcs.ObservableAxis;
-import org.opencadc.caom2.wcs.PolarizationWCS;
-import org.opencadc.caom2.wcs.SpatialWCS;
-import org.opencadc.caom2.wcs.SpectralWCS;
-import org.opencadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
@@ -95,6 +82,19 @@ import java.util.ArrayList;
 import java.util.List;
 import jsky.coords.wcscon;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.PolarizationState;
+import org.opencadc.caom2.util.EnergyConverter;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.CustomWCS;
+import org.opencadc.caom2.wcs.ObservableAxis;
+import org.opencadc.caom2.wcs.PolarizationWCS;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.wcs.TemporalWCS;
 
 public final class CutoutUtil {
     private static final Logger log = Logger.getLogger(CutoutUtil.class);
@@ -126,8 +126,8 @@ public final class CutoutUtil {
      * @throws NoSuchKeywordException
      */
     public static List<String> computeCutout(Artifact a, Shape shape,
-            DoubleInterval energyInter, DoubleInterval timeInter, List<PolarizationState> polarStates,
-            String customCtype, DoubleInterval customInter)
+            Interval<Double> energyInter, Interval<Double> timeInter, List<PolarizationState> polarStates,
+            String customCtype, Interval<Double> customInter)
         throws NoSuchKeywordException {
         if (a == null) {
             throw new IllegalArgumentException("null Artifact");
@@ -793,14 +793,14 @@ public final class CutoutUtil {
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *     null if no pixels are included
      */
-    static long[] getEnergyBounds(SpectralWCS wcs, DoubleInterval bounds)
+    static long[] getEnergyBounds(SpectralWCS wcs, Interval<Double> bounds)
         throws NoSuchKeywordException, WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
             // convert wcs to energy axis interval
-            DoubleInterval si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            DoubleInterval inter = DoubleInterval.intersection(si, bounds);
+            Interval<Double> inter = Interval.intersection(si, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
                 return null;
@@ -839,9 +839,9 @@ public final class CutoutUtil {
             for (CoordRange1D tile : wcs.getAxis().bounds.getSamples()) {
                 //log.warn("getBounds: tile = " + tile);
                 maxPixValue = Math.max(maxPixValue, (long) tile.getEnd().pix);
-                DoubleInterval bwmRange = EnergyUtil.toInterval(wcs, tile);
+                Interval<Double> bwmRange = EnergyUtil.toInterval(wcs, tile);
                 // compute intersection
-                DoubleInterval inter = DoubleInterval.intersection(bwmRange, bounds);
+                Interval<Double> inter = Interval.intersection(bwmRange, bounds);
                 //log.warn("getBounds: " + inter + " = " + wbounds + " X " + bounds);
                 if (inter != null) {
                     pix1 = Math.min(pix1, tile.getStart().pix);
@@ -862,9 +862,9 @@ public final class CutoutUtil {
 
         if (wcs.getAxis().range != null) {
             // can only check for complete non-overlap
-            DoubleInterval bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
+            Interval<Double> bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
             // compute intersection
-            DoubleInterval inter = DoubleInterval.intersection(bwmRange, bounds);
+            Interval<Double> inter = Interval.intersection(bwmRange, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.range == null");
                 return null;
@@ -916,7 +916,7 @@ public final class CutoutUtil {
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *     null if no pixels are included
      */
-    static long[] getCustomAxisBounds(CustomWCS wcs, DoubleInterval bounds)
+    static long[] getCustomAxisBounds(CustomWCS wcs, Interval<Double> bounds)
         throws WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
 
@@ -927,10 +927,10 @@ public final class CutoutUtil {
             }
 
             // convert wcs to custom axis interval
-            DoubleInterval si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            DoubleInterval inter = DoubleInterval.intersection(si, bounds);
+            Interval<Double> inter = Interval.intersection(si, bounds);
 
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
@@ -961,7 +961,7 @@ public final class CutoutUtil {
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *     null if no pixels are included
      */
-    static long[] getTimeBounds(TemporalWCS wcs, DoubleInterval bounds)
+    static long[] getTimeBounds(TemporalWCS wcs, Interval<Double> bounds)
         throws WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
 
@@ -972,10 +972,10 @@ public final class CutoutUtil {
             }
 
             // convert wcs to time axis interval
-            DoubleInterval si = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> si = TimeUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            DoubleInterval inter = DoubleInterval.intersection(si, bounds);
+            Interval<Double> inter = Interval.intersection(si, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
                 return null;

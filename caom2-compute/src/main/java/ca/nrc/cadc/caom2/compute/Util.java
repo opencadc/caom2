@@ -67,9 +67,10 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.Part;
+import ca.nrc.cadc.dali.Interval;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.Logger;
 import org.opencadc.caom2.vocab.DataLinkSemantics;
 import org.opencadc.caom2.wcs.CoordAxis1D;
 import org.opencadc.caom2.wcs.CoordAxis2D;
@@ -79,10 +80,6 @@ import org.opencadc.caom2.wcs.CoordFunction1D;
 import org.opencadc.caom2.wcs.CoordFunction2D;
 import org.opencadc.caom2.wcs.CoordRange1D;
 import org.opencadc.caom2.wcs.CoordRange2D;
-import ca.nrc.cadc.dali.DoubleInterval;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.log4j.Logger;
 
 /**
  * Internal utility methods.
@@ -152,13 +149,13 @@ public final class Util {
 
         if (bounds != null) {
             // count number of distinct bins
-            List<DoubleInterval> bins = new ArrayList<DoubleInterval>();
+            List<Interval<Double>> bins = new ArrayList<Interval<Double>>();
             for (CoordRange1D cr : bounds.getSamples()) {
-                DoubleInterval si = new DoubleInterval(cr.getStart().pix, cr.getEnd().pix);
+                Interval<Double> si = new Interval<Double>(cr.getStart().pix, cr.getEnd().pix);
                 Util.mergeIntoList(si, bins, 0.0);
             }
             double ret = 0.0;
-            for (DoubleInterval si : bins) {
+            for (Interval<Double> si : bins) {
                 ret += Math.abs(si.getUpper() - si.getLower());
             }
             return ret;
@@ -207,9 +204,9 @@ public final class Util {
         return function.getRefCoord().pix + (val - refVal) / function.getDelta();
     }
 
-    // merge a DoubleInterval into a List of DoubleInterval
-    static void mergeIntoList(DoubleInterval si, List<DoubleInterval> samples, double unionScale) {
-        DoubleInterval snew = si;
+    // merge a Interval<Double> into a List of Interval<Double>
+    static void mergeIntoList(Interval<Double> si, List<Interval<Double>> samples, double unionScale) {
+        Interval<Double> snew = si;
 
         //log.debug("[mergeIntoList] " + si.lower + "," + si.upper + " ->  " + samples.size());
         if (samples.size() > 0) {
@@ -217,11 +214,11 @@ public final class Util {
             double a = si.getLower() - f;
             double b = si.getUpper() + f;
 
-            ArrayList<DoubleInterval> tmp = new ArrayList<DoubleInterval>(samples.size());
+            ArrayList<Interval<Double>> tmp = new ArrayList<Interval<Double>>(samples.size());
 
             // find intervals that overlap the new one, move from samples -> tmp
             for (int i = 0; i < samples.size(); i++) {
-                DoubleInterval s1 = (DoubleInterval) samples.get(i);
+                Interval<Double> s1 = (Interval<Double>) samples.get(i);
                 f = unionScale * (s1.getUpper() - s1.getLower());
                 double c = s1.getLower() - f;
                 double d = s1.getUpper() + f;
@@ -242,7 +239,7 @@ public final class Util {
             if (!tmp.isEmpty()) {
                 double lb = si.getLower();
                 double ub = si.getUpper();
-                for (DoubleInterval s : tmp) {
+                for (Interval<Double> s : tmp) {
                     if (lb > s.getLower()) {
                         lb = s.getLower();
                     }
@@ -250,13 +247,13 @@ public final class Util {
                         ub = s.getUpper();
                     }
                 }
-                snew = new DoubleInterval(lb, ub);
+                snew = new Interval<Double>(lb, ub);
             }
         }
         // insert new sub to preserve order
         boolean added = false;
         for (int i = 0; i < samples.size(); i++) {
-            DoubleInterval ss = samples.get(i);
+            Interval<Double> ss = samples.get(i);
             if (snew.getLower() < ss.getLower()) {
                 samples.add(i, snew);
                 added = true;

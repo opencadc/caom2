@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2;
 
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import java.util.ArrayList;
 import java.util.List;
 import org.opencadc.caom2.util.CaomValidator;
@@ -80,18 +80,18 @@ import org.opencadc.caom2.vocab.CalibrationStatus;
  * @author pdowler
  */
 public class Time {
-    private DoubleInterval bounds;
-    public List<DoubleInterval> samples = new ArrayList<>();
+    private Interval<Double> bounds;
+    public List<Interval<Double>> samples = new ArrayList<>();
 
     public Long dimension;
     public Double resolution;
-    public DoubleInterval resolutionBounds;
+    public Interval<Double> resolutionBounds;
     public Double sampleSize;
     public Double exposure;
-    public DoubleInterval exposureBounds;
+    public Interval<Double> exposureBounds;
     public CalibrationStatus calibration;
 
-    public Time(DoubleInterval bounds) {
+    public Time(Interval<Double> bounds) {
         CaomValidator.assertNotNull(getClass(), "bounds", bounds);
         this.bounds = bounds;
     }
@@ -101,16 +101,16 @@ public class Time {
         CaomValidator.assertNotEmpty(getClass(), "samples", samples);
     }
 
-    public DoubleInterval getBounds() {
+    public Interval<Double> getBounds() {
         return bounds;
     }
 
-    public void setBounds(DoubleInterval bounds) {
+    public void setBounds(Interval<Double> bounds) {
         CaomValidator.assertNotNull(getClass(), "bounds", bounds);
         this.bounds = bounds;
     }
 
-    public List<DoubleInterval> getSamples() {
+    public List<Interval<Double>> getSamples() {
         return samples;
     }
 

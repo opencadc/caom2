@@ -94,7 +94,7 @@ import org.opencadc.caom2.wcs.ObservableAxis;
 import org.opencadc.caom2.wcs.Slice;
 import org.opencadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
 import ca.nrc.cadc.date.DateUtil;
@@ -1499,8 +1499,8 @@ public abstract class AbstractObservationDAOTest {
             
             Assert.assertEquals("energy.samples.size", expected.energy.getSamples().size(), actual.energy.getSamples().size());
             for (int i = 0; i < expected.energy.getSamples().size(); i++) {
-                DoubleInterval esi = expected.energy.getSamples().get(i);
-                DoubleInterval asi = actual.energy.getSamples().get(i);
+                Interval<Double> esi = expected.energy.getSamples().get(i);
+                Interval<Double> asi = actual.energy.getSamples().get(i);
                 Assert.assertEquals("sample.lb", esi.getLower(), asi.getLower(), 0.0);
                 Assert.assertEquals("sample.ub", esi.getUpper(), asi.getUpper(), 0.0);
             }
@@ -1528,8 +1528,8 @@ public abstract class AbstractObservationDAOTest {
             Assert.assertEquals("time.bounds.upper", expected.time.getBounds().getUpper(), actual.time.getBounds().getUpper(), 0.0);
             Assert.assertEquals("time.samples.size", expected.time.getSamples().size(), actual.time.getSamples().size());
             for (int i = 0; i < expected.time.getSamples().size(); i++) {
-                DoubleInterval esi = expected.time.getSamples().get(i);
-                DoubleInterval asi = actual.time.getSamples().get(i);
+                Interval<Double> esi = expected.time.getSamples().get(i);
+                Interval<Double> asi = actual.time.getSamples().get(i);
                 Assert.assertEquals("SubInterval.lb", esi.getLower(), asi.getLower(), 0.0);
                 Assert.assertEquals("SubInterval.ub", esi.getUpper(), asi.getUpper(), 0.0);
             }

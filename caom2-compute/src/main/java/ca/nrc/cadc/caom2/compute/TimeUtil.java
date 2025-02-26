@@ -67,6 +67,12 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.dali.Interval;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import org.apache.log4j.Logger;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.Part;
@@ -76,12 +82,6 @@ import org.opencadc.caom2.wcs.CoordBounds1D;
 import org.opencadc.caom2.wcs.CoordFunction1D;
 import org.opencadc.caom2.wcs.CoordRange1D;
 import org.opencadc.caom2.wcs.TemporalWCS;
-import ca.nrc.cadc.dali.DoubleInterval;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import org.apache.log4j.Logger;
 import org.opencadc.erfa.DubiousYearException;
 import org.opencadc.erfa.ERFALib;
 import org.opencadc.erfa.ERFALibException;
@@ -111,8 +111,8 @@ public final class TimeUtil {
     }
 
     static class ComputedBounds {
-        DoubleInterval bounds;
-        List<DoubleInterval> samples;
+        Interval<Double> bounds;
+        List<Interval<Double>> samples;
     }
     
     public static Time compute(Set<Artifact> artifacts) {
@@ -142,7 +142,7 @@ public final class TimeUtil {
      */
     static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) {
         double unionScale = 0.02;
-        List<DoubleInterval> subs = new ArrayList<>();
+        List<Interval<Double>> subs = new ArrayList<>();
 
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
@@ -153,17 +153,17 @@ public final class TimeUtil {
                             CoordBounds1D bounds = c.time.getAxis().bounds;
                             CoordFunction1D function = c.time.getAxis().function;
                             if (range != null) {
-                                DoubleInterval s = toInterval(c.time, range);
+                                Interval<Double> s = toInterval(c.time, range);
                                 log.debug("[computeBounds] range -> sub: " + s);
                                 Util.mergeIntoList(s, subs, unionScale);
                             } else if (bounds != null) {
                                 for (CoordRange1D cr : bounds.getSamples()) {
-                                    DoubleInterval s = toInterval(c.time, cr);
+                                    Interval<Double> s = toInterval(c.time, cr);
                                     log.debug("[computeBounds] bounds -> sub: " + s);
                                     Util.mergeIntoList(s, subs, unionScale);
                                 }
                             } else if (function != null) {
-                                DoubleInterval s = TimeUtil.toInterval(c.time, function);
+                                Interval<Double> s = TimeUtil.toInterval(c.time, function);
                                 log.debug("[computeBounds] function -> sub: " + s);
                                 Util.mergeIntoList(s, subs, unionScale);
                             }
@@ -179,13 +179,13 @@ public final class TimeUtil {
         // compute the outer bounds of the sub-intervals
         double lb = Double.MAX_VALUE;
         double ub = Double.MIN_VALUE;
-        for (DoubleInterval sub : subs) {
+        for (Interval<Double> sub : subs) {
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
 
         ComputedBounds ret = new ComputedBounds();
-        ret.bounds = new DoubleInterval(lb, ub);
+        ret.bounds = new Interval<Double>(lb, ub);
         ret.samples = subs;
         return ret;
     }
@@ -212,15 +212,15 @@ public final class TimeUtil {
 
                             numPixels += Util.getNumPixels(c.time.getAxis());
                             if (range != null) {
-                                DoubleInterval si = toInterval(c.time, range);
+                                Interval<Double> si = toInterval(c.time, range);
                                 totSampleSize += si.getUpper() - si.getLower();
                             } else if (bounds != null) {
                                 for (CoordRange1D cr : bounds.getSamples()) {
-                                    DoubleInterval si = toInterval(c.time, cr);
+                                    Interval<Double> si = toInterval(c.time, cr);
                                     totSampleSize += si.getUpper() - si.getLower();
                                 }
                             } else if (function != null) {
-                                DoubleInterval si = TimeUtil.toInterval(c.time, function);
+                                Interval<Double> si = TimeUtil.toInterval(c.time, function);
                                 totSampleSize += si.getUpper() - si.getLower();
                             }
                         }
@@ -245,7 +245,7 @@ public final class TimeUtil {
      * @param productType the artifact DataLinkSemantics
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromWCS(DoubleInterval bounds, Set<Artifact> artifacts, DataLinkSemantics productType) {
+    static Long computeDimensionFromWCS(Interval<Double> bounds, Set<Artifact> artifacts, DataLinkSemantics productType) {
         log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null) {
             return null;
@@ -390,7 +390,7 @@ public final class TimeUtil {
         return null;
     }
 
-    static DoubleInterval toInterval(TemporalWCS wcs, CoordRange1D r) {
+    static Interval<Double> toInterval(TemporalWCS wcs, CoordRange1D r) {
         validateWCS(wcs);
 
         // TODO: if mjdref has a value then the units of axis values could be any time
@@ -410,10 +410,10 @@ public final class TimeUtil {
         double[] tb = transform(wcs, b);
         double lower = ta[0] + ta[1];
         double upper = tb[0] + tb[1];
-        return new DoubleInterval(Math.min(lower, upper), Math.max(lower, upper));
+        return new Interval<Double>(Math.min(lower, upper), Math.max(lower, upper));
     }
 
-    static DoubleInterval toInterval(TemporalWCS wcs, CoordFunction1D func) {
+    static Interval<Double> toInterval(TemporalWCS wcs, CoordFunction1D func) {
         validateWCS(wcs);
 
         // TODO: if mjdref has a value then the units of axis values could be any time
@@ -434,7 +434,7 @@ public final class TimeUtil {
         double[] tb = transform(wcs, b);
         double lower = ta[0] + ta[1];
         double upper = tb[0] + tb[1];
-        return new DoubleInterval(Math.min(lower, upper), Math.max(lower, upper));
+        return new Interval<Double>(Math.min(lower, upper), Math.max(lower, upper));
     }
 
     // check that the provided wcs includes supported combination of CTYPE, CUNIT, and TIMESYS

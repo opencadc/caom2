@@ -69,6 +69,18 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.Part;
@@ -95,18 +107,6 @@ import org.opencadc.caom2.wcs.SpatialWCS;
 import org.opencadc.caom2.wcs.SpectralWCS;
 import org.opencadc.caom2.wcs.TemporalWCS;
 import org.opencadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * @author pdowler
@@ -521,9 +521,9 @@ public class CutoutUtilTest {
             p.getChunks().add(c);
 
             // cutout requests: must be wavelength in meters
-            DoubleInterval miss = new DoubleInterval(600.0e-9, 800.0e-9);
-            DoubleInterval inside = new DoubleInterval(399.9e-9, 400.1e-9); // 400 +- 0.1 aka 3 pixels
-            DoubleInterval outside = new DoubleInterval(200.0e-9, 900.0e-9);
+            Interval<Double> miss = new Interval<Double>(600.0e-9, 800.0e-9);
+            Interval<Double> inside = new Interval<Double>(399.9e-9, 400.1e-9); // 400 +- 0.1 aka 3 pixels
+            Interval<Double> outside = new Interval<Double>(200.0e-9, 900.0e-9);
 
             List<String> cus = CutoutUtil.computeCutout(a, null, miss, null, null, null,null);
             Assert.assertNotNull(cus);
@@ -579,18 +579,18 @@ public class CutoutUtilTest {
 
             // test a range of cutout requests to make sure templating is working correctly
             // WCS has range of 200 to 400
-            DoubleInterval inside = new DoubleInterval(210, 220);
+            Interval<Double> inside = new Interval<Double>(210.0, 220.0);
             List<String> cus = CutoutUtil.computeCutout(a, null, null, inside, null, null, null);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
             log.debug("inside cutout: " + cutout);
             Assert.assertEquals("[0][11:20]", cutout);
 
-            DoubleInterval outside_include = new DoubleInterval(100, 500);
+            Interval<Double> outside_include = new Interval<Double>(100.0, 500.0);
             cus = CutoutUtil.computeCutout(a, null, null, outside_include, null, null, null);
             Assert.assertNotNull(cus);
 
-            DoubleInterval overlap_lower = new DoubleInterval(100, 250);
+            Interval<Double> overlap_lower = new Interval<Double>(100.0, 250.0);
             cus = CutoutUtil.computeCutout(a, null, null,  overlap_lower, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
@@ -598,7 +598,7 @@ public class CutoutUtilTest {
             log.debug("overlap_lower cutout: " + cutout);
             Assert.assertEquals("[0][1:50]", cutout);
 
-            DoubleInterval overlap_upper = new DoubleInterval(300, 550);
+            Interval<Double> overlap_upper = new Interval<Double>(300.0, 550.0);
             cus = CutoutUtil.computeCutout(a, null, null, overlap_upper, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
@@ -606,20 +606,20 @@ public class CutoutUtilTest {
             log.info("overlap_upper cutout: " + cutout);
             Assert.assertEquals("[0][101:200]", cutout);
 
-            DoubleInterval outside_below = new DoubleInterval(100, 150);
+            Interval<Double> outside_below = new Interval<Double>(100.0, 150.0);
             cus = CutoutUtil.computeCutout(a, null, null,  outside_below, null, null, null);
             Assert.assertNotNull(cus);
             log.info("overlap_upper cutout: " + cus);
             Assert.assertTrue(cus.isEmpty());
 
-            DoubleInterval outside_above = new DoubleInterval(500, 650);
+            Interval<Double> outside_above = new Interval<Double>(500.0, 650.0);
             cus = CutoutUtil.computeCutout(a, null, null, outside_above, null, null, null);
             Assert.assertNotNull(cus);
             log.debug("overlap_upper cutout: " + cus);
             Assert.assertTrue(cus.isEmpty());
 
             // long [0] - matches boundary exactly
-            DoubleInterval includes = new DoubleInterval(200.0, 400.0);
+            Interval<Double> includes = new Interval<Double>(200.0, 400.0);
             cus = CutoutUtil.computeCutout(a, null, null, includes, null, null, null);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
@@ -708,9 +708,9 @@ public class CutoutUtilTest {
             p.getChunks().add(c);
             
             // cutout requests: must be wavelength in meters
-            DoubleInterval miss = new DoubleInterval(600.0e-9, 800.0e-9);
-            DoubleInterval inside = new DoubleInterval(399.9e-9, 400.1e-9); // 400 +- 0.1 aka 3 pixels
-            DoubleInterval outside = new DoubleInterval(200.0e-9, 900.0e-9);
+            Interval<Double> miss = new Interval<Double>(600.0e-9, 800.0e-9);
+            Interval<Double> inside = new Interval<Double>(399.9e-9, 400.1e-9); // 400 +- 0.1 aka 3 pixels
+            Interval<Double> outside = new Interval<Double>(200.0e-9, 900.0e-9);
 
             List<String> cus = CutoutUtil.computeCutout(a, null, miss, null, null, null, null);
             Assert.assertNotNull(cus);
@@ -827,18 +827,18 @@ public class CutoutUtilTest {
 
             // test a range of cutout requests to make sure templating is working correctly
             // WCS has range of 200 to 400
-            DoubleInterval inside = new DoubleInterval(210, 220);
+            Interval<Double> inside = new Interval<Double>(210.0, 220.0);
             List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, inside);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
             log.debug("inside cutout: " + cutout);
             Assert.assertEquals("[0][11:20]", cutout);
 
-            DoubleInterval outside_include = new DoubleInterval(100, 500);
+            Interval<Double> outside_include = new Interval<Double>(100.0, 500.0);
             cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, outside_include);
             Assert.assertNotNull(cus);
 
-            DoubleInterval overlap_lower = new DoubleInterval(100, 250);
+            Interval<Double> overlap_lower = new Interval<Double>(100.0, 250.0);
             cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, overlap_lower);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
@@ -846,7 +846,7 @@ public class CutoutUtilTest {
             log.debug("overlap_lower cutout: " + cutout);
             Assert.assertEquals("[0][1:50]", cutout);
 
-            DoubleInterval overlap_upper = new DoubleInterval(300, 550);
+            Interval<Double> overlap_upper = new Interval<Double>(300.0, 550.0);
             cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, overlap_upper);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
@@ -854,20 +854,20 @@ public class CutoutUtilTest {
             log.debug("overlap_upper cutout: " + cutout);
             Assert.assertEquals("[0][101:200]", cutout);
 
-            DoubleInterval outside_below = new DoubleInterval(100, 150);
+            Interval<Double> outside_below = new Interval<Double>(100.0, 150.0);
             cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, outside_below);
             Assert.assertNotNull(cus);
             log.debug("overlap_upper cutout: " + cus);
             Assert.assertTrue(cus.isEmpty());
 
-            DoubleInterval outside_above = new DoubleInterval(500, 650);
+            Interval<Double> outside_above = new Interval<Double>(500.0, 650.0);
             cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, outside_above);
             Assert.assertNotNull(cus);
             log.debug("overlap_upper cutout: " + cus);
             Assert.assertTrue(cus.isEmpty());
 
             // long [0] - matches boundary exactly
-            DoubleInterval includes = new DoubleInterval(200.0, 400.0);
+            Interval<Double> includes = new Interval<Double>(200.0, 400.0);
             cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, includes);
             Assert.assertNotNull(cus);
             Assert.assertTrue(cus.size() == 1);
@@ -903,7 +903,7 @@ public class CutoutUtilTest {
 
             // test a single cutout request to make sure templating is working correctly
             // full suite of tests is in another function
-            DoubleInterval inside = new DoubleInterval(210, 220);
+            Interval<Double> inside = new Interval<Double>(210.0, 220.0);
             List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, TEST_CTYPE, inside);
             Assert.assertTrue(cus.size() == 1);
             String cutout = cus.get(0);
@@ -937,7 +937,7 @@ public class CutoutUtilTest {
 
             // test a single cutout request to make sure templating is working correctly
             // full suite of tests is in another function
-            DoubleInterval inside = new DoubleInterval(210, 220);
+            Interval<Double> inside = new Interval<Double>(210.0, 220.0);
             List<String> cus = CutoutUtil.computeCutout(a, null, null, null, null, "RM", inside);
             Assert.assertTrue(cus.size() == 0);
 

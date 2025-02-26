@@ -69,6 +69,14 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.net.URISyntaxException;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.CustomAxis;
@@ -83,15 +91,6 @@ import org.opencadc.caom2.wcs.CoordFunction1D;
 import org.opencadc.caom2.wcs.CoordRange1D;
 import org.opencadc.caom2.wcs.CustomWCS;
 import org.opencadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URISyntaxException;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * @author hjeeves
@@ -301,7 +300,7 @@ public class CustomAxisUtilTest {
             CoordAxis1D axis = new CoordAxis1D(new Axis(TEST_CTYPE, TEST_CUNIT));
             CustomWCS wcs = new CustomWCS(axis);
             wcs.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 54321.0));
-            DoubleInterval i = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> i = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
             Assert.fail("expected IllegalArgumentException, got: " + i);
         } catch (IllegalArgumentException expected) {
             log.info("caught expected: " + expected);

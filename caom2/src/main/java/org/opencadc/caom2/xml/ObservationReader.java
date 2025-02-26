@@ -69,6 +69,39 @@
 
 package org.opencadc.caom2.xml;
 
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.xml.XmlUtil;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import org.apache.log4j.Logger;
+import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
 import org.opencadc.caom2.Algorithm;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.CalibrationLevel;
@@ -104,7 +137,6 @@ import org.opencadc.caom2.TargetType;
 import org.opencadc.caom2.Telescope;
 import org.opencadc.caom2.Time;
 import org.opencadc.caom2.Visibility;
-import org.opencadc.caom2.VocabularyTerm;
 import org.opencadc.caom2.util.CaomUtil;
 import org.opencadc.caom2.vocab.CalibrationStatus;
 import org.opencadc.caom2.vocab.DataLinkSemantics;
@@ -134,39 +166,6 @@ import org.opencadc.caom2.wcs.SpatialWCS;
 import org.opencadc.caom2.wcs.SpectralWCS;
 import org.opencadc.caom2.wcs.TemporalWCS;
 import org.opencadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.xml.XmlUtil;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import org.apache.log4j.Logger;
-import org.jdom2.Attribute;
-import org.jdom2.DataConversionException;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.Namespace;
 
 /**
  *
@@ -1061,7 +1060,7 @@ public class ObservationReader {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
             double ub = getChildTextAsDouble("upper", cur, namespace, false);
-            ret.maxRecoverableScale = new DoubleInterval(lb, ub);
+            ret.maxRecoverableScale = new Interval<Double>(lb, ub);
         }
 
         ret.resolution = getChildTextAsDouble("resolution", element, namespace,
@@ -1070,7 +1069,7 @@ public class ObservationReader {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
             double ub = getChildTextAsDouble("upper", cur, namespace, false);
-            ret.resolutionBounds = new DoubleInterval(lb, ub);
+            ret.resolutionBounds = new Interval<Double>(lb, ub);
         }
         ret.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
@@ -1119,12 +1118,12 @@ public class ObservationReader {
             return null;
         }
 
-        DoubleInterval bounds = null;
+        Interval<Double> bounds = null;
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            bounds = new DoubleInterval(lb, ub);
+            bounds = new Interval<Double>(lb, ub);
             //addSamples(nrg.getSamples(), cur.getChild("samples", namespace),
             //        namespace, rc);
         }
@@ -1146,7 +1145,7 @@ public class ObservationReader {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
             double ub = getChildTextAsDouble("upper", cur, namespace, false);
-            ret.resolvingPowerBounds = new DoubleInterval(lb, ub);
+            ret.resolvingPowerBounds = new Interval<Double>(lb, ub);
         }
         ret.resolution = getChildTextAsDouble("resolution", element,
                 namespace, false);
@@ -1154,7 +1153,7 @@ public class ObservationReader {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
             double ub = getChildTextAsDouble("upper", cur, namespace, false);
-            ret.resolutionBounds = new DoubleInterval(lb, ub);
+            ret.resolutionBounds = new Interval<Double>(lb, ub);
         }
         ret.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
                 false);
@@ -1204,12 +1203,12 @@ public class ObservationReader {
             return null;
         }
 
-        DoubleInterval bounds = null;
+        Interval<Double> bounds = null;
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            bounds = new DoubleInterval(lb, ub);
+            bounds = new Interval<Double>(lb, ub);
             //addSamples(tim.getSamples(), cur.getChild("samples", namespace),
             //        namespace, rc);
         }
@@ -1230,7 +1229,7 @@ public class ObservationReader {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
             double ub = getChildTextAsDouble("upper", cur, namespace, false);
-            ret.resolutionBounds = new DoubleInterval(lb, ub);
+            ret.resolutionBounds = new Interval<Double>(lb, ub);
         }
 
         ret.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
@@ -1242,7 +1241,7 @@ public class ObservationReader {
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
             double ub = getChildTextAsDouble("upper", cur, namespace, false);
-            ret.exposureBounds = new DoubleInterval(lb, ub);
+            ret.exposureBounds = new Interval<Double>(lb, ub);
         }
 
         String c = getChildText("calibration", element, namespace, false);
@@ -1260,12 +1259,12 @@ public class ObservationReader {
         }
 
         String ctype = getChildText("ctype", element, namespace, true);
-        DoubleInterval bounds = null;
+        Interval<Double> bounds = null;
         Element cur = getChildElement("bounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            bounds = new DoubleInterval(lb, ub);
+            bounds = new Interval<Double>(lb, ub);
             //addSamples(cus.getSamples(), cur.getChild("samples", namespace), namespace, rc);
         }
         CustomAxis ret = new CustomAxis(ctype, bounds);
@@ -1289,12 +1288,12 @@ public class ObservationReader {
             return null;
         }
         
-        DoubleInterval distance = null;
+        Interval<Double> distance = null;
         Element cur = getChildElement("distance", element, namespace, true);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, true);
             double ub = getChildTextAsDouble("upper", cur, namespace, true);
-            distance = new DoubleInterval(lb, ub);
+            distance = new Interval<Double>(lb, ub);
         }
         Double de = getChildTextAsDouble("distributionEccentricity", element, namespace, true);
         Double df = getChildTextAsDouble("distributionFill", element, namespace, true);
@@ -1303,7 +1302,7 @@ public class ObservationReader {
         return  ret;
     }
 
-    private void addSamples(List<DoubleInterval> samps, Element sampleElement,
+    private void addSamples(List<Interval<Double>> samps, Element sampleElement,
             Namespace namespace, ReadContext rc)
             throws ObservationParsingException {
         if (sampleElement != null) {
@@ -1311,7 +1310,7 @@ public class ObservationReader {
             for (Element se : sse) {
                 double lb = getChildTextAsDouble("lower", se, namespace, true);
                 double ub = getChildTextAsDouble("upper", se, namespace, true);
-                samps.add(new DoubleInterval(lb, ub));
+                samps.add(new Interval<Double>(lb, ub));
             }
         }
         //if (rc.docVersion < 23 && inter.getSamples().isEmpty()) {

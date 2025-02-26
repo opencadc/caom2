@@ -69,7 +69,7 @@
 
 package org.opencadc.caom2;
 
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -84,22 +84,22 @@ import org.opencadc.caom2.vocab.CalibrationStatus;
  */
 public class Energy {
     
-    private DoubleInterval bounds;
-    private final List<DoubleInterval> samples = new ArrayList<>();
+    private Interval<Double> bounds;
+    private final List<Interval<Double>> samples = new ArrayList<>();
     private final Set<EnergyBand> energyBands = new TreeSet<>(); // sorted enum
     
     public Long dimension;
     public Double resolvingPower;
-    public DoubleInterval resolvingPowerBounds;
+    public Interval<Double> resolvingPowerBounds;
     public Double resolution;
-    public DoubleInterval resolutionBounds;
+    public Interval<Double> resolutionBounds;
     public Double sampleSize;
     public String bandpassName;
     public EnergyTransition transition;
     public Double rest;
     public CalibrationStatus calibration;
 
-    public Energy(DoubleInterval bounds) {
+    public Energy(Interval<Double> bounds) {
         CaomValidator.assertNotNull(getClass(), "bounds", bounds);
         this.bounds = bounds;
     }
@@ -109,16 +109,16 @@ public class Energy {
         CaomValidator.assertNotEmpty(getClass(), "samples", samples);
     }
 
-    public DoubleInterval getBounds() {
+    public Interval<Double> getBounds() {
         return bounds;
     }
 
-    public void setBounds(DoubleInterval bounds) {
+    public void setBounds(Interval<Double> bounds) {
         CaomValidator.assertNotNull(getClass(), "bounds", samples);
         this.bounds = bounds;
     }
 
-    public List<DoubleInterval> getSamples() {
+    public List<Interval<Double>> getSamples() {
         return samples;
     }
 

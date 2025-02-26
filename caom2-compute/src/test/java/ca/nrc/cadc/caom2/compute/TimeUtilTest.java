@@ -69,6 +69,14 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.net.URISyntaxException;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.Part;
@@ -83,15 +91,6 @@ import org.opencadc.caom2.wcs.CoordFunction1D;
 import org.opencadc.caom2.wcs.CoordRange1D;
 import org.opencadc.caom2.wcs.RefCoord;
 import org.opencadc.caom2.wcs.TemporalWCS;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.net.URISyntaxException;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
 import org.opencadc.erfa.ERFALib;
 
 /**
@@ -401,7 +400,7 @@ public class TimeUtilTest {
             TemporalWCS wcs = new TemporalWCS(axis);
             wcs.timesys = "UTC";
             wcs.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 54321.0));
-            DoubleInterval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
             Assert.fail("expected IllegalArgumentException, got: " + i);
         } catch (IllegalArgumentException expected) {
             log.info("caught expected: " + expected);
@@ -416,7 +415,7 @@ public class TimeUtilTest {
             wcs.timesys = "UTC";
             // delata==0 allowed for single bin
             wcs.getAxis().function = new CoordFunction1D(1L, 0.0, new RefCoord(0.5, 54321.0));
-            DoubleInterval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -648,7 +647,7 @@ public class TimeUtilTest {
             wcs.getAxis().function = new CoordFunction1D(1L, 0.0, refCoord);
 
             wcs.timesys = "UTC";
-            DoubleInterval interval = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> interval = TimeUtil.toInterval(wcs, wcs.getAxis().function);
             log.debug(String.format("%s - > UTC interval: %s", wcs.getAxis().function, interval));
             Assert.assertEquals(mjdref + mjd, interval.getLower(), 0.0000000001);
             Assert.assertEquals(mjdref + mjd, interval.getUpper(), 0.0000000001);

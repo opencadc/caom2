@@ -69,6 +69,22 @@
 
 package org.opencadc.caom2.xml;
 
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.opencadc.caom2.Algorithm;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.CalibrationLevel;
@@ -129,22 +145,6 @@ import org.opencadc.caom2.wcs.SpatialWCS;
 import org.opencadc.caom2.wcs.SpectralWCS;
 import org.opencadc.caom2.wcs.TemporalWCS;
 import org.opencadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.DoubleInterval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.util.Log4jInit;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -350,18 +350,18 @@ public class Caom2TestInstances {
                 
 
                 // alphabetical so easier to trace and debug metaChecksum computation
-                p.energy = new Energy(new DoubleInterval(400e-6, 900e-6));
-                p.energy.getSamples().add(new DoubleInterval(400e-6, 500e-6));
-                p.energy.getSamples().add(new DoubleInterval(800e-6, 900e-6));
+                p.energy = new Energy(new Interval<Double>(400e-6, 900e-6));
+                p.energy.getSamples().add(new Interval<Double>(400e-6, 500e-6));
+                p.energy.getSamples().add(new Interval<Double>(800e-6, 900e-6));
                 p.energy.bandpassName = "V";
                 p.energy.dimension = 2L;
                 for (EnergyBand eb : EnergyBand.values()) {
                     p.energy.getEnergyBands().add(eb);
                 }
                 p.energy.resolvingPower = 2.0;
-                p.energy.resolvingPowerBounds = new DoubleInterval(1.0, 8.0);
+                p.energy.resolvingPowerBounds = new Interval<Double>(1.0, 8.0);
                 p.energy.resolution = 1.0e-4;
-                p.energy.resolutionBounds = new DoubleInterval(1.0e-4, 1.0e-4);
+                p.energy.resolutionBounds = new Interval<Double>(1.0e-4, 1.0e-4);
                 p.energy.rest = 600e-9;
                 p.energy.sampleSize = 100e-6;
                 p.energy.transition = new EnergyTransition("H", "alpha");
@@ -399,32 +399,32 @@ public class Caom2TestInstances {
                 }
                 
                 p.position.dimension = new Dimension2D(1024, 2048);
-                p.position.maxRecoverableScale = new DoubleInterval(0.2, 0.4);
+                p.position.maxRecoverableScale = new Interval<Double>(0.2, 0.4);
                 p.position.resolution = 0.05;
-                p.position.resolutionBounds = new DoubleInterval(0.04, 0.06);
+                p.position.resolutionBounds = new Interval<Double>(0.04, 0.06);
                 p.position.sampleSize = 0.025;
                 p.position.calibration = CalibrationStatus.ABSOLUTE;
                 p.position.validate();
 
-                p.time = new Time(new DoubleInterval(50000.25, 50000.75));
-                p.time.getSamples().add(new DoubleInterval(50000.25, 50000.40));
-                p.time.getSamples().add(new DoubleInterval(50000.50, 50000.75));
+                p.time = new Time(new Interval<Double>(50000.25, 50000.75));
+                p.time.getSamples().add(new Interval<Double>(50000.25, 50000.40));
+                p.time.getSamples().add(new Interval<Double>(50000.50, 50000.75));
                 p.time.dimension = 2L;
                 p.time.exposure = 600.0;
-                p.time.exposureBounds = new DoubleInterval(500.0, 700.0);
+                p.time.exposureBounds = new Interval<Double>(500.0, 700.0);
                 p.time.resolution = 0.5;
-                p.time.resolutionBounds = new DoubleInterval(0.5, 1.1);
+                p.time.resolutionBounds = new Interval<Double>(0.5, 1.1);
                 p.time.sampleSize = 0.15;
                 p.time.calibration = CalibrationStatus.ABSOLUTE;
                 p.time.validate();
 
-                p.custom = new CustomAxis("FARADAY", new DoubleInterval(10.0, 20.0));
-                p.custom.getSamples().add(new DoubleInterval(10.0, 13.0));
-                p.custom.getSamples().add(new DoubleInterval(17.0, 20.0));
+                p.custom = new CustomAxis("FARADAY", new Interval<Double>(10.0, 20.0));
+                p.custom.getSamples().add(new Interval<Double>(10.0, 13.0));
+                p.custom.getSamples().add(new Interval<Double>(17.0, 20.0));
                 p.custom.dimension = 10L;
                 p.custom.validate();
 
-                p.visibility = new Visibility(new DoubleInterval(20.0, 120.0), 0.5, 0.85);
+                p.visibility = new Visibility(new Interval<Double>(20.0, 120.0), 0.5, 0.85);
                 p.visibility.validate();
             }
             if (depth > 2) {
