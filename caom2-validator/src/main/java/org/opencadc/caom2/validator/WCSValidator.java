@@ -65,10 +65,13 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package org.opencadc.caom2.validator;
 
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Plane;
 
 /**
  *

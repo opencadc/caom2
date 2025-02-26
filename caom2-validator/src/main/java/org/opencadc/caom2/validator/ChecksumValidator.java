@@ -65,11 +65,16 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.caom2;
+package org.opencadc.caom2.validator;
 
 import java.net.URI;
 import java.security.MessageDigest;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
 import org.opencadc.persist.Entity;
 
 /**

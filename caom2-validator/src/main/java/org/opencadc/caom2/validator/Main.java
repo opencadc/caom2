@@ -65,10 +65,8 @@
 ************************************************************************
  */
 
-package ca.nrc.cadc.caom2;
+package org.opencadc.caom2.validator;
 
-import ca.nrc.cadc.caom2.xml.ObservationReader;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
@@ -79,6 +77,10 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.CaomEntity;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.xml.ObservationReader;
+import org.opencadc.caom2.xml.ObservationWriter;
 
 /**
  *

@@ -15,7 +15,7 @@ group = 'org.opencadc'
 
 version = '2.5.0'
 
-mainClassName = "ca.nrc.cadc.caom2.Main"
+mainClassName = "org.opencadc.caom2.validator.Main"
 
 dependencies {
     implementation 'org.jdom:jdom2:2.0.6'
