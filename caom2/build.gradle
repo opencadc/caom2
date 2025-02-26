@@ -24,7 +24,7 @@ dependencies {
     //implementation 'org.jdom:jdom2:2.0.6'
     
     api 'org.opencadc:cadc-util:[1.12.0,)'
-    api 'org.opencadc:cadc-dali:1.2.X-caom25'
+    api 'org.opencadc:cadc-dali:[1.2.22,)'
 
     testImplementation 'junit:junit:4.13'
 }
