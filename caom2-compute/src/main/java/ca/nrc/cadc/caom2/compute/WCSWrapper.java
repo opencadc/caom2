@@ -69,10 +69,10 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordFunction2D;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.SpectralWCS;
 import ca.nrc.cadc.wcs.WCSKeywordsImpl;
 
 /**

@@ -70,7 +70,6 @@
 package org.opencadc.torkeep;
 
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -88,6 +87,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.erfa.ERFALib;
 
 /**
@@ -135,7 +135,7 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
             }
 
             Map<String,Object> daoConfig = TorkeepInitAction.getDAOConfig();
-            ObservationDAO dao = new ObservationDAO();
+            ObservationDAO dao = new ObservationDAO(true);
             dao.setConfig(daoConfig); // connectivity tested
 
             // check the WCS JNI library

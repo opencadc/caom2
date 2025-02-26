@@ -112,7 +112,7 @@ public class PositionBoundsShapeFormat extends AbstractResultSetFormat {
         if (dd.length >= 6) {
             Polygon poly = new Polygon();
             for (int i = 0; i < dd.length; i += 2) {
-                Point p = new Point(dd[1], dd[i + 1]);
+                Point p = new Point(dd[i], dd[i + 1]);
                 poly.getVertices().add(p);
             }
             return poly;

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2024.                            (c) 2024.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,22 +67,21 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.SampledInterval;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.dali.Interval;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Time;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.CoordBounds1D;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.TemporalWCS;
 import org.opencadc.erfa.DubiousYearException;
 import org.opencadc.erfa.ERFALib;
 import org.opencadc.erfa.ERFALibException;
@@ -111,30 +110,39 @@ public final class TimeUtil {
     private TimeUtil() {
     }
 
+    static class ComputedBounds {
+        Interval<Double> bounds;
+        List<Interval<Double>> samples;
+    }
+    
     public static Time compute(Set<Artifact> artifacts) {
-        ProductType productType = Util.choseProductType(artifacts);
+        DataLinkSemantics productType = DataLinkSemantics.THIS;
         log.debug("compute: " + productType);
-        Time t = new Time();
-        if (productType != null) {
-            t.bounds = computeBounds(artifacts, productType);
-            t.dimension = computeDimensionFromRangeBounds(artifacts, productType);
-            if (t.dimension == null) {
-                t.dimension = computeDimensionFromWCS(t.bounds, artifacts, productType);
+        
+        ComputedBounds cb = computeBounds(artifacts, productType);
+        if (cb != null) {
+            Time ret = new Time(cb.bounds);
+            ret.getSamples().addAll(cb.samples);
+            ret.dimension = computeDimensionFromRangeBounds(artifacts, productType);
+            if (ret.dimension == null) {
+                ret.dimension = computeDimensionFromWCS(ret.getBounds(), artifacts, productType);
             }
-            t.resolution = computeResolution(artifacts, productType);
-            t.sampleSize = computeSampleSize(artifacts, productType);
-            t.exposure = computeExposureTime(artifacts, productType);
+            ret.resolution = computeResolution(artifacts, productType);
+            ret.sampleSize = computeSampleSize(artifacts, productType);
+            ret.exposure = computeExposureTime(artifacts, productType);
+            
+            return ret;
         }
-
-        return t;
+        
+        return null;
     }
 
     /**
      * Computes the union.
      */
-    static SampledInterval computeBounds(Set<Artifact> artifacts, ProductType productType) {
+    static ComputedBounds computeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) {
         double unionScale = 0.02;
-        List<Interval> subs = new ArrayList<Interval>();
+        List<Interval<Double>> subs = new ArrayList<>();
 
         for (Artifact a : artifacts) {
             for (Part p : a.getParts()) {
@@ -145,17 +153,17 @@ public final class TimeUtil {
                             CoordBounds1D bounds = c.time.getAxis().bounds;
                             CoordFunction1D function = c.time.getAxis().function;
                             if (range != null) {
-                                Interval s = toInterval(c.time, range);
+                                Interval<Double> s = toInterval(c.time, range);
                                 log.debug("[computeBounds] range -> sub: " + s);
                                 Util.mergeIntoList(s, subs, unionScale);
                             } else if (bounds != null) {
                                 for (CoordRange1D cr : bounds.getSamples()) {
-                                    Interval s = toInterval(c.time, cr);
+                                    Interval<Double> s = toInterval(c.time, cr);
                                     log.debug("[computeBounds] bounds -> sub: " + s);
                                     Util.mergeIntoList(s, subs, unionScale);
                                 }
                             } else if (function != null) {
-                                Interval s = TimeUtil.toInterval(c.time, function);
+                                Interval<Double> s = TimeUtil.toInterval(c.time, function);
                                 log.debug("[computeBounds] function -> sub: " + s);
                                 Util.mergeIntoList(s, subs, unionScale);
                             }
@@ -171,22 +179,25 @@ public final class TimeUtil {
         // compute the outer bounds of the sub-intervals
         double lb = Double.MAX_VALUE;
         double ub = Double.MIN_VALUE;
-        for (Interval sub : subs) {
+        for (Interval<Double> sub : subs) {
             lb = Math.min(lb, sub.getLower());
             ub = Math.max(ub, sub.getUpper());
         }
 
-        return new SampledInterval(lb, ub, subs);
+        ComputedBounds ret = new ComputedBounds();
+        ret.bounds = new Interval<Double>(lb, ub);
+        ret.samples = subs;
+        return ret;
     }
 
     /**
      * Compute mean sample size (pixel scale).
      *
      * @param artifacts the set of Artifact's
-     * @param productType the artifact ProductType
+     * @param productType the artifact DataLinkSemantics
      * @return a new Polygon computed with the default union scale
      */
-    static Double computeSampleSize(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeSampleSize(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // assumption: all pixels are distinct so we can just compute a weighted average
         double totSampleSize = 0.0;
         double numPixels = 0.0;
@@ -201,15 +212,15 @@ public final class TimeUtil {
 
                             numPixels += Util.getNumPixels(c.time.getAxis());
                             if (range != null) {
-                                Interval si = toInterval(c.time, range);
+                                Interval<Double> si = toInterval(c.time, range);
                                 totSampleSize += si.getUpper() - si.getLower();
                             } else if (bounds != null) {
                                 for (CoordRange1D cr : bounds.getSamples()) {
-                                    Interval si = toInterval(c.time, cr);
+                                    Interval<Double> si = toInterval(c.time, cr);
                                     totSampleSize += si.getUpper() - si.getLower();
                                 }
                             } else if (function != null) {
-                                Interval si = TimeUtil.toInterval(c.time, function);
+                                Interval<Double> si = TimeUtil.toInterval(c.time, function);
                                 totSampleSize += si.getUpper() - si.getLower();
                             }
                         }
@@ -231,10 +242,10 @@ public final class TimeUtil {
      *
      * @param bounds the interval bounds
      * @param artifacts the set of Artifact's
-     * @param productType the artifact ProductType
+     * @param productType the artifact DataLinkSemantics
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromWCS(SampledInterval bounds, Set<Artifact> artifacts, ProductType productType) {
+    static Long computeDimensionFromWCS(Interval<Double> bounds, Set<Artifact> artifacts, DataLinkSemantics productType) {
         log.debug("computeDimensionFromWCS: " + bounds);
         if (bounds == null) {
             return null;
@@ -283,10 +294,10 @@ public final class TimeUtil {
      * Compute dimensionality (number of pixels).
      *
      * @param artifacts the set of Artifact's
-     * @param productType the artifact ProductType
+     * @param productType the artifact DataLinkSemantics
      * @return number of pixels (approximate)
      */
-    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, ProductType productType) {
+    static Long computeDimensionFromRangeBounds(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // assumption: all   pixels are distinct so just add up the number of pixels
         double numPixels = 0;
         for (Artifact a : artifacts) {
@@ -316,10 +327,10 @@ public final class TimeUtil {
      * in the chunk.
      *
      * @param artifacts the set of Artifact's
-     * @param productType the artifact ProductType
+     * @param productType the artifact DataLinkSemantics
      * @return exposure time in seconds
      */
-    static Double computeExposureTime(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeExposureTime(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
         // the chunk
@@ -350,10 +361,10 @@ public final class TimeUtil {
      * in the chunk.
      *
      * @param artifacts the set of Artifact's
-     * @param productType the artifact ProductType
+     * @param productType the artifact DataLinkSemantics
      * @return exposure time in seconds
      */
-    static Double computeResolution(Set<Artifact> artifacts, ProductType productType) {
+    static Double computeResolution(Set<Artifact> artifacts, DataLinkSemantics productType) {
         // ASSUMPTION: different Chunks (different WCS) are always different pixels
         // so we simply compute the mean values time weighted by number of pixels in
         // the chunk
@@ -379,7 +390,7 @@ public final class TimeUtil {
         return null;
     }
 
-    static Interval toInterval(TemporalWCS wcs, CoordRange1D r) {
+    static Interval<Double> toInterval(TemporalWCS wcs, CoordRange1D r) {
         validateWCS(wcs);
 
         // TODO: if mjdref has a value then the units of axis values could be any time
@@ -399,10 +410,10 @@ public final class TimeUtil {
         double[] tb = transform(wcs, b);
         double lower = ta[0] + ta[1];
         double upper = tb[0] + tb[1];
-        return new Interval(Math.min(lower, upper), Math.max(lower, upper));
+        return new Interval<Double>(Math.min(lower, upper), Math.max(lower, upper));
     }
 
-    static Interval toInterval(TemporalWCS wcs, CoordFunction1D func) {
+    static Interval<Double> toInterval(TemporalWCS wcs, CoordFunction1D func) {
         validateWCS(wcs);
 
         // TODO: if mjdref has a value then the units of axis values could be any time
@@ -423,7 +434,7 @@ public final class TimeUtil {
         double[] tb = transform(wcs, b);
         double lower = ta[0] + ta[1];
         double upper = tb[0] + tb[1];
-        return new Interval(Math.min(lower, upper), Math.max(lower, upper));
+        return new Interval<Double>(Math.min(lower, upper), Math.max(lower, upper));
     }
 
     // check that the provided wcs includes supported combination of CTYPE, CUNIT, and TIMESYS

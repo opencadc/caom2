@@ -67,20 +67,6 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.wcs.Axis;
-import ca.nrc.cadc.caom2.wcs.Coord2D;
-import ca.nrc.cadc.caom2.wcs.CoordAxis2D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction2D;
-import ca.nrc.cadc.caom2.wcs.CustomWCS;
-import ca.nrc.cadc.caom2.wcs.Dimension2D;
-import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
-import ca.nrc.cadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.net.URISyntaxException;
@@ -88,6 +74,20 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.Axis;
+import org.opencadc.caom2.wcs.Coord2D;
+import org.opencadc.caom2.wcs.CoordAxis2D;
+import org.opencadc.caom2.wcs.CoordFunction2D;
+import org.opencadc.caom2.wcs.CustomWCS;
+import org.opencadc.caom2.wcs.Dimension2D;
+import org.opencadc.caom2.wcs.PolarizationWCS;
+import org.opencadc.caom2.wcs.RefCoord;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.wcs.TemporalWCS;
 
 
 /**
@@ -112,7 +112,7 @@ public class CaomWCSValidatorTest {
         Artifact a = null;
 
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             CaomWCSValidator.validate(a);
@@ -150,7 +150,7 @@ public class CaomWCSValidatorTest {
     public void testValidWCS() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             // Populate all WCS with good values
@@ -172,7 +172,7 @@ public class CaomWCSValidatorTest {
     public void testNullAxis() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
 
             c.naxis = null;
@@ -188,7 +188,7 @@ public class CaomWCSValidatorTest {
     public void testInvalidNullMetadata() {
         Artifact a = null;
         try {
-            a = dataGenerator.getTestArtifact(ProductType.SCIENCE);
+            a = dataGenerator.getTestArtifact(DataLinkSemantics.THIS);
             Chunk c = a.getParts().iterator().next().getChunks().iterator().next();
             c.timeAxis = null;
             CaomWCSValidator.validate(a);
