@@ -47,5 +47,3 @@ dependencies {
     testImplementation 'junit:junit:4.13'
 }
 
-apply from: '../opencadc.gradle'
-
