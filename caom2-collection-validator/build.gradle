@@ -1,7 +1,5 @@
 plugins {
     id 'java'
-    id 'maven'
-    id 'maven-publish'
     id 'application'
     id 'checkstyle'
 }
@@ -11,7 +9,9 @@ repositories {
     mavenLocal()
 }
 
-sourceCompatibility = 1.8
+apply from: '../opencadc.gradle'
+
+sourceCompatibility = 11
 
 group = 'org.opencadc'
 
@@ -26,20 +26,18 @@ mainClassName = 'ca.nrc.cadc.caom2.validator.collection.Main'
 applicationDefaultJvmArgs = ['-Xms2048m','-Xmx8192m','-XX:OnOutOfMemoryError="kill -3 %p"']
 
 dependencies {
-    compile 'org.opencadc:cadc-util:[1.6,2.0)'
+    implementation 'org.opencadc:cadc-util:[1.6,2.0)'
 
-    compile 'org.opencadc:caom2:[2.4.1,2.5)'
-    compile 'org.opencadc:caom2persistence:[2.4.0,2.5)'
-    compile 'org.opencadc:caom2-repo:[1.4,1.5)'
-    compile 'org.opencadc:caom2-persist:[2.4.0,2.5)'
+    implementation 'org.opencadc:caom2:[2.4.1,2.5)'
+    implementation 'org.opencadc:caom2persistence:[2.4.0,2.5)'
+    implementation 'org.opencadc:caom2-repo:[1.4,1.5)'
+    implementation 'org.opencadc:caom2-persist:[2.4.0,2.5)'
     
     // needed to run plane metadata compute plugin (--compute)
-    compile 'org.opencadc:caom2-compute:[2.4.0,2.5)'
+    implementation 'org.opencadc:caom2-compute:[2.4.0,2.5)'
 
-    runtime 'org.postgresql:postgresql:[42.2,43.0)'
+    runtimeOnly 'org.postgresql:postgresql:[42.2,43.0)'
     
-    testCompile 'junit:junit:4.13'
+    testImplementation 'junit:junit:4.13'
 }
-
-apply from: '../opencadc.gradle'
 
