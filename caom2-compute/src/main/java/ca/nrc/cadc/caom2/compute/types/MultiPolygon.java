@@ -69,16 +69,14 @@
 
 package ca.nrc.cadc.caom2.compute.types;
 
-import org.opencadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.util.HexUtil;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.util.CaomValidator;
 
 /**
  *

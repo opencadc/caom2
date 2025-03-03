@@ -67,6 +67,11 @@
 
 package ca.nrc.cadc.caom2.compute;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+import org.apache.log4j.Logger;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.Part;
@@ -77,11 +82,6 @@ import org.opencadc.caom2.wcs.CoordBounds1D;
 import org.opencadc.caom2.wcs.CoordFunction1D;
 import org.opencadc.caom2.wcs.CoordRange1D;
 import org.opencadc.caom2.wcs.PolarizationWCS;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-import org.apache.log4j.Logger;
 
 /**
  * @author pdowler

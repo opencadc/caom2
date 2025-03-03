@@ -78,7 +78,6 @@ import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;

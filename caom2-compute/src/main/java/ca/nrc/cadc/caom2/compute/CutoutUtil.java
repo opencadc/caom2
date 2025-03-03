@@ -621,7 +621,7 @@ public final class CutoutUtil {
             if (s instanceof Polygon) {
                 return getPositionBounds(wcs, (Polygon) s);
             }
-        } catch(InvalidPolygonException ex) {
+        } catch (InvalidPolygonException ex) {
             throw new RuntimeException("BUG or CONTENT: generated invalid polygon whihc computing cutout", ex);
         }
         throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());

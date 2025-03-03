@@ -67,13 +67,12 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.Plane;
 import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import org.apache.log4j.Logger;
-
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Plane;
 
 /**
  * Utility class to assign values to fields marked with the computed stereotype
@@ -90,26 +89,28 @@ public class ComputeUtil {
 
     /**
      * Clear computed plane metadata.
-     *
-     * @deprecated
+     * @param p plane to clear
      */
     public static void clearTransientState(Plane p) {
         p.position = null;
         p.energy = null;
         p.time = null;
         p.polarization = null;
+        p.custom = null;
     }
 
     /**
      * Compute plane metadata from WCS.
      *
-     * @deprecated
+     * @param o parent observation
+     * @param p plane to compute
      */
     public static void computeTransientState(Observation o, Plane p) {
         computePosition(p);
         computeEnergy(p);
         computeTime(p);
         computePolarization(p);
+        computeCustom(p);
     }
 
 
@@ -139,4 +140,7 @@ public class ComputeUtil {
         p.polarization = PolarizationUtil.compute(p.getArtifacts());
     }
 
+    private static void computeCustom(Plane p) {
+        p.custom = CustomAxisUtil.compute(p.getArtifacts());
+    }
 }
