@@ -9,6 +9,8 @@ repositories {
     mavenLocal()
 }
 
+apply from: '../opencadc.gradle'
+
 sourceCompatibility = 11
 
 group = 'org.opencadc'
@@ -18,12 +20,8 @@ version = '2.5.0'
 mainClassName = "org.opencadc.caom2.validator.Main"
 
 dependencies {
-    implementation 'org.jdom:jdom2:2.0.6'
-    
     implementation 'org.opencadc:cadc-util:[1.12.0,2.0)'
     implementation 'org.opencadc:caom2:[2.5,2.6)'
     implementation 'org.opencadc:caom2-compute:[2.5,2.6)'
 }
-
-apply from: '../opencadc.gradle'
 

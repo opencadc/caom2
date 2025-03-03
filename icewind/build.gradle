@@ -9,9 +9,14 @@ repositories {
     mavenLocal()
 }
 
+apply from: '../opencadc.gradle'
+
 sourceCompatibility = 11
 
 group = 'org.opencadc'
+
+description = 'OpenCADC CAOM metadata sync application'
+def git_url = 'https://github.com/opencadc/caom2'
 
 mainClassName = 'org.opencadc.icewind.Main'
 
@@ -27,4 +32,3 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql:[42.2,43.0)'
 }
 
-apply from: '../opencadc.gradle'

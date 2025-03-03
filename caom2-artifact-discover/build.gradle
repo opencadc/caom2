@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'maven'
     id 'application'
     id 'checkstyle'
 }
@@ -10,20 +9,22 @@ repositories {
     mavenLocal()
 }
 
-sourceCompatibility = 1.8
+apply from: '../opencadc.gradle'
+
+sourceCompatibility = 11
 
 group = 'org.opencadc'
 
 description = 'OpenCADC CAOM artifact discover application'
 def git_url = 'https://github.com/opencadc/caom2'
 
-dependencies {
-    compile 'org.opencadc:caom2-artifact-sync:[2.4.15,2.5)'
-
-    runtime 'org.opencadc:caom2-artifact-store-si:[0.1.0,1.0)'
-    runtime 'org.postgresql:postgresql:[42.0,43.0)'
-}
-
 mainClassName = 'org.opencadc.caom2.discover.Main'
 
-apply from: '../opencadc.gradle'
+dependencies {
+    implementation 'org.opencadc:caom2-artifact-sync:[2.4.15,2.5)'
+
+    runtimeOnly 'org.opencadc:caom2-artifact-store-si:[0.1.0,1.0)'
+    runtimeOnly 'org.postgresql:postgresql:[42.0,43.0)'
+}
+
+
