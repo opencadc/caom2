@@ -202,7 +202,7 @@ public class ObservationReader {
      * client is likely to fail in horrible ways (e.g. NullPointerException) if
      * it receives invalid documents. However, performance may be improved.
      *
-     * @param enableSchemaValidation
+     * @param enableSchemaValidation enable XML schema validation
      */
     public ObservationReader(boolean enableSchemaValidation) {
         this.enableSchemaValidation = enableSchemaValidation;
@@ -314,10 +314,9 @@ public class ObservationReader {
     /**
      * Construct an Observation from an XML String source.
      *
-     * @param xml
-     *            String of the XML.
-     * @return An Observation.
-     * @throws ObservationParsingException
+     * @param xml input observation in XML format
+     * @return An Observation
+     * @throws ObservationParsingException if content is invalid
      *             if there is an error parsing the XML.
      */
     public Observation read(String xml) throws ObservationParsingException {
@@ -335,11 +334,11 @@ public class ObservationReader {
     /**
      * Construct an Observation from a InputStream.
      *
-     * @param in
-     *            An InputStream.
-     * @return An Observation.
-     * @throws ObservationParsingException
+     * @param in input stream to read from
+     * @return An Observation
+     * @throws ObservationParsingException if content is invalid
      *             if there is an error parsing the XML.
+     * @throws java.io.IOException if input cannot be read
      */
     public Observation read(InputStream in)
             throws ObservationParsingException, IOException {
@@ -356,11 +355,11 @@ public class ObservationReader {
     /**
      * Construct an Observation from a Reader.
      *
-     * @param reader
-     *            A Reader.
-     * @return An Observation.
-     * @throws ObservationParsingException
+     * @param reader input reader to read from
+     * @return An Observation
+     * @throws ObservationParsingException if content is invalid
      *             if there is an error parsing the XML.
+     * @throws java.io.IOException if input cannot be read
      */
     public Observation read(Reader reader)
             throws ObservationParsingException, IOException {
@@ -374,6 +373,9 @@ public class ObservationReader {
         try {
             document = XmlUtil.buildDocument(reader, schemaMap);
         } catch (JDOMException jde) {
+            if (jde.getCause() != null && jde.getCause() instanceof IOException) {
+                throw (IOException) jde.getCause();
+            }
             String error = "XML failed schema validation: " + jde.getMessage();
             throw new ObservationParsingException(error, jde);
         }
@@ -561,14 +563,12 @@ public class ObservationReader {
     /**
      * Build an Algorithm from a JDOM representation of an algorithm element.
      *
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
      * @return an Algorithm, or null if the document doesn't contain an
      *         algorithm element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Environment getEnvironment(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -597,14 +597,12 @@ public class ObservationReader {
     /**
      * Build an Algorithm from a JDOM representation of an algorithm element.
      * 
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
      * @return an Algorithm, or null if the document doesn't contain an
      *         algorithm element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Algorithm getAlgorithm(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -620,14 +618,12 @@ public class ObservationReader {
     /**
      * Build an Proposal from a JDOM representation of an proposal element.
      * 
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
      * @return an Proposal, or null if the document doesn't contain an proposal
      *         element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Proposal getProposal(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -664,14 +660,12 @@ public class ObservationReader {
     /**
      * Build an Target from a JDOM representation of an target element.
      * 
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
      * @return an Target, or null if the document doesn't contain an target
      *         element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Target getTarget(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -718,14 +712,12 @@ public class ObservationReader {
      * Build a TargetPosition from a JDOM representation of an targetPosition
      * element.
      * 
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
      * @return a TargetPosition, or null if the document doesn't contain an
      *         targetPosition element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected TargetPosition getTargetPosition(Element parent,
             Namespace namespace, ReadContext rc)
@@ -753,11 +745,12 @@ public class ObservationReader {
 
     /**
      * 
-     * @param parent
-     * @param namespace
-     * @param rc
-     * @return
-     * @throws ObservationParsingException
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @return requirements object or null
+     * 
+     * @throws ObservationParsingException if content is invalid
      */
     protected Requirements getRequirements(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -776,14 +769,12 @@ public class ObservationReader {
     /**
      * Build an Telescope from a JDOM representation of an telescope element.
      * 
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
      * @return an TarTelescopeget, or null if the document doesn't contain an
      *         telescope element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Telescope getTelescope(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -819,14 +810,12 @@ public class ObservationReader {
     /**
      * Build an Instrument from a JDOM representation of an instrument element.
      * 
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
      * @return an Instrument, or null if the document doesn't contain an
      *         instrument element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Instrument getInstrument(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -853,14 +842,11 @@ public class ObservationReader {
      * Creates ObservationURI from the observationURI elements found in the
      * members element, and adds them to the given Set of ObservationURI's.
      * 
-     * @param members
-     *            Set of Member's from the Observation.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
-     * @throws ObservationParsingException
+     * @param members set to populate
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @throws ObservationParsingException if content is invalid
      */
     protected void addMembers(Set<URI> members, Element parent,
             Namespace namespace, ReadContext rc)
@@ -889,14 +875,12 @@ public class ObservationReader {
      * Creates Plane's from the plane elements found in the planes element, and
      * adds them to the given Set of Plane's.
      * 
-     * @param planes
-     *            the Set of Plane's from the Observation.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
-     * @throws ObservationParsingException
+     * @param obsURI parent observation URI
+     * @param planes set to populate
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @throws ObservationParsingException if content is invalid
      */
     protected void addPlanes(URI obsURI, Set<Plane> planes, Element parent,
             Namespace namespace, ReadContext rc)
@@ -1349,14 +1333,11 @@ public class ObservationReader {
     /**
      * Build a Provenance from a JDOM representation of an Provenance.
      * 
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
-     * @return an Provenance, or null if the document doesn't contain a
-     *         provenance element.
-     * @throws ObservationParsingException
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @return Provenance or null
+     * @throws ObservationParsingException if content is invalid
      */
     protected Provenance getProvenance(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -1418,11 +1399,11 @@ public class ObservationReader {
 
     /**
      * 
-     * @param parent
-     * @param namespace
-     * @param rc
-     * @return
-     * @throws ObservationParsingException
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @return DataQuality or null
+     * @throws ObservationParsingException if content is invalid
      */
     protected DataQuality getQuality(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -1439,11 +1420,11 @@ public class ObservationReader {
     
     /**
      * 
-     * @param parent
-     * @param namespace
-     * @param rc
-     * @return
-     * @throws ObservationParsingException
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @return Observable or null
+     * @throws ObservationParsingException if content is invalid
      */
     protected Observable getObservable(Element parent, Namespace namespace,
             ReadContext rc) throws ObservationParsingException {
@@ -1482,14 +1463,11 @@ public class ObservationReader {
      * Creates PlaneURI's from the planeURI elements found in the inputs
      * element, and adds them to the given Set of PlaneURI's.
      * 
-     * @param inputs
-     *            the Set of PlaneURI from the Provenance.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
-     * @throws ObservationParsingException
+     * @param inputs set to populate
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @throws ObservationParsingException if content is invalid
      */
     protected void addInputs(Set<URI> inputs, Element parent,
             Namespace namespace, ReadContext rc)
@@ -1520,12 +1498,10 @@ public class ObservationReader {
      * 
      * @param artifacts
      *            the Set of Artifact's from the Plane.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
-     * @throws ObservationParsingException
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @throws ObservationParsingException if content is invalid
      */
     protected void addArtifacts(Set<Artifact> artifacts, Element parent,
             Namespace namespace, ReadContext rc)
@@ -1614,12 +1590,10 @@ public class ObservationReader {
      * 
      * @param parts
      *            the Set of Part's from the Artifact.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
-     * @throws ObservationParsingException
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @throws ObservationParsingException if content is invalid
      */
     protected void addParts(Set<Part> parts, Element parent,
             Namespace namespace, ReadContext rc)
@@ -1661,12 +1635,10 @@ public class ObservationReader {
      * 
      * @param chunks
      *            the Set of Chunk's from the Part.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
-     * @param rc
-     * @throws ObservationParsingException
+     * @param parent parent element
+     * @param namespace caom2 namespace
+     * @param rc read context info
+     * @throws ObservationParsingException if content is invalid
      */
     protected void addChunks(Set<Chunk> chunks, Element parent,
             Namespace namespace, ReadContext rc)
@@ -1726,16 +1698,14 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
-     * @param rc
+     * @param rc read context info
      * @return an ObservableAxis, or null if the document doesn't contain an
      *         observable element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected ObservableAxis getObservableAxis(String name, Element parent,
             Namespace namespace, boolean required, ReadContext rc)
@@ -1757,16 +1727,14 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
-     * @param rc
+     * @param rc read context info
      * @return an SpatialWCS, or null if the document doesn't contain an
      *         position element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected SpatialWCS getSpatialWCS(String name, Element parent,
             Namespace namespace, boolean required, ReadContext rc)
@@ -1791,16 +1759,14 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
-     * @param rc
+     * @param rc read context info
      * @return an SpectralWCS, or null if the document doesn't contain an energy
      *         element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected SpectralWCS getSpectralWCS(String name, Element parent,
             Namespace namespace, boolean required, ReadContext rc)
@@ -1838,16 +1804,14 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
-     * @param rc
+     * @param rc read context info
      * @return an TemporalWCS, or null if the document doesn't contain an time
      *         element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected TemporalWCS getTemporalWCS(String name, Element parent,
             Namespace namespace, boolean required, ReadContext rc)
@@ -1875,15 +1839,14 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
-     * @param rc
+     *            is the element expected to be found.
+     * @param rc read context info
      * @return an PolarizationWCS, or null if the document doesn't contain an
      *         polarization element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected PolarizationWCS getPolarizationWCS(String name, Element parent,
             Namespace namespace, boolean required, ReadContext rc)
@@ -1903,15 +1866,14 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
-     * @param rc
+     *            is the element expected to be found.
+     * @param rc read context info
      * @return an PolarizationWCS, or null if the document doesn't contain an
      *         polarization element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CustomWCS getCustomWCS(String name, Element parent,
             Namespace namespace, boolean required, ReadContext rc)
@@ -1930,14 +1892,12 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an Axis, or null if the document doesn't contain an axis element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Axis getAxis(String name, Element parent, Namespace namespace,
             boolean required) throws ObservationParsingException {
@@ -1957,15 +1917,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return a Coord2D, or null if the document doesn't contain element named
      *         name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Coord2D getCoord2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -1986,15 +1944,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return a ValueCoord2D, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected ValueCoord2D getValueCoord2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2016,15 +1972,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordAxis1D, or null if the document doesn't contain element
      *         called name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordAxis1D getCoordAxis1D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2050,15 +2004,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordAxis2D, or null if the document doesn't contain element
      *         called name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordAxis2D getCoordAxis2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2087,15 +2039,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordBounds1D, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordBounds1D getCoordBounds1D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2120,15 +2070,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordBounds2D, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordBounds2D getCoordBounds2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2164,15 +2112,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordCircle2D, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordCircle2D getCoordCircle2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2195,15 +2141,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordError, or null if the document doesn't contain element
      *         called name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordError getCoordError(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2224,15 +2168,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordFunction1D, or null if the document doesn't contain
      *         element named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordFunction1D getCoordFunction1D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2254,15 +2196,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordFunction2D, or null if the document doesn't contain
      *         element named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordFunction2D getCoordFunction2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2288,15 +2228,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordPolygon2D, or null if the document doesn't contain
      *         element named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordPolygon2D getCoordPolygon2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2336,15 +2274,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordRange1D, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordRange1D getCoordRange1D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2365,15 +2301,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an CoordRange2D, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected CoordRange2D getCoordRange2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2393,15 +2327,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an Dimension2D, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Dimension2D getDimension2D(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2421,15 +2353,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an RefCoord, or null if the document doesn't contain element
      *         named name.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected RefCoord getRefCoord(String name, Element parent,
             Namespace namespace, boolean required)
@@ -2449,15 +2379,13 @@ public class ObservationReader {
      * 
      * @param name
      *            the name of the Element.
-     * @param parent
-     *            the parent Element.
-     * @param namespace
-     *            of the document.
+     * @param parent parent element
+     * @param namespace caom2 namespace
      * @param required
      *            is the element expected to be found.
      * @return an Slice, or null if the document doesn't contain an slice
      *         element.
-     * @throws ObservationParsingException
+     * @throws ObservationParsingException if content is invalid
      */
     protected Slice getSlice(String name, Element parent, Namespace namespace,
             boolean required) throws ObservationParsingException {

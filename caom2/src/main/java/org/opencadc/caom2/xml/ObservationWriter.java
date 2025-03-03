@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,6 +69,34 @@
 
 package org.opencadc.caom2.xml;
 
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.util.StringBuilderWriter;
+import ca.nrc.cadc.util.StringUtil;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.net.URI;
+import java.text.DateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.log4j.Logger;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.Namespace;
+import org.jdom2.ProcessingInstruction;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 import org.opencadc.caom2.Algorithm;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.CaomEntity;
@@ -122,34 +150,6 @@ import org.opencadc.caom2.wcs.SpatialWCS;
 import org.opencadc.caom2.wcs.SpectralWCS;
 import org.opencadc.caom2.wcs.TemporalWCS;
 import org.opencadc.caom2.wcs.ValueCoord2D;
-import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.util.StringBuilderWriter;
-import ca.nrc.cadc.util.StringUtil;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.URI;
-import java.text.DateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.apache.log4j.Logger;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.Namespace;
-import org.jdom2.ProcessingInstruction;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 
 /**
  *
@@ -185,10 +185,9 @@ public class ObservationWriter {
      * included for any collections that are empty; this is not necessary but is
      * valid in the schema so is useful for testing.
      *
-     * @param caom2NamespacePrefix
-     * @param namespace
-     *            a valid CAOM-2.x target namespace
-     * @param writeEmptyCollections
+     * @param caom2NamespacePrefix namespace prefix to use while writing
+     * @param namespace a valid CAOM-2.x target namespace
+     * @param writeEmptyCollections true to write placeholder empty collection elements, false to omit
      */
     public ObservationWriter(String caom2NamespacePrefix, String namespace,
             boolean writeEmptyCollections) {
@@ -240,7 +239,7 @@ public class ObservationWriter {
 
     /**
      * 
-     * @param stylesheetURL
+     * @param stylesheetURL filename of an XSLT style sheet in the classpath
      */
     public void setStylesheetURL(String stylesheetURL) {
         this.stylesheetURL = stylesheetURL;
@@ -248,7 +247,7 @@ public class ObservationWriter {
 
     /**
      * 
-     * @return
+     * @return filename of XSLT style sheet to use
      */
     public String getStylesheetURL() {
         return stylesheetURL;
@@ -447,7 +446,7 @@ public class ObservationWriter {
         addProposalElement(obs.proposal, element, dateFormat);
         addTargetElement(obs.target, element, dateFormat);
         addTargetPositionElement(obs.targetPosition, element, dateFormat);
-        addRequirements(obs.requirements, element, dateFormat);
+        addRequirements(obs.requirements, element);
         addTelescopeElement(obs.telescope, element, dateFormat);
         addInstrumentElement(obs.instrument, element, dateFormat);
         addEnvironmentElement(obs.environment, element, dateFormat);
@@ -587,12 +586,10 @@ public class ObservationWriter {
     /**
      * Add a JDOM representation of Requirements.
      * 
-     * @param req
-     * @param parent
-     * @param dateFormat
+     * @param req object to write
+     * @param parent parent element
      */
-    protected void addRequirements(Requirements req, Element parent,
-            DateFormat dateFormat) {
+    protected void addRequirements(Requirements req, Element parent) {
         if (docVersion < 21) {
             return; // Requirements added in CAOM-2.1
         }
@@ -1174,9 +1171,8 @@ public class ObservationWriter {
     /**
      * Add a JDOM representation of DaatQuality.
      * 
-     * @param dq
-     * @param parent
-     * @param dateFormat
+     * @param dq object to write
+     * @param parent parent element
      */
     protected void addQuality(DataQuality dq, Element parent) {
         if (docVersion < 21) {
