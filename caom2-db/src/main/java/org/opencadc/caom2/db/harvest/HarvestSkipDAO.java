@@ -131,7 +131,7 @@ public class HarvestSkipDAO {
         this.extractor = new HarvestSkipMapper(Calendar.getInstance(DateUtil.UTC));
     }
     
-    public HarvestSkip get(String source, String cname, URI uri) {
+    public HarvestSkip get(URI source, String cname, URI uri) {
         SelectStatementCreator sel = new SelectStatementCreator();
         sel.setValues(source, cname, uri, null, null, null);
         List result = jdbc.query(sel, extractor);
@@ -141,7 +141,7 @@ public class HarvestSkipDAO {
         return (HarvestSkip) result.get(0);
     }
 
-    public List<HarvestSkip> get(String source, String cname, Date start, Date end, Integer batchSize) {
+    public List<HarvestSkip> get(URI source, String cname, Date start, Date end, Integer batchSize) {
         SelectStatementCreator sel = new SelectStatementCreator();
         sel.setValues(source, cname, null, start, end, batchSize);
         List result = jdbc.query(sel, extractor);
@@ -213,7 +213,7 @@ public class HarvestSkipDAO {
     
     private class SelectStatementCreator implements PreparedStatementCreator {
 
-        private String source;
+        private URI source;
         private String cname;
         private Integer batchSize;
         private URI skipID;
@@ -223,7 +223,7 @@ public class HarvestSkipDAO {
         public SelectStatementCreator() {
         }
 
-        public void setValues(String source, String cname, URI skipID, Date start, Date end, Integer batchSize) {
+        public void setValues(URI source, String cname, URI skipID, Date start, Date end, Integer batchSize) {
             this.source = source;
             this.cname = cname;
             this.batchSize = batchSize;
@@ -265,7 +265,7 @@ public class HarvestSkipDAO {
         private void loadValues(PreparedStatement ps)
                 throws SQLException {
             int col = 1;
-            ps.setString(col++, source);
+            ps.setString(col++, source.toASCIIString());
             ps.setString(col++, cname);
             if (errorMessagePattern != null) {
                 ps.setString(col++, errorMessagePattern);

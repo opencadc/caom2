@@ -147,24 +147,25 @@ public class PostgresqlHarvestSkipDAOTest {
             Date start = null;
             Date end = null;
 
+            final URI source = URI.create("foo:testInsert");
             Date t1 = new Date();
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id1, t1, "m1");
+            skip = new HarvestSkip(source, Integer.class.getName(), id1, t1, "m1");
             dao.put(skip);
             Thread.sleep(10L);
             Date t2 = new Date();
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id2, t2, null);
+            skip = new HarvestSkip(source, Integer.class.getName(), id2, t2, null);
             dao.put(skip);
             Thread.sleep(10L);
             Date t3 = new Date();
-            skip = new HarvestSkip("testInsert", Integer.class.getName(), id3, t3, "m2");
+            skip = new HarvestSkip(source, Integer.class.getName(), id3, t3, "m2");
             dao.put(skip);
 
-            List<HarvestSkip> skips = dao.get("testInsert", Integer.class.getName(), start, end, null);
+            List<HarvestSkip> skips = dao.get(source, Integer.class.getName(), start, end, null);
             Assert.assertEquals("skips size", 3, skips.size());
 
-            Assert.assertEquals("testInsert", skips.get(0).getSource());
-            Assert.assertEquals("testInsert", skips.get(1).getSource());
-            Assert.assertEquals("testInsert", skips.get(2).getSource());
+            Assert.assertEquals(source, skips.get(0).getSource());
+            Assert.assertEquals(source, skips.get(1).getSource());
+            Assert.assertEquals(source, skips.get(2).getSource());
 
             Assert.assertEquals(Integer.class.getName(), skips.get(0).getName());
             Assert.assertEquals(Integer.class.getName(), skips.get(1).getName());
@@ -195,12 +196,13 @@ public class PostgresqlHarvestSkipDAOTest {
 
             HarvestSkip skip;
 
+            final URI source = URI.create("foo:testInsert");
             Date t1 = new Date();
-            skip = new HarvestSkip("testUpdate", Integer.class.getName(), id1, t1, "initial error message");
+            skip = new HarvestSkip(source, Integer.class.getName(), id1, t1, "initial error message");
             dao.put(skip);
             final String expectedBucket = skip.getUriBucket();
 
-            HarvestSkip actual1 = dao.get("testUpdate", Integer.class.getName(), id1);
+            HarvestSkip actual1 = dao.get(source, Integer.class.getName(), id1);
             Assert.assertNotNull(actual1);
             Assert.assertEquals(id1, actual1.getURI());
             Assert.assertEquals(t1, actual1.tryAfter);
@@ -215,7 +217,7 @@ public class PostgresqlHarvestSkipDAOTest {
             skip.tryAfter = t2;
             dao.put(skip);
 
-            HarvestSkip actual2 = dao.get("testUpdate", Integer.class.getName(), id1);
+            HarvestSkip actual2 = dao.get(source, Integer.class.getName(), id1);
             Assert.assertNotNull(actual2);
             Assert.assertEquals(id1, actual2.getURI());
             Assert.assertEquals(t2, actual2.tryAfter);
@@ -234,7 +236,7 @@ public class PostgresqlHarvestSkipDAOTest {
     @Test
     public void testIterator() {
         final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-        final String source = "testIterator";
+        final URI source = URI.create("foo:testIterator");
         final String cname = "Foo";
         final String namespace = "foo:";
         try {
@@ -303,7 +305,7 @@ public class PostgresqlHarvestSkipDAOTest {
     @Test
     public void testIteratorBucket() {
         final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-        final String source = "testIteratorBucket";
+        final URI source = URI.create("foo:testIteratorBucket");
         final String cname = "Foo";
         final String namespace = "foo:";
         try {
@@ -344,7 +346,7 @@ public class PostgresqlHarvestSkipDAOTest {
     @Test
     public void testIteratorBucketRange() {
         final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-        final String source = "testIteratorBucket";
+        final URI source = URI.create("foo:testIteratorBucketRange");
         final String cname = "Foo";
         final String namespace = "foo:";
         try {
