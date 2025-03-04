@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap.query.functions;
 
@@ -74,14 +74,13 @@ import net.sf.jsqlparser.expression.StringValue;
 
 /**
  * The CAOM implementation of ADQL function COORDSYS.
- * 
+ *
  * @author zhangsa
- * 
+ *
  */
-public class Coordsys extends StringValue
-{
-    public Coordsys(Function adqlFunction)
-    {
+public class Coordsys extends StringValue {
+
+    public Coordsys(Function adqlFunction) {
         super("'ICRS'");
     }
 

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,27 +65,25 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap.query.functions;
 
 import net.sf.jsqlparser.expression.Function;
 
 /**
- * The CAOM implementation of ADQL function AREA.
+ * The CAOM implementation of ADQL function AREA. AREA(position_bounds) is 
+ * converted to position_bounds_area.
  *
- * AREA(position_bounds) is converted to position_bounds_area
- * 
  * @author zhangsa
- * 
+ *
  */
-public class Area extends FuntionOnBounds
-{
-    public Area(Function adqlFunction)
-    {
+public class Area extends FuntionOnBounds {
+
+    public Area(Function adqlFunction) {
         super(adqlFunction);
         convertParameters();
         column.setColumnName(POSITION_BOUNDS_AREA);
     }
-    
+
 }

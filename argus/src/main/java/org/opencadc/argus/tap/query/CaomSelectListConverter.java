@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap.query;
 
@@ -90,61 +90,48 @@ import org.apache.log4j.Logger;
 /**
  * Supports converting various CAOM columns from the select list into different
  * columns that can deliver the correct output.
- * 
+ *
  * @author pdowler
  */
-public class CaomSelectListConverter extends SelectNavigator
-{
+public class CaomSelectListConverter extends SelectNavigator {
+
     private static Logger log = Logger.getLogger(CaomSelectListConverter.class);
-    
+
     private final TapSchema tapSchema;
-    
-    public CaomSelectListConverter(TapSchema tapSchema)
-    {
+
+    public CaomSelectListConverter(TapSchema tapSchema) {
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
         this.tapSchema = tapSchema;
     }
 
     @Override
-    public void visit(PlainSelect ps)
-    {
+    public void visit(PlainSelect ps) {
         // not going to recurse, just examine/convert the select list
         List<Table> tabs = ParserUtil.getFromTableList(ps);
         List<SelectItem> selectItems = ps.getSelectItems();
-        if (selectItems != null)
-        {
-            for (SelectItem s : selectItems)
-            {
-                if (s instanceof SelectExpressionItem)
-                {
+        if (selectItems != null) {
+            for (SelectItem s : selectItems) {
+                if (s instanceof SelectExpressionItem) {
                     SelectExpressionItem se = (SelectExpressionItem) s;
                     Expression e = se.getExpression();
-                    if (e instanceof Function)
-                    {
+                    if (e instanceof Function) {
                         Function f = (Function) e;
-                        if (f.isAllColumns())
-                        {
+                        if (f.isAllColumns()) {
                             log.debug("found: " + f.getName() + " arg: AllColumns");
-                        }
-                        else
-                        {
+                        } else {
                             ExpressionList elist = f.getParameters();
                             if (elist != null && elist.getExpressions() != null && !elist.getExpressions().isEmpty()) {
                                 Iterator i = elist.getExpressions().iterator();
-                                while ( i.hasNext() )
-                                {
+                                while (i.hasNext()) {
                                     Expression arg = (Expression) i.next();
-                                    if (arg instanceof Column)
-                                    {
+                                    if (arg instanceof Column) {
                                         Column c = (Column) arg;
                                         fixColumn(c, tabs);
                                     }
                                 }
                             }
                         }
-                    }
-                    else if (e instanceof Column)
-                    {
+                    } else if (e instanceof Column) {
                         Column c = (Column) e;
                         fixColumn(c, tabs);
                     }
@@ -153,35 +140,30 @@ public class CaomSelectListConverter extends SelectNavigator
         }
     }
 
-    private void fixColumn(Column c, List<Table> tabs)
-    {
+    private void fixColumn(Column c, List<Table> tabs) {
         Table t = c.getTable();
-        if ( !Util.isUploadedTable(t, tabs))
-        {
-            if (Util.isCAOM2(t, tabs))
-            {
+        if (!Util.isUploadedTable(t, tabs)) {
+            if (Util.isCAOM2(t, tabs)) {
                 // caom2.Artifact, caom2.SIAv1
-                if (c.getColumnName().equalsIgnoreCase("accessURL"))
+                if (c.getColumnName().equalsIgnoreCase("accessURL")) {
                     c.setColumnName("uri");
-                
+                }
+
                 // caom2.Plane changes in caom2persistence-2.3.33:
                 // position_bounds is a caom2:shape
                 // position_bounds_samples is a caom2:multipolygon
                 // position_bounds_spoly is a polygon for use in predicates
-                
                 // caom2.Plane -- position_bounds_points is polymorphic (circles and polygons)
                 // and position_bounds is not (circle approximated as polygon) so we have to 
                 // return the latter in TAP -- slightly lossy
-                
                 //if (c.getColumnName().equalsIgnoreCase("position_bounds"))
                 //    c.setColumnName("position_bounds_points");
-                
                 // ivoa.ObsCore has STC-S output so we can select the exact polymorphic column
                 // this variant has to match the one in FormatFactoryImpl.getRegionFormat()
                 //if (c.getColumnName().equalsIgnoreCase("s_region"))
                 //    c.setColumnName("position_bounds_points");
             }
-            
+
         }
     }
 }

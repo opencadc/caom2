@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap.query.functions;
 
@@ -75,55 +75,50 @@ import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 
 /**
- * 
+ *
  * @author zhangsa
- * 
+ *
  */
-public abstract class FuntionOnBounds extends Function
-{
+public abstract class FuntionOnBounds extends Function {
+
     // these values work for caom1 and caom2
-    public static String[] POSITION_BOUNDS = { "position_bounds", "s_region" };
+    public static String[] POSITION_BOUNDS = {"position_bounds", "s_region"};
     public static String POSITION_BOUNDS_CENTER = "position_bounds_center";
     public static String POSITION_BOUNDS_AREA = "position_bounds_area";
-    
+
     protected Column column;
-    
+
     protected boolean onPositionBounds = false;
 
-    public FuntionOnBounds(Function adqlFunction)
-    {
+    public FuntionOnBounds(Function adqlFunction) {
         super();
         setParameters(adqlFunction.getParameters());
         convertParameters();
     }
 
-    public void setOnPositionBounds(boolean onPositionBounds)
-    {
+    public void setOnPositionBounds(boolean onPositionBounds) {
         this.onPositionBounds = onPositionBounds;
     }
 
-    public boolean isOnPositionBounds()
-    {
+    public boolean isOnPositionBounds() {
         return onPositionBounds;
     }
 
-    public Expression getExpression()
-    {
+    public Expression getExpression() {
         return column;
     }
-    
+
     @SuppressWarnings("unchecked")
-    protected void convertParameters()
-    {
+    protected void convertParameters() {
         List<Expression> expressions = getParameters().getExpressions();
         Expression expression = expressions.get(0);
         onPositionBounds = false;
-        if (expression instanceof Column)
-        {
+        if (expression instanceof Column) {
             column = (Column) expression;
             String columnName = column.getColumnName();
-            for (String s : POSITION_BOUNDS)
+            for (String s : POSITION_BOUNDS) {
                 onPositionBounds = onPositionBounds || columnName.equalsIgnoreCase(s);
+            }
         }
     }
 

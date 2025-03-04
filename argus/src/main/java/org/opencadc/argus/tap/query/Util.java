@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap.query;
 
@@ -86,6 +86,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.schema.Column;
@@ -101,45 +102,43 @@ import org.opencadc.gms.IvoaGroupClient;
  *
  * @author pdowler, Sailor Zhang
  */
-public class Util
-{
+public class Util {
+
     private static Logger log = Logger.getLogger(Util.class);
-    
+
     /**
      * Obtain a PlainSelect object from a query string.
      * If exception happens, returns null.
-     * 
+     *
      * @param query
      * @return
      */
-    public static PlainSelect getPlainSelect(String query)
-    {
+    public static PlainSelect getPlainSelect(String query) {
         PlainSelect ps = null;
-        try
-        {
+        try {
             Statement stmt = ParserUtil.receiveQuery(query);
             Select select = (Select) stmt;
             ps = (PlainSelect) select.getSelectBody();
-        } catch (Exception e)
-        {
+        } catch (JSQLParserException ex) {
+            throw new RuntimeException("unexpected exception: " + ex);
         }
         return ps;
     }
 
     /**
      * Combine a list of expressions using AND operation.
+     *
      * @param exprList
      * @return
      */
-    public static Expression combineAndExpressions(List<Expression> exprList)
-    {
+    public static Expression combineAndExpressions(List<Expression> exprList) {
         Expression rtn = null;
-        for (Expression expr : exprList)
-        {
-            if (rtn == null)
+        for (Expression expr : exprList) {
+            if (rtn == null) {
                 rtn = expr;
-            else
+            } else {
                 rtn = new AndExpression(rtn, expr);
+            }
         }
         return rtn;
     }
@@ -147,36 +146,33 @@ public class Util
     /**
      * If table alias is presented in the select statement,
      * a column of this table should be presented with alias only.
-     * This method treats the column and keep the alias only if it exists. 
-     * 
+     * This method treats the column and keep the alias only if it exists.
+     *
      * @param column
      * @return
      */
-    public static Column useTableAliasIfExists(Column column)
-    {
+    public static Column useTableAliasIfExists(Column column) {
         Column rtn = null;
         Table newTable = null;
 
         Table table = column.getTable();
-        if (table == null)
+        if (table == null) {
             rtn = column; //no treatment is made, return original column
-        else
-        {
+        } else {
             String alias = table.getAlias();
-            if (alias == null || alias.equals(""))
+            if (alias == null || alias.equals("")) {
                 rtn = column; //no treatment is made, return original column
-            else
-            {
+            } else {
                 newTable = new Table(null, alias);
                 rtn = new Column(newTable, column.getColumnName());
             }
         }
         return rtn;
     }
-    
+
     public static List<String> getGroupIDs(IvoaGroupClient gmsClient) throws AccessControlException {
         List<String> groupIDs = new ArrayList<>();
-            
+
         IvoaGroupClient gms = gmsClient;
         if (gms == null) {
             gms = new IvoaGroupClient();
@@ -218,7 +214,7 @@ public class Util
                 }
                 if (t2.getAlias() == null) {
                     // unqualified caom2 table in the FROM clause
-                    caom2 = true; 
+                    caom2 = true;
                 }
             }
         }
@@ -242,8 +238,7 @@ public class Util
         }
         return upload;
     }
-    
-       
+
     static Table findTableWithColumn(Column c, List<Table> tabs, TapSchema ts) {
         log.debug("find: " + c.getColumnName());
         Table ret = null;

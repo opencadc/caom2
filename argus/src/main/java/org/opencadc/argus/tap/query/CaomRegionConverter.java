@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,13 +65,10 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap.query;
 
-import org.opencadc.argus.tap.query.functions.Area;
-import org.opencadc.argus.tap.query.functions.Centroid;
-import org.opencadc.argus.tap.query.functions.Coordsys;
 import ca.nrc.cadc.tap.parser.ParserUtil;
 import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
 import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
@@ -86,44 +83,44 @@ import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import org.apache.log4j.Logger;
+import org.opencadc.argus.tap.query.functions.Area;
+import org.opencadc.argus.tap.query.functions.Centroid;
+import org.opencadc.argus.tap.query.functions.Coordsys;
 
 /**
  * convert predicate functions into CAOM implementation
- * 
+ *
  * @author pdowler
  *
  */
-public class CaomRegionConverter extends PgsphereRegionConverter
-{
+public class CaomRegionConverter extends PgsphereRegionConverter {
+
     private static Logger log = Logger.getLogger(CaomRegionConverter.class);
 
     private final TapSchema tapSchema;
-    
-    public CaomRegionConverter(TapSchema tapSchema)
-    {
+
+    public CaomRegionConverter(TapSchema tapSchema) {
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
         this.tapSchema = tapSchema;
     }
-    
+
     /**
      * This method is called when a CONTAINS is found.
      * This could occur if the query had CONTAINS(...) in the select list or as
-     * part of an arithmetic expression or aggregate function (since CONTAINS 
-     * returns a numeric value). 
-     * 
-     * @param left 
+     * part of an arithmetic expression or aggregate function (since CONTAINS
+     * returns a numeric value).
+     *
+     * @param left
      * @param right
      * @return replacement expression
      */
     @Override
-    protected Expression handleContains(Expression left, Expression right)
-    {
-        log.debug("handleContains: " + left  + " " + right);
-        
+    protected Expression handleContains(Expression left, Expression right) {
+        log.debug("handleContains: " + left + " " + right);
+
         // column renaming
         List<Table> tabs = ParserUtil.getFromTableList(super.getPlainSelect());
-        if (left instanceof Column)
-        {
+        if (left instanceof Column) {
             Column c = (Column) left;
             Table t = c.getTable();
             if (t == null || t.getName() == null) {
@@ -137,9 +134,8 @@ public class CaomRegionConverter extends PgsphereRegionConverter
                     c.setColumnName("position_bounds_spoly");
                 }
             }
-        } 
-        if (right instanceof Column)
-        {
+        }
+        if (right instanceof Column) {
             Column c = (Column) right;
             Table t = c.getTable();
             if (t == null || t.getName() == null) {
@@ -154,19 +150,13 @@ public class CaomRegionConverter extends PgsphereRegionConverter
                 }
             }
         }
-        
-        if (right instanceof Interval || Interval.class.equals(getColumnType(right)))
-        {
-            if (left instanceof Column)
-            {   
-                
-            }
-            else if (left instanceof Interval)
-            {
+
+        if (right instanceof Interval || Interval.class.equals(getColumnType(right))) {
+            if (left instanceof Column) {
                 // OK
-            }
-            else if (left instanceof DoubleValue)
-            {
+            } else if (left instanceof Interval) {
+                // OK
+            } else if (left instanceof DoubleValue) {
                 DoubleValue dv = (DoubleValue) left;
                 //Point2D p = new Point2D(dv, new DoubleValue("0.0"));
                 double d = dv.getValue();
@@ -175,48 +165,45 @@ public class CaomRegionConverter extends PgsphereRegionConverter
                 Interval p = new Interval(new DoubleValue(Double.toString(d1)), new DoubleValue(Double.toString(d2)));
                 //return super.handleContains(p, right);
                 return super.handleIntersects(p, right);
-            }
-            else
+            } else {
                 throw new IllegalArgumentException("invalid argument type for contains: " + left.getClass().getSimpleName());
+            }
         }
         return super.handleContains(left, right);
     }
-      
+
     // HACK: this could be determined automatically by looking for the column type in
     // the TapSchema, but support for that should be pushed up into all base visitors
     // from the ca.nrc.cadc.tap.parser.navigator package (refactor to cadcADQL)
-    private Class getColumnType(Expression e)
-    {
-      if (e instanceof Column)
-      {
-          Column c = (Column) e;
-          // TODO: resolve column in tap_schema and then trigger off xtype==interval
-          if (c.getColumnName().equals("energy_bounds") || c.getColumnName().equals("energy_bounds_samples")
-                  || c.getColumnName().equals("time_bounds") || c.getColumnName().equals("time_bounds_samples"))
-              return Interval.class;
-      }
-      return null; // unknown
+    private Class getColumnType(Expression e) {
+        if (e instanceof Column) {
+            Column c = (Column) e;
+            // TODO: resolve column in tap_schema and then trigger off xtype==interval
+            if (c.getColumnName().equals("energy_bounds") || c.getColumnName().equals("energy_bounds_samples")
+                || c.getColumnName().equals("time_bounds") || c.getColumnName().equals("time_bounds_samples")) {
+                return Interval.class;
+            }
+        }
+        return null; // unknown
     }
 
     /**
      * This method is called when a INTERSECTS is found.
      * This could occur if the query had INTERSECTS(...) in the select list or as
-     * part of an arithmetic expression or aggregate function (since INTERSECTS 
-     * returns a numeric value). 
-     * 
+     * part of an arithmetic expression or aggregate function (since INTERSECTS
+     * returns a numeric value).
+     *
      * @param left
      * @param right
-     * 
+     *
      * @return replacement expression
      */
     @Override
-    protected Expression handleIntersects(Expression left, Expression right)
-    {
-        log.debug("handleIntersects: " + left  + " " + right);
+    protected Expression handleIntersects(Expression left, Expression right) {
+        log.debug("handleIntersects: " + left + " " + right);
         // column renaming
         List<Table> tabs = ParserUtil.getFromTableList(super.getPlainSelect());
-        if (left instanceof Column)
-        {
+        if (left instanceof Column) {
             Column c = (Column) left;
             Table t = c.getTable();
             if (t == null || t.getName() == null) {
@@ -230,9 +217,8 @@ public class CaomRegionConverter extends PgsphereRegionConverter
                     c.setColumnName("position_bounds_spoly");
                 }
             }
-        } 
-        if (right instanceof Column)
-        {
+        }
+        if (right instanceof Column) {
             Column c = (Column) right;
             Table t = c.getTable();
             if (t == null || t.getName() == null) {
@@ -247,75 +233,70 @@ public class CaomRegionConverter extends PgsphereRegionConverter
                 }
             }
         }
-        
+
         addCast(left);
         addCast(right);
         return super.handleIntersects(left, right);
     }
 
     // if the argument is an Spoint column cast it to scircle
-    private void addCast(Expression e)
-    {
-        if (e instanceof Column)
-        {
+    private void addCast(Expression e) {
+        if (e instanceof Column) {
             Column c = (Column) e;
-            if (c.getColumnName().equals("position_bounds_center"))
+            if (c.getColumnName().equals("position_bounds_center")) {
                 c.setColumnName("position_bounds_center::scircle");
+            }
         }
     }
 
     @Override
-    protected Expression handleInterval(Expression lower, Expression upper)
-    {
+    protected Expression handleInterval(Expression lower, Expression upper) {
         return new Interval(lower, upper);
     }
-    
+
     /**
      * In CAOM, CENTROID(position_bounds) is converted to position_bounds_center
-     * 
+     *
      * @param adqlFunction
      * @return replacement expression
      */
     @Override
-    protected Expression handleCentroid(Function adqlFunction)
-    {
+    protected Expression handleCentroid(Function adqlFunction) {
         log.debug("handleCentroid: " + adqlFunction);
         Centroid centroid = new Centroid(adqlFunction);
-        if (centroid.isOnPositionBounds())
-        {
+        if (centroid.isOnPositionBounds()) {
             //return centroid;
             return centroid.getExpression();
-        }
-        else
+        } else {
             throw new UnsupportedOperationException("CENTROID() used with unsupported parameter.");
+        }
     }
 
     /**
      * In CAOM, AREA(position_bounds) is converted to position_bounds_area
-     * 
+     *
      * @param adqlFunction
      * @return replacement expression
      */
     @Override
-    protected Expression handleArea(Function adqlFunction)
-    {
+    protected Expression handleArea(Function adqlFunction) {
         log.debug("handleArea: " + adqlFunction);
         Area area = new Area(adqlFunction);
-        if (area.isOnPositionBounds())
+        if (area.isOnPositionBounds()) {
             return area.getExpression();
-        else
+        } else {
             throw new UnsupportedOperationException("AREA() used with unsupported parameter.");
+        }
     }
 
     /**
      * This method is called when COORDSYS function is found.
-     * 
+     *
      * @param adqlFunction the COORDSYS expression
      * @return replacement expression
      */
     @Override
-    protected Expression handleCoordSys(Function adqlFunction)
-    {
+    protected Expression handleCoordSys(Function adqlFunction) {
         log.debug("handleCoordSys: " + adqlFunction);
         return new Coordsys(adqlFunction);
     }

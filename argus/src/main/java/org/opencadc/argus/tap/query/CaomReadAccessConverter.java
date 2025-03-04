@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,7 +65,7 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap.query;
 
@@ -100,25 +100,26 @@ import org.opencadc.gms.IvoaGroupClient;
  *
  * @author pdowler, Sailor Zhang
  */
-public class CaomReadAccessConverter extends SelectNavigator
-{
+public class CaomReadAccessConverter extends SelectNavigator {
+
     private static Logger log = Logger.getLogger(CaomReadAccessConverter.class);
 
-    public static class AssetTable
-    {
+    public static class AssetTable {
+
         public String keyColumn;
         public String metaReleaseColumn;
         public String metaReadAccessColumn;
         public boolean nullKeyIsPublic;
         public boolean isView = false;
 
-        AssetTable() { }
-        AssetTable(String assetColumn, String metaReleaseColumn, String metaReadAccessTable)
-        {
+        AssetTable() {
+        }
+
+        AssetTable(String assetColumn, String metaReleaseColumn, String metaReadAccessTable) {
             this(assetColumn, metaReleaseColumn, metaReadAccessTable, false);
         }
-        AssetTable(String keyColumn, String metaReleaseColumn, String metaReadAccessColumn, boolean nullKeyIsPublic)
-        {
+
+        AssetTable(String keyColumn, String metaReleaseColumn, String metaReadAccessColumn, boolean nullKeyIsPublic) {
             this.keyColumn = keyColumn;
             this.metaReleaseColumn = metaReleaseColumn;
             this.metaReadAccessColumn = metaReadAccessColumn;
@@ -126,9 +127,9 @@ public class CaomReadAccessConverter extends SelectNavigator
         }
     }
 
-    public static final Map<String,AssetTable> ASSET_TABLES = new HashMap<String,AssetTable>();
-    static
-    {
+    public static final Map<String, AssetTable> ASSET_TABLES = new HashMap<String, AssetTable>();
+
+    static {
         // caom2
         ASSET_TABLES.put("caom2.Observation".toLowerCase(), new AssetTable("obsID", "metaRelease", "metaReadAccessGroups"));
         ASSET_TABLES.put("caom2.Plane".toLowerCase(), new AssetTable("planeID", "metaRelease", "metaReadAccessGroups"));
@@ -146,95 +147,93 @@ public class CaomReadAccessConverter extends SelectNavigator
 
     private IvoaGroupClient gmsClient;
 
-    public CaomReadAccessConverter()
-    {
+    public CaomReadAccessConverter() {
         super(new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator());
     }
 
-    void setGMSClient(IvoaGroupClient gmsClient)
-    {
+    void setGMSClient(IvoaGroupClient gmsClient) {
         this.gmsClient = gmsClient;
     }
 
     @Override
-    public void visit(PlainSelect ps)
-    {
+    public void visit(PlainSelect ps) {
         log.debug("visit(PlainSelect) " + ps);
         super.visit(ps);
         Expression exprAccessControl = accessControlExpression(ps);
-        if (exprAccessControl == null)
+        if (exprAccessControl == null) {
             return; // nothing to do
-
+        }
         Expression where = ps.getWhere();
-        if (where == null)
+        if (where == null) {
             ps.setWhere(exprAccessControl);
-        else
-        {
+        } else {
             Parenthesis par = new Parenthesis(where);
             Expression and = new AndExpression(par, exprAccessControl);
             ps.setWhere(and);
         }
     }
 
-    private Expression accessControlExpression(PlainSelect ps)
-    {
+    private Expression accessControlExpression(PlainSelect ps) {
         List<Expression> exprAcList = new ArrayList<Expression>();
         List<Table> fromTableList = ParserUtil.getFromTableList(ps);
-        for (Table assetTable : fromTableList)
-        {
+        for (Table assetTable : fromTableList) {
             String fromTableWholeName = assetTable.getWholeTableName().toLowerCase();
             log.debug("check: " + fromTableWholeName);
             AssetTable at = ASSET_TABLES.get(fromTableWholeName);
-            if ( at != null)
-            {
+            if (at != null) {
                 Expression accessControlExpr = null;
                 Expression assetPublicExpr = metaReleaseControlExpression(assetTable, at);
-                if (assetPublicExpr == null)
+                if (assetPublicExpr == null) {
                     assetPublicExpr = publicAssetByID(assetTable, at.keyColumn, at.nullKeyIsPublic);
+                }
                 List<String> gids = Util.getGroupIDs(gmsClient);
                 Expression groupControlExpr = groupAccessControlExpression(assetTable, at.metaReadAccessColumn, gids);
 
-                if (assetPublicExpr != null && groupControlExpr != null)
+                if (assetPublicExpr != null && groupControlExpr != null) {
                     accessControlExpr = new Parenthesis(new OrExpression(assetPublicExpr, groupControlExpr));
-                else if (assetPublicExpr != null)
+                } else if (assetPublicExpr != null) {
                     accessControlExpr = new Parenthesis(assetPublicExpr);
-                else if (groupControlExpr != null)
+                } else if (groupControlExpr != null) {
                     accessControlExpr = new Parenthesis(groupControlExpr);
+                }
 
-                if (accessControlExpr != null)
+                if (accessControlExpr != null) {
                     exprAcList.add(accessControlExpr);
-                else
+                } else {
                     throw new UnsupportedOperationException("cannot control access to table " + fromTableWholeName);
-            }
-            else
+                }
+            } else {
                 log.debug("not an asset table: " + fromTableWholeName);
+            }
         }
-        if (exprAcList.size() > 0)
+        if (exprAcList.size() > 0) {
             return Util.combineAndExpressions(exprAcList);
+        }
         return null;
     }
 
-    private Expression publicAssetByID(Table fromTable, String assetColumn, boolean nullAssetIDPublic)
-    {
-        if (!nullAssetIDPublic)
+    private Expression publicAssetByID(Table fromTable, String assetColumn, boolean nullAssetIDPublic) {
+        if (!nullAssetIDPublic) {
             return null;
+        }
         Column columnMeta = Util.useTableAliasIfExists(new Column(fromTable, assetColumn));
         IsNullExpression isNull = new IsNullExpression();
         isNull.setLeftExpression(columnMeta);
         return isNull;
     }
 
-    private Expression metaReleaseControlExpression(Table fromTable, AssetTable at)
-    {
-        if (at.isView) // views already force the non-null primary key in left-join
+    private Expression metaReleaseControlExpression(Table fromTable, AssetTable at) {
+        if (at.isView) {
+            // views already force the non-null primary key in left-join
             return releaseDateControlExpression(fromTable, at.metaReleaseColumn, null, dateFormat);
+        }
         return releaseDateControlExpression(fromTable, at.metaReleaseColumn, at.keyColumn, dateFormat);
     }
 
-    static Expression releaseDateControlExpression(Table fromTable, String releaseDateCol, String assetCol, DateFormat df)
-    {
-        if (releaseDateCol == null)
+    static Expression releaseDateControlExpression(Table fromTable, String releaseDateCol, String assetCol, DateFormat df) {
+        if (releaseDateCol == null) {
             return null;
+        }
         // ( alias.metaRelease <  currentTime OR alias.primaryKey is null )
         String strCurrentTime = df.format(new Date());
         Column columnMeta = Util.useTableAliasIfExists(new Column(fromTable, releaseDateCol));
@@ -243,8 +242,9 @@ public class CaomReadAccessConverter extends SelectNavigator
         metaReleaseExpr.setLeftExpression(columnMeta);
         metaReleaseExpr.setRightExpression(new StringValue("'" + strCurrentTime + "'"));
 
-        if (assetCol == null)
+        if (assetCol == null) {
             return metaReleaseExpr;
+        }
 
         Column assetMeta = Util.useTableAliasIfExists(new Column(fromTable, assetCol));
         IsNullExpression nullLeftJoin = new IsNullExpression();
@@ -253,39 +253,26 @@ public class CaomReadAccessConverter extends SelectNavigator
         return new Parenthesis(new OrExpression(metaReleaseExpr, nullLeftJoin));
     }
 
-    static Expression groupAccessControlExpression(Table assetTable, String metaReadAccessColumn, List<String> gids)
-    {
+    static Expression groupAccessControlExpression(Table assetTable, String metaReadAccessColumn, List<String> gids) {
         log.debug("[groupAccessControlExpression] " + metaReadAccessColumn + "," + gids);
-        if (metaReadAccessColumn == null)
-        {
+        if (metaReadAccessColumn == null) {
             log.debug("[groupAccessControlExpression] no meta-read-access column");
             return null;
         }
 
-        try
-        {
-            Expression rtn = null;
-            if (!gids.isEmpty())
-            {
-                Column column = Util.useTableAliasIfExists(new Column(assetTable, metaReadAccessColumn));
-                StringBuilder sb = new StringBuilder();
-                for (String id : gids)
-                {
-                    sb.append(id);
-                    sb.append("|");
-                }
-                sb.deleteCharAt(sb.length() -1);
-                rtn = new PgTextSearchMatch(column, sb.toString());
+        Expression rtn = null;
+        if (!gids.isEmpty()) {
+            Column column = Util.useTableAliasIfExists(new Column(assetTable, metaReadAccessColumn));
+            StringBuilder sb = new StringBuilder();
+            for (String id : gids) {
+                sb.append(id);
+                sb.append("|");
             }
-            else
-            {
-                log.debug("[groupAccessControlExpression] no groups");
-            }
-            return rtn;
+            sb.deleteCharAt(sb.length() - 1);
+            rtn = new PgTextSearchMatch(column, sb.toString());
+        } else {
+            log.debug("[groupAccessControlExpression] no groups");
         }
-        finally
-        {
-
-        }
+        return rtn;
     }
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,13 +65,9 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.argus.tap;
-
-import java.util.List;
-
-import org.apache.log4j.Logger;
 
 import ca.nrc.cadc.tap.AdqlQuery;
 import ca.nrc.cadc.tap.DefaultTableWriter;
@@ -79,15 +75,16 @@ import ca.nrc.cadc.tap.MaxRecValidator;
 import ca.nrc.cadc.tap.parser.extractor.SelectListExtractor;
 import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
 import ca.nrc.cadc.util.StringUtil;
-import ca.nrc.cadc.uws.Parameter;
 import ca.nrc.cadc.uws.ParameterUtil;
+import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author pdowler
  */
-public class MaxRecValidatorImpl extends MaxRecValidator
-{
+public class MaxRecValidatorImpl extends MaxRecValidator {
+
     private static Logger log = Logger.getLogger(MaxRecValidatorImpl.class);
 
     // HACK: assume UTF-8 and mainly short strings
@@ -96,60 +93,51 @@ public class MaxRecValidatorImpl extends MaxRecValidator
 
     private static final double XML_BLOAT = 2.4;
 
-    private static final long MAX_FILE_SIZE = 128*1024*1024; // 128 MB
+    private static final long MAX_FILE_SIZE = 128 * 1024 * 1024; // 128 MB
 
     private static final Integer DEFAULT_MAXREC = new Integer(1000);
 
     private static final Integer DEFAULT_MAXREC_RSS = new Integer(10);
     private static final Integer MAXREC_RSS = new Integer(100);
 
-    public MaxRecValidatorImpl()
-    {
+    public MaxRecValidatorImpl() {
         super();
     }
 
     /**
      * Validate with the given job parameters.
      *
-     * @return              Maximum number of records to return.
+     * @return Maximum number of records to return.
      */
     @Override
-    public Integer validate()
-    {
+    public Integer validate() {
         String format = ParameterUtil.findParameterValue("FORMAT", job.getParameterList());
-        if (DefaultTableWriter.RSS.equals(format))
-        {
-            try
-            {
+        if (DefaultTableWriter.RSS.equals(format)) {
+            try {
                 // specific limit for RSS format
                 setDefaultValue(DEFAULT_MAXREC_RSS);
                 setMaxValue(MAXREC_RSS);
                 Integer maxrec = super.validate();
                 log.debug("RSS: maxrec=" + maxrec);
                 return maxrec;
-            }
-            finally
-            {
+            } finally {
                 setDefaultValue(null);
                 setMaxValue(null);
             }
         }
 
-        if (sync)
-        {
+        if (sync) {
             // user specified limit only
             Integer maxrec = super.validate();
             log.debug("sync: maxrec=" + maxrec);
             return maxrec;
         }
-        
+
         // async -> vospace: no enforced limit
-        try
-        {
+        try {
             String destinationValue = ParameterUtil.findParameterValue("DEST", job.getParameterList());
-            if ( StringUtil.hasText(destinationValue) &&
-                    destinationValue.startsWith("vos://"))
-            {
+            if (StringUtil.hasText(destinationValue)
+                && destinationValue.startsWith("vos://")) {
                 Integer maxrec = super.validate();
                 log.debug("async-vospace: maxrec=" + maxrec);
                 return maxrec;
@@ -161,40 +149,35 @@ public class MaxRecValidatorImpl extends MaxRecValidator
             int numCols = adql.getSelectListSize();
             double rowSize = numCols * BYTES_PER_COLUMN;
 
-            if (DefaultTableWriter.VOTABLE.equals(format))
-                   rowSize *= XML_BLOAT;
+            if (DefaultTableWriter.VOTABLE.equals(format)) {
+                rowSize *= XML_BLOAT;
+            }
             int numRows = (int) (MAX_FILE_SIZE / rowSize);
             setDefaultValue(numRows);
             setMaxValue(numRows);
             Integer maxrec = super.validate();
-            log.debug("numCols="+numCols + " rowSize="+rowSize + " numRows="+numRows + " dynamic async maxrec="+maxrec);
+            log.debug("numCols=" + numCols + " rowSize=" + rowSize + " numRows=" + numRows + " dynamic async maxrec=" + maxrec);
             return maxrec;
-        }
-        finally
-        {
+        } finally {
             setDefaultValue(null);
             setMaxValue(null);
         }
     }
 
-    private class AdqlQueryHack extends AdqlQuery
-    {
-        AdqlQueryHack()
-        {
+    private class AdqlQueryHack extends AdqlQuery {
+
+        AdqlQueryHack() {
             super();
         }
 
         @Override
-        protected void init()
-        {
+        protected void init() {
             super.init();
-            if (tapSchema == null) // unit test mode
-            {
+            if (tapSchema == null) { 
+                // unit test mode
                 SelectNavigator keep = null;
-                for (SelectNavigator sn : super.navigatorList)
-                {
-                    if (sn instanceof SelectListExtractor)
-                    {
+                for (SelectNavigator sn : super.navigatorList) {
+                    if (sn instanceof SelectListExtractor) {
                         keep = sn;
                     }
                 }
@@ -203,8 +186,7 @@ public class MaxRecValidatorImpl extends MaxRecValidator
             }
         }
 
-        int getSelectListSize()
-        {
+        int getSelectListSize() {
             List items = super.getSelectList();
             return items.size();
         }

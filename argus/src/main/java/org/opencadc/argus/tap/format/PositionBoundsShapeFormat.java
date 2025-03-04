@@ -67,7 +67,6 @@
 
 package org.opencadc.argus.tap.format;
 
-
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
