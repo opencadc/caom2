@@ -1,8 +1,6 @@
 plugins {
-    id 'java'
-    id 'maven'
+    id 'java-library'
     id 'maven-publish'
-    id 'application'
     id 'checkstyle'
 }
 
@@ -13,7 +11,7 @@ repositories {
 
 apply from: '../opencadc.gradle'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 
 group = 'org.opencadc'
 
@@ -22,21 +20,16 @@ version = '1.4.9'
 description = 'OpenCADC CAOM repository client library'
 def git_url = 'https://github.com/opencadc/caom2'
 
-
-mainClassName = 'ca.nrc.cadc.caom2.repo.client.Main'
-
 dependencies {
-    compile 'net.sourceforge.javacsv:javacsv:2.0'
-    compile 'javax.servlet:javax.servlet-api:3.1.0'
+    implementation 'net.sourceforge.javacsv:javacsv:2.0'
+    implementation 'javax.servlet:javax.servlet-api:3.1.0'
     
-    compile 'org.opencadc:cadc-util:[1.6,2.0)'
-    compile 'org.opencadc:caom2:[2.4.0,2.5)'
-    compile 'org.opencadc:caom2-persist:[2.4.0,2.5)'
+    implementation 'org.opencadc:cadc-util:[1.6,2.0)'
+    implementation 'org.opencadc:caom2:[2.4.0,2.5)'
+    implementation 'org.opencadc:caom2-persist:[2.4.0,2.5)'
+    implementation 'org.opencadc:cadc-registry:[1.7,2.0)'
+    implementation 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
 
-    compile 'org.opencadc:cadc-registry:[1.7,2.0)'
-    compile 'org.opencadc:cadc-vosi:[1.0.1,2.0)'
-
-    
-    testCompile 'junit:junit:4.13'
-    testCompile 'org.easymock:easymock:3.6'
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'org.easymock:easymock:3.6'
 }
