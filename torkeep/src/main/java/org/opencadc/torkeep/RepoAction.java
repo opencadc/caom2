@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,13 +69,8 @@
 
 package org.opencadc.torkeep;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
-import org.opencadc.caom2.util.CaomValidator;
-import org.opencadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -96,8 +91,13 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Plane;
 import org.opencadc.caom2.db.DeletedObservationEventDAO;
 import org.opencadc.caom2.db.ObservationDAO;
+import org.opencadc.caom2.util.CaomValidator;
+import org.opencadc.caom2.xml.ObservationParsingException;
 import org.opencadc.permissions.client.PermissionsCheck;
 
 /**

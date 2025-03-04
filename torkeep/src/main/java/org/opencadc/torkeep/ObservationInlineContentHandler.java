@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2016.                            (c) 2016.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,17 +69,15 @@
 
 package org.opencadc.torkeep;
 
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.xml.ObservationParsingException;
-import org.opencadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.io.ByteCountInputStream;
 import ca.nrc.cadc.rest.InlineContentException;
 import ca.nrc.cadc.rest.InlineContentHandler;
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.xml.ObservationParsingException;
+import org.opencadc.caom2.xml.ObservationReader;
 
 public class ObservationInlineContentHandler implements InlineContentHandler {
     private static Logger log = Logger.getLogger(ObservationInlineContentHandler.class);
