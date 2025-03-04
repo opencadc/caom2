@@ -69,12 +69,11 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
-import org.opencadc.caom2.DeletedObservationEvent;
 import ca.nrc.cadc.io.ResourceIterator;
 import java.util.Date;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.DeletedObservationEvent;
 
 /**
  *

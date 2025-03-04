@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2011.                            (c) 2011.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,9 +69,9 @@
 
 package org.opencadc.caom2.db.skel;
 
-import org.opencadc.caom2.Artifact;
 import java.util.ArrayList;
 import java.util.List;
+import org.opencadc.caom2.Artifact;
 
 /**
  *
@@ -79,7 +79,7 @@ import java.util.List;
  */
 public class ArtifactSkeleton extends Skeleton {
 
-    public List<PartSkeleton> parts = new ArrayList<PartSkeleton>();
+    public final List<PartSkeleton> parts = new ArrayList<>();
 
     public ArtifactSkeleton() {
         super(Artifact.class);

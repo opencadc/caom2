@@ -67,11 +67,11 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.util.CaomUtil;
 import java.security.MessageDigest;
 import java.util.Date;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.util.CaomUtil;
 import org.opencadc.persist.Entity;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;

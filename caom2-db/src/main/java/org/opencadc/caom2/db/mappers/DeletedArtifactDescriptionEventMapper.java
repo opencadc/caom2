@@ -67,8 +67,6 @@
 
 package org.opencadc.caom2.db.mappers;
 
-import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
-import org.opencadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
 import java.sql.ResultSet;
@@ -77,7 +75,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
 import org.opencadc.caom2.db.Util;
+import org.opencadc.caom2.util.CaomUtil;
 import org.springframework.jdbc.core.RowMapper;
 
 /**

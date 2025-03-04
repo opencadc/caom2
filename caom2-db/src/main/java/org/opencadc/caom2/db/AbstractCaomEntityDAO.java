@@ -69,13 +69,10 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.CaomEntity;
-import org.opencadc.caom2.db.skel.Skeleton;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.LinkedList;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.CaomEntity;
+import org.opencadc.caom2.db.skel.Skeleton;
 import org.opencadc.persist.Entity;
 import org.springframework.jdbc.core.JdbcTemplate;
 

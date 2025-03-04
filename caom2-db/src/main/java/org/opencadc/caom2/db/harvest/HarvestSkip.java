@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2017.                            (c) 2017.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,12 +69,12 @@
 
 package org.opencadc.caom2.db.harvest;
 
-import org.opencadc.caom2.util.CaomUtil;
-import org.opencadc.caom2.util.CaomValidator;
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.UUID;
+import org.opencadc.caom2.util.CaomUtil;
+import org.opencadc.caom2.util.CaomValidator;
 
 /**
  * Track failed harvest attempts by URI. This is expected to be used for CAOM
@@ -84,7 +84,7 @@ import java.util.UUID;
  */
 public class HarvestSkip {
 
-    private final String source;
+    private final URI source;
     private final String name;
     private final URI uri;
     private final String uriBucket;
@@ -98,23 +98,24 @@ public class HarvestSkip {
     /**
      * Primary constructor. All arguments must have values.
      * 
-     * @param source
-     * @param name
-     * @param uri
+     * @param source remote entity source
+     * @param name simple class name of the harvested entity
+     * @param uri entity uri that was skipped
      */
-    public HarvestSkip(String source, String name, URI uri) {
+    public HarvestSkip(URI source, String name, URI uri) {
         this(source, name, uri, null, null);
     }
     
     /**
      * Convenience constructor with optional error content.
      * 
-     * @param source
-     * @param name
-     * @param uri
-     * @param emsg 
+     * @param source remote entity source
+     * @param name simple class name of the harvested entity
+     * @param uri entity uri that was skipped
+     * @param tryAfter timestamp to control retry attempts (optional)
+     * @param emsg error message (optional)
      */
-    public HarvestSkip(String source, String name, URI uri, Date tryAfter, String emsg) {
+    public HarvestSkip(URI source, String name, URI uri, Date tryAfter, String emsg) {
         CaomValidator.assertNotNull(HarvestSkip.class, "source", source);
         CaomValidator.assertNotNull(HarvestSkip.class, "name", name);
         CaomValidator.assertNotNull(HarvestSkip.class, "uri", uri);
@@ -128,14 +129,14 @@ public class HarvestSkip {
 
     @Override
     public String toString() {
-        return "HarvestSkipURI[" + source + "," + name + "," + uri + "]";
+        return "HarvestSkip[" + source + "," + name + "," + uri + "]";
     }
     
     String toString(DateFormat df) {
-        return "HarvestSkipURI[" + source + "," + name + "," + uri + "," + df.format(tryAfter) + "]";
+        return "HarvestSkip[" + source + "," + name + "," + uri + "," + df.format(tryAfter) + "]";
     }
     
-    public String getSource() {
+    public URI getSource() {
         return source;
     }
 

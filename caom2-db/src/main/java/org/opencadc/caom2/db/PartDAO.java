@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2011.                            (c) 2011.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,11 +69,11 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.Part;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
 import org.opencadc.caom2.db.skel.ChunkSkeleton;
 import org.opencadc.caom2.db.skel.PartSkeleton;
 import org.opencadc.caom2.db.skel.Skeleton;

@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2022.                            (c) 2022.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -312,7 +312,7 @@ public class HarvestSkipDAO {
         private void loadValues(PreparedStatement ps)
                 throws SQLException {
             int col = 1;
-            ps.setString(col++, skip.getSource());
+            ps.setString(col++, skip.getSource().toASCIIString());
             ps.setString(col++, skip.getName());
             ps.setString(col++, skip.getURI().toASCIIString());
             ps.setString(col++, skip.getUriBucket());
@@ -342,7 +342,7 @@ public class HarvestSkipDAO {
         public HarvestSkip mapRow(ResultSet rs, int i) throws SQLException {
             
             int col = 1;
-            String source = rs.getString(col++);
+            URI source = Util.getURI(rs, col++);
             String name = rs.getString(col++);
             URI uri = Util.getURI(rs, col++);
             String bucket = rs.getString(col++); // recomputed

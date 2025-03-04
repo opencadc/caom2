@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2024.                            (c) 2024.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,13 +69,6 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.Part;
-import org.opencadc.caom2.Plane;
-import org.opencadc.caom2.util.CaomUtil;
-import org.opencadc.caom2.util.ObservationState;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.net.PreconditionFailedException;
@@ -88,6 +81,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
 import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import org.opencadc.caom2.db.skel.ArtifactSkeleton;
 import org.opencadc.caom2.db.skel.ChunkSkeleton;
@@ -95,6 +93,8 @@ import org.opencadc.caom2.db.skel.ObservationSkeleton;
 import org.opencadc.caom2.db.skel.PartSkeleton;
 import org.opencadc.caom2.db.skel.PlaneSkeleton;
 import org.opencadc.caom2.db.skel.Skeleton;
+import org.opencadc.caom2.util.CaomUtil;
+import org.opencadc.caom2.util.ObservationState;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -120,12 +120,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         this.planeDAO = new PlaneDAO(this);
     }
 
-    // use case: repo sync API -- maybe return a minimal ObservationState class
-    // use case: caom2-meta-validate aka icewind validate mode
-    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucket, Date start, Date end, Integer maxrec) {
-        throw new UnsupportedOperationException("not implemented");
-    }
-    
     // use case: repo get-by-uri
     public ObservationState getState(URI uri) {
         return getState(null, uri);
@@ -538,18 +532,10 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
     }
 
-    /**
-     * Prototype API for use by caom2-meta-validate and caom2-repository API.
-     * 
-     * @param namespace artifact uri prefix to match
-     * @param uriBucket uri bucket to match; null for all
-     * @param minLastModified minimum lastModified to consider (for incremental mode)
-     * @param maxLastModified maximum lastModified to consider
-     * @return resource iterator over matching artifacts
-     */
-    public ResourceIterator<Observation> iterator(String namespace, String uriBucket, 
-            Date minLastModified, Date maxLastModified) {
-        throw new UnsupportedOperationException();
+    // use case: repo list API
+    // use case: caom2-meta-validate aka icewind validate mode
+    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucket, Date start, Date end, Integer maxrec) {
+        throw new UnsupportedOperationException("not implemented");
     }
 
     // update CaomEntity state:

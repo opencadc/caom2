@@ -744,7 +744,7 @@ public class SQLGenerator {
                 || ObservationSkeleton.class.isAssignableFrom(c)
                 || ArtifactDescription.class.isAssignableFrom(c)
                 || DeletedObservationEvent.class.isAssignableFrom(c)
-                || DeletedArtifactDescriptionEvent.class.isAssignableFrom(c)){
+                || DeletedArtifactDescriptionEvent.class.isAssignableFrom(c)) {
             throw new IllegalArgumentException(c.getSimpleName() + " does not have a foreign key");
         }
         String[] cols = columnMap.get(c);

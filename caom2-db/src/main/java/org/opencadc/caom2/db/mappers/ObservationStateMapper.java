@@ -67,7 +67,6 @@
 
 package org.opencadc.caom2.db.mappers;
 
-import org.opencadc.caom2.util.ObservationState;
 import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
 import java.sql.ResultSet;
@@ -76,6 +75,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 import org.opencadc.caom2.db.Util;
+import org.opencadc.caom2.util.ObservationState;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
