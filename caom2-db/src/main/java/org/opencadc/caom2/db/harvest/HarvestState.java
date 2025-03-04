@@ -69,6 +69,7 @@
 
 package org.opencadc.caom2.db.harvest;
 
+import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
 
@@ -78,7 +79,7 @@ import java.util.UUID;
  */
 public class HarvestState {
 
-    private final String source;
+    private final URI source;
     private final String entityClassName;
     
     // mutable
@@ -88,12 +89,12 @@ public class HarvestState {
     Date lastModified;
     UUID id;
 
-    public HarvestState(String source, String cname) {
+    public HarvestState(URI source, String cname) {
         this.source = source;
         this.entityClassName = cname;
     }
 
-    public String getSource() {
+    public URI getSource() {
         return source;
     }
 

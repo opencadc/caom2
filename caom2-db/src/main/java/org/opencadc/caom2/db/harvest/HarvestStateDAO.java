@@ -70,6 +70,7 @@
 package org.opencadc.caom2.db.harvest;
 
 import ca.nrc.cadc.date.DateUtil;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -129,7 +130,7 @@ public abstract class HarvestStateDAO {
     }
 
     // get the current state from the database
-    public HarvestState get(String source, String cname) {
+    public HarvestState get(URI source, String cname) {
         SelectStatementCreator sel = new SelectStatementCreator();
         sel.setValues(source, cname);
         Object o = jdbc.query(sel, extractor);
@@ -168,13 +169,13 @@ public abstract class HarvestStateDAO {
 
     private class SelectStatementCreator implements PreparedStatementCreator {
 
-        private String source;
+        private URI source;
         private String cname;
 
         public SelectStatementCreator() {
         }
 
-        public void setValues(String source, String cname) {
+        public void setValues(URI source, String cname) {
             this.source = source;
             this.cname = cname;
         }
@@ -195,7 +196,7 @@ public abstract class HarvestStateDAO {
                 throw new IllegalStateException("null arg(s): " + source + "," + cname);
             }
 
-            ps.setString(1, source);
+            ps.setString(1, source.toASCIIString());
             ps.setString(2, cname);
         }
     }
@@ -231,7 +232,7 @@ public abstract class HarvestStateDAO {
                 throws SQLException {
             StringBuilder sb = new StringBuilder("values: ");
             int col = 1;
-            ps.setString(col++, state.getSource());
+            ps.setString(col++, state.getSource().toASCIIString());
             sb.append(state.getSource()).append(",");
             ps.setString(col++, state.getEntityClassName());
             sb.append(state.getEntityClassName()).append(",");
@@ -296,7 +297,7 @@ public abstract class HarvestStateDAO {
             HarvestState ret = null;
             if (rs.next()) {
                 int col = 1;
-                String source = rs.getString(col++);
+                URI source = Util.getURI(rs, col++);
                 String cname = rs.getString(col++);
                 ret = new HarvestState(source, cname);
                 

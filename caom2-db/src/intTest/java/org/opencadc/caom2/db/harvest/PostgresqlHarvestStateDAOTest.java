@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -73,6 +73,7 @@ import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
 import javax.sql.DataSource;
@@ -99,7 +100,7 @@ public class PostgresqlHarvestStateDAOTest {
 
     DataSource dataSource;
     String database;
-
+    
     public PostgresqlHarvestStateDAOTest()
             throws Exception {
         DBConfig dbrc = new DBConfig();
@@ -126,11 +127,12 @@ public class PostgresqlHarvestStateDAOTest {
 
     @Test
     public void testGet() {
+        final URI testSource = URI.create("test:testGet");
         try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
-            HarvestState s = dao.get("testGet", Integer.class.getName());
+            HarvestState s = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s);
-            Assert.assertEquals("testGet", s.getSource());
+            Assert.assertEquals(testSource, s.getSource());
             Assert.assertEquals(Integer.class.getName(), s.getEntityClassName());
             Assert.assertNull(s.curLastModified);
         } catch (Exception unexpected) {
@@ -141,11 +143,12 @@ public class PostgresqlHarvestStateDAOTest {
 
     @Test
     public void testPutGetDelete() {
+        final URI testSource = URI.create("test:testPutGetDelete");
         try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
-            HarvestState s = dao.get("testGet", Integer.class.getName());
+            HarvestState s = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s);
-            Assert.assertEquals("testGet", s.getSource());
+            Assert.assertEquals(testSource, s.getSource());
             Assert.assertEquals(Integer.class.getName(), s.getEntityClassName());
             Assert.assertNull(s.curLastModified);
             Assert.assertNull(s.id); // not actually stored in DB
@@ -153,7 +156,7 @@ public class PostgresqlHarvestStateDAOTest {
             s.curLastModified = new Date();
             s.curID = UUID.randomUUID();
             dao.put(s);
-            HarvestState actual = dao.get("testGet", Integer.class.getName());
+            HarvestState actual = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertEquals(s.getSource(), actual.getSource());
             Assert.assertEquals(s.getEntityClassName(), actual.getEntityClassName());
@@ -168,9 +171,9 @@ public class PostgresqlHarvestStateDAOTest {
             }
 
             dao.delete(actual);
-            s = dao.get("testGet", Integer.class.getName());
+            s = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s);
-            Assert.assertEquals("testGet", s.getSource());
+            Assert.assertEquals(testSource, s.getSource());
             Assert.assertEquals(Integer.class.getName(), s.getEntityClassName());
             Assert.assertNull(s.curLastModified);
             Assert.assertNull(s.id); // no longer stored in DB
@@ -182,16 +185,17 @@ public class PostgresqlHarvestStateDAOTest {
 
     @Test
     public void testInsertID() {
+        final URI testSource = URI.create("test:testInsertID");
         try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
-            HarvestState s = dao.get("testInsertID", Integer.class.getName());
+            HarvestState s = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
             s.curID = UUID.randomUUID();
             dao.put(s);
 
-            HarvestState s2 = dao.get("testInsertID", Integer.class.getName());
+            HarvestState s2 = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s2);
             Assert.assertNull(s2.curLastModified);
             Assert.assertEquals(s.id, s2.id);
@@ -203,17 +207,18 @@ public class PostgresqlHarvestStateDAOTest {
 
     @Test
     public void testInsertDate() {
+        final URI testSource = URI.create("test:testInsertDate");
         try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
-            HarvestState s = dao.get("testInsertDate", Integer.class.getName());
-            Assert.assertEquals("testInsertDate", s.getSource());
+            HarvestState s = dao.get(testSource, Integer.class.getName());
+            Assert.assertEquals(testSource, s.getSource());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
             s.curLastModified = new Date();
             dao.put(s);
 
-            HarvestState s2 = dao.get("testInsertDate", Integer.class.getName());
+            HarvestState s2 = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s2);
             Assert.assertEquals(s.curLastModified, s2.curLastModified);
         } catch (Exception unexpected) {
@@ -224,16 +229,17 @@ public class PostgresqlHarvestStateDAOTest {
 
     @Test
     public void testUpdateID() {
+        final URI testSource = URI.create("test:testUpdateID");
         try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
-            HarvestState s = dao.get("testUpdateID", Integer.class.getName());
+            HarvestState s = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
             s.curID = UUID.randomUUID();
             dao.put(s);
 
-            HarvestState s2 = dao.get("testUpdateID", Integer.class.getName());
+            HarvestState s2 = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s2);
             Assert.assertNull(s2.curLastModified);
             Assert.assertEquals(s.id, s2.id);
@@ -241,7 +247,7 @@ public class PostgresqlHarvestStateDAOTest {
             s.curID = UUID.randomUUID();
             dao.put(s);
 
-            HarvestState s3 = dao.get("testUpdateID", Integer.class.getName());
+            HarvestState s3 = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s3);
             Assert.assertNull(s3.curLastModified);
             Assert.assertEquals(s.id, s3.id);
@@ -254,10 +260,11 @@ public class PostgresqlHarvestStateDAOTest {
 
     @Test
     public void testUpdateDate() {
+        final URI testSource = URI.create("test:testUpdateDate");
         try {
             HarvestStateDAO dao = new PostgresqlHarvestStateDAO(dataSource, database, schema);
-            HarvestState s = dao.get("testUpdateDate", Integer.class.getName());
-            Assert.assertEquals("testUpdateDate", s.getSource());
+            HarvestState s = dao.get(testSource, Integer.class.getName());
+            Assert.assertEquals(testSource, s.getSource());
             Assert.assertNotNull(s);
             Assert.assertNull(s.curLastModified);
 
@@ -265,14 +272,14 @@ public class PostgresqlHarvestStateDAOTest {
             s.curLastModified = new Date(t);
             dao.put(s);
 
-            HarvestState s2 = dao.get("testUpdateDate", Integer.class.getName());
+            HarvestState s2 = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s2);
             Assert.assertEquals(s.curLastModified, s2.curLastModified);
 
             s.curLastModified = new Date(t + 10L);
             dao.put(s);
 
-            HarvestState s3 = dao.get("testUpdateDate", Integer.class.getName());
+            HarvestState s3 = dao.get(testSource, Integer.class.getName());
             Assert.assertNotNull(s3);
             Assert.assertEquals(s.curLastModified, s3.curLastModified);
         } catch (Exception unexpected) {
