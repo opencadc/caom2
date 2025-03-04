@@ -70,15 +70,12 @@
 package org.opencadc.caom2.wcs;
 
 import org.opencadc.caom2.util.CaomValidator;
-import java.io.Serializable;
 
 /**
  *
  * @author pdowler
  */
-public class Dimension2D implements Serializable {
-    private static final long serialVersionUID = 201202081100L;
-
+public class Dimension2D {
     // state
     public long naxis1;
     public long naxis2;

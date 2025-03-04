@@ -69,7 +69,6 @@
 
 package org.opencadc.caom2.wcs;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,8 +76,7 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class CoordBounds1D implements Serializable {
-    private static final long serialVersionUID = 201202091500L;
+public class CoordBounds1D {
 
     // mutable content
     private List<CoordRange1D> samples;

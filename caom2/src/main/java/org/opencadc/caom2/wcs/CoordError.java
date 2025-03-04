@@ -69,14 +69,11 @@
 
 package org.opencadc.caom2.wcs;
 
-import java.io.Serializable;
-
 /**
  *
  * @author pdowler
  */
-public class CoordError implements Serializable {
-    private static final long serialVersionUID = 201202091500L;
+public class CoordError {
 
     public Double syser;
     public Double rnder;

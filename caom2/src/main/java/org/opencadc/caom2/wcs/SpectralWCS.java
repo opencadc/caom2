@@ -71,15 +71,12 @@ package org.opencadc.caom2.wcs;
 
 import org.opencadc.caom2.EnergyTransition;
 import org.opencadc.caom2.util.CaomValidator;
-import java.io.Serializable;
 
 /**
  *
  * @author pdowler
  */
-public class SpectralWCS implements Serializable {
-    private static final long serialVersionUID = 201110261400L;
-
+public class SpectralWCS {
     // immutable state
     private CoordAxis1D axis;
 

@@ -69,8 +69,8 @@
 
 package org.opencadc.caom2.util;
 
-import org.opencadc.caom2.CaomEntity;
 import java.util.Comparator;
+import org.opencadc.caom2.CaomEntity;
 
 /**
  * Comparator that orders by lastModified timestamp.

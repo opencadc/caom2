@@ -84,7 +84,6 @@ import org.opencadc.caom2.vocab.DataLinkSemantics;
  * @author pdowler
  */
 public class Part extends CaomEntity implements Comparable<Part> {
-    private static final long serialVersionUID = 201110261400L;
     private static final Logger log = Logger.getLogger(Part.class);
 
     // immutable state

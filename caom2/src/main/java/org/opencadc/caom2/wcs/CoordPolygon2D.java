@@ -69,7 +69,6 @@
 
 package org.opencadc.caom2.wcs;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,14 +76,11 @@ import java.util.List;
  *
  * @author pdowler
  */
-public class CoordPolygon2D implements CoordBounds2D, Serializable {
-    private static final long serialVersionUID = 201202091500L;
-
+public class CoordPolygon2D implements CoordBounds2D {
     // immutable state
-    private List<ValueCoord2D> vertices;
+    private final List<ValueCoord2D> vertices = new ArrayList<ValueCoord2D>();
 
     public CoordPolygon2D() {
-        this.vertices = new ArrayList<ValueCoord2D>();
     }
 
     public List<ValueCoord2D> getVertices() {

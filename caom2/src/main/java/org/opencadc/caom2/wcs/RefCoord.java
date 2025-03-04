@@ -69,17 +69,12 @@
 
 package org.opencadc.caom2.wcs;
 
-import java.io.Serializable;
-
 /**
  *
  * @author pdowler
  */
-public class RefCoord implements Serializable {
-    private static final long serialVersionUID = 201202091500L;
-
+public class RefCoord {
     public double pix;
-
     public double val;
 
     public static final String[] CTOR_UTYPES = { "pix", "val" };

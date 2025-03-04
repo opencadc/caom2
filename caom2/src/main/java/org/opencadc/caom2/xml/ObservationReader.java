@@ -65,7 +65,7 @@
 *  $Revision: 4 $
 *
 ************************************************************************
-*/
+ */
 
 package org.opencadc.caom2.xml;
 
@@ -172,6 +172,7 @@ import org.opencadc.caom2.wcs.ValueCoord2D;
  * @author jburke
  */
 public class ObservationReader {
+
     //private static final String CAOM20_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
     //private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
     //private static final String CAOM22_SCHEMA_RESOURCE = "CAOM-2.2.xsd";
@@ -227,17 +228,17 @@ public class ObservationReader {
                 String caom23SchemaUrl = XmlUtil.getResourceUrlString(
                         CAOM23_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.3 schema URL: " + caom23SchemaUrl);
-                */
+                 */
                 String caom24SchemaUrl = XmlUtil.getResourceUrlString(
-                        CAOM24_SCHEMA_RESOURCE, ObservationReader.class);
+                    CAOM24_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.4 schema URL: " + caom24SchemaUrl);
-                
+
                 String caom25SchemaUrl = XmlUtil.getResourceUrlString(
-                        CAOM25_SCHEMA_RESOURCE, ObservationReader.class);
+                    CAOM25_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("caom-2.5 schema URL: " + caom25SchemaUrl);
 
                 String xlinkSchemaUrl = XmlUtil.getResourceUrlString(
-                        XLINK_SCHEMA_RESOURCE, ObservationReader.class);
+                    XLINK_SCHEMA_RESOURCE, ObservationReader.class);
                 log.debug("xlinkSchemaUrl: " + xlinkSchemaUrl);
 
                 /*
@@ -257,18 +258,18 @@ public class ObservationReader {
                     throw new RuntimeException("failed to load "
                             + CAOM23_SCHEMA_RESOURCE + " from classpath");
                 }
-                */
+                 */
                 if (caom24SchemaUrl == null) {
                     throw new RuntimeException("failed to load "
-                            + CAOM24_SCHEMA_RESOURCE + " from classpath");
+                        + CAOM24_SCHEMA_RESOURCE + " from classpath");
                 }
                 if (caom25SchemaUrl == null) {
                     throw new RuntimeException("failed to load "
-                            + CAOM25_SCHEMA_RESOURCE + " from classpath");
+                        + CAOM25_SCHEMA_RESOURCE + " from classpath");
                 }
                 if (xlinkSchemaUrl == null) {
                     throw new RuntimeException("failed to load "
-                            + XLINK_SCHEMA_RESOURCE + " from classpath");
+                        + XLINK_SCHEMA_RESOURCE + " from classpath");
                 }
 
                 schemaMap = new HashMap<String, String>();
@@ -285,12 +286,13 @@ public class ObservationReader {
             }
 
             xsiNamespace = Namespace.getNamespace("xsi",
-                    XmlConstants.XMLSCHEMA);
+                XmlConstants.XMLSCHEMA);
             this.initDone = true;
         }
     }
 
     private class ReadContext {
+
         DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         int docVersion = CURRENT_CAOM2_SCHEMA_LEVEL;
 
@@ -317,7 +319,6 @@ public class ObservationReader {
      * @param xml input observation in XML format
      * @return An Observation
      * @throws ObservationParsingException if content is invalid
-     *             if there is an error parsing the XML.
      */
     public Observation read(String xml) throws ObservationParsingException {
         if (xml == null) {
@@ -337,11 +338,10 @@ public class ObservationReader {
      * @param in input stream to read from
      * @return An Observation
      * @throws ObservationParsingException if content is invalid
-     *             if there is an error parsing the XML.
      * @throws java.io.IOException if input cannot be read
      */
     public Observation read(InputStream in)
-            throws ObservationParsingException, IOException {
+        throws ObservationParsingException, IOException {
         if (in == null) {
             throw new IllegalArgumentException("stream must not be null");
         }
@@ -358,11 +358,10 @@ public class ObservationReader {
      * @param reader input reader to read from
      * @return An Observation
      * @throws ObservationParsingException if content is invalid
-     *             if there is an error parsing the XML.
      * @throws java.io.IOException if input cannot be read
      */
     public Observation read(Reader reader)
-            throws ObservationParsingException, IOException {
+        throws ObservationParsingException, IOException {
         if (reader == null) {
             throw new IllegalArgumentException("reader must not be null");
         }
@@ -397,7 +396,7 @@ public class ObservationReader {
         } else if (XmlConstants.CAOM2_3_NAMESPACE.equals(namespace.getURI())) {
             rc.docVersion = 23;
         }
-        */
+         */
         if (XmlConstants.CAOM2_4_NAMESPACE.equals(namespace.getURI())) {
             rc.docVersion = 24;
         }
@@ -424,11 +423,11 @@ public class ObservationReader {
                 obsURI = new URI(suri);
             } catch (URISyntaxException e) {
                 String error = "Unable to parse " + suri
-                        + " to URI in element " + root.getName()
-                        + " because " + e.getMessage();
+                    + " to URI in element " + root.getName()
+                    + " because " + e.getMessage();
             }
         }
-        
+
         // Algorithm.
         Algorithm algorithm = getAlgorithm(root, namespace, rc);
 
@@ -459,7 +458,7 @@ public class ObservationReader {
         obs.metaRelease = getChildTextAsDate("metaRelease", root, namespace, false, rc.dateFormat);
         addGroups(obs.getMetaReadGroups(), "metaReadGroups", root, namespace, rc);
         obs.sequenceNumber = getChildTextAsInteger("sequenceNumber", root,
-                namespace, false);
+            namespace, false);
         obs.proposal = getProposal(root, namespace, rc);
         obs.target = getTarget(root, namespace, rc);
         obs.targetPosition = getTargetPosition(root, namespace, rc);
@@ -472,21 +471,21 @@ public class ObservationReader {
 
         if (obs instanceof DerivedObservation) {
             addMembers(((DerivedObservation) obs).getMembers(), root,
-                    namespace, rc);
+                namespace, rc);
         }
 
         assignEntityAttributes(root, obs, rc);
 
         return obs;
     }
-    
+
     private void assignEntityAttributes(Element e, CaomEntity ce,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Attribute aid = e.getAttribute("id", e.getNamespace());
         Attribute alastModified = e.getAttribute("lastModified",
-                e.getNamespace());
+            e.getNamespace());
         Attribute amaxLastModified = e.getAttribute("maxLastModified",
-                e.getNamespace());
+            e.getNamespace());
         Attribute mcs = e.getAttribute("metaChecksum", e.getNamespace());
         Attribute acc = e.getAttribute("accMetaChecksum", e.getNamespace());
         Attribute amp = e.getAttribute("metaProducer", e.getNamespace());
@@ -508,9 +507,9 @@ public class ObservationReader {
             if (rc.docVersion >= 23) {
                 if (amaxLastModified != null) {
                     Date lastModified = rc
-                            .parseTimestamp(amaxLastModified.getValue());
+                        .parseTimestamp(amaxLastModified.getValue());
                     CaomUtil.assignLastModified(ce, lastModified,
-                            "maxLastModified");
+                        "maxLastModified");
                 }
                 if (mcs != null) {
                     URI metaCS = new URI(mcs.getValue());
@@ -521,7 +520,7 @@ public class ObservationReader {
                     CaomUtil.assignMetaChecksum(ce, accCS, "accMetaChecksum");
                 }
             }
-            
+
             if (rc.docVersion >= 24) {
                 if (amp != null) {
                     ce.metaProducer = new URI(amp.getValue());
@@ -529,18 +528,18 @@ public class ObservationReader {
             }
         } catch (DataConversionException ex) {
             throw new ObservationParsingException(
-                    "invalid id: " + aid.getValue());
+                "invalid id: " + aid.getValue());
         } catch (ParseException ex) {
             throw new ObservationParsingException(
-                    "invalid lastModified: " + alastModified.getValue());
+                "invalid lastModified: " + alastModified.getValue());
         } catch (URISyntaxException ex) {
             throw new ObservationParsingException(
-                    "invalid uri: " + aid.getValue());
+                "invalid uri: " + aid.getValue());
         }
     }
 
     protected void addGroups(Set<URI> uris, String name, Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         if (rc.docVersion < 24) {
             return;
         }
@@ -559,21 +558,11 @@ public class ObservationReader {
             }
         }
     }
-    
-    /**
-     * Build an Algorithm from a JDOM representation of an algorithm element.
-     *
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return an Algorithm, or null if the document doesn't contain an
-     *         algorithm element.
-     * @throws ObservationParsingException if content is invalid
-     */
+
     protected Environment getEnvironment(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("environment", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
@@ -581,31 +570,21 @@ public class ObservationReader {
         Environment env = new Environment();
         env.seeing = getChildTextAsDouble("seeing", element, namespace, false);
         env.humidity = getChildTextAsDouble("humidity", element, namespace,
-                false);
+            false);
         env.elevation = getChildTextAsDouble("elevation", element, namespace,
-                false);
+            false);
         env.tau = getChildTextAsDouble("tau", element, namespace, false);
         env.wavelengthTau = getChildTextAsDouble("wavelengthTau", element,
-                namespace, false);
+            namespace, false);
         env.ambientTemp = getChildTextAsDouble("ambientTemp", element,
-                namespace, false);
+            namespace, false);
         env.photometric = getChildTextAsBoolean("photometric", element,
-                namespace, false);
+            namespace, false);
         return env;
     }
 
-    /**
-     * Build an Algorithm from a JDOM representation of an algorithm element.
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return an Algorithm, or null if the document doesn't contain an
-     *         algorithm element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Algorithm getAlgorithm(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("algorithm", parent, namespace, true);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -615,18 +594,8 @@ public class ObservationReader {
         return new Algorithm(name);
     }
 
-    /**
-     * Build an Proposal from a JDOM representation of an proposal element.
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return an Proposal, or null if the document doesn't contain an proposal
-     *         element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Proposal getProposal(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("proposal", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -649,7 +618,7 @@ public class ObservationReader {
         }
         if (rc.docVersion < 23) {
             addChildTextToStringList("keywords", proposal.getKeywords(),
-                    element, namespace, false);
+                element, namespace, false);
         } else {
             addKeywordsToList(proposal.getKeywords(), element, namespace);
         }
@@ -657,18 +626,8 @@ public class ObservationReader {
         return proposal;
     }
 
-    /**
-     * Build an Target from a JDOM representation of an target element.
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return an Target, or null if the document doesn't contain an target
-     *         element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Target getTarget(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("target", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -677,7 +636,7 @@ public class ObservationReader {
         String name = getChildText("name", element, namespace, true);
 
         Target target = new Target(name);
-        
+
         String tid = getChildText("targetID", element, namespace, false);
         if (tid != null) {
             try {
@@ -693,14 +652,14 @@ public class ObservationReader {
         }
 
         target.standard = getChildTextAsBoolean("standard", element, namespace,
-                false);
+            false);
         target.redshift = getChildTextAsDouble("redshift", element, namespace,
-                false);
+            false);
         target.moving = getChildTextAsBoolean("moving", element, namespace,
-                false);
+            false);
         if (rc.docVersion < 23) {
             addChildTextToStringList("keywords", target.getKeywords(), element,
-                    namespace, false);
+                namespace, false);
         } else {
             addKeywordsToList(target.getKeywords(), element, namespace);
         }
@@ -708,54 +667,34 @@ public class ObservationReader {
         return target;
     }
 
-    /**
-     * Build a TargetPosition from a JDOM representation of an targetPosition
-     * element.
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return a TargetPosition, or null if the document doesn't contain an
-     *         targetPosition element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected TargetPosition getTargetPosition(Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("targetPosition", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
 
         String coordsys = getChildText("coordsys", element, namespace, true);
         Double equinox = getChildTextAsDouble("equinox", element, namespace,
-                false);
+            false);
         Element coords = getChildElement("coordinates", element, namespace,
-                true);
+            true);
         double cval1 = getChildTextAsDouble("cval1", coords, namespace, true);
         double cval2 = getChildTextAsDouble("cval2", coords, namespace, true);
 
         TargetPosition tpos = new TargetPosition(coordsys,
-                new Point(cval1, cval2));
+            new Point(cval1, cval2));
         tpos.equinox = equinox;
 
         return tpos;
     }
 
-    /**
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return requirements object or null
-     * 
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Requirements getRequirements(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("requirements", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
@@ -766,20 +705,10 @@ public class ObservationReader {
         return req;
     }
 
-    /**
-     * Build an Telescope from a JDOM representation of an telescope element.
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return an TarTelescopeget, or null if the document doesn't contain an
-     *         telescope element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Telescope getTelescope(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("telescope", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
@@ -788,18 +717,18 @@ public class ObservationReader {
         Telescope telescope = new Telescope(name);
 
         telescope.geoLocationX = getChildTextAsDouble("geoLocationX", element,
-                namespace, false);
+            namespace, false);
         telescope.geoLocationY = getChildTextAsDouble("geoLocationY", element,
-                namespace, false);
+            namespace, false);
         telescope.geoLocationZ = getChildTextAsDouble("geoLocationZ", element,
-                namespace, false);
+            namespace, false);
         String track = getChildText("trackingMode", element, namespace, false);
         if (track != null) {
             telescope.trackingMode = new Tracking(track);
         }
         if (rc.docVersion < 23) {
             addChildTextToStringList("keywords", telescope.getKeywords(),
-                    element, namespace, false);
+                element, namespace, false);
         } else {
             addKeywordsToList(telescope.getKeywords(), element, namespace);
         }
@@ -807,20 +736,10 @@ public class ObservationReader {
         return telescope;
     }
 
-    /**
-     * Build an Instrument from a JDOM representation of an instrument element.
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return an Instrument, or null if the document doesn't contain an
-     *         instrument element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Instrument getInstrument(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("instrument", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
@@ -830,7 +749,7 @@ public class ObservationReader {
 
         if (rc.docVersion < 23) {
             addChildTextToStringList("keywords", instrument.getKeywords(),
-                    element, namespace, false);
+                element, namespace, false);
         } else {
             addKeywordsToList(instrument.getKeywords(), element, namespace);
         }
@@ -838,23 +757,13 @@ public class ObservationReader {
         return instrument;
     }
 
-    /**
-     * Creates ObservationURI from the observationURI elements found in the
-     * members element, and adds them to the given Set of ObservationURI's.
-     * 
-     * @param members set to populate
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @throws ObservationParsingException if content is invalid
-     */
     protected void addMembers(Set<URI> members, Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("members", parent, namespace, false);
         if (element != null) {
             List children = getChildrenElements("member", element,
-                    namespace, false);
+                namespace, false);
             Iterator it = children.iterator();
             while (it.hasNext()) {
                 Element child = (Element) it.next();
@@ -862,36 +771,25 @@ public class ObservationReader {
                     members.add(new URI(child.getText()));
                 } catch (URISyntaxException e) {
                     String error = "Unable to parse observationURI "
-                            + child.getText()
-                            + " in to an ObservationURI in element "
-                            + element.getName() + " because " + e.getMessage();
+                        + child.getText()
+                        + " in to an ObservationURI in element "
+                        + element.getName() + " because " + e.getMessage();
                     throw new ObservationParsingException(error);
                 }
             }
         }
     }
 
-    /**
-     * Creates Plane's from the plane elements found in the planes element, and
-     * adds them to the given Set of Plane's.
-     * 
-     * @param obsURI parent observation URI
-     * @param planes set to populate
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @throws ObservationParsingException if content is invalid
-     */
     protected void addPlanes(URI obsURI, Set<Plane> planes, Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("planes", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return;
         }
 
         List planeElements = getChildrenElements("plane", element, namespace,
-                false);
+            false);
         Iterator it = planeElements.iterator();
         while (it.hasNext()) {
             Element planeElement = (Element) it.next();
@@ -903,20 +801,19 @@ public class ObservationReader {
             } else {
                 suri = getChildText("uri", planeElement, namespace, true);
             }
-            
-            
+
             URI planeURI = null;
             if (suri != null) {
                 try {
                     planeURI = new URI(suri);
                 } catch (URISyntaxException e) {
                     String error = "Unable to parse " + suri
-                            + " to URI in element " + planeElement.getName()
-                            + " because " + e.getMessage();
+                        + " to URI in element " + planeElement.getName()
+                        + " because " + e.getMessage();
                 }
             }
             Plane plane = new Plane(planeURI);
-            
+
             plane.metaRelease = getChildTextAsDate("metaRelease", planeElement, namespace, false, rc.dateFormat);
             addGroups(plane.getMetaReadGroups(), "metaReadGroups", planeElement, namespace, rc);
             plane.dataRelease = getChildTextAsDate("dataRelease", planeElement, namespace, false, rc.dateFormat);
@@ -943,20 +840,20 @@ public class ObservationReader {
             plane.polarization = getPolarization(planeElement, namespace, rc);
             plane.custom = getCustom(planeElement, namespace, rc);
             plane.visibility = getVisibility(planeElement, namespace, rc);
-            
+
             addArtifacts(plane.getArtifacts(), planeElement, namespace, rc);
 
             assignEntityAttributes(planeElement, plane, rc);
 
             boolean added = planes.add(plane);
             if (!added) {
-                throw new IllegalArgumentException("Plane.uri = " +  suri + " is not unique");
+                throw new IllegalArgumentException("Plane.uri = " + suri + " is not unique");
             }
         }
     }
 
     protected Position getPosition(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("position", parent, namespace, false);
         if (element == null) {
             return null;
@@ -970,8 +867,8 @@ public class ObservationReader {
         if (cur != null) {
             if (rc.docVersion < 23) {
                 throw new UnsupportedOperationException(
-                        "cannot convert version " + rc.docVersion
-                                + " polygon to current version");
+                    "cannot convert version " + rc.docVersion
+                    + " polygon to current version");
             }
             Attribute type = cur.getAttribute("type", xsiNamespace);
             String tval = type.getValue();
@@ -984,9 +881,9 @@ public class ObservationReader {
                     Polygon sp = new Polygon();
                     for (Element ve : ves.getChildren()) {
                         double cval1 = getChildTextAsDouble("cval1", ve, namespace,
-                                true);
+                            true);
                         double cval2 = getChildTextAsDouble("cval2", ve, namespace,
-                                true);
+                            true);
                         int sv = getChildTextAsInteger("type", ve, namespace, true);
                         if (sv == 0) {
                             // close
@@ -1005,7 +902,7 @@ public class ObservationReader {
                 }
             }
         }
-        
+
         cur = getChildElement("samples", element, namespace, false);
         if (cur != null) {
             // CAOM-2.5
@@ -1015,14 +912,14 @@ public class ObservationReader {
                 samples.getShapes().add(s);
             }
         }
-        
+
         Position ret = new Position(bounds, samples);
-        
+
         Element mb = getChildElement("minBounds", element, namespace, false);
         if (mb != null) {
             ret.minBounds = getShape(mb, namespace);
         }
-                
+
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null) {
             // Attribute type = cur.getAttribute("type", xsiNamespace);
@@ -1039,7 +936,7 @@ public class ObservationReader {
             // throw new ObservationParsingException("unsupported dimension
             // type: " + tval);
         }
-        
+
         cur = getChildElement("maxRecoverableScale", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
@@ -1048,7 +945,7 @@ public class ObservationReader {
         }
 
         ret.resolution = getChildTextAsDouble("resolution", element, namespace,
-                false);
+            false);
         cur = getChildElement("resolutionBounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
@@ -1056,22 +953,22 @@ public class ObservationReader {
             ret.resolutionBounds = new Interval<Double>(lb, ub);
         }
         ret.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
-                false);
+            false);
         //pos.timeDependent = getChildTextAsBoolean("timeDependent", element,
         //        namespace, false);
-        
+
         String c = getChildText("calibration", element, namespace, false);
         if (c != null) {
             ret.calibration = CalibrationStatus.toValue(c);
         }
-        
+
         return ret;
     }
-    
+
     private Shape getShape(Element se, Namespace namespace) throws ObservationParsingException {
         final String circleType = namespace.getPrefix() + ":" + Circle.class.getSimpleName();
         final String polyType = namespace.getPrefix() + ":" + Polygon.class.getSimpleName();
-        
+
         Attribute type = se.getAttribute("type", xsiNamespace);
         String tval = type.getValue();
         if (polyType.equals(tval)) {
@@ -1096,7 +993,7 @@ public class ObservationReader {
     }
 
     protected Energy getEnergy(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("energy", parent, namespace, false);
         if (element == null) {
             return null;
@@ -1120,11 +1017,11 @@ public class ObservationReader {
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null) {
             ret.dimension = getChildTextAsLong("dimension", element, namespace,
-                    true);
+                true);
         }
 
         ret.resolvingPower = getChildTextAsDouble("resolvingPower", element,
-                namespace, false);
+            namespace, false);
         cur = getChildElement("resolvingPowerBounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
@@ -1132,7 +1029,7 @@ public class ObservationReader {
             ret.resolvingPowerBounds = new Interval<Double>(lb, ub);
         }
         ret.resolution = getChildTextAsDouble("resolution", element,
-                namespace, false);
+            namespace, false);
         cur = getChildElement("resolutionBounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
@@ -1140,10 +1037,10 @@ public class ObservationReader {
             ret.resolutionBounds = new Interval<Double>(lb, ub);
         }
         ret.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
-                false);
+            false);
 
         ret.bandpassName = getChildText("bandpassName", element, namespace,
-                false);
+            false);
 
         // for 2.3 there is 0..1 EnergyBand
         // for 2.4 there are 0..* EnergyBand(s)
@@ -1171,7 +1068,7 @@ public class ObservationReader {
             String trans = getChildText("transition", cur, namespace, true);
             ret.transition = new EnergyTransition(species, trans);
         }
-        
+
         String c = getChildText("calibration", element, namespace, false);
         if (c != null) {
             ret.calibration = CalibrationStatus.toValue(c);
@@ -1181,7 +1078,7 @@ public class ObservationReader {
     }
 
     protected Time getTime(Element parent, Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        throws ObservationParsingException {
         Element element = getChildElement("time", parent, namespace, false);
         if (element == null) {
             return null;
@@ -1208,7 +1105,7 @@ public class ObservationReader {
         }
 
         ret.resolution = getChildTextAsDouble("resolution", element, namespace,
-                false);
+            false);
         cur = getChildElement("resolutionBounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
@@ -1217,10 +1114,10 @@ public class ObservationReader {
         }
 
         ret.sampleSize = getChildTextAsDouble("sampleSize", element, namespace,
-                false);
+            false);
 
         ret.exposure = getChildTextAsDouble("exposure", element, namespace,
-                false);
+            false);
         cur = getChildElement("exposureBounds", element, namespace, false);
         if (cur != null) {
             double lb = getChildTextAsDouble("lower", cur, namespace, false);
@@ -1236,7 +1133,7 @@ public class ObservationReader {
     }
 
     private CustomAxis getCustom(Element parent, Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        throws ObservationParsingException {
         Element element = getChildElement("custom", parent, namespace, false);
         if (element == null) {
             return null;
@@ -1256,7 +1153,7 @@ public class ObservationReader {
         if (se != null) {
             addSamples(ret.getSamples(), se, namespace, rc);
         }
-        
+
         cur = getChildElement("dimension", element, namespace, false);
         if (cur != null) {
             ret.dimension = getChildTextAsLong("dimension", element, namespace, true);
@@ -1264,14 +1161,14 @@ public class ObservationReader {
 
         return ret;
     }
-    
+
     private Visibility getVisibility(Element parent, Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        throws ObservationParsingException {
         Element element = getChildElement("visibility", parent, namespace, false);
         if (element == null) {
             return null;
         }
-        
+
         Interval<Double> distance = null;
         Element cur = getChildElement("distance", element, namespace, true);
         if (cur != null) {
@@ -1282,13 +1179,13 @@ public class ObservationReader {
         Double de = getChildTextAsDouble("distributionEccentricity", element, namespace, true);
         Double df = getChildTextAsDouble("distributionFill", element, namespace, true);
         Visibility ret = new Visibility(distance, de, df);
-        
-        return  ret;
+
+        return ret;
     }
 
     private void addSamples(List<Interval<Double>> samps, Element sampleElement,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         if (sampleElement != null) {
             List<Element> sse = sampleElement.getChildren("sample", namespace);
             for (Element se : sse) {
@@ -1298,15 +1195,15 @@ public class ObservationReader {
             }
         }
         //if (rc.docVersion < 23 && inter.getSamples().isEmpty()) {
-            // backwards compat
+        // backwards compat
         //    samps.add(new Interval(inter.getLower(), inter.getUpper()));
         //}
     }
 
     protected Polarization getPolarization(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("polarization", parent, namespace,
-                false);
+            false);
         if (element == null) {
             return null;
         }
@@ -1330,19 +1227,10 @@ public class ObservationReader {
         return pol;
     }
 
-    /**
-     * Build a Provenance from a JDOM representation of an Provenance.
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return Provenance or null
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Provenance getProvenance(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("provenance", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
@@ -1353,7 +1241,7 @@ public class ObservationReader {
         provenance.version = getChildText("version", element, namespace, false);
         provenance.project = getChildText("project", element, namespace, false);
         provenance.producer = getChildText("producer", element, namespace,
-                false);
+            false);
         provenance.runID = getChildText("runID", element, namespace, false);
         String reference = getChildText("reference", element, namespace, false);
         if (reference != null) {
@@ -1361,16 +1249,16 @@ public class ObservationReader {
                 provenance.reference = new URI(reference);
             } catch (URISyntaxException e) {
                 String error = "Unable to parse reference " + reference
-                        + " to URI in element " + element.getName()
-                        + " because " + e.getMessage();
+                    + " to URI in element " + element.getName()
+                    + " because " + e.getMessage();
                 throw new ObservationParsingException(error);
             }
         }
         provenance.lastExecuted = getChildTextAsDate("lastExecuted", element,
-                namespace, false, rc.dateFormat);
+            namespace, false, rc.dateFormat);
         if (rc.docVersion < 23) {
             addChildTextToStringList("keywords", provenance.getKeywords(),
-                    element, namespace, false);
+                element, namespace, false);
         } else {
             addKeywordsToList(provenance.getKeywords(), element, namespace);
         }
@@ -1380,7 +1268,7 @@ public class ObservationReader {
     }
 
     protected Metrics getMetrics(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("metrics", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1388,7 +1276,7 @@ public class ObservationReader {
 
         Metrics metrics = new Metrics();
         metrics.sourceNumberDensity = getChildTextAsDouble(
-                "sourceNumberDensity", element, namespace, false);
+            "sourceNumberDensity", element, namespace, false);
         metrics.background = getChildTextAsDouble("background", element, namespace, false);
         metrics.backgroundStddev = getChildTextAsDouble("backgroundStddev", element, namespace, false);
         metrics.fluxDensityLimit = getChildTextAsDouble("fluxDensityLimit", element, namespace, false);
@@ -1397,16 +1285,8 @@ public class ObservationReader {
         return metrics;
     }
 
-    /**
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return DataQuality or null
-     * @throws ObservationParsingException if content is invalid
-     */
     protected DataQuality getQuality(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("quality", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1417,17 +1297,9 @@ public class ObservationReader {
 
         return ret;
     }
-    
-    /**
-     * 
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @return Observable or null
-     * @throws ObservationParsingException if content is invalid
-     */
+
     protected Observable getObservable(Element parent, Namespace namespace,
-            ReadContext rc) throws ObservationParsingException {
+        ReadContext rc) throws ObservationParsingException {
         Element element = getChildElement("observable", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1440,42 +1312,32 @@ public class ObservationReader {
         if (c != null) {
             ret.calibration = CalibrationStatus.toValue(c);
         }
-        
+
         return ret;
     }
 
     protected EnergyTransition getTransition(Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("transition", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
 
         String species = getChildText("species", element, namespace, true);
         String transition = getChildText("transition", element, namespace,
-                true);
+            true);
         return new EnergyTransition(species, transition);
     }
 
-    /**
-     * Creates PlaneURI's from the planeURI elements found in the inputs
-     * element, and adds them to the given Set of PlaneURI's.
-     * 
-     * @param inputs set to populate
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @throws ObservationParsingException if content is invalid
-     */
     protected void addInputs(Set<URI> inputs, Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("inputs", parent, namespace, false);
         if (element != null) {
             List children = getChildrenElements("input", element, namespace,
-                    false);
+                false);
             Iterator it = children.iterator();
             while (it.hasNext()) {
                 Element child = (Element) it.next();
@@ -1483,37 +1345,26 @@ public class ObservationReader {
                     inputs.add(new URI(child.getText()));
                 } catch (URISyntaxException e) {
                     String error = "Unable to parse "
-                            + child.getText()
-                            + " in to a URI in element "
-                            + element.getName() + " because " + e.getMessage();
+                        + child.getText()
+                        + " in to a URI in element "
+                        + element.getName() + " because " + e.getMessage();
                     throw new ObservationParsingException(error);
                 }
             }
         }
     }
 
-    /**
-     * Creates Artifact's from the artifact elements found in the artifacts
-     * element, and adds them to the given Set of Artifact's.
-     * 
-     * @param artifacts
-     *            the Set of Artifact's from the Plane.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @throws ObservationParsingException if content is invalid
-     */
     protected void addArtifacts(Set<Artifact> artifacts, Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("artifacts", parent, namespace,
-                false);
+            false);
         if (element == null || element.getContentSize() == 0) {
             return;
         }
 
         List artifactElements = getChildrenElements("artifact", element,
-                namespace, false);
+            namespace, false);
         Iterator it = artifactElements.iterator();
         while (it.hasNext()) {
             Element artifactElement = (Element) it.next();
@@ -1539,26 +1390,26 @@ public class ObservationReader {
             }
 
             artifact.contentType = getChildText("contentType", artifactElement,
-                    namespace, false);
+                namespace, false);
             artifact.contentLength = getChildTextAsLong("contentLength",
-                    artifactElement, namespace, false);
+                artifactElement, namespace, false);
 
             String contentChecksumStr = getChildText("contentChecksum",
-                    artifactElement, namespace, false);
+                artifactElement, namespace, false);
             if (contentChecksumStr != null) {
                 try {
                     artifact.contentChecksum = new URI(contentChecksumStr);
                 } catch (URISyntaxException e) {
                     String error = "Unable to parse contentChecksum " + uri
-                            + " into a URI in element "
-                            + artifactElement.getName() + " because "
-                            + e.getMessage();
+                        + " into a URI in element "
+                        + artifactElement.getName() + " because "
+                        + e.getMessage();
                     throw new ObservationParsingException(error, e);
                 }
             }
-            
+
             artifact.contentRelease = getChildTextAsDate("contentRelease", artifactElement,
-                    namespace, false, rc.dateFormat);
+                namespace, false, rc.dateFormat);
             addGroups(artifact.getContentReadGroups(), "contentReadGroups", artifactElement, namespace, rc);
 
             String descStr = getChildText("descriptionID", artifactElement, namespace, false);
@@ -1567,9 +1418,9 @@ public class ObservationReader {
                     artifact.descriptionID = new URI(descStr);
                 } catch (URISyntaxException e) {
                     String error = "Unable to parse descriptionID " + uri
-                            + " into a URI in element "
-                            + artifactElement.getName() + " because "
-                            + e.getMessage();
+                        + " into a URI in element "
+                        + artifactElement.getName() + " because "
+                        + e.getMessage();
                     throw new ObservationParsingException(error, e);
                 }
             }
@@ -1579,77 +1430,55 @@ public class ObservationReader {
 
             boolean added = artifacts.add(artifact);
             if (!added) {
-                throw new IllegalArgumentException("Artifact.uri = " +  uri + " is not unique");
+                throw new IllegalArgumentException("Artifact.uri = " + uri + " is not unique");
             }
         }
     }
 
-    /**
-     * Creates Part's from the part elements found in the parts element, and
-     * adds them to the given Set of Part's.
-     * 
-     * @param parts
-     *            the Set of Part's from the Artifact.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @throws ObservationParsingException if content is invalid
-     */
     protected void addParts(Set<Part> parts, Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("parts", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return;
         }
 
         List partElements = getChildrenElements("part", element, namespace,
-                false);
+            false);
         Iterator it = partElements.iterator();
         while (it.hasNext()) {
             Element partElement = (Element) it.next();
             String partName = getChildText("name", partElement, namespace,
-                    true);
+                true);
 
             Part part = new Part(partName);
 
             String productType = getChildText("productType", partElement,
-                    namespace, false);
+                namespace, false);
             if (productType != null) {
                 part.productType = DataLinkSemantics.toValue(productType);
             }
             addChunks(part.getChunks(), partElement, namespace, rc);
 
             assignEntityAttributes(partElement, part, rc);
-            
+
             boolean added = parts.add(part);
             if (!added) {
-                throw new IllegalArgumentException("Part.name = " +  partName + " is not unique");
+                throw new IllegalArgumentException("Part.name = " + partName + " is not unique");
             }
         }
     }
 
-    /**
-     * Creates Chunk's from the chunk elements found in the chunks element, and
-     * adds them to the given Set of Chunk's.
-     * 
-     * @param chunks
-     *            the Set of Chunk's from the Part.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param rc read context info
-     * @throws ObservationParsingException if content is invalid
-     */
     protected void addChunks(Set<Chunk> chunks, Element parent,
-            Namespace namespace, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement("chunks", parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return;
         }
 
         List chunkElements = getChildrenElements("chunk", element, namespace,
-                false);
+            false);
         Iterator it = chunkElements.iterator();
         while (it.hasNext()) {
             Element chunkElement = (Element) it.next();
@@ -1657,33 +1486,33 @@ public class ObservationReader {
             Chunk chunk = new Chunk();
 
             String productType = getChildText("productType", chunkElement,
-                    namespace, false);
+                namespace, false);
             if (productType != null) {
                 chunk.productType = DataLinkSemantics.toValue(productType);
             }
             chunk.naxis = getChildTextAsInteger("naxis", chunkElement,
-                    namespace, false);
+                namespace, false);
             chunk.observableAxis = getChildTextAsInteger("observableAxis",
-                    chunkElement, namespace, false);
+                chunkElement, namespace, false);
             chunk.positionAxis1 = getChildTextAsInteger("positionAxis1",
-                    chunkElement, namespace, false);
+                chunkElement, namespace, false);
             chunk.positionAxis2 = getChildTextAsInteger("positionAxis2",
-                    chunkElement, namespace, false);
+                chunkElement, namespace, false);
             chunk.energyAxis = getChildTextAsInteger("energyAxis", chunkElement,
-                    namespace, false);
+                namespace, false);
             chunk.timeAxis = getChildTextAsInteger("timeAxis", chunkElement,
-                    namespace, false);
+                namespace, false);
             chunk.polarizationAxis = getChildTextAsInteger("polarizationAxis",
-                    chunkElement, namespace, false);
+                chunkElement, namespace, false);
             chunk.customAxis = getChildTextAsInteger("customAxis",
-                    chunkElement, namespace, false);
+                chunkElement, namespace, false);
 
             chunk.observable = getObservableAxis("observable", chunkElement, namespace, false, rc);
             chunk.position = getSpatialWCS("position", chunkElement, namespace, false, rc);
             chunk.energy = getSpectralWCS("energy", chunkElement, namespace, false, rc);
             chunk.time = getTemporalWCS("time", chunkElement, namespace, false, rc);
             chunk.polarization = getPolarizationWCS("polarization", chunkElement, namespace, false, rc);
-            
+
             chunk.custom = getCustomWCS("custom", chunkElement, namespace, false, rc);
 
             assignEntityAttributes(chunkElement, chunk, rc);
@@ -1692,24 +1521,9 @@ public class ObservationReader {
         }
     }
 
-    /**
-     * Build an ObservableAxis from a JDOM representation of an observable
-     * element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @param rc read context info
-     * @return an ObservableAxis, or null if the document doesn't contain an
-     *         observable element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected ObservableAxis getObservableAxis(String name, Element parent,
-            Namespace namespace, boolean required, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1718,27 +1532,13 @@ public class ObservationReader {
         Slice dependent = getSlice("dependent", element, namespace, true);
         ObservableAxis observable = new ObservableAxis(dependent);
         observable.independent = getSlice("independent", element, namespace,
-                false);
+            false);
         return observable;
     }
 
-    /**
-     * Build an SpatialWCS from a JDOM representation of an position element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @param rc read context info
-     * @return an SpatialWCS, or null if the document doesn't contain an
-     *         position element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected SpatialWCS getSpatialWCS(String name, Element parent,
-            Namespace namespace, boolean required, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1748,29 +1548,15 @@ public class ObservationReader {
         SpatialWCS position = new SpatialWCS(axis);
         position.coordsys = getChildText("coordsys", element, namespace, false);
         position.equinox = getChildTextAsDouble("equinox", element, namespace,
-                false);
+            false);
         position.resolution = getChildTextAsDouble("resolution", element,
-                namespace, false);
+            namespace, false);
         return position;
     }
 
-    /**
-     * Build an SpectralWCS from a JDOM representation of an energy element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @param rc read context info
-     * @return an SpectralWCS, or null if the document doesn't contain an energy
-     *         element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected SpectralWCS getSpectralWCS(String name, Element parent,
-            Namespace namespace, boolean required, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1782,40 +1568,26 @@ public class ObservationReader {
         energy.ssysobs = getChildText("ssysobs", element, namespace, false);
         energy.ssyssrc = getChildText("ssyssrc", element, namespace, false);
         energy.restfrq = getChildTextAsDouble("restfrq", element, namespace,
-                false);
+            false);
         energy.restwav = getChildTextAsDouble("restwav", element, namespace,
-                false);
+            false);
         energy.velosys = getChildTextAsDouble("velosys", element, namespace,
-                false);
+            false);
         energy.zsource = getChildTextAsDouble("zsource", element, namespace,
-                false);
+            false);
         energy.velang = getChildTextAsDouble("velang", element, namespace,
-                false);
+            false);
         energy.bandpassName = getChildText("bandpassName", element, namespace,
-                false);
+            false);
         energy.resolvingPower = getChildTextAsDouble("resolvingPower", element,
-                namespace, false);
+            namespace, false);
         energy.transition = getTransition(element, namespace, rc);
         return energy;
     }
 
-    /**
-     * Build an TemporalWCS from a JDOM representation of an time element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @param rc read context info
-     * @return an TemporalWCS, or null if the document doesn't contain an time
-     *         element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected TemporalWCS getTemporalWCS(String name, Element parent,
-            Namespace namespace, boolean required, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1827,30 +1599,15 @@ public class ObservationReader {
         time.trefpos = getChildText("trefpos", element, namespace, false);
         time.mjdref = getChildTextAsDouble("mjdref", element, namespace, false);
         time.exposure = getChildTextAsDouble("exposure", element, namespace,
-                false);
+            false);
         time.resolution = getChildTextAsDouble("resolution", element, namespace,
-                false);
+            false);
         return time;
     }
 
-    /**
-     * Build an PolarizationWCS from a JDOM representation of an polarization
-     * element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @param rc read context info
-     * @return an PolarizationWCS, or null if the document doesn't contain an
-     *         polarization element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected PolarizationWCS getPolarizationWCS(String name, Element parent,
-            Namespace namespace, boolean required, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1859,25 +1616,10 @@ public class ObservationReader {
         CoordAxis1D axis = getCoordAxis1D("axis", element, namespace, true);
         return new PolarizationWCS(axis);
     }
-    
-    /**
-     * Build an CustomWCS from a JDOM representation of an custom
-     * element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @param rc read context info
-     * @return an PolarizationWCS, or null if the document doesn't contain an
-     *         polarization element.
-     * @throws ObservationParsingException if content is invalid
-     */
+
     protected CustomWCS getCustomWCS(String name, Element parent,
-            Namespace namespace, boolean required, ReadContext rc)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required, ReadContext rc)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1887,20 +1629,8 @@ public class ObservationReader {
         return new CustomWCS(axis);
     }
 
-    /**
-     * Build an Axis from a JDOM representation of an axis element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an Axis, or null if the document doesn't contain an axis element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Axis getAxis(String name, Element parent, Namespace namespace,
-            boolean required) throws ObservationParsingException {
+        boolean required) throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1912,22 +1642,9 @@ public class ObservationReader {
         return ret;
     }
 
-    /**
-     * Build an Coord2D from a JDOM representation of an element named name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return a Coord2D, or null if the document doesn't contain element named
-     *         name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Coord2D getCoord2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1938,51 +1655,24 @@ public class ObservationReader {
         return new Coord2D(coord1, coord2);
     }
 
-    /**
-     * Build an ValueCoord2D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return a ValueCoord2D, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected ValueCoord2D getValueCoord2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
 
         double coord1 = getChildTextAsDouble("coord1", element, namespace,
-                true);
+            true);
         double coord2 = getChildTextAsDouble("coord2", element, namespace,
-                true);
+            true);
         return new ValueCoord2D(coord1, coord2);
     }
 
-    /**
-     * Build an CoordAxis1D from a JDOM representation of element name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordAxis1D, or null if the document doesn't contain element
-     *         called name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordAxis1D getCoordAxis1D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -1993,28 +1683,15 @@ public class ObservationReader {
         coordAxis1D.error = getCoordError("error", element, namespace, false);
         coordAxis1D.range = getCoordRange1D("range", element, namespace, false);
         coordAxis1D.bounds = getCoordBounds1D("bounds", element, namespace,
-                false);
+            false);
         coordAxis1D.function = getCoordFunction1D("function", element,
-                namespace, false);
+            namespace, false);
         return coordAxis1D;
     }
 
-    /**
-     * Build an CoordAxis2D from a JDOM representation of element name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordAxis2D, or null if the document doesn't contain element
-     *         called name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordAxis2D getCoordAxis2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2029,27 +1706,13 @@ public class ObservationReader {
         axis.range = getCoordRange2D("range", element, namespace, false);
         axis.bounds = getCoordBounds2D("bounds", element, namespace, false);
         axis.function = getCoordFunction2D("function", element, namespace,
-                false);
+            false);
         return axis;
     }
 
-    /**
-     * Build an CoordBounds1D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordBounds1D, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordBounds1D getCoordBounds1D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2059,28 +1722,14 @@ public class ObservationReader {
         Element samples = getChildElement("samples", element, namespace, false);
         if (samples != null) {
             addChildrenToCoordRange1DList("range", coordBounds1D.getSamples(),
-                    samples, namespace, false);
+                samples, namespace, false);
         }
         return coordBounds1D;
     }
 
-    /**
-     * Build an CoordBounds2D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordBounds2D, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordBounds2D getCoordBounds2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2088,41 +1737,27 @@ public class ObservationReader {
 
         // Look for a CoordCircle2D which has a center and a radius.
         CoordCircle2D circle = getCoordCircle2D("circle", element, namespace,
-                false);
+            false);
         if (circle != null) {
             return circle;
         }
 
         // Look for a CoordPolygon2D which has a list of Coord2D vertices.
         CoordPolygon2D polygon = getCoordPolygon2D("polygon", element,
-                namespace, false);
+            namespace, false);
         if (polygon != null) {
             return polygon;
         }
 
         // Unknown children.
         String error = "Unsupported element found in " + name + ": "
-                + element.getText();
+            + element.getText();
         throw new ObservationParsingException(error);
     }
 
-    /**
-     * Build an CoordCircle2D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordCircle2D, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordCircle2D getCoordCircle2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null) {
             return null;
@@ -2130,28 +1765,15 @@ public class ObservationReader {
 
         // Look for a CoordCircle2D which has a center and a radius.
         ValueCoord2D center = getValueCoord2D("center", element, namespace,
-                true);
+            true);
         Double radius = getChildTextAsDouble("radius", element, namespace,
-                true);
+            true);
         return new CoordCircle2D(center, radius);
     }
 
-    /**
-     * Build an CoordError from a JDOM representation of element name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordError, or null if the document doesn't contain element
-     *         called name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordError getCoordError(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2162,23 +1784,9 @@ public class ObservationReader {
         return new CoordError(syser, rnder);
     }
 
-    /**
-     * Build an CoordFunction1D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordFunction1D, or null if the document doesn't contain
-     *         element named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordFunction1D getCoordFunction1D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2190,30 +1798,16 @@ public class ObservationReader {
         return new CoordFunction1D(naxis, delta, refCoord);
     }
 
-    /**
-     * Build an CoordFunction2D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordFunction2D, or null if the document doesn't contain
-     *         element named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordFunction2D getCoordFunction2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
         }
 
         Dimension2D dimension = getDimension2D("dimension", element, namespace,
-                true);
+            true);
         Coord2D refCoord = getCoord2D("refCoord", element, namespace, true);
         double cd11 = getChildTextAsDouble("cd11", element, namespace, true);
         double cd12 = getChildTextAsDouble("cd12", element, namespace, true);
@@ -2222,36 +1816,22 @@ public class ObservationReader {
         return new CoordFunction2D(dimension, refCoord, cd11, cd12, cd21, cd22);
     }
 
-    /**
-     * Build an CoordPolygon2D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordPolygon2D, or null if the document doesn't contain
-     *         element named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordPolygon2D getCoordPolygon2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null) {
             return null;
         }
 
         Element vertices = getChildElement("vertices", element, namespace,
-                true);
+            true);
         List children = getChildrenElements("vertex", vertices, namespace,
-                true);
+            true);
         // Vertices must have a minimum of 3 vertexes.
         if (children.size() < 3) {
             String error = "CoordPolygon2D must have a minimum of 3 vertexes, found "
-                    + children.size();
+                + children.size();
             throw new ObservationParsingException(error);
         }
 
@@ -2260,31 +1840,17 @@ public class ObservationReader {
         while (it.hasNext()) {
             Element vertexElement = (Element) it.next();
             double coord1 = getChildTextAsDouble("coord1", vertexElement,
-                    namespace, true);
+                namespace, true);
             double coord2 = getChildTextAsDouble("coord2", vertexElement,
-                    namespace, true);
+                namespace, true);
             polygon.getVertices().add(new ValueCoord2D(coord1, coord2));
         }
         return polygon;
     }
 
-    /**
-     * Build an CoordRange1D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordRange1D, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordRange1D getCoordRange1D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2295,23 +1861,9 @@ public class ObservationReader {
         return new CoordRange1D(start, end);
     }
 
-    /**
-     * Build an CoordRange2D from a JDOM representation of an element named
-     * name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an CoordRange2D, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected CoordRange2D getCoordRange2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2322,22 +1874,9 @@ public class ObservationReader {
         return new CoordRange2D(start, end);
     }
 
-    /**
-     * Build an Dimension2D from a JDOM representation of an element named name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an Dimension2D, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Dimension2D getDimension2D(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2348,22 +1887,9 @@ public class ObservationReader {
         return new Dimension2D(naxis1, naxis2);
     }
 
-    /**
-     * Build an RefCoord from a JDOM representation of an element named name.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an RefCoord, or null if the document doesn't contain element
-     *         named name.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected RefCoord getRefCoord(String name, Element parent,
-            Namespace namespace, boolean required)
-            throws ObservationParsingException {
+        Namespace namespace, boolean required)
+        throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, false);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2374,21 +1900,8 @@ public class ObservationReader {
         return new RefCoord(pix, val);
     }
 
-    /**
-     * Build an Slice from a JDOM representation of an slice element.
-     * 
-     * @param name
-     *            the name of the Element.
-     * @param parent parent element
-     * @param namespace caom2 namespace
-     * @param required
-     *            is the element expected to be found.
-     * @return an Slice, or null if the document doesn't contain an slice
-     *         element.
-     * @throws ObservationParsingException if content is invalid
-     */
     protected Slice getSlice(String name, Element parent, Namespace namespace,
-            boolean required) throws ObservationParsingException {
+        boolean required) throws ObservationParsingException {
         Element element = getChildElement(name, parent, namespace, required);
         if (element == null || element.getContentSize() == 0) {
             return null;
@@ -2399,22 +1912,8 @@ public class ObservationReader {
         return new Slice(axis, bin);
     }
 
-    // protected String getAttributeValue(String name, Element element, boolean
-    // required)
-    // throws ObservationParsingException
-    // {
-    // String value = element.getAttributeValue(name);
-    // if (required && value == null)
-    // {
-    // String error = "Required attribute " + name + " not found in element " +
-    // element.getName();
-    // throw new ObservationParsingException(error);
-    // }
-    // return value;
-    // }
-
     protected Element getChildElement(String name, Element element,
-            Namespace ns, boolean required) throws ObservationParsingException {
+        Namespace ns, boolean required) throws ObservationParsingException {
         Element child = element.getChild(name, ns);
         if (required && child == null) {
             String error = name + " element not found in " + element.getName();
@@ -2424,7 +1923,7 @@ public class ObservationReader {
     }
 
     protected String getChildText(String name, Element element, Namespace ns,
-            boolean required) throws ObservationParsingException {
+        boolean required) throws ObservationParsingException {
         Element child = getChildElement(name, element, ns, required);
         if (child != null) {
             return cleanWhitespace(child.getText());
@@ -2433,7 +1932,7 @@ public class ObservationReader {
     }
 
     protected Boolean getChildTextAsBoolean(String name, Element element,
-            Namespace ns, boolean required) throws ObservationParsingException {
+        Namespace ns, boolean required) throws ObservationParsingException {
         Element child = getChildElement(name, element, ns, required);
         if (child != null) {
             return Boolean.valueOf(child.getText());
@@ -2442,7 +1941,7 @@ public class ObservationReader {
     }
 
     protected Integer getChildTextAsInteger(String name, Element element,
-            Namespace ns, boolean required) throws ObservationParsingException {
+        Namespace ns, boolean required) throws ObservationParsingException {
         Element child = getChildElement(name, element, ns, required);
         if (child != null) {
             return Integer.valueOf(child.getText());
@@ -2451,7 +1950,7 @@ public class ObservationReader {
     }
 
     protected Double getChildTextAsDouble(String name, Element element,
-            Namespace ns, boolean required) throws ObservationParsingException {
+        Namespace ns, boolean required) throws ObservationParsingException {
         Element child = getChildElement(name, element, ns, required);
         if (child != null) {
             return Double.valueOf(child.getText());
@@ -2460,7 +1959,7 @@ public class ObservationReader {
     }
 
     protected Long getChildTextAsLong(String name, Element element,
-            Namespace ns, boolean required) throws ObservationParsingException {
+        Namespace ns, boolean required) throws ObservationParsingException {
         Element child = getChildElement(name, element, ns, required);
         if (child != null) {
             return Long.valueOf(child.getText());
@@ -2469,8 +1968,8 @@ public class ObservationReader {
     }
 
     protected void addChildTextToStringList(String name,
-            Collection<String> list, Element element, Namespace ns,
-            boolean required) throws ObservationParsingException {
+        Collection<String> list, Element element, Namespace ns,
+        boolean required) throws ObservationParsingException {
         String child = getChildText(name, element, ns, required);
         if (child == null) {
             return;
@@ -2487,7 +1986,7 @@ public class ObservationReader {
     }
 
     protected void addKeywordsToList(Collection<String> list, Element element,
-            Namespace ns) throws ObservationParsingException {
+        Namespace ns) throws ObservationParsingException {
         Element kwe = element.getChild("keywords", ns);
         //log.debug("addKeywordsToList: " + kwe);
         if (kwe == null) {
@@ -2506,8 +2005,8 @@ public class ObservationReader {
     }
 
     protected void addChildrenToCoordRange1DList(String name,
-            List<CoordRange1D> list, Element element, Namespace ns,
-            boolean required) throws ObservationParsingException {
+        List<CoordRange1D> list, Element element, Namespace ns,
+        boolean required) throws ObservationParsingException {
         List children = getChildrenElements(name, element, ns, required);
         Iterator it = children.iterator();
         while (it.hasNext()) {
@@ -2519,16 +2018,16 @@ public class ObservationReader {
     }
 
     protected Date getChildTextAsDate(String name, Element element,
-            Namespace ns, boolean required, DateFormat dateFormat)
-            throws ObservationParsingException {
+        Namespace ns, boolean required, DateFormat dateFormat)
+        throws ObservationParsingException {
         String child = getChildText(name, element, ns, required);
         if (child != null) {
             try {
                 return DateUtil.flexToDate(child, dateFormat);
             } catch (ParseException ex) {
                 String error = "Unable to parse " + name + " in "
-                        + element.getName() + " to a date because "
-                        + ex.getMessage();
+                    + element.getName() + " to a date because "
+                    + ex.getMessage();
                 throw new ObservationParsingException(error, ex);
             }
         }
@@ -2536,7 +2035,7 @@ public class ObservationReader {
     }
 
     protected List getChildrenElements(String name, Element element,
-            Namespace ns, boolean required) throws ObservationParsingException {
+        Namespace ns, boolean required) throws ObservationParsingException {
         List children = element.getChildren(name, ns);
         if (required && children.isEmpty()) {
             String error = name + " element not found in " + element.getName();

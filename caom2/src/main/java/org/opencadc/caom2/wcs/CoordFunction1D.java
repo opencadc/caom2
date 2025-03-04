@@ -70,14 +70,12 @@
 package org.opencadc.caom2.wcs;
 
 import org.opencadc.caom2.util.CaomValidator;
-import java.io.Serializable;
 
 /**
  *
  * @author pdowler
  */
-public class CoordFunction1D implements Serializable {
-    private static final long serialVersionUID = 201202091500L;
+public class CoordFunction1D {
 
     // immutable state
     private Long naxis;

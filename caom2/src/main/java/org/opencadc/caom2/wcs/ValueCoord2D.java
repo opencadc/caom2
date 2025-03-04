@@ -69,14 +69,12 @@
 
 package org.opencadc.caom2.wcs;
 
-import java.io.Serializable;
 
 /**
  *
  * @author pdowler
  */
-public class ValueCoord2D implements Serializable {
-    private static final long serialVersionUID = 201312111230L;
+public class ValueCoord2D {
 
     public double coord1;
     public double coord2;

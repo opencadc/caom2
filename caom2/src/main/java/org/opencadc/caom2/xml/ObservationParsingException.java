@@ -74,8 +74,6 @@ package org.opencadc.caom2.xml;
  * @author jburke
  */
 public class ObservationParsingException extends Exception {
-    private static final long serialVersionUID = 201204110757L;
-
     public ObservationParsingException(String msg) {
         super(msg);
     }

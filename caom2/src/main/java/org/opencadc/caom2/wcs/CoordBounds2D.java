@@ -69,12 +69,10 @@
 
 package org.opencadc.caom2.wcs;
 
-import java.io.Serializable;
-
 /**
  *
  * @author pdowler
  */
-public interface CoordBounds2D extends Serializable {
+public interface CoordBounds2D {
 
 }

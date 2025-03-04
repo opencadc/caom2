@@ -70,15 +70,12 @@
 package org.opencadc.caom2.wcs;
 
 import org.opencadc.caom2.util.CaomValidator;
-import java.io.Serializable;
 
 /**
  *
  * @author pdowler
  */
-public class TemporalWCS implements Serializable {
-    private static final long serialVersionUID = 201110261400L;
-
+public class TemporalWCS {
     // immutable state
     private CoordAxis1D axis;
 

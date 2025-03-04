@@ -70,15 +70,12 @@
 package org.opencadc.caom2.wcs;
 
 import org.opencadc.caom2.util.CaomValidator;
-import java.io.Serializable;
 
 /**
  *
  * @author pdowler
  */
-public class SpatialWCS implements Serializable {
-    private static final long serialVersionUID = 201202091500L;
-
+public class SpatialWCS {
     // immutable state
     private CoordAxis2D axis;
 

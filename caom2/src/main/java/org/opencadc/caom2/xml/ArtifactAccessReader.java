@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2018.                            (c) 2018.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,10 +67,6 @@
 
 package org.opencadc.caom2.xml;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.vocab.DataLinkSemantics;
-import org.opencadc.caom2.ReleaseType;
-import org.opencadc.caom2.access.ArtifactAccess;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.xml.XmlUtil;
 import java.io.IOException;
@@ -88,6 +84,10 @@ import org.apache.log4j.Logger;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.ReleaseType;
+import org.opencadc.caom2.access.ArtifactAccess;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
 
 /**
  *
