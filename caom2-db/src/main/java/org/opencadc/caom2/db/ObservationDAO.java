@@ -534,7 +534,8 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
 
     // use case: repo list API
     // use case: caom2-meta-validate aka icewind validate mode
-    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucket, Date start, Date end, Integer maxrec) {
+    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucket, 
+            Date minLastModified, Date maxLastModified, Integer maxrec) {
         throw new UnsupportedOperationException("not implemented");
     }
 

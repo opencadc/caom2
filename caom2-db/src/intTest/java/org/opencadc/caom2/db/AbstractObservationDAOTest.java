@@ -143,7 +143,7 @@ public abstract class AbstractObservationDAOTest {
     public static final long TIME_TOLERANCE = 0L;
 
     public static final Long TEST_LONG = 123456789L;
-    public static final List<String> TEST_KEYWORDS = new ArrayList<String>();
+    public static final List<String> TEST_KEYWORDS = new ArrayList<>();
     public static Date TEST_DATE;
 
     static {
@@ -179,7 +179,7 @@ public abstract class AbstractObservationDAOTest {
             config.put("jndiDataSourceName", "jdbc/caom2-db-test");
             //config.put("database", database);
             config.put("schema", schema);
-            config.put(SQLGenerator.class.getName(), genClass);
+            config.put(SQLDialect.class.getName(), genClass);
             this.dao = new ObservationDAO(true);
             dao.setConfig(config);
         } catch (Exception ex) {
@@ -894,11 +894,12 @@ public abstract class AbstractObservationDAOTest {
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             TransactionManager txnManager = dao.getTransactionManager();
-            if (txnManager.isOpen())
+            if (txnManager.isOpen()) {
                 try {
-                txnManager.rollbackTransaction();
-            } catch (Throwable t) {
-                log.error("failed to rollback transaction", t);
+                    txnManager.rollbackTransaction();
+                } catch (Throwable t) {
+                    log.error("failed to rollback transaction", t);
+                }
             }
             Assert.fail("unexpected exception: " + unexpected);
         }
@@ -914,7 +915,7 @@ public abstract class AbstractObservationDAOTest {
             log.debug("put: comp DONE");
 
             String sql = "SELECT count(*) from " + dao.gen.getTable(ObservationMember.class)
-                    + " WHERE parentID = " + dao.gen.literal(comp.getID());
+                    + " WHERE parentID = '" + comp.getID() + "'";
             JdbcTemplate jdbc = new JdbcTemplate(dao.dataSource);
 
             if (dao.gen.persistOptimisations) {

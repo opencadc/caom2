@@ -99,19 +99,16 @@ import org.postgresql.util.PGobject;
  *
  * @author pdowler
  */
-public class PostgreSQLGenerator extends SQLGenerator {
+public class PostgreSQLDialect extends SQLDialect {
 
-    private static final Logger log = Logger.getLogger(PostgreSQLGenerator.class);
+    private static final Logger log = Logger.getLogger(PostgreSQLDialect.class);
     
-    public PostgreSQLGenerator(String database, String schema) {
-        super(database, schema);
-        this.useIntegerForBoolean = true;
-        this.persistOptimisations = true;
-        super.init();
+    public PostgreSQLDialect(boolean useIntegerForBoolean) {
+        super(useIntegerForBoolean);
     }
 
     @Override
-    protected void safeSetArray(StringBuilder sb, PreparedStatement prep, int col, Set<URI> values) throws SQLException {
+    public void safeSetArray(StringBuilder sb, PreparedStatement prep, int col, Set<URI> values) throws SQLException {
         
         if (values != null && !values.isEmpty()) {
             String[] array1d = new String[values.size()];
@@ -135,7 +132,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
     
     @Override
-    protected void extractMultiURI(ResultSet rs, int col, Set<URI> out)
+    public void extractMultiURI(ResultSet rs, int col, Set<URI> out)
             throws SQLException {
         String[] raw  = Util.getTextArray(rs, col);
         stringToURI(raw, out);
@@ -155,7 +152,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> val) throws SQLException {
+    public void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> val) throws SQLException {
         // not null list; empty becomes zero-length string
         String gnames = Util.extractGroupNames(val);
         PGobject pgo = new PGobject();
@@ -169,13 +166,13 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected String literal(UUID value) {
+    public String literal(UUID value) {
         // uuid datatype accepts a string with the standard hex string format
         return "'" + value.toString() + "'";
     }
 
     @Override
-    protected void safeSetDimension(StringBuilder sb, PreparedStatement ps, int col, Dimension2D val) throws SQLException {
+    public void safeSetDimension(StringBuilder sb, PreparedStatement ps, int col, Dimension2D val) throws SQLException {
         if (val == null) {
             ps.setNull(col, Types.ARRAY);
             if (sb != null) {
@@ -197,7 +194,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected Dimension2D getDimension(ResultSet rs, int col) throws SQLException {
+    public Dimension2D getDimension(ResultSet rs, int col) throws SQLException {
         long[] vals = Util.getLongArray(rs, col);
         if (vals == null) {
             return null;
@@ -210,7 +207,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     
     // store as array to make it round trip
     @Override
-    protected void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val)
+    public void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val)
             throws SQLException {
         if (val == null) {
             ps.setNull(col, Types.ARRAY);
@@ -235,7 +232,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected Point getPoint(ResultSet rs, int col) throws SQLException {
+    public Point getPoint(ResultSet rs, int col) throws SQLException {
         double[] vals = Util.getDoubleArray(rs, col);
         if (vals == null) {
             return null;
@@ -247,7 +244,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
     
     // store as spoint to make it queryable
-    protected void safeSetPointOpt(StringBuilder sb, PreparedStatement ps, int col, Point val)
+    public void safeSetPointOpt(StringBuilder sb, PreparedStatement ps, int col, Point val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -268,7 +265,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
 
     // store in array to rounds trip
     @Override
-    protected void safeSetShape(StringBuilder sb, PreparedStatement ps, int col, Shape val)
+    public void safeSetShape(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -294,7 +291,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected Shape getShape(ResultSet rs, int col) throws SQLException {
+    public Shape getShape(ResultSet rs, int col) throws SQLException {
         double[] dval = Util.getDoubleArray(rs, col);
         if (dval == null) {
             return null;
@@ -342,7 +339,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
      * @throws SQLException 
      */
     @Override
-    protected void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val)
+    public void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -379,7 +376,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void safeSetMultiShape(StringBuilder sb, PreparedStatement ps, int col, MultiShape val)
+    public void safeSetMultiShape(StringBuilder sb, PreparedStatement ps, int col, MultiShape val)
             throws SQLException {
         String sval = null;
         if (val != null) {
@@ -390,7 +387,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected MultiShape getMultiShape(ResultSet rs, int col) throws SQLException {
+    public MultiShape getMultiShape(ResultSet rs, int col) throws SQLException {
         String sval = rs.getString(col);
         if (sval == null) {
             return null;
@@ -400,7 +397,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val) 
+    public void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val) 
             throws SQLException {
         if (val == null) {
             ps.setNull(col, Types.ARRAY);
@@ -425,7 +422,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected Interval<Double> getInterval(ResultSet rs, int col) throws SQLException {
+    public Interval<Double> getInterval(ResultSet rs, int col) throws SQLException {
         double[] vals = Util.getDoubleArray(rs, col);
         if (vals == null) {
             return null;
@@ -436,7 +433,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         throw new IllegalStateException("array length " + vals.length + " invalid for Interval");
     }
 
-    protected void safeSetIntervalOptimization(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val)
+    public void safeSetIntervalOptimization(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -456,7 +453,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> subs)
+    public void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> subs)
             throws SQLException {
         if (subs == null || subs.isEmpty()) {
             ps.setNull(col, Types.ARRAY);
@@ -486,7 +483,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
     }
 
     @Override
-    protected void extractIntervalList(ResultSet rs, int col, List<Interval<Double>> vals) throws SQLException {
+    public void extractIntervalList(ResultSet rs, int col, List<Interval<Double>> vals) throws SQLException {
         double[] coords = Util.getDoubleArray(rs, col);
         if (coords == null) {
             return;
@@ -501,7 +498,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         }
     }
 
-    protected void safeSetIntervalListOptimization(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> subs)
+    public void safeSetIntervalListOptimization(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> subs)
             throws SQLException {
         if (subs == null || subs.isEmpty()) {
             ps.setObject(col, null);

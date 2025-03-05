@@ -172,10 +172,7 @@ public class AbstractDAO {
 
     public void setConfig(Map<String, Object> config) {
         
-        Class<?> genClass = (Class<?>) config.get(SQLGenerator.class.getName());
-        if (genClass == null) {
-            throw new IllegalArgumentException(SQLGenerator.class.getName() + " must be specified in config");
-        }
+        
         
         String jndiDataSourceName = (String) config.get("jndiDataSourceName");
         if (jndiDataSourceName == null) {
@@ -190,13 +187,20 @@ public class AbstractDAO {
 
         String database = (String) config.get("database");
         String schema = (String) config.get("schema");
-        try {
-            Constructor<?> ctor = genClass.getConstructor(String.class, String.class);
-            this.gen = (SQLGenerator) ctor.newInstance(database, schema);
-            log.warn("loaded: " + genClass.getName());
-        } catch (Exception ex) {
-            throw new RuntimeException("failed to instantiate SQLGenerator: " + genClass.getName(), ex);
-        }
+        
+        // TODO: make this db-specific plugin configurable again
+        
+        //Class<?> genClass = (Class<?>) config.get(StatementUtil.class.getName());
+        //if (genClass == null) {
+        //    throw new IllegalArgumentException(StatementUtil.class.getName() + " must be specified in config");
+        //}
+        //try {
+        //    StatementUtil su = (StatementUtil) genClass.newInstance();
+        //} catch (Exception ex) {
+        //    throw new RuntimeException("CONFIG: failed to instantiate " + genClass);
+        //}
+        
+        this.gen = new SQLGenerator(database, schema);
     }
 
     protected void checkInit() {

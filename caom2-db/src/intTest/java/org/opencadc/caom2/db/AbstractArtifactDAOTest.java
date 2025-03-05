@@ -124,7 +124,7 @@ public abstract class AbstractArtifactDAOTest {
             config.put("jndiDataSourceName", "jdbc/caom2-db-test");
             //config.put("database", database);
             config.put("schema", schema);
-            config.put(SQLGenerator.class.getName(), genClass);
+            config.put(SQLDialect.class.getName(), genClass);
             this.obsDAO = new ObservationDAO(true);
             obsDAO.setConfig(config);
             this.dao = new ArtifactDAO(true);

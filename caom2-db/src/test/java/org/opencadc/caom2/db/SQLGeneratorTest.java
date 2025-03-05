@@ -69,6 +69,7 @@
 
 package org.opencadc.caom2.db;
 
+import ca.nrc.cadc.date.DateUtil;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
@@ -78,6 +79,8 @@ import org.opencadc.caom2.Part;
 import org.opencadc.caom2.Plane;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.UUID;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -93,7 +96,7 @@ public class SQLGeneratorTest {
     private static final Logger log = Logger.getLogger(SQLGeneratorTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2", Level.INFO);
     }
 
     String[] tables = {
@@ -117,26 +120,12 @@ public class SQLGeneratorTest {
         DeletedArtifactDescriptionEvent.class
     };
 
-    SQLGenerator gen = new DummyBaseSQLGenerator();
-
-    private class DummyBaseSQLGenerator extends SQLGenerator {
-
-        public DummyBaseSQLGenerator() {
-            super(null, "caom2");
-            super.init();
-        }
-
-        @Override
-        protected String literal(UUID value) {
-            return value.toString(); // syntax doesn't matter / not checked
-        }
-
-    }
+    SQLGenerator gen = new SQLGenerator(null, "caom2");
 
     //@Test
     public void testTemplate() {
         try {
-
+            // TODO
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -146,12 +135,11 @@ public class SQLGeneratorTest {
     @Test
     public void testSelectObservationSQL() {
         try {
-
-            URI uri = new URI("caom:FOO/NoSuchObservation");
+            UUID id = new UUID(0L, 666L);
             for (int i = 1; i <= 5; i++) {
-                String sql = gen.getSelectSQL(uri, i, false);
+                String sql = gen.getSelectSQL(id, i, false);
                 Assert.assertNotNull(sql);
-                log.debug("SQL [" + sql.length() + "] " + sql);
+                log.info("SQL [" + sql.length() + "] " + sql);
 
                 for (int t = 0; t < i; t++) {
                     Assert.assertTrue(tables[t], sql.contains(tables[t]));
@@ -173,7 +161,7 @@ public class SQLGeneratorTest {
             int i = 5;
             String sql = gen.getSelectSQL(clz[i], id);
             Assert.assertNotNull(sql);
-            log.debug("SQL [" + sql.length() + "] " + sql);
+            log.info("SQL [" + sql.length() + "] " + sql);
             Assert.assertTrue(tables[i], sql.contains(tables[i]));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -250,4 +238,59 @@ public class SQLGeneratorTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
+    
+    @Test
+    public void testSelectMinLastModifiedSQL() {
+        try {
+            Date d1 = new Date();
+            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+            final String start = "select observation.";
+            final String where = "where observation.maxlastmodified >= '" + df.format(d1) + "'";
+            final String end = " order by observation.maxlastmodified limit 10";
+            
+            String sql = gen.getSelectSQL(Observation.class, d1, null, 10);
+            log.info("SQL: " + sql);
+            sql = sql.toLowerCase();
+
+            String actualStart = sql.substring(0, start.length());
+            String actualEnd = sql.substring(sql.length() - end.length());
+            Assert.assertEquals(start, actualStart);
+            Assert.assertEquals(end, actualEnd);
+            Assert.assertTrue(sql.contains(where));
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
+    @Test
+    public void testSelectMinMaxLastModifiedSQL() {
+        try {
+            Date d2 = new Date();
+            Date d1 = new Date(d2.getTime() - 3600 * 1000L); // one hour ago
+            DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
+            final String exp1 = "observation.maxlastmodified >= '" + df.format(d1) + "'";
+            final String exp2 = "observation.maxlastmodified <= '" + df.format(d2) + "'";
+            final String start = "select observation.";
+            final String end = " order by observation.maxlastmodified limit 10";
+            
+            String sql = gen.getSelectSQL(Observation.class, d1, d2, 10);
+            log.info("SQL: " + sql);
+            sql = sql.toLowerCase();
+            
+            String actualStart = sql.substring(0, start.length());
+            String actualEnd = sql.substring(sql.length() - end.length());
+            Assert.assertEquals(start, actualStart);
+            Assert.assertEquals(end, actualEnd);
+            
+            log.info("exp1: " + exp1);
+            Assert.assertTrue(sql.contains(exp1));
+            log.info("exp2: " + exp2);
+            Assert.assertTrue(sql.contains(exp2));
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+    
 }

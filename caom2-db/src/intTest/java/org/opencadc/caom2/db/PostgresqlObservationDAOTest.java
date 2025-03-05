@@ -111,7 +111,7 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest {
 
     public PostgresqlObservationDAOTest()
             throws Exception {
-        super(PostgreSQLGenerator.class, TestUtil.TEST_SERVER, TestUtil.TEST_DB, schema);
+        super(PostgreSQLDialect.class, TestUtil.TEST_SERVER, TestUtil.TEST_DB, schema);
 
         log.info("calling InitDatabase...");
         InitDatabase init = new InitDatabase(dao.getDataSource(), null, schema);
