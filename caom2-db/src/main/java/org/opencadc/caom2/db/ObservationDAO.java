@@ -155,35 +155,25 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
         }
-        return get(uri, null, SQLGenerator.MAX_DEPTH);
+        ObservationState s = getState(uri);
+        if (s == null) {
+            return null;
+        }
+        return get(s.getID());
     }
 
     @Override
     public Observation get(UUID id) {
+        checkInit();
         if (id == null) {
             throw new IllegalArgumentException("id cannot be null");
         }
-        return get(null, id, SQLGenerator.MAX_DEPTH);
-    }
-
-    private Observation get(URI uri, UUID id, int depth) {
-        checkInit();
-        if (uri == null && id == null) {
-            throw new IllegalArgumentException("args cannot be null");
-        }
-        String idStr = (uri != null ? uri.toString() : id.toString());
-        log.debug("GET: " + idStr);
+        log.debug("GET: " + id);
         long t = System.currentTimeMillis();
 
         boolean txnOpen = false;
         try {
-            String sql;
-            if (uri != null) {
-                sql = gen.getSelectSQL(uri, depth, false);
-            } else {
-                sql = gen.getSelectSQL(id, depth, false);
-            }
-
+            String sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, false);
             if (log.isDebugEnabled()) {
                 log.debug("GET: " + Util.formatSQL(sql));
             }
@@ -209,13 +199,13 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 if (oops.getCause() != null) {
                     cause = oops.getCause();
                 }
-                throw new IllegalStateException("failed to get observation: " + idStr
+                throw new IllegalStateException("failed to get observation: " + id
                     + " cause: " + cause.getMessage());
             }
         } catch (RuntimeException ex) {
             if (txnOpen) {
                 try {
-                    log.debug("failed to get " + idStr);
+                    log.debug("failed to get " + id);
                     getTransactionManager().rollbackTransaction();
                     log.debug("rollback: OK");
                 } catch (Exception ex2) {
@@ -235,7 +225,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 }
             }
             long dt = System.currentTimeMillis() - t;
-            log.debug("GET: " + idStr + " " + dt + "ms");
+            log.debug("GET: " + id + " " + dt + "ms");
         }
     }
 

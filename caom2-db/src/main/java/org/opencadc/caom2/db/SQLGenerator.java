@@ -561,28 +561,6 @@ public class SQLGenerator {
         return "select CURRENT_TIMESTAMP";
     }
 
-    public String getSelectSQL(URI uri, int depth, boolean skeleton) {
-        StringBuilder sb = new StringBuilder();
-        String alias = getAlias(Observation.class);
-        if (skeleton) {
-            alias = getAlias(ObservationSkeleton.class);
-        }
-        sb.append("SELECT ");
-        sb.append(getObservationSelect(depth, skeleton));
-        sb.append(" WHERE ");
-        sb.append(alias);
-        sb.append(".").append("uri").append(" = ").append(dbDialect.literal(uri));
-        String orderBy = getOrderColumns(depth);
-        if (skeleton) {
-            orderBy = getSkeletonOrderColumns(depth);
-        }
-        if (orderBy != null) {
-            sb.append(" ORDER BY ");
-            sb.append(orderBy);
-        }
-        return sb.toString();
-    }
-
     public String getSelectSQL(UUID id, int depth, boolean skeleton) {
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(Observation.class);

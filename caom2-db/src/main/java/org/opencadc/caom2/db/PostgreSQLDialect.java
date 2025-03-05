@@ -108,6 +108,12 @@ public class PostgreSQLDialect extends SQLDialect {
     }
 
     @Override
+    public String literal(UUID value) {
+        // uuid datatype accepts a string with the standard hex string format
+        return "'" + value.toString() + "'";
+    }
+
+    @Override
     public void safeSetArray(StringBuilder sb, PreparedStatement prep, int col, Set<URI> values) throws SQLException {
         
         if (values != null && !values.isEmpty()) {
@@ -163,12 +169,6 @@ public class PostgreSQLDialect extends SQLDialect {
             sb.append(pgo.getValue());
             sb.append(",");
         }
-    }
-
-    @Override
-    public String literal(UUID value) {
-        // uuid datatype accepts a string with the standard hex string format
-        return "'" + value.toString() + "'";
     }
 
     @Override
