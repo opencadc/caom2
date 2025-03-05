@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,12 +69,11 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-
+import java.net.URI;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.db.ObservationDAO;
+import org.opencadc.caom2.util.ObservationState;
 
 /**
  *
@@ -88,7 +87,7 @@ public class DeleteAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        ObservationURI uri = getObservationURI();
+        URI uri = getObservationURI();
         log.debug("START: " + uri);
 
         checkWritePermission();
@@ -100,6 +99,7 @@ public class DeleteAction extends RepoAction {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
+        // TODO: obtain lock, create DeletedObservationEvent, use txn
         dao.delete(state.getID());
 
         log.debug("DONE: " + uri);

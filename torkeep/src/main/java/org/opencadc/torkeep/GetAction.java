@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2023.                            (c) 2023.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,22 +69,23 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.ObservationResponse;
-import ca.nrc.cadc.caom2.ObservationState;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.xml.ObservationWriter;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
+import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.List;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.db.ObservationDAO;
+import org.opencadc.caom2.util.ObservationState;
+import org.opencadc.caom2.xml.ObservationWriter;
 
 /**
  *
@@ -102,7 +103,7 @@ public class GetAction extends RepoAction {
     @Override
     public void doAction() throws Exception {
         log.debug("GET ACTION");
-        ObservationURI uri = getObservationURI();
+        URI uri = getObservationURI();
         if (uri != null) {
             doGetObservation(uri);
             return;
@@ -116,28 +117,31 @@ public class GetAction extends RepoAction {
         }
     }
 
-    protected void doGetObservation(ObservationURI uri) throws Exception {
+    protected void doGetObservation(URI uri) throws Exception {
         log.debug("START: " + uri);
 
         checkReadPermission();
 
         ObservationDAO dao = getDAO();
-        ObservationResponse resp = dao.getObservationResponse(uri);
-
-        if (resp.error != null) {
-            throw resp.error;
-        }
-        if (resp.observation == null) {
+        log.debug("getState: " + uri);
+        ObservationState state = dao.getState(uri);
+        log.warn("found state: " + state);
+        if (state == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
-
+        //if (resp.error != null) {
+        //    throw resp.error;
+        //}
+        
+        Observation o = dao.get(state.getID());
+        log.debug("loaded observation: " + o);
         ObservationWriter ow = getObservationWriter();
         
         syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
-        syncOutput.setHeader("ETag", resp.observation.getAccMetaChecksum());
+        syncOutput.setHeader("ETag", o.getAccMetaChecksum());
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ow.write(resp.observation, bc);
+        ow.write(o, bc);
         logInfo.setBytes(bc.getByteCount());
 
         log.debug("DONE: " + uri);
@@ -150,16 +154,12 @@ public class GetAction extends RepoAction {
 
         ObservationDAO dao = getDAO();
 
-        List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec,
-                isAscending);
-
-        if (states == null) {
-            throw new ResourceNotFoundException("Collection not found: " + getCollection());
+        //List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec,
+        //        isAscending);
+        try (ResourceIterator<ObservationState> iter = dao.iterator(getCollection(), null, start, end, maxRec)) {
+            long byteCount = writeObservationList(iter);
+            logInfo.setBytes(byteCount);
         }
-
-        long byteCount = writeObservationList(states);
-        logInfo.setBytes(byteCount);
-
         log.debug("DONE: " + getCollection());
     }
 
@@ -167,27 +167,20 @@ public class GetAction extends RepoAction {
         return new ObservationWriter();
     }
 
-    protected long writeObservationList(List<ObservationState> states) throws IOException {
+    protected long writeObservationList(ResourceIterator<ObservationState> iter) throws IOException {
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, "US-ASCII");
+        OutputStreamWriter out = new OutputStreamWriter(bc, StandardCharsets.US_ASCII);
         CsvWriter writer = new CsvWriter(out, '\t');
-        for (ObservationState state : states) {
-            writer.write(state.getURI().getCollection());
-            writer.write(state.getURI().getObservationID());
-            if (state.maxLastModified != null) {
-                writer.write(df.format(state.maxLastModified));
-            } else {
-                writer.write("");
-            }
-            if (state.accMetaChecksum != null) {
-                writer.write(state.accMetaChecksum.toASCIIString());
-            } else {
-                writer.write("");
-            }
+        while (iter.hasNext()) {
+            ObservationState state = iter.next();
+            writer.write(state.getID().toString());
+            writer.write(state.getURI().toASCIIString());
+            writer.write(df.format(state.maxLastModified));
+            writer.write(state.accMetaChecksum.toASCIIString());
             writer.endRecord();
         }
         writer.flush();

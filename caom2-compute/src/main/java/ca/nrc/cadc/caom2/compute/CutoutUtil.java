@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,26 +67,12 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.Vertex;
-import ca.nrc.cadc.caom2.util.EnergyConverter;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.CustomWCS;
-import ca.nrc.cadc.caom2.wcs.ObservableAxis;
-import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.InvalidPolygonException;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.WCSKeywords;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
@@ -96,6 +82,19 @@ import java.util.ArrayList;
 import java.util.List;
 import jsky.coords.wcscon;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.PolarizationState;
+import org.opencadc.caom2.util.EnergyConverter;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.CustomWCS;
+import org.opencadc.caom2.wcs.ObservableAxis;
+import org.opencadc.caom2.wcs.PolarizationWCS;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.wcs.TemporalWCS;
 
 public final class CutoutUtil {
     private static final Logger log = Logger.getLogger(CutoutUtil.class);
@@ -127,8 +126,8 @@ public final class CutoutUtil {
      * @throws NoSuchKeywordException
      */
     public static List<String> computeCutout(Artifact a, Shape shape,
-            Interval energyInter, Interval timeInter, List<PolarizationState> polarStates,
-            String customCtype, Interval customInter)
+            Interval<Double> energyInter, Interval<Double> timeInter, List<PolarizationState> polarStates,
+            String customCtype, Interval<Double> customInter)
         throws NoSuchKeywordException {
         if (a == null) {
             throw new IllegalArgumentException("null Artifact");
@@ -615,11 +614,15 @@ public final class CutoutUtil {
         if (s == null) {
             return null;
         }
-        if (s instanceof Circle) {
-            return getPositionBounds(wcs, (Circle) s);
-        }
-        if (s instanceof Polygon) {
-            return getPositionBounds(wcs, ((Polygon) s).getSamples());
+        try {
+            if (s instanceof Circle) {
+                return getPositionBounds(wcs, (Circle) s);
+            }
+            if (s instanceof Polygon) {
+                return getPositionBounds(wcs, (Polygon) s);
+            }
+        } catch (InvalidPolygonException ex) {
+            throw new RuntimeException("BUG or CONTENT: generated invalid polygon whihc computing cutout", ex);
         }
         throw new IllegalArgumentException("unsupported cutout shape: " + s.getClass().getSimpleName());
     }
@@ -633,19 +636,8 @@ public final class CutoutUtil {
      *     or null if the circle does not intersect the WCS
      */
     static long[] getPositionBounds(SpatialWCS wcs, Circle c)
-        throws NoSuchKeywordException, WCSLibRuntimeException {
-        // convert the Circle -> Box ~ Polygon
-        // TODO: a WCS-aligned polygon would be better than an axis-aligned Box
-        double x = c.getCenter().cval1;
-        double y = c.getCenter().cval2;
-        double dy = c.getRadius();
-        double dx = Math.abs(dy / Math.cos(Math.toRadians(y)));
-        MultiPolygon poly = new MultiPolygon();
-        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x - dx, y - dy, SegmentType.MOVE)));
-        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x + dx, y - dy, SegmentType.LINE)));
-        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x + dx, y + dy, SegmentType.LINE)));
-        poly.getVertices().add(PositionUtil.rangeReduce(new Vertex(x - dx, y + dy, SegmentType.LINE)));
-        poly.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        throws NoSuchKeywordException, WCSLibRuntimeException, InvalidPolygonException {
+        Polygon poly = Circle.generatePolygonApproximation(c, 11);
         return getPositionBounds(wcs, poly);
     }
 
@@ -661,8 +653,8 @@ public final class CutoutUtil {
      * @return int[4] holding [x1, x2, y1, y2], int[0] if all pixels are included,
      *     or null if the circle does not intersect the WCS
      */
-    static long[] getPositionBounds(SpatialWCS wcs, MultiPolygon poly)
-        throws NoSuchKeywordException, WCSLibRuntimeException {
+    static long[] getPositionBounds(SpatialWCS wcs, Polygon poly)
+        throws InvalidPolygonException, NoSuchKeywordException, WCSLibRuntimeException {
         PositionUtil.CoordSys coordsys = PositionUtil.inferCoordSys(wcs);
 
         // detect necessary conversion of target coords to native WCS coordsys
@@ -682,12 +674,22 @@ public final class CutoutUtil {
 
         // convert wcs/footprint to sky coords
         log.debug("computing footprint from wcs");
-        MultiPolygon foot = PositionUtil.toICRSPolygon(wcs);
-        log.debug("wcs poly: " + foot);
-        log.debug("input poly: " + poly);
+        Shape foot = PositionUtil.toShapeICRS(wcs);
+        log.warn("wcs shape: " + foot);
+        
+        Polygon fpoly = null;
+        if (foot instanceof Circle) {
+            fpoly = Circle.generatePolygonApproximation((Circle) foot, 11);
+        } else {
+            fpoly = (Polygon) foot;
+        }
+        
+        log.warn("input poly: " + poly);
+        log.warn("wcs poly: " + fpoly);
 
         log.debug("computing poly INTERSECT footprint");
-        MultiPolygon npoly = PolygonUtil.intersection(poly, foot);
+        Polygon npoly = PolygonUtil.intersection(poly, fpoly);
+        log.warn("input INTERSECT wcs: " + npoly);
         if (npoly == null) {
             log.debug("poly INTERSECT footprint == null");
             return null;
@@ -697,22 +699,23 @@ public final class CutoutUtil {
         // npoly is in ICRS
         if (gal || fk4) {
             // convert npoly to native coordsys, in place since we created a new npoly above
-            log.debug("converting poly to " + coordsys);
-            for (Vertex v : npoly.getVertices()) {
-                if (!SegmentType.CLOSE.equals(v.getType())) {
-                    Point2D.Double pp = new Point2D.Double(v.cval1, v.cval2);
+            log.warn("converting intersection to " + coordsys.getName());
+            //Point v : npoly.getVertices()
+            for (int i = 0; i < npoly.getVertices().size(); i++) {
+                Point v = npoly.getVertices().get(i);
+                Point2D.Double pp = new Point2D.Double(v.getLongitude(), v.getLatitude());
 
-                    // convert poly coords to native WCS coordsys
-                    if (gal) {
-                        pp = wcscon.fk52gal(pp);
-                    } else if (fk4) {
-                        pp = wcscon.fk524(pp);
-                    }
-                    v.cval1 = pp.x;
-                    v.cval2 = pp.y;
+                // convert poly coords to native WCS coordsys
+                if (gal) {
+                    pp = wcscon.fk52gal(pp);
+                } else if (fk4) {
+                    pp = wcscon.fk524(pp);
                 }
+                Point r = new Point(pp.x, pp.y);
+                npoly.getVertices().set(i, r); // in-place
             }
         }
+        log.warn("sky cutout: " + npoly);
 
         // convert npoly to pixel coordinates and find min/max
         double x1 = Double.MAX_VALUE;
@@ -721,28 +724,26 @@ public final class CutoutUtil {
         double y2 = -1 * y1;
         log.debug("converting npoly to pixel coordinates");
         double[] coords = new double[2];
-        for (Vertex v : npoly.getVertices()) {
-            if (!SegmentType.CLOSE.equals(v.getType())) {
-                coords[0] = v.cval1;
-                coords[1] = v.cval2;
+        for (Point v : npoly.getVertices()) {
+            coords[0] = v.getLongitude();
+            coords[1] = v.getLatitude();
 
-                if (coordsys.isSwappedAxes()) {
-                    coords[0] = v.cval2;
-                    coords[1] = v.cval1;
-                }
-                Transform.Result tr = transform.sky2pix(coords);
-                // if p2 is null, it was a long way away from the WCS and does not
-                // impose a limit/cutout - so we can safely skip it
-                if (tr != null) {
-                    //log.warn("pixel coords: " + tr.coordinates[0] + "," + tr.coordinates[1]);
-                    x1 = Math.min(x1, tr.coordinates[0]);
-                    x2 = Math.max(x2, tr.coordinates[0]);
-                    y1 = Math.min(y1, tr.coordinates[1]);
-                    y2 = Math.max(y2, tr.coordinates[1]);
-                }
-                //else
-                //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
+            if (coordsys.isSwappedAxes()) {
+                coords[0] = v.getLatitude();
+                coords[1] = v.getLongitude();
             }
+            Transform.Result tr = transform.sky2pix(coords);
+            // if p2 is null, it was a long way away from the WCS and does not
+            // impose a limit/cutout - so we can safely skip it
+            if (tr != null) {
+                //log.warn("pixel coords: " + tr.coordinates[0] + "," + tr.coordinates[1]);
+                x1 = Math.min(x1, tr.coordinates[0]);
+                x2 = Math.max(x2, tr.coordinates[0]);
+                y1 = Math.min(y1, tr.coordinates[1]);
+                y2 = Math.max(y2, tr.coordinates[1]);
+            }
+            //else
+            //    System.out.println("[GeomUtil] failed to convert " + v + ": skipping");
         }
         //log.warn(x1 + " " + x2 + " " + y1 + " " +y2);
         long ix1 = (long) Math.floor(x1 + 0.5);
@@ -753,6 +754,7 @@ public final class CutoutUtil {
         // clipping
         long naxis1 = wcs.getAxis().function.getDimension().naxis1;
         long naxis2 = wcs.getAxis().function.getDimension().naxis2;
+        log.warn("doClip: " + naxis1 + "," + naxis2 + "," + ix1 + "," + ix2 + "," + iy1 + "," + iy2);
         return doPositionClipCheck(naxis1, naxis2, ix1, ix2, iy1, iy2);
     }
 
@@ -791,14 +793,14 @@ public final class CutoutUtil {
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *     null if no pixels are included
      */
-    static long[] getEnergyBounds(SpectralWCS wcs, Interval bounds)
+    static long[] getEnergyBounds(SpectralWCS wcs, Interval<Double> bounds)
         throws NoSuchKeywordException, WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
             // convert wcs to energy axis interval
-            Interval si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> si = EnergyUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            Interval inter = Interval.intersection(si, bounds);
+            Interval<Double> inter = Interval.intersection(si, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
                 return null;
@@ -837,9 +839,9 @@ public final class CutoutUtil {
             for (CoordRange1D tile : wcs.getAxis().bounds.getSamples()) {
                 //log.warn("getBounds: tile = " + tile);
                 maxPixValue = Math.max(maxPixValue, (long) tile.getEnd().pix);
-                Interval bwmRange = EnergyUtil.toInterval(wcs, tile);
+                Interval<Double> bwmRange = EnergyUtil.toInterval(wcs, tile);
                 // compute intersection
-                Interval inter = Interval.intersection(bwmRange, bounds);
+                Interval<Double> inter = Interval.intersection(bwmRange, bounds);
                 //log.warn("getBounds: " + inter + " = " + wbounds + " X " + bounds);
                 if (inter != null) {
                     pix1 = Math.min(pix1, tile.getStart().pix);
@@ -860,9 +862,9 @@ public final class CutoutUtil {
 
         if (wcs.getAxis().range != null) {
             // can only check for complete non-overlap
-            Interval bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
+            Interval<Double> bwmRange = EnergyUtil.toInterval(wcs, wcs.getAxis().range);
             // compute intersection
-            Interval inter = Interval.intersection(bwmRange, bounds);
+            Interval<Double> inter = Interval.intersection(bwmRange, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.range == null");
                 return null;
@@ -914,7 +916,7 @@ public final class CutoutUtil {
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *     null if no pixels are included
      */
-    static long[] getCustomAxisBounds(CustomWCS wcs, Interval bounds)
+    static long[] getCustomAxisBounds(CustomWCS wcs, Interval<Double> bounds)
         throws WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
 
@@ -925,10 +927,10 @@ public final class CutoutUtil {
             }
 
             // convert wcs to custom axis interval
-            Interval si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> si = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            Interval inter = Interval.intersection(si, bounds);
+            Interval<Double> inter = Interval.intersection(si, bounds);
 
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
@@ -959,7 +961,7 @@ public final class CutoutUtil {
      * @return int[2] with the pixel bounds, int[0] if all pixels are included, or
      *     null if no pixels are included
      */
-    static long[] getTimeBounds(TemporalWCS wcs, Interval bounds)
+    static long[] getTimeBounds(TemporalWCS wcs, Interval<Double> bounds)
         throws WCSLibRuntimeException {
         if (wcs.getAxis().function != null) {
 
@@ -970,10 +972,10 @@ public final class CutoutUtil {
             }
 
             // convert wcs to time axis interval
-            Interval si = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> si = TimeUtil.toInterval(wcs, wcs.getAxis().function);
 
             // compute intersection
-            Interval inter = Interval.intersection(si, bounds);
+            Interval<Double> inter = Interval.intersection(si, bounds);
             if (inter == null) {
                 log.debug("bounds INTERSECT wcs.function == null");
                 return null;

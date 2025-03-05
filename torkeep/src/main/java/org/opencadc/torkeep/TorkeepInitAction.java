@@ -69,9 +69,6 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
-import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.caom2.version.InitDatabase;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.rest.InitAction;
 import java.util.Map;
@@ -81,6 +78,9 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.db.PostgreSQLGenerator;
+import org.opencadc.caom2.db.SQLGenerator;
+import org.opencadc.caom2.db.version.InitDatabase;
 
 public class TorkeepInitAction extends InitAction {
 

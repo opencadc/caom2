@@ -69,13 +69,13 @@ package org.opencadc.argus;
 
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.impl.InitCaomTapSchemaContent;
 import ca.nrc.cadc.tap.schema.InitDatabaseTS;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
+import org.opencadc.argus.tap.InitCaomTapSchemaContent;
 
 /**
  * Init uws schema, tap_schema schema, and tap_schema content.

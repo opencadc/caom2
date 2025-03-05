@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,22 +67,21 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Polarization;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Polarization;
+import org.opencadc.caom2.PolarizationState;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.CoordBounds1D;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.PolarizationWCS;
 
 /**
  * @author pdowler
@@ -95,7 +94,7 @@ public final class PolarizationUtil {
 
     public static Polarization compute(Set<Artifact> artifacts) {
         Set<PolarizationState> pol = EnumSet.noneOf(PolarizationState.class);
-        ProductType productType = Util.choseProductType(artifacts);
+        DataLinkSemantics productType = DataLinkSemantics.THIS;
         log.debug("compute: " + productType);
         int numPixels = 0;
         for (Artifact a : artifacts) {
@@ -111,13 +110,13 @@ public final class PolarizationUtil {
             }
         }
 
-        Polarization p = new Polarization();
         if (!pol.isEmpty()) {
-            p.states = new TreeSet<PolarizationState>();
-            p.states.addAll(pol);
-            p.dimension = new Long(numPixels);
+            Polarization p = new Polarization();
+            p.getStates().addAll(pol);
+            p.dimension = numPixels;
+            return p;
         }
-        return p;
+        return null;
     }
     
     static List<PolarizationState> wcsToStates(PolarizationWCS wcs) {

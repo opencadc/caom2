@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,19 +69,8 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.ac.UserNotFoundException;
-import ca.nrc.cadc.ac.client.GMSClient;
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Observation;
-import ca.nrc.cadc.caom2.ObservationURI;
-import ca.nrc.cadc.caom2.Plane;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
-import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
-import ca.nrc.cadc.caom2.persistence.ObservationDAO;
-import ca.nrc.cadc.caom2.util.CaomValidator;
-import ca.nrc.cadc.caom2.xml.ObservationParsingException;
-import ca.nrc.cadc.cred.client.CredUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.ResourceNotFoundException;
@@ -102,11 +91,14 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 import org.apache.log4j.Logger;
-import org.opencadc.gms.GroupURI;
-import org.opencadc.permissions.ReadGrant;
-import org.opencadc.permissions.WriteGrant;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.db.DeletedObservationEventDAO;
+import org.opencadc.caom2.db.ObservationDAO;
+import org.opencadc.caom2.util.CaomValidator;
+import org.opencadc.caom2.xml.ObservationParsingException;
 import org.opencadc.permissions.client.PermissionsCheck;
-import org.opencadc.permissions.client.PermissionsClient;
 
 /**
  * @author pdowler
@@ -116,13 +108,13 @@ public abstract class RepoAction extends RestAction {
 
     public static final int MAX_LIST_SIZE = 100000;
 
-    protected ObservationURI observationURI;
+    protected URI observationURI;
     protected boolean computeMetadata;
     // protected Map<String, Object> raGroupConfig = new HashMap<String, Object>();
     private String collection;
     private transient TorkeepConfig torkeepConfig;
     private transient ObservationDAO observationDAO;
-    private transient DeletedEntityDAO deletedEntityDAO;
+    private transient DeletedObservationEventDAO deletedDAO;
 
     protected RepoAction() {
     }
@@ -140,7 +132,7 @@ public abstract class RepoAction extends RestAction {
                     String suri = "caom:" + path;
                     log.debug("path uri: " + suri);
                     try {
-                        this.observationURI = new ObservationURI(new URI(suri));
+                        this.observationURI = new URI(suri);
                     } catch (URISyntaxException | IllegalArgumentException ex) {
                         throw new IllegalArgumentException("invalid input: " + suri, ex);
                     }
@@ -228,7 +220,7 @@ public abstract class RepoAction extends RestAction {
     }
     
     // return uri for get-observation, null for get-list, and throw for invalid
-    protected ObservationURI getObservationURI() {
+    protected URI getObservationURI() {
         initTarget();
         return this.observationURI;
     }
@@ -245,7 +237,7 @@ public abstract class RepoAction extends RestAction {
         CollectionEntry collectionEntry = tc.getConfig(collection);
         if (collectionEntry != null) {
             // this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, collectionEntry.isProposalGroup());
-            daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID().toASCIIString());
+            //daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID().toASCIIString());
             this.computeMetadata = collectionEntry.isComputeMetadata();
         }
         return daoConfig;
@@ -253,18 +245,21 @@ public abstract class RepoAction extends RestAction {
     
     protected ObservationDAO getDAO() throws IOException {
         if (this.observationDAO == null) {
-            this.observationDAO = new ObservationDAO();
-            this.observationDAO.setConfig(getDAOConfig(getCollection()));
+            this.observationDAO = new ObservationDAO(true);
+            Map<String,Object> config = getDAOConfig(collection);
+            this.observationDAO.setConfig(config);
+            this.deletedDAO = new DeletedObservationEventDAO(true);
+            this.deletedDAO.setConfig(config);
         }
         return this.observationDAO;
     }
 
-    protected DeletedEntityDAO getDeletedEntityDAO() throws IOException {
-        if (this.deletedEntityDAO == null) {
-            this.deletedEntityDAO = new DeletedEntityDAO();
-            this.deletedEntityDAO.setConfig(getDAOConfig(getCollection()));
+    protected DeletedObservationEventDAO getDeletedDAO() throws IOException {
+        if (this.deletedDAO == null) {
+            this.deletedDAO = new DeletedObservationEventDAO(true);
+            this.deletedDAO.setConfig(getDAOConfig(getCollection()));
         }
-        return this.deletedEntityDAO;
+        return this.deletedDAO;
     }
     
     // read the input stream (POST and PUT) and extract the observation from the XML
@@ -310,7 +305,7 @@ public abstract class RepoAction extends RestAction {
 
         URI grantURI;
         if (getObservationURI() != null) {
-            grantURI = getObservationURI().getURI();
+            grantURI = getObservationURI();
         } else {
             grantURI = URI.create("caom:" + getCollection() + "/");
         }
@@ -350,7 +345,7 @@ public abstract class RepoAction extends RestAction {
 
         URI grantURI;
         if (getObservationURI() != null) {
-            grantURI = getObservationURI().getURI();
+            grantURI = getObservationURI();
         } else {
             grantURI = URI.create("caom:" + getCollection() + "/");
         }
@@ -361,6 +356,27 @@ public abstract class RepoAction extends RestAction {
             cp.checkWritePermission(tc.getGrantProviders());
         } catch (InterruptedException ex) {
             throw new RuntimeException("interrupted", ex);
+        }
+    }
+
+    protected void assignPublisherID(Observation obs) throws URISyntaxException {
+        Map<String, Object> daoConfig = TorkeepInitAction.getDAOConfig();
+        TorkeepConfig tc = getTorkeepConfig();
+        CollectionEntry collectionEntry = tc.getConfig(obs.getCollection());
+        String basePublisherID = null;
+        if (collectionEntry != null) {
+            basePublisherID = collectionEntry.getBasePublisherID().toASCIIString();
+        }
+        for (Plane p : obs.getPlanes()) {
+            URI uri = p.getURI();
+            if ("caom".equals(uri.getScheme())) {
+                String s1 = obs.getCollection() + "/";
+                String s2 = obs.getCollection() + "?";
+                String s = uri.getSchemeSpecificPart().replace(s1, s2);
+                p.publisherID = new URI(basePublisherID + s);
+            } else {
+                p.publisherID = p.getURI();
+            }
         }
     }
 
@@ -381,11 +397,11 @@ public abstract class RepoAction extends RestAction {
             }
 
             if (this.computeMetadata) {
-                String ostr = obs.getCollection() + "/" + obs.getObservationID();
+                String ostr = obs.getURI().toASCIIString();
                 String cur = ostr;
                 try {
                     for (Plane p : obs.getPlanes()) {
-                        cur = ostr + "/" + p.getProductID();
+                        cur = p.getURI().toASCIIString();
                         ComputeUtil.computeTransientState(obs, p);
                     }
                 } catch (Error er) {
