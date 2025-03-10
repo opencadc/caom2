@@ -74,7 +74,9 @@ import org.apache.log4j.Logger;
 import org.opencadc.caom2.Observation;
 
 /**
- *
+ * Utility class that captures the minimal esssential observation state
+ * to support metadata synchronization.
+ * 
  * @author pdowler
  */
 public class ObservationState {
@@ -83,8 +85,8 @@ public class ObservationState {
     private final UUID id;
     private final URI uri;
 
-    public Date maxLastModified;
-    public URI accMetaChecksum;
+    private Date maxLastModified;
+    private URI accMetaChecksum;
     
     // optional complete observation OR error
     public Observation observation;
@@ -103,6 +105,14 @@ public class ObservationState {
         return uri;
     }
 
+    public URI getAccMetaChecksum() {
+        return accMetaChecksum;
+    }
+
+    public Date getMaxLastModified() {
+        return maxLastModified;
+    }
+    
     @Override
     public String toString() {
         return ObservationState.class.getSimpleName() + "[" + id + "," + uri + "]";
