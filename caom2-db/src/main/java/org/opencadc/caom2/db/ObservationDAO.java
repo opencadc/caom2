@@ -98,6 +98,7 @@ import org.opencadc.caom2.util.ObservationState;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -522,11 +523,43 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
     }
 
-    // use case: repo list API
+    // use case: backwards compatible repo list API
+    public ResourceIterator<ObservationState> iterator(String collection, 
+            Date minLastModified, Date maxLastModified, Integer batchSize) {
+        checkInit();
+        long t = System.currentTimeMillis();
+
+        try {
+            ObservationStateIteratorQuery iter = new ObservationStateIteratorQuery(gen, collection, null);
+            iter.setMinLastModified(minLastModified);
+            iter.setMaxLastModified(maxLastModified);
+            iter.setBatchSize(batchSize);
+            return iter.query(dataSource);
+        } catch (BadSqlGrammarException ex) {
+            handleInternalFail(ex);
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("iterator: " + dt + "ms");
+        }
+        throw new RuntimeException("BUG: should be unreachable");
+    }
+
     // use case: caom2-meta-validate aka icewind validate mode
-    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucket, 
-            Date minLastModified, Date maxLastModified, Integer maxrec) {
-        throw new UnsupportedOperationException("not implemented");
+    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucketPrefix) {
+        checkInit();
+        long t = System.currentTimeMillis();
+
+        try {
+            ObservationStateIteratorQuery iter = new ObservationStateIteratorQuery(gen, null, namespace);
+            iter.setUriBucket(uriBucketPrefix);
+            return iter.query(dataSource);
+        } catch (BadSqlGrammarException ex) {
+            handleInternalFail(ex);
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("iterator: " + dt + "ms");
+        }
+        throw new RuntimeException("BUG: should be unreachable");
     }
 
     // update CaomEntity state:

@@ -590,7 +590,7 @@ public class SQLGenerator {
         return sb.toString();
     }
 
-    // just SELECT {columns} FROM {table}
+    // just SELECT {columns} FROM {table} AS {alias}
     protected StringBuilder getSelectSQL(Class clz) {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -601,55 +601,6 @@ public class SQLGenerator {
         sb.append(getAlias(clz));
         
         return sb;
-    }
-
-    // select batchSize instances of c, starting at minLastModified and in lastModified order
-    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize) {
-        return getSelectSQL(c, minLastModified, maxLastModified, batchSize, true, null);
-    }
-
-    
-    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascending, String collection) {
-        DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-
-        String lastModifiedColumn = "lastModified";
-        if (Observation.class.equals(c)) {
-            lastModifiedColumn = "maxLastModified";
-        }
-
-        StringBuilder sb = getSelectSQL(c);
-        String alias = getAlias(c);
-        String predCombine = " WHERE ";
-        if (collection != null) {
-            sb.append(predCombine);
-            predCombine = " AND ";
-            sb.append(alias).append(".collection = '").append(collection).append("'");
-        }
-        if (minLastModified != null) {
-            sb.append(predCombine);
-            predCombine = " AND ";
-            sb.append(alias).append(".").append(lastModifiedColumn).append(" >= '");
-            sb.append(df.format(minLastModified));
-            sb.append("'");
-        }
-        if (maxLastModified != null) {
-            sb.append(predCombine);
-            predCombine = " AND ";
-            sb.append(alias).append(".").append(lastModifiedColumn).append(" <= '");
-            sb.append(df.format(maxLastModified));
-            sb.append("'");
-        }
-        sb.append(" ORDER BY ");
-        sb.append(alias).append(".").append(lastModifiedColumn);
-        if (!ascending) {
-            sb.append(" DESC");
-        }
-        String limit = getLimitConstraint(batchSize);
-        if (limit != null && limit.length() > 0) {
-            sb.append(" ");
-            sb.append(limit);
-        }
-        return sb.toString();
     }
 
     public String getSelectSQL(Class clz, UUID id) {
@@ -2351,7 +2302,6 @@ public class SQLGenerator {
         }
     }
 
-
     String getColumns(Class c) {
         return getColumns(c, null);
     }
@@ -2401,7 +2351,7 @@ public class SQLGenerator {
         sb.append(getAlias(c));
         return sb.toString();
     }
-
+    
     public String getFrom(Class c, int depth, boolean skeleton) {
         log.debug("getFrom: " + c + ", depth = " + depth);
 

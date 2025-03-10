@@ -134,8 +134,8 @@ public class PostAction extends RepoAction {
             }
 
             if (expectedMetaChecksum != null) {
-                if (!s.accMetaChecksum.equals(expectedMetaChecksum)) {
-                    throw new PreconditionFailedException(obs.getURI() + " checksum " + s.accMetaChecksum 
+                if (!s.getAccMetaChecksum().equals(expectedMetaChecksum)) {
+                    throw new PreconditionFailedException(obs.getURI() + " checksum " + s.getAccMetaChecksum()
                             + " does not match condition " + expectedMetaChecksum);
                 }
             }
