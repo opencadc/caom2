@@ -69,6 +69,7 @@
 
 package org.opencadc.caom2.db;
 
+import org.opencadc.caom2.db.mappers.PartialRowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;

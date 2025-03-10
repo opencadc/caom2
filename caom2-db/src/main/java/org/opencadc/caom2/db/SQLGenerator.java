@@ -69,10 +69,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Shape;
+import org.opencadc.caom2.db.mappers.PartialRowMapper;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.mappers.TimestampRowMapper;
 import java.net.URI;
@@ -80,7 +77,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
@@ -89,47 +85,28 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
-import org.opencadc.caom2.Algorithm;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.ArtifactDescription;
-import org.opencadc.caom2.CalibrationLevel;
 import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.CustomAxis;
-import org.opencadc.caom2.DataQuality;
 import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
 import org.opencadc.caom2.DeletedObservationEvent;
 import org.opencadc.caom2.DerivedObservation;
 import org.opencadc.caom2.Energy;
 import org.opencadc.caom2.EnergyTransition;
-import org.opencadc.caom2.Environment;
-import org.opencadc.caom2.Instrument;
-import org.opencadc.caom2.Metrics;
-import org.opencadc.caom2.Observable;
 import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.ObservationIntentType;
 import org.opencadc.caom2.Part;
 import org.opencadc.caom2.Plane;
-import org.opencadc.caom2.Polarization;
 import org.opencadc.caom2.Position;
-import org.opencadc.caom2.Proposal;
-import org.opencadc.caom2.Provenance;
-import org.opencadc.caom2.Quality;
-import org.opencadc.caom2.ReleaseType;
-import org.opencadc.caom2.Requirements;
-import org.opencadc.caom2.SimpleObservation;
-import org.opencadc.caom2.Status;
-import org.opencadc.caom2.Target;
-import org.opencadc.caom2.TargetPosition;
-import org.opencadc.caom2.TargetType;
-import org.opencadc.caom2.Telescope;
 import org.opencadc.caom2.Time;
-import org.opencadc.caom2.Visibility;
 import org.opencadc.caom2.db.mappers.ArtifactDescriptionMapper;
+import org.opencadc.caom2.db.mappers.ArtifactMapper;
 import org.opencadc.caom2.db.mappers.DeletedArtifactDescriptionEventMapper;
 import org.opencadc.caom2.db.mappers.DeletedObservationEventMapper;
+import org.opencadc.caom2.db.mappers.ObservationMapper;
 import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateMapper;
+import org.opencadc.caom2.db.mappers.PlaneMapper;
 import org.opencadc.caom2.db.skel.ArtifactSkeleton;
 import org.opencadc.caom2.db.skel.ChunkSkeleton;
 import org.opencadc.caom2.db.skel.ObservationSkeleton;
@@ -138,11 +115,7 @@ import org.opencadc.caom2.db.skel.PlaneSkeleton;
 import org.opencadc.caom2.db.skel.Skeleton;
 import org.opencadc.caom2.util.CaomUtil;
 import org.opencadc.caom2.util.ObservationState;
-import org.opencadc.caom2.vocab.CalibrationStatus;
 import org.opencadc.caom2.vocab.DataLinkSemantics;
-import org.opencadc.caom2.vocab.DataProductType;
-import org.opencadc.caom2.vocab.Tracking;
-import org.opencadc.caom2.vocab.UCD;
 import org.opencadc.caom2.wcs.Axis;
 import org.opencadc.caom2.wcs.Coord2D;
 import org.opencadc.caom2.wcs.CoordAxis1D;
@@ -196,8 +169,8 @@ public class SQLGenerator {
         ObservationMember.class, ProvenanceInput.class
     };
 
-    static final String SIMPLE_TYPE = "S";
-    static final String DERIVED_TYPE = "D";
+    public static final String SIMPLE_TYPE = "S";
+    public static final String DERIVED_TYPE = "D";
 
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
@@ -282,28 +255,7 @@ public class SQLGenerator {
         //   it hits a null object
         // - the typeCode column is first so the right subclass of observation can be created
         
-        String[] obsColumns = new String[] {
-            "typeCode",
-            "uri", "uriBucket", "collection",
-            "algorithm_name",
-            "obstype", "intent", "sequenceNumber", "metaRelease", "metaReadGroups",
-            "proposal_id", "proposal_pi", "proposal_project", "proposal_title", 
-            "proposal_keywords", "proposal_reference",
-            "target_name", "target_targetID", "target_type", "target_standard",
-            "target_redshift", "target_moving", "target_keywords",
-            "targetPosition_coordsys", "targetPosition_coordinates", "targetPosition_equinox",
-            "telescope_name", "telescope_geoLocationX", "telescope_geoLocationY", "telescope_geoLocationZ", 
-            "telescope_keywords", "telescope_trackingMode",
-            "instrument_name", "instrument_keywords",
-            "environment_seeing", "environment_humidity", "environment_elevation",
-            "environment_tau", "environment_wavelengthTau", "environment_ambientTemp",
-            "environment_photometric",
-            "requirements_flag",
-            "members",
-            "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum", "metaProducer",
-            "obsID" // PK
-        };
+        String[] obsColumns = ObservationMapper.COLUMNS;
         if (persistOptimisations) {
             String[] extraCols = new String[]{
                 // TODO
@@ -318,59 +270,7 @@ public class SQLGenerator {
         };
         columnMap.put(ObservationMember.class, obsMembersColumns);
 
-        String[] planeColumns = new String[] {
-            "obsID", // FK
-            "uri",
-            "publisherID",
-            "metaRelease", "metaReadGroups", 
-            "dataRelease", "dataReadGroups",
-            "dataProductType", 
-            "calibrationLevel",
-
-            "provenance_name", "provenance_reference", "provenance_version", "provenance_project",
-            "provenance_producer", "provenance_runID", "provenance_lastExecuted",
-            "provenance_keywords", "provenance_inputs",
-
-            "metrics_sourceNumberDensity", "metrics_background", "metrics_backgroundStddev",
-            "metrics_fluxDensityLimit", "metrics_magLimit", "metrics_sampleSNR",
-            "quality_flag",
-            
-            "observable_ucd", "observable_calibration",
-            
-            "position_bounds", "position_samples", "position_minBounds",
-            "position_dimension",
-            "position_maxRecoverableScale",
-            "position_resolution", "position_resolutionBounds",
-            "position_sampleSize",
-            "position_calibration",
-
-            "energy_bounds", "energy_samples",
-            "energy_bandpassName", "energy_energyBands",
-            "energy_dimension", 
-            "energy_resolvingPower", "energy_resolvingPowerBounds",
-            "energy_resolution", "energy_resolutionBounds",
-            "energy_sampleSize",
-            "energy_transition_species", "energy_transition_transition",
-            "energy_rest",
-            "energy_calibration",
-
-            "time_bounds", "time_samples",
-            "time_dimension", 
-            "time_exposure", "time_exposureBounds",
-            "time_resolution", "time_resolutionBounds",
-            "time_sampleSize", 
-            "time_calibration",
-
-            "polarization_states", "polarization_dimension",
-
-            "custom_ctype", "custom_bounds", "custom_samples", "custom_dimension",
-
-            "uv_distance", "uv_distributionEccentricity", "uv_distributionFill",
-            
-            "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum", "metaProducer",
-            "planeID" // PK
-        };
+        String[] planeColumns = PlaneMapper.COLUMNS;
         if (persistOptimisations) {
             String[] extraCols = new String[]{
                 //"_q_position_bounds", "_q_position_minBounds,
@@ -394,17 +294,7 @@ public class SQLGenerator {
         };
         columnMap.put(ProvenanceInput.class, provInputColumns);
 
-        String[] artifactColumns = new String[]{
-            "planeID", // FK
-            "uri", "uriBucket",
-            "productType", "releaseType",
-            "contentType", "contentLength", "contentChecksum",
-            "contentRelease", "contentReadGroups",
-            "descriptionID",
-            "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum", "metaProducer",
-            "artifactID" // PK
-        };
+        String[] artifactColumns = ArtifactMapper.COLUMNS;
         if (persistOptimisations) {
             String[] extraCols = new String[] {
                 // TODO
@@ -2591,15 +2481,15 @@ public class SQLGenerator {
     }
 
     PartialRowMapper<Observation> getObservationMapper() {
-        return new ObservationMapper();
+        return new ObservationMapper(dbDialect);
     }
 
     PartialRowMapper<Plane> getPlaneMapper() {
-        return new PlaneMapper();
+        return new PlaneMapper(dbDialect);
     }
 
     public PartialRowMapper<Artifact> getArtifactMapper() {
-        return new ArtifactMapper();
+        return new ArtifactMapper(dbDialect);
     }
 
     PartialRowMapper<Part> getPartMapper() {
@@ -2608,556 +2498,6 @@ public class SQLGenerator {
 
     PartialRowMapper<Chunk> getChunkMapper() {
         return new ChunkMapper();
-    }
-
-    class ObservationMapper implements PartialRowMapper<Observation> {
-        @Override
-        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
-            int n = getColumnCount() - 1;
-            UUID id = Util.getUUID(rs, offset + n);
-            log.debug("found: entity ID = " + id);
-            return id;
-        }
-        
-        @Override
-        public int getColumnCount() {
-            return columnMap.get(Observation.class).length;
-        }
-
-        public Observation mapRow(ResultSet rs, int row)
-                throws SQLException {
-            return mapRow(rs, row, 1);
-        }
-
-        /**
-         * Map columns from the current row into an Observation, starting at the
-         * specified column offset.
-         *
-         * @param rs
-         * @param row
-         * @param col JDBC column offset where observation columns are located
-         * @return
-         * @throws java.sql.SQLException
-         */
-        public Observation mapRow(ResultSet rs, int row, int col)
-                throws SQLException {
-            // first column is a constant that dictates the type
-            String typeCode = rs.getString(col++);
-            if (typeCode == null) {
-                return null;
-            }
-
-            URI uri = Util.getURI(rs, col++);
-            String uriBucket = rs.getString(col++); // unused
-            String collection = rs.getString(col++);
-            Algorithm algorithm = new Algorithm(rs.getString(col++));
-            log.debug("found: algorithm = " + algorithm);
-
-            Observation o = null;
-            if (SIMPLE_TYPE.equals(typeCode)) {
-                o = new SimpleObservation(collection, uri, algorithm);
-            } else if (DERIVED_TYPE.equals(typeCode)) {
-                o = new DerivedObservation(collection, uri, algorithm);
-            } else {
-                throw new RuntimeException("BUG: unexpected observation.typeCode " + typeCode);
-            }
-
-            o.type = rs.getString(col++);
-            String intent = rs.getString(col++);
-            log.debug("found: intent = " + intent);
-            if (intent != null) {
-                o.intent = ObservationIntentType.toValue(intent);
-            }
-
-            o.sequenceNumber = Util.getInteger(rs, col++);
-            o.metaRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found metaRelease: " + o.metaRelease);
-            dbDialect.extractMultiURI(rs, col++, o.getMetaReadGroups());
-            log.debug("found metaReadGroups: " + o.getMetaReadGroups().size());
-            
-            String pid = rs.getString(col++);
-            if (pid != null) {
-                o.proposal = new Proposal(pid);
-                o.proposal.pi = rs.getString(col++);
-                o.proposal.project = rs.getString(col++);
-                o.proposal.title = rs.getString(col++);
-                dbDialect.getKeywords(rs, col++, o.proposal.getKeywords());
-                o.proposal.reference = Util.getURI(rs, col++);
-                
-            } else {
-                col += 6; // skip
-            }
-            log.debug("found proposal: " + o.proposal);
-            
-            String targ = rs.getString(col++);
-            if (targ != null) {
-                o.target = new Target(targ);
-                o.target.targetID = Util.getURI(rs, col++);
-                String tt = rs.getString(col++);
-                if (tt != null) {
-                    o.target.type = TargetType.toValue(tt);
-                }
-                o.target.standard = Util.getBoolean(rs, col++);
-                o.target.redshift = Util.getDouble(rs, col++);
-                o.target.moving = Util.getBoolean(rs, col++);
-                dbDialect.getKeywords(rs, col++, o.target.getKeywords());
-            } else {
-                col += 6; // skip
-            }
-            log.debug("found target: " + o.target);
-
-            String tposCs = rs.getString(col++);
-            if (tposCs != null) {
-                Point tpos = dbDialect.getPoint(rs, col++);
-                o.targetPosition = new TargetPosition(tposCs, tpos);
-                o.targetPosition.equinox = Util.getDouble(rs, col++);
-            } else {
-                col += 2; // skip
-            }
-            log.debug("found targetPosition: " + o.targetPosition);
-            
-            String tn = rs.getString(col++);
-            if (tn != null) {
-                o.telescope = new Telescope(tn);
-                o.telescope.geoLocationX = Util.getDouble(rs, col++);
-                o.telescope.geoLocationY = Util.getDouble(rs, col++);
-                o.telescope.geoLocationZ = Util.getDouble(rs, col++);
-                dbDialect.getKeywords(rs, col++, o.telescope.getKeywords());
-                String tm = rs.getString(col++);
-                if (tm != null) {
-                    o.telescope.trackingMode = Tracking.toValue(tm);
-                }
-            } else {
-                col += 4; // skip
-            }
-            log.debug("found telescope: " + o.telescope);
-            
-            String in = rs.getString(col++);
-            if (in != null) {
-                o.instrument = new Instrument(in);
-                dbDialect.getKeywords(rs, col++, o.instrument.getKeywords());
-            } else {
-                col += 1; // skip
-            }
-            log.debug("found instrument: " + o.instrument);
-            
-            Environment e = new Environment();
-            e.seeing = Util.getDouble(rs, col++);
-            e.humidity = Util.getDouble(rs, col++);
-            e.elevation = Util.getDouble(rs, col++);
-            e.tau = Util.getDouble(rs, col++);
-            e.wavelengthTau = Util.getDouble(rs, col++);
-            e.ambientTemp = Util.getDouble(rs, col++);
-            e.photometric = Util.getBoolean(rs, col++);
-
-            if (e.seeing != null || e.humidity != null || e.elevation != null
-                    || e.tau != null || e.wavelengthTau != null || e.ambientTemp != null
-                    || e.photometric != null) {
-                o.environment = e;
-            }
-            log.debug("found environment: " + o.environment);
-            
-            String rflag = rs.getString(col++);
-            if (rflag != null) {
-                o.requirements = new Requirements(Status.toValue(rflag));
-            }
-            log.debug("found requirements: " + o.requirements);
-            
-            if (o instanceof DerivedObservation) {
-                DerivedObservation der = (DerivedObservation) o;
-                dbDialect.extractMultiURI(rs, col++, der.getMembers());
-                log.debug("found members: " + der.getMembers().size());
-            } else {
-                col += 1; // skip
-            }
-            
-            //if (persistOptimisations) {
-            //    col += numOptObservationColumns;
-            //}
-
-            Date lastModified = Util.getDate(rs, col++, utcCalendar);
-            Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            CaomUtil.assignLastModified(o, lastModified, "lastModified");
-            CaomUtil.assignLastModified(o, maxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(rs, col++);
-            URI accMetaChecksum = Util.getURI(rs, col++);
-            CaomUtil.assignMetaChecksum(o, metaChecksum, "metaChecksum");
-            CaomUtil.assignMetaChecksum(o, accMetaChecksum, "accMetaChecksum");
-            o.metaProducer = Util.getURI(rs, col++);
-
-            UUID id = Util.getUUID(rs, col++);
-            log.debug("found: observation.id = " + id);
-            CaomUtil.assignID(o, id);
-
-            return o;
-        }
-    }
-
-    class PlaneMapper implements PartialRowMapper<Plane> {
-        @Override
-        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
-            int n = getColumnCount() - 1;
-            UUID id = Util.getUUID(rs, offset + n);
-            log.debug("found: entity ID = " + id);
-            return id;
-        }
-        
-        @Override
-        public int getColumnCount() {
-            return columnMap.get(Plane.class).length;
-        }
-        
-        public Plane mapRow(ResultSet rs, int row)
-                throws SQLException {
-            return mapRow(rs, row, 1);
-        }
-
-        /**
-         * Map columns from the current row into a Plane, starting at the
-         * specified column offset.
-         *
-         * @param rs
-         * @param row
-         * @param col JDBC column offset where plane columns are located
-         * @return
-         * @throws java.sql.SQLException
-         */
-        public Plane mapRow(ResultSet rs, int row, int col)
-                throws SQLException {
-            UUID obsID = Util.getUUID(rs, col++); // FK
-            if (obsID == null) {
-                return null;
-            }
-
-            URI uri = Util.getURI(rs, col++);
-            if (uri == null) {
-                return null;
-            }
-            log.debug("found p.uri = " + uri);
-            
-            Plane p = new Plane(uri);
-            p.publisherID = Util.getURI(rs, col++);
-
-            p.metaRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found p.metaRelease = " + p.metaRelease);
-            dbDialect.extractMultiURI(rs, col++, p.getMetaReadGroups());
-            p.dataRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found p.dataRelease = " + p.dataRelease);
-            dbDialect.extractMultiURI(rs, col++, p.getDataReadGroups());
-
-            String dpt = rs.getString(col++);
-            log.debug("found p.dataProductType = " + dpt);
-            if (dpt != null) {
-                p.dataProductType = DataProductType.toValue(dpt);
-            }
-
-            Integer cl = Util.getInteger(rs, col++);
-            log.debug("found p.calibrationLevel = " + cl);
-            if (cl != null) {
-                p.calibrationLevel = CalibrationLevel.toValue(cl.intValue());
-            }
-
-            String pname = rs.getString(col++);
-            log.debug("found p.provenance.name = " + pname);
-            if (pname != null) {
-                p.provenance = new Provenance(pname);
-                p.provenance.reference = Util.getURI(rs, col++);
-                log.debug("found p.provenance.reference = " + p.provenance.reference);
-                p.provenance.version = rs.getString(col++);
-                log.debug("found p.provenance.version = " + p.provenance.version);
-                p.provenance.project = rs.getString(col++);
-                log.debug("found p.provenance.project = " + p.provenance.project);
-                p.provenance.producer = rs.getString(col++);
-                log.debug("found p.provenance.producer = " + p.provenance.producer);
-                p.provenance.runID = rs.getString(col++);
-                log.debug("found p.provenance.runID = " + p.provenance.runID);
-                p.provenance.lastExecuted = Util.getDate(rs, col++, utcCalendar);
-                log.debug("found p.provenance.lastExecuted = " + p.provenance.lastExecuted);
-                dbDialect.getKeywords(rs, col++, p.provenance.getKeywords());
-                log.debug("found p.provenance.keywords: " + p.provenance.getKeywords().size());
-                dbDialect.extractMultiURI(rs, col++, p.provenance.getInputs());
-                log.debug("found p.provenance.inpts: " + p.provenance.getInputs().size());
-            } else {
-                col += 8;
-            }
-
-            Metrics m = new Metrics();
-            m.sourceNumberDensity = Util.getDouble(rs, col++);
-            m.background = Util.getDouble(rs, col++);
-            m.backgroundStddev = Util.getDouble(rs, col++);
-            m.fluxDensityLimit = Util.getDouble(rs, col++);
-            m.magLimit = Util.getDouble(rs, col++);
-            m.sampleSNR = Util.getDouble(rs, col++);
-            if (m.sourceNumberDensity != null || m.background != null || m.backgroundStddev != null
-                    || m.fluxDensityLimit != null || m.magLimit != null || m.sampleSNR != null) {
-                p.metrics = m;
-            }
-
-            String qflag = rs.getString(col++);
-            if (qflag != null) {
-                p.quality = new DataQuality(Quality.toValue(qflag));
-            }
-
-            // observable
-            String oucd = rs.getString(col++);
-            if (oucd != null) {
-                p.observable = new Observable(new UCD(oucd));
-                String cs = rs.getString(col++);
-                if (cs != null) {
-                    p.observable.calibration = new CalibrationStatus(cs);
-                }
-            } else {
-                col += 1;
-            }
-
-            // position
-            Shape s = dbDialect.getShape(rs, col++);
-            if (s != null) {
-                MultiShape ms = dbDialect.getMultiShape(rs, col++);
-                Position pos = new Position(s, ms);
-                pos.minBounds = dbDialect.getShape(rs, col++);
-                pos.dimension = dbDialect.getDimension(rs, col++);
-                log.debug("position.dimension: " + pos.dimension);
-
-                pos.maxRecoverableScale = dbDialect.getInterval(rs, col++);
-                log.debug("position.maxRecoverableScale: " + pos.maxRecoverableScale);
-                pos.resolution = Util.getDouble(rs, col++);
-                log.debug("position.resolution: " + pos.resolution);
-                pos.resolutionBounds = dbDialect.getInterval(rs, col++);
-                log.debug("position.resolutionBounds: " + pos.resolutionBounds);
-                pos.sampleSize = Util.getDouble(rs, col++);
-                log.debug("position_sampleSize: " + pos.sampleSize);
-                String cs = rs.getString(col++);
-                log.debug("position_calibration: " + cs);
-                if (cs != null) {
-                    pos.calibration = new CalibrationStatus(cs);
-                }
-                p.position = pos;
-            } else {
-                col += 8;
-            }
-            
-            // energy
-            Interval<Double> eb = dbDialect.getInterval(rs, col++);
-            if (eb != null) {
-                Energy nrg = new Energy(eb);
-                log.debug("energy_bounds: " + eb);
-                dbDialect.extractIntervalList(rs, col++, nrg.getSamples());
-                nrg.bandpassName = rs.getString(col++);
-                log.debug("energy.bandpassName: " + nrg.bandpassName);
-                String emStr = rs.getString(col++);
-                CaomUtil.decodeBands(emStr, nrg.getEnergyBands());
-                log.debug("energy.energyBands: " + nrg.getEnergyBands().size());
-                nrg.dimension = rs.getLong(col++);
-                log.debug("energy.dimension: " + nrg.dimension);
-                
-                nrg.resolvingPower = Util.getDouble(rs, col++);
-                log.debug("energy.resolvingPower: " + nrg.resolvingPower);
-                nrg.resolvingPowerBounds = dbDialect.getInterval(rs, col++);
-                log.debug("energy.resolvingPowerBounds: " + nrg.resolvingPowerBounds);
-                
-                nrg.resolution = Util.getDouble(rs, col++);
-                log.debug("energy.resolution: " + nrg.resolution);
-                nrg.resolutionBounds = dbDialect.getInterval(rs, col++);
-                log.debug("energy.resolutionBounds: " + nrg.resolutionBounds);
-                
-                nrg.sampleSize = Util.getDouble(rs, col++);
-                log.debug("energy.sampleSize: " + nrg.sampleSize);
-                
-                String ets = rs.getString(col++);
-                String ett = rs.getString(col++);
-                if (ets != null) {
-                    nrg.transition = new EnergyTransition(ets, ett);
-                }
-                log.debug("energy.transition: " + nrg.transition);
-                
-                nrg.rest = Util.getDouble(rs, col++);
-                log.debug("energy.rest: " + nrg.rest);
-                p.energy = nrg;
-                
-                String cs = rs.getString(col++);
-                if (cs != null) {
-                    nrg.calibration = new CalibrationStatus(cs);
-                }
-            } else {
-                col += 13;
-            }
-            
-            // time
-            Interval<Double> tb = dbDialect.getInterval(rs, col++);
-            if (tb != null) {
-                Time tim = new Time(tb);
-                dbDialect.extractIntervalList(rs, col++, tim.getSamples());
-                tim.dimension = Util.getLong(rs, col++);
-                log.debug("time.dimension: " + tim.dimension);
-                
-                tim.exposure = Util.getDouble(rs, col++);
-                log.debug("time.exposure: " + tim.exposure);
-                tim.exposureBounds = dbDialect.getInterval(rs, col++);
-                log.debug("time.exposureBounds: " + tim.exposureBounds);
-                
-                tim.resolution = Util.getDouble(rs, col++);
-                log.debug("time.resolution: " + tim.resolution);
-                tim.resolutionBounds = dbDialect.getInterval(rs, col++);
-                log.debug("time.resolutionBounds: " + tim.resolutionBounds);
-                
-                tim.sampleSize = Util.getDouble(rs, col++);
-                log.debug("time_sampleSize: " + tim.sampleSize);
-                p.time = tim;
-                
-                String cs = rs.getString(col++);
-                if (cs != null) {
-                    tim.calibration = new CalibrationStatus(cs);
-                }
-            } else {
-                col += 8;
-            }
-
-            // polarization
-            String polStr = rs.getString(col++);
-            log.debug("polarization.states: " + polStr);
-            if (polStr != null) {
-                p.polarization = new Polarization();
-                CaomUtil.decodeStates(polStr, p.polarization.getStates());
-                p.polarization.dimension = Util.getInteger(rs, col++);
-                log.debug("polarization.dimension: " + p.polarization.dimension);
-            } else {
-                col += 1;
-            }
-            
-            // custom
-            String cct = rs.getString(col++);
-            if (cct != null) {
-                log.debug("custom.ctype: " + cct);
-                Interval<Double> cb = dbDialect.getInterval(rs, col++);
-                p.custom = new CustomAxis(cct, cb);
-                dbDialect.extractIntervalList(rs, col++, p.custom.getSamples());
-                p.custom.dimension = Util.getLong(rs, col++);
-                log.debug("custom.dimension: " + p.custom.dimension);
-            } else {
-                col += 3;
-            }
-            
-            // visibility
-            Interval<Double> uvd = dbDialect.getInterval(rs, col++);
-            if (uvd != null) {
-                log.debug("visibility.distance: " + uvd);
-                Double ecc = rs.getDouble(col++);
-                log.debug("visibility.ecc: " + ecc);
-                Double fill = rs.getDouble(col++);
-                log.debug("visibility.fill: " + fill);
-                p.visibility = new Visibility(uvd, ecc, fill);
-            } else {
-                col += 2;
-            }
-            
-            if (persistOptimisations) {
-                col += numOptPlaneColumns;
-            }
-            
-            Date lastModified = Util.getDate(rs, col++, utcCalendar);
-            Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            CaomUtil.assignLastModified(p, lastModified, "lastModified");
-            CaomUtil.assignLastModified(p, maxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(rs, col++);
-            URI accMetaChecksum = Util.getURI(rs, col++);
-            CaomUtil.assignMetaChecksum(p, metaChecksum, "metaChecksum");
-            CaomUtil.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
-            p.metaProducer = Util.getURI(rs, col++);
-
-            UUID id = Util.getUUID(rs, col++);
-            log.debug("found: plane.id = " + id);
-            CaomUtil.assignID(p, id);
-
-            return p;
-        }
-    }
-
-    class ArtifactMapper implements PartialRowMapper<Artifact> {
-        @Override
-        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
-            int n = getColumnCount() - 1;
-            UUID id = Util.getUUID(rs, offset + n);
-            log.debug("found: entity ID = " + id);
-            return id;
-        }
-        
-        @Override
-        public int getColumnCount() {
-            return columnMap.get(Artifact.class).length;
-        }
-        
-        public Artifact mapRow(ResultSet rs, int row)
-                throws SQLException {
-            return mapRow(rs, row, 1);
-        }
-
-        /**
-         * Map columns from the current row into an Artifact, starting at the
-         * specified column offset.
-         *
-         * @param rs
-         * @param row
-         * @param col JDBC column offset where plane columns are located
-         * @return
-         * @throws java.sql.SQLException
-         */
-        public Artifact mapRow(ResultSet rs, int row, int col)
-                throws SQLException {
-            UUID planeID = Util.getUUID(rs, col++); // FK
-            if (planeID == null) {
-                return null;
-            }
-
-            URI uri = Util.getURI(rs, col++);
-            log.debug("found a.uri = " + uri);
-            String uriBucket = rs.getString(col++); // unused
-
-            String pt = rs.getString(col++);
-            log.debug("found a.productType = " + pt);
-            DataLinkSemantics ptype = DataLinkSemantics.toValue(pt);
-
-            String rt = rs.getString(col++);
-            log.debug("found a.releaseType = " + rt);
-            ReleaseType rtype = ReleaseType.toValue(rt);
-
-            Artifact a = new Artifact(uri, ptype, rtype);
-
-            a.contentType = rs.getString(col++);
-            log.debug("found a.contentType = " + a.contentType);
-            a.contentLength = Util.getLong(rs, col++);
-            log.debug("found a.contentLength = " + a.contentLength);
-            a.contentChecksum = Util.getURI(rs, col++);
-            log.debug("found a.contentChecksum = " + a.contentChecksum);
-            a.contentRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found a.contentRelease = " + a.contentRelease);
-            dbDialect.extractMultiURI(rs, col++, a.getContentReadGroups());
-            log.debug("found a.contentReadGrouops: " + a.getContentReadGroups().size());
-            a.descriptionID = Util.getURI(rs, col++);
-            log.debug("a.descriptionID: " + a.descriptionID);
-            if (persistOptimisations) {
-                col += numOptArtifactColumns;
-            }
-
-            Date lastModified = Util.getDate(rs, col++, utcCalendar);
-            Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            CaomUtil.assignLastModified(a, lastModified, "lastModified");
-            CaomUtil.assignLastModified(a, maxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(rs, col++);
-            URI accMetaChecksum = Util.getURI(rs, col++);
-            CaomUtil.assignMetaChecksum(a, metaChecksum, "metaChecksum");
-            CaomUtil.assignMetaChecksum(a, accMetaChecksum, "accMetaChecksum");
-            a.metaProducer = Util.getURI(rs, col++);
-
-            UUID id = Util.getUUID(rs, col++);
-            log.debug("found artifact.id = " + id);
-            CaomUtil.assignID(a, id);
-
-            return a;
-        }
     }
 
     class PartMapper implements PartialRowMapper<Part> {
