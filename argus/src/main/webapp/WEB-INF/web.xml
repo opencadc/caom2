@@ -32,10 +32,6 @@
                 ca.nrc.cadc.xml
             </param-value>
         </init-param>
-        <init-param>
-        <param-name>logControlProperties</param-name>
-        <param-value>argus-logControl.properties</param-value>
-    </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
