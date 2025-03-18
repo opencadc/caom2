@@ -22,7 +22,7 @@ def git_url = 'https://github.com/opencadc/caom2'
 
 dependencies {
     implementation 'org.opencadc:cadc-util:[1.6.4,2.0)'
-    implementation 'org.opencadc:cadc-registry:[1.5,1.6)'
+    implementation 'org.opencadc:cadc-registry:[1.5,)'
 
     testImplementation 'junit:junit:4.13'
 }
