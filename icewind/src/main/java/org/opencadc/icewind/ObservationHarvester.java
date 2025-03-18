@@ -138,10 +138,6 @@ public class ObservationHarvester extends Harvester {
         this.harvestSkipDAO.errorMessagePattern = errorMessagePattern;
     }
 
-    public void setErrorMessagePattern(String errorMessagePattern) {
-        this.errorMessagePattern = errorMessagePattern;
-    }
-    
     public int getIngested() {
         return this.ingested;
     }
@@ -770,7 +766,6 @@ public class ObservationHarvester extends Harvester {
 
     private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) throws ExecutionException, InterruptedException {
         log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
-        harvestSkipDAO.errorMessagePattern = errorMessagePattern;
         List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null, batchSize);
 
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
