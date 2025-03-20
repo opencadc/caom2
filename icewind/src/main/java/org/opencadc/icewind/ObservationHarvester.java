@@ -211,7 +211,6 @@ public class ObservationHarvester extends Harvester {
 
     private Date startDate;
     private Date endDate;
-    private boolean firstIteration = true;
 
     private Progress doit() {
 
@@ -242,19 +241,12 @@ public class ObservationHarvester extends Harvester {
             timeState = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
 
-            if (firstIteration) {
-                if (!skipped) {
-                    // harvest up to a little in the past because the head of
-                    // the sequence may be volatile
-                    long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
-                    if (endDate == null) {
-                        endDate = new Date(fiveMinAgo);
-                    } else {
-                        endDate = new Date(Math.min(fiveMinAgo, endDate.getTime()));
-                    }
-                }
+            if (!skipped) {
+                // harvest up to a little in the past because the head of
+                // the sequence may be volatile
+                long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
+                endDate = new Date(fiveMinAgo);
             }
-            firstIteration = false;
 
             List<SkippedWrapperURI<ObservationResponse>> entityList;
             if (skipped) {
