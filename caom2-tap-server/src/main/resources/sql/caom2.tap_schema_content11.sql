@@ -46,7 +46,7 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,u
 ;
 
 -- Observation
-insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
+insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,column_id) values
 ( 'caom2.Observation', 'observationURI', 'unique URI for this observation', 'caom2:Observation.uri', NULL, NULL, 'char', '*','uri', 1,1,1,1, 'caomObservationURI')
 ;
 
@@ -111,7 +111,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ;
 
 -- Plane
-insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
+insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,column_id) values
 ( 'caom2.Plane', 'publisherID', 'unique publisher identifier for this product', 'caom2:Plane.publisherID', NULL, NULL, 'char', '*', 'uri', 1,1,1,1, 'caomPublisherID')
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
@@ -207,7 +207,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 -- Artifact
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,
-    principal,indexed,std,column_index,id) values
+    principal,indexed,std,column_index,column_id) values
 ( 'caom2.Artifact', 'uri',           'external URI for the physical artifact', 'caom2:Artifact.uri', NULL, NULL, 'char', '*','uri', 
     1,1,0 , 1, 'caomArtifactURI')
 ;
