@@ -36,7 +36,7 @@ dependencies {
     implementation 'org.opencadc:cadc-dali-parquet:[0.5.0,)'
     compile 'org.opencadc:cadc-uws-server:[1.2.22,)'
     compile 'org.opencadc:cadc-tap-schema:[1.2.4,)'
-    compile 'org.opencadc:cadc-tap-server:[1.1.27,)'
+    compile 'org.opencadc:cadc-tap-server:[1.1.29,)'
     compile 'org.opencadc:cadc-tap-server-pg:[1.1.2,)'
     compile 'org.opencadc:cadc-adql:[1.1.5,)'
     compile 'org.opencadc:cadc-uws:[1.0.2,2.0)'
