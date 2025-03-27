@@ -113,6 +113,11 @@
         <alias>tsv</alias>
     </outputFormat>
 
+    <outputFormat>
+        <mime>application/vnd.apache.parquet</mime>
+        <alias>parquet</alias>
+    </outputFormat>
+
     <uploadMethod ivo-id="ivo://ivoa.net/std/TAPRegExt#upload-inline"/>
     <uploadMethod ivo-id="ivo://ivoa.net/std/TAPRegExt#upload-http"/>
     <uploadMethod ivo-id="ivo://ivoa.net/std/TAPRegExt#upload-https"/>

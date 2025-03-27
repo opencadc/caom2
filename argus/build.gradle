@@ -33,9 +33,10 @@ dependencies {
     compile 'org.opencadc:cadc-registry:[1.5.0,)'
     compile 'org.opencadc:cadc-gms:[1.0.0,)'
     compile 'org.opencadc:cadc-dali:[1.2.20,)'
+    implementation 'org.opencadc:cadc-dali-parquet:[0.5.0,)'
     compile 'org.opencadc:cadc-uws-server:[1.2.22,)'
     compile 'org.opencadc:cadc-tap-schema:[1.2.4,)'
-    compile 'org.opencadc:cadc-tap-server:[1.1.27,)'
+    compile 'org.opencadc:cadc-tap-server:[1.1.29,)'
     compile 'org.opencadc:cadc-tap-server-pg:[1.1.2,)'
     compile 'org.opencadc:cadc-adql:[1.1.5,)'
     compile 'org.opencadc:cadc-uws:[1.0.2,2.0)'
@@ -66,5 +67,19 @@ configurations {
 
   // pulled by stil,unused, critical CVEs:
   runtime.exclude group: 'org.yaml', module: 'snakeyaml'
+
+  // pull by parquet-avro
+  runtime.exclude group: 'com.sun.jersey'
+  runtime.exclude group: 'com.sun.jersey.contribs'
+  runtime.exclude group: 'com.google.inject'
+  runtime.exclude group: 'com.google.inject.extensions'
+  runtime.exclude group: 'com.github.pjfanning'
+  runtime.exclude group: 'javax.servlet'
+  runtime.exclude group: 'javax.servlet.jsp'
+  runtime.exclude group: 'org.apache.httpcomponents'
+  runtime.exclude group: 'org.apache.kerby'
+  runtime.exclude group: 'org.eclipse.jetty'
+  runtime.exclude group: 'org.eclipse.jetty'
+  runtime.exclude group: 'io.netty'
 }
 

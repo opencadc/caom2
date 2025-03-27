@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,68 +65,109 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.tap.impl;
+package org.opencadc.argus;
 
-import ca.nrc.cadc.db.version.InitDatabase;
+import ca.nrc.cadc.dali.tables.parquet.ParquetReader;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableInfo;
+import ca.nrc.cadc.dali.tables.votable.VOTableResource;
+import ca.nrc.cadc.dali.tables.votable.VOTableTable;
+import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import javax.sql.DataSource;
+import java.util.Map;
+import java.util.TreeMap;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
+import static org.opencadc.argus.AuthQueryTest.syncURL;
+import org.opencadc.tap.TapClient;
 
 /**
- * This class automates adding/updating the description of CAOM tables and views
- * in the tap_schema. This class assumes that it can re-use the tap_schema.ModelVersion
- * table (usually created by InitDatabaseTS in cadc-tap-schema library) and does
- * not try to create it.  The init includes base CAOM tables and IVOA views (ObsCore++),
- * but <em>does not include</em> aggregate (simple or materialised) views. The service
- * operator must create simple views manually or implement a mechanism to create and
- * update materialised views periodically.
- * 
+ *
  * @author pdowler
  */
-public class InitCaomTapSchemaContent extends InitDatabase {
-    private static final Logger log = Logger.getLogger(InitCaomTapSchemaContent.class);
+public class ParquetOutputTest {
+    private static final Logger log = Logger.getLogger(ParquetOutputTest.class);
 
-    public static final String MODEL_NAME = "caom-schema";
-    public static final String MODEL_VERSION = "1.2.17";
+    static {
+        Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
+    }
 
-    // the SQL is tightly coupled to cadc-tap-schema table names (for TAP-1.1)
-    static String[] BASE_SQL = new String[] {
-        "caom2.tap_schema_content11.sql",
-        "ivoa.tap_schema_content11.sql"
-    };
-
-    // upgrade is normally the same as create since SQL is idempotent
-    static String[] BASE_EXTRA_SQL = new String[] {
-        "caom2.tap_schema_content11.sql",
-        "caom2.tap_schema_content11-extra.sql",
-        "ivoa.tap_schema_content11.sql"
-    };
-    
-    /**
-     * Constructor. The schema argument is used to query the ModelVersion table
-     * as {schema}.ModelVersion.
-     * 
-     * @param dataSource connection with write permission to tap_schema tables
-     * @param database database name (should be null if not needed in SQL)
-     * @param schema schema name (usually tap_schema)
-     * @param extras add tap_schema content for extra tables (materialised views)
-     */
-    public InitCaomTapSchemaContent(DataSource dataSource, String database, String schema, boolean extras) {
-        // use MODELVERSION/extras so changing extras will cause a recreate
-        // eg 1.2.13/false <-> 1.2.13/true
-        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION + "/" + extras);
-        String[] src = BASE_SQL;
-        if (extras) {
-            src = BASE_EXTRA_SQL;
-        }
-        for (String s : src) {
-            createSQL.add(s);
-            upgradeSQL.add(s);
-        }
+    public ParquetOutputTest() { 
     }
     
-    @Override
-    protected URL findSQL(String fname) {
-        return InitCaomTapSchemaContent.class.getClassLoader().getResource("sql/" + fname);
+    @Test
+    public void testParquetOutput() throws Exception {
+        TapClient tap = new TapClient(Constants.RESOURCE_ID);
+        URL tapURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
+        log.info(" sync: " + syncURL);
+        
+        String adql = "select top 10 * from caom2.Plane";
+        Map<String, Object> params = new TreeMap<>();
+        params.put("LANG", "ADQL");
+        params.put("QUERY", adql);
+        params.put("RESPONSEFORMAT", "parquet");
+        
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        HttpPost httpPost = new HttpPost(tapURL, params, out);
+        httpPost.run();
+
+        if (httpPost.getThrowable() != null) {
+            log.error("Post failed", httpPost.getThrowable());
+            Assert.fail("exception on post: " + httpPost.getThrowable());
+        }
+
+        int code = httpPost.getResponseCode();
+        Assert.assertEquals(200, code);
+
+        String contentType = httpPost.getContentType();
+        Assert.assertEquals("application/vnd.apache.parquet", contentType);
+        
+        extractVOTableFromOutputStream(out, adql);
+    }
+    
+    private static VOTableTable extractVOTableFromOutputStream(ByteArrayOutputStream out, String adql) throws IOException {
+        ParquetReader reader = new ParquetReader();
+        InputStream inputStream = new ByteArrayInputStream(out.toByteArray());
+        ParquetReader.TableShape readerResponse = reader.read(inputStream);
+
+        log.info(readerResponse.getColumnCount() + " columns, " + readerResponse.getRecordCount() + " records");
+
+        Assert.assertTrue(readerResponse.getRecordCount() > 0);
+        Assert.assertTrue(readerResponse.getColumnCount() > 0);
+
+        VOTableDocument voTableDocument = readerResponse.getVoTableDocument();
+
+        Assert.assertNotNull(voTableDocument.getResources());
+
+        VOTableResource results = voTableDocument.getResourceByType("results");
+        Assert.assertNotNull(results);
+
+        boolean queryFound = false;
+        boolean queryStatusFound = false;
+
+        for (VOTableInfo voTableInfo : results.getInfos()) {
+            if (voTableInfo.getName().equals("QUERY")) {
+                queryFound = true;
+                Assert.assertEquals(adql, voTableInfo.getValue());
+            } else if (voTableInfo.getName().equals("QUERY_STATUS")) {
+                queryStatusFound = true;
+                Assert.assertEquals("OK", voTableInfo.getValue());
+            }
+        }
+
+        Assert.assertTrue(queryFound);
+        Assert.assertTrue(queryStatusFound);
+
+        Assert.assertNotNull(results.getTable());
+        Assert.assertEquals(readerResponse.getColumnCount(), results.getTable().getFields().size());
+        return results.getTable();
     }
 }
