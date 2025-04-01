@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -63,62 +63,80 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
- */
+*/
 
 package org.opencadc.caom2.db.version;
 
-import ca.nrc.cadc.db.ConnectionConfig;
-import ca.nrc.cadc.db.DBConfig;
-import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.List;
 import javax.sql.DataSource;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opencadc.caom2.db.TestUtil;
 
 /**
  *
  * @author pdowler
  */
 public class InitDatabaseTest {
-
     private static final Logger log = Logger.getLogger(InitDatabaseTest.class);
 
-    static String schema = "caom2";
-
+    private static final String SCHEMA = "caom2";
+    private static final DataSource DUMMY_DS = new DummyDataSource();
+    
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2", Level.INFO);
     }
-
-    private DataSource dataSource;
-    private String database;
-
-    public InitDatabaseTest() {
-        try {
-            database = "cadctest";
-
-            DBConfig dbrc = new DBConfig();
-            ConnectionConfig cc = dbrc.getConnectionConfig(TestUtil.TEST_SERVER, TestUtil.TEST_DB);
-            dataSource = DBUtil.getDataSource(cc, true, false);
-        } catch (Exception ex) {
-            log.error("failed to init DataSource", ex);
-        }
+    
+    public InitDatabaseTest() { 
     }
-
-    //@Test
-    public void testNewInstall() {
+    
+    @Test
+    public void testParseCreateDDL() {
         try {
-            // TODO: nuke all tables and re-create
-            // for now: create || upgrade || idempotent
-            InitDatabase init = new InitDatabase(dataSource, null, schema);
-            init.doInit();
-
-            // TODO: verify that tables were created with test queries
-            // TODO: verify that init is idempotent
+            InitDatabase init = new InitDatabase(DUMMY_DS, null, SCHEMA);
+            for (String fname : InitDatabase.CREATE_SQL) {
+                log.info("process file: " + fname);
+                List<String> statements = init.parseDDL(fname, SCHEMA);
+                Assert.assertNotNull(statements);
+                Assert.assertFalse(statements.isEmpty());
+                for (String s : statements) {
+                    String[] tokens = s.split(" ");
+                    String cmd = tokens[0];
+                    String type = tokens[1];
+                    String next = tokens[2];
+                    if ("create".equalsIgnoreCase(cmd)) {
+                        if ("table".equalsIgnoreCase(type) || "view".equalsIgnoreCase(type) 
+                                || "index".equalsIgnoreCase(type)
+                                || ("unique".equalsIgnoreCase(type) && "index".equalsIgnoreCase(next))) {
+                            // OK
+                        } else {
+                            Assert.fail("[create] unexpected type: " + s);
+                        }
+                    } else if ("drop".equalsIgnoreCase(cmd)) {
+                        if ("view".equalsIgnoreCase(type)) {
+                            // OK
+                        } else {
+                            Assert.fail("[drop] dangerous drop: " + s);
+                        }
+                    } else if ("cluster".equalsIgnoreCase(cmd)) {
+                        // OK
+                    } else if ("grant".equalsIgnoreCase(cmd)) {
+                        if ("select".equalsIgnoreCase(type) || "usage".equalsIgnoreCase(type)) {
+                            // OK
+                        } else {
+                            Assert.fail("[grant] unexpected type: " + s);
+                        }
+                    } else {
+                        Assert.fail("unexpected command: " + cmd + " [" + s + "]");
+                    }
+                }
+            }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -126,20 +144,65 @@ public class InitDatabaseTest {
     }
 
     @Test
-    public void testUpgradeInstall() {
+    public void testParseUpgradeDDL() {
         try {
-            // TODO: create previous version  of tables and upgrade... sounds complicated
-            // for now: create || upgrade || idempotent
-            InitDatabase init = new InitDatabase(dataSource, null, schema);
-            init.doInit();
-
-            // TODO: verify that tables were created with test queries
-            // TODO: verify that init is idempotent
+            InitDatabase init = new InitDatabase(DUMMY_DS, null, SCHEMA);
+            for (String fname : InitDatabase.UPGRADE_SQL) {
+                log.info("process file: " + fname);
+                List<String> statements = init.parseDDL(fname, SCHEMA);
+                Assert.assertNotNull(statements);
+                Assert.assertFalse(statements.isEmpty());
+            }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-
     
+    private static class DummyDataSource implements DataSource {
+        @Override
+        public Connection getConnection() throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Connection getConnection(String string, String string1) throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public PrintWriter getLogWriter() throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setLogWriter(PrintWriter writer) throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setLoginTimeout(int i) throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int getLoginTimeout() throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <T> T unwrap(Class<T> type) throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean isWrapperFor(Class<?> type) throws SQLException {
+            throw new UnsupportedOperationException();
+        }
+    };
 }

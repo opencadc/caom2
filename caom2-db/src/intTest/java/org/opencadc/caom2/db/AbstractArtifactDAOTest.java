@@ -67,14 +67,6 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.Part;
-import org.opencadc.caom2.Plane;
-import org.opencadc.caom2.ReleaseType;
-import org.opencadc.caom2.SimpleObservation;
-import org.opencadc.caom2.vocab.DataLinkSemantics;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
@@ -82,7 +74,6 @@ import ca.nrc.cadc.db.TransactionManager;
 import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
-import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.sql.DataSource;
@@ -91,6 +82,14 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.ReleaseType;
+import org.opencadc.caom2.SimpleObservation;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
 
 /**
  *

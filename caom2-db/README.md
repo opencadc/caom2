@@ -1,3 +1,8 @@
-# caom2db/caom2persistence
+# caom2-db
 
-If a file named 'test.schema' is available in this directory, the contents of that file will be used as the schema for running the unit tests.
+This is the main database library for CAOM-2.5+.
+
+Currently supported RDBMS: PostgreSQL + pgsphere
+
+TODO: other db support?
+

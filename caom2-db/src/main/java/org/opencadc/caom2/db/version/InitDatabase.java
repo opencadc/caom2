@@ -121,7 +121,7 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
             upgradeSQL.add(s);
         }
     }
-
+    
     @Override
     protected URL findSQL(String fname) {
         // SQL files are stored inside the jar file

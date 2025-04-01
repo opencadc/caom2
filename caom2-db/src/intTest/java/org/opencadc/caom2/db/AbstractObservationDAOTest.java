@@ -69,34 +69,11 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.Algorithm;
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.ArtifactDescription;
-import org.opencadc.caom2.CalibrationLevel;
-import org.opencadc.caom2.CaomEntity;
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
-import org.opencadc.caom2.DeletedObservationEvent;
-import org.opencadc.caom2.DerivedObservation;
-import org.opencadc.caom2.EnergyBand;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.Part;
-import org.opencadc.caom2.Plane;
-import org.opencadc.caom2.PolarizationState;
-import org.opencadc.caom2.SimpleObservation;
-import org.opencadc.caom2.util.CaomUtil;
-import org.opencadc.caom2.util.ObservationState;
-import org.opencadc.caom2.vocab.DataLinkSemantics;
-import org.opencadc.caom2.wcs.Axis;
-import org.opencadc.caom2.wcs.CoordAxis1D;
-import org.opencadc.caom2.wcs.CoordAxis2D;
-import org.opencadc.caom2.wcs.ObservableAxis;
-import org.opencadc.caom2.wcs.Slice;
-import org.opencadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.dali.Circle;
 import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
@@ -126,6 +103,30 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.opencadc.caom2.Algorithm;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.ArtifactDescription;
+import org.opencadc.caom2.CalibrationLevel;
+import org.opencadc.caom2.CaomEntity;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
+import org.opencadc.caom2.DeletedObservationEvent;
+import org.opencadc.caom2.DerivedObservation;
+import org.opencadc.caom2.EnergyBand;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.PolarizationState;
+import org.opencadc.caom2.SimpleObservation;
+import org.opencadc.caom2.util.CaomUtil;
+import org.opencadc.caom2.util.ObservationState;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.Axis;
+import org.opencadc.caom2.wcs.CoordAxis1D;
+import org.opencadc.caom2.wcs.CoordAxis2D;
+import org.opencadc.caom2.wcs.ObservableAxis;
+import org.opencadc.caom2.wcs.Slice;
+import org.opencadc.caom2.xml.ObservationReader;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -1347,6 +1348,7 @@ public abstract class AbstractObservationDAOTest {
             Assert.assertEquals("proposal.project", expected.proposal.project, actual.proposal.project);
             Assert.assertEquals("proposal.title", expected.proposal.title, actual.proposal.title);
             testEqual("proposal.keywords", expected.proposal.getKeywords(), actual.proposal.getKeywords());
+            Assert.assertEquals("proposal.reference", expected.proposal.reference, actual.proposal.reference);
         } else {
             Assert.assertNull("proposal", actual.proposal);
         }
@@ -1368,6 +1370,7 @@ public abstract class AbstractObservationDAOTest {
             Assert.assertEquals("telescope.geoLocationY", expected.telescope.geoLocationY, actual.telescope.geoLocationY);
             Assert.assertEquals("telescope.geoLocationZ", expected.telescope.geoLocationZ, actual.telescope.geoLocationZ);
             testEqual("telescope.keywords", expected.telescope.getKeywords(), actual.telescope.getKeywords());
+            Assert.assertEquals("telescope.trackingMode", expected.telescope.trackingMode, actual.telescope.trackingMode);
         } else {
             Assert.assertNull("telescope", actual.telescope);
         }
@@ -1456,53 +1459,44 @@ public abstract class AbstractObservationDAOTest {
             Assert.assertEquals("metrics.backgroundStdde", expected.metrics.backgroundStddev, actual.metrics.backgroundStddev);
             Assert.assertEquals("metrics.fluxDensityLimit", expected.metrics.fluxDensityLimit, actual.metrics.fluxDensityLimit);
             Assert.assertEquals("metrics.magLimit", expected.metrics.magLimit, actual.metrics.magLimit);
+            Assert.assertEquals("metrics.sampleSNR", expected.metrics.sampleSNR, actual.metrics.sampleSNR);
         } else {
             Assert.assertNull(actual.metrics);
         }
 
         if (expected.position != null) {
             Assert.assertNotNull("plane.position", actual.position);
-            if (expected.position.getBounds() != null && Polygon.class.equals(expected.position.getBounds().getClass())) {
-                Polygon ep = (Polygon) expected.position.getBounds();
-                Polygon ap = (Polygon) actual.position.getBounds();
-                Assert.assertEquals("vertices.size", ep.getVertices().size(), ap.getVertices().size());
-                for (int i = 0; i < ep.getVertices().size(); i++) {
-                    Point ept = ep.getVertices().get(i);
-                    Point apt = ap.getVertices().get(i);
-                    Assert.assertEquals("point.long", ept.getLongitude(), apt.getLongitude(), 0.0);
-                    Assert.assertEquals("point.lat", ept.getLatitude(), apt.getLatitude(), 0.0);
-                }
-            } else if (expected.position.getBounds() != null && Circle.class.equals(expected.position.getBounds().getClass())) {
-                Circle ep = (Circle) expected.position.getBounds();
-                Circle ap = (Circle) actual.position.getBounds();
-                Assert.assertEquals("center.long", ep.getCenter().getLongitude(), ap.getCenter().getLongitude(), 0.0);
-                Assert.assertEquals("center.lat", ep.getCenter().getLatitude(), ap.getCenter().getLatitude(), 0.0);
-                Assert.assertEquals("radius", ep.getRadius(), ap.getRadius(), 0.0);
-            } else {
-                Assert.assertNull(actual.position.getBounds());
+            testEqual("position.bounds", expected.position.getBounds(), actual.position.getBounds());
+            Assert.assertEquals("position.samples.size", expected.position.getSamples().getShapes().size(),
+                    actual.position.getSamples().getShapes().size());
+            for (int i = 0; i < expected.position.getSamples().getShapes().size(); i++) {
+                Shape es = expected.position.getSamples().getShapes().get(i);
+                Shape as = actual.position.getSamples().getShapes().get(i);
+                testEqual("position.samples-" + i, es, as);
             }
-            // TODO: position.samples
+            testEqual("position.minBounds", expected.position.minBounds, actual.position.minBounds);
+            
             if (expected.position.dimension != null) {
                 Assert.assertEquals("position.dimension.naxis1", expected.position.dimension.naxis1, actual.position.dimension.naxis1);
                 Assert.assertEquals("position.dimension.naxis2", expected.position.dimension.naxis2, actual.position.dimension.naxis2);
             } else {
                 Assert.assertNull(actual.position.dimension);
             }
+            testEqual("position.maxRecoverableScale", expected.position.maxRecoverableScale, actual.position.maxRecoverableScale);
             Assert.assertEquals("position.resolution", expected.position.resolution, actual.position.resolution);
+            testEqual("position.resolutionBounds", expected.position.resolutionBounds, actual.position.resolutionBounds);
             Assert.assertEquals("position.sampleSize", expected.position.sampleSize, actual.position.sampleSize);
-            // TODO: new fields
+            Assert.assertEquals("position.calibration", expected.position.calibration, actual.position.calibration);
         }
+        
         if (expected.energy != null) {
             Assert.assertNotNull("plane.energy", actual.energy);
-            Assert.assertEquals("energy.bounds.lower", expected.energy.getBounds().getLower(), actual.energy.getBounds().getLower(), 0.0);
-            Assert.assertEquals("energy.bounds.upper", expected.energy.getBounds().getUpper(), actual.energy.getBounds().getUpper(), 0.0);
-            
+            testEqual("energy.bounds", expected.energy.getBounds(), actual.energy.getBounds());
             Assert.assertEquals("energy.samples.size", expected.energy.getSamples().size(), actual.energy.getSamples().size());
             for (int i = 0; i < expected.energy.getSamples().size(); i++) {
                 Interval<Double> esi = expected.energy.getSamples().get(i);
                 Interval<Double> asi = actual.energy.getSamples().get(i);
-                Assert.assertEquals("sample.lb", esi.getLower(), asi.getLower(), 0.0);
-                Assert.assertEquals("sample.ub", esi.getUpper(), asi.getUpper(), 0.0);
+                testEqual("energy.sample " + i, esi, asi);
             }
             Assert.assertEquals("energy.bandpassName", expected.energy.bandpassName, actual.energy.bandpassName);
             Assert.assertEquals("energy.dimension", expected.energy.dimension, actual.energy.dimension);
@@ -1514,37 +1508,39 @@ public abstract class AbstractObservationDAOTest {
                 Assert.assertEquals("energy.energyBand", ex, ac);
             }
             Assert.assertEquals("energy.resolvingPower", expected.energy.resolvingPower, actual.energy.resolvingPower);
-            Assert.assertEquals("energy.rest", expected.energy.rest, actual.energy.rest);
+            testEqual("energy.resolvingPowerBounds", expected.energy.resolvingPowerBounds, actual.energy.resolvingPowerBounds);
+            Assert.assertEquals("energy.resolution", expected.energy.resolution, actual.energy.resolution);
+            testEqual("energy.resolutionBounds", expected.energy.resolutionBounds, actual.energy.resolutionBounds);
             Assert.assertEquals("energy.sampleSize", expected.energy.sampleSize, actual.energy.sampleSize);
+            Assert.assertEquals("energy.rest", expected.energy.rest, actual.energy.rest);
+            Assert.assertEquals("energy.calibration", expected.energy.calibration, actual.energy.calibration);
             Assert.assertEquals("energy.transition", expected.energy.transition, actual.energy.transition);
-            // TODO: new fields
         } else {
             Assert.assertNull(actual.energy);
         }
             
         if (expected.time != null) {
             Assert.assertNotNull("plane.time", actual.time);
-            Assert.assertEquals("time.bounds.lower", expected.time.getBounds().getLower(), actual.time.getBounds().getLower(), 0.0);
-            Assert.assertEquals("time.bounds.upper", expected.time.getBounds().getUpper(), actual.time.getBounds().getUpper(), 0.0);
+            testEqual("time.bounds", expected.time.getBounds(), actual.time.getBounds());
             Assert.assertEquals("time.samples.size", expected.time.getSamples().size(), actual.time.getSamples().size());
             for (int i = 0; i < expected.time.getSamples().size(); i++) {
                 Interval<Double> esi = expected.time.getSamples().get(i);
                 Interval<Double> asi = actual.time.getSamples().get(i);
-                Assert.assertEquals("SubInterval.lb", esi.getLower(), asi.getLower(), 0.0);
-                Assert.assertEquals("SubInterval.ub", esi.getUpper(), asi.getUpper(), 0.0);
+                testEqual("time.sample " + i, esi, asi);
             }
-            
             Assert.assertEquals("time.dimension", expected.time.dimension, actual.time.dimension);
             Assert.assertEquals("time.exposure", expected.time.exposure, actual.time.exposure);
+            testEqual("time.exposureBounds", expected.time.exposureBounds, actual.time.exposureBounds);
             Assert.assertEquals("time.resolution", expected.time.resolution, actual.time.resolution);
+            Assert.assertEquals("time.resolutionBounds", expected.time.resolutionBounds, actual.time.resolutionBounds);
             Assert.assertEquals("time.sampleSize", expected.time.sampleSize, actual.time.sampleSize);
+            Assert.assertEquals("time.calibration", expected.time.calibration, actual.time.calibration);
         } else {
             Assert.assertNull(actual.time);
         }
         
         if (expected.polarization != null) {
             Assert.assertNotNull("plane.polarization", actual.polarization);
-            Assert.assertNotNull("polarization.states", actual.polarization.getStates());
             Assert.assertEquals("polarization.states.size", expected.polarization.getStates().size(), actual.polarization.getStates().size());
             Iterator<PolarizationState> ei = expected.polarization.getStates().iterator();
             Iterator<PolarizationState> ai = actual.polarization.getStates().iterator();
@@ -1556,9 +1552,31 @@ public abstract class AbstractObservationDAOTest {
             Assert.assertNull(actual.polarization);
         }
 
-        // TODO: custom axis
+        if (expected.custom != null) {
+            Assert.assertNotNull("plane.custom", actual.custom);
+            Assert.assertEquals("custom.ctype", expected.custom.getCtype(), actual.custom.getCtype());
+            testEqual("custom.bounds", expected.custom.getBounds(), actual.custom.getBounds());
+            Assert.assertEquals("custom.samples.size", expected.custom.getSamples().size(), actual.custom.getSamples().size());
+            for (int i = 0; i < expected.time.getSamples().size(); i++) {
+                Interval<Double> esi = expected.custom.getSamples().get(i);
+                Interval<Double> asi = actual.custom.getSamples().get(i);
+                testEqual("time.sample " + i, esi, asi);
+            }
+            Assert.assertEquals("custom.dimension", expected.custom.dimension, actual.custom.dimension);
+        } else {
+            Assert.assertNull(actual.custom);
+        }
         
-        // TODO: visibility
+        if (expected.visibility != null) {
+            Assert.assertNotNull("plane.visibility", actual.visibility);
+            testEqual("visibility.distance", expected.visibility.getDistance(), actual.visibility.getDistance());
+            Assert.assertEquals("visibility.distributionEccentricity", expected.visibility.getDistributionEccentricity(), 
+                    actual.visibility.getDistributionEccentricity());
+            Assert.assertEquals("visibility.distributionFill", expected.visibility.getDistributionFill(), 
+                    actual.visibility.getDistributionFill());
+        } else {
+            Assert.assertNull(actual.visibility);
+        }
         
         Assert.assertEquals("metaReadGroups.size", expected.getMetaReadGroups().size(), actual.getMetaReadGroups().size());
         Iterator<URI> emra = expected.getMetaReadGroups().iterator();
@@ -1585,6 +1603,43 @@ public abstract class AbstractObservationDAOTest {
         }
 
         testEntityChecksums(expected, actual);
+    }
+    
+    private void testEqual(String field, Interval<Double> expected, Interval<Double> actual) {
+        if (expected != null) {
+            Assert.assertNotNull(field, actual);
+            Assert.assertEquals(field + ".lower", expected.getLower(), actual.getLower(), 0.0);
+            Assert.assertEquals(field + ".upper", expected.getUpper(), actual.getUpper(), 0.0);
+        } else {
+            Assert.assertNull(actual);
+        }
+    }
+
+    private void testEqual(String field, Shape expected, Shape actual) {
+        if (expected  != null) {
+            Assert.assertNotNull(field, actual);
+            if (Polygon.class.equals(expected.getClass())) {
+                Polygon ep = (Polygon) expected;
+                Polygon ap = (Polygon) actual;
+                Assert.assertEquals(field + " vertices.size", ep.getVertices().size(), ap.getVertices().size());
+                for (int i = 0; i < ep.getVertices().size(); i++) {
+                    Point ept = ep.getVertices().get(i);
+                    Point apt = ap.getVertices().get(i);
+                    Assert.assertEquals(field + " point.long", ept.getLongitude(), apt.getLongitude(), 0.0);
+                    Assert.assertEquals(field + " point.lat", ept.getLatitude(), apt.getLatitude(), 0.0);
+                }
+            } else if (Circle.class.equals(expected.getClass())) {
+                Circle ep = (Circle) expected;
+                Circle ap = (Circle) actual;
+                Assert.assertEquals(field + " center.long", ep.getCenter().getLongitude(), ap.getCenter().getLongitude(), 0.0);
+                Assert.assertEquals(field + " center.lat", ep.getCenter().getLatitude(), ap.getCenter().getLatitude(), 0.0);
+                Assert.assertEquals(field + " radius", ep.getRadius(), ap.getRadius(), 0.0);
+            } else {
+                throw new UnsupportedOperationException(field + " compare: " + expected.getClass().getName());
+            }
+        } else {
+            Assert.assertNull(actual);
+        }
     }
 
     private void testEqual(Artifact expected, Artifact actual) {
