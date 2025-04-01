@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,72 +65,109 @@
 ************************************************************************
 */
 
-package ca.nrc.cadc.tap.caom2;
+package org.opencadc.argus;
 
-
-import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.Shape;
-import ca.nrc.cadc.dali.util.ShapeFormat;
-import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
-import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import ca.nrc.cadc.dali.tables.parquet.ParquetReader;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableInfo;
+import ca.nrc.cadc.dali.tables.votable.VOTableResource;
+import ca.nrc.cadc.dali.tables.votable.VOTableTable;
+import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Map;
+import java.util.TreeMap;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
+import static org.opencadc.argus.AuthQueryTest.syncURL;
+import org.opencadc.tap.TapClient;
 
 /**
- * Format a position_bounds value as xtype="caom2:shape".
- * 
+ *
  * @author pdowler
  */
-public class PositionBoundsShapeFormat extends AbstractResultSetFormat {
-    private static final Logger log = Logger.getLogger(PositionBoundsShapeFormat.class);
+public class ParquetOutputTest {
+    private static final Logger log = Logger.getLogger(ParquetOutputTest.class);
 
-    private final ShapeFormat sfmt = new ShapeFormat();
-    private final DoubleArrayFormat daf = new DoubleArrayFormat();
-     
-    public PositionBoundsShapeFormat() { 
+    static {
+        Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
+    }
+
+    public ParquetOutputTest() { 
     }
     
-    /**
-     * Takes a ResultSet and column index of the position_bounds_points
-     * and returns a polymorphic DALI shape value.
-     *
-     * @param resultSet containing the position_bounds_points column.
-     * @param columnIndex index of the column in the ResultSet.
-     * @return DALI Shape
-     * @throws SQLException if there is an error accessing the ResultSet.
-     */
-    @Override
-    public Object extract(ResultSet resultSet, int columnIndex)
-            throws SQLException {
-        double[] dd = (double[]) daf.extract(resultSet, columnIndex);
-        if (dd == null) {
-            return null;
-        }
-
-        if (dd.length == 3) {
-            return new Circle(new Point(dd[0], dd[1]), dd[2]);
-        } 
-        if (dd.length >= 6) {
-            Polygon poly = new Polygon();
-            for (int i = 0; i < dd.length; i += 2) {
-                Point p = new Point(dd[i], dd[i + 1]);
-                poly.getVertices().add(p);
-            }
-            return poly;
-        }
+    @Test
+    public void testParquetOutput() throws Exception {
+        TapClient tap = new TapClient(Constants.RESOURCE_ID);
+        URL tapURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
+        log.info(" sync: " + syncURL);
         
-        throw new RuntimeException("CONTENT: unexpected position_bounds length: " + dd.length); 
-    }
+        String adql = "select top 10 * from caom2.Plane";
+        Map<String, Object> params = new TreeMap<>();
+        params.put("LANG", "ADQL");
+        params.put("QUERY", adql);
+        params.put("RESPONSEFORMAT", "parquet");
+        
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        HttpPost httpPost = new HttpPost(tapURL, params, out);
+        httpPost.run();
 
-    @Override
-    public String format(Object o) {
-        if (o == null) {
-            return "";
+        if (httpPost.getThrowable() != null) {
+            log.error("Post failed", httpPost.getThrowable());
+            Assert.fail("exception on post: " + httpPost.getThrowable());
         }
-        Shape s = (Shape) o;
-        return sfmt.format(s);
+
+        int code = httpPost.getResponseCode();
+        Assert.assertEquals(200, code);
+
+        String contentType = httpPost.getContentType();
+        Assert.assertEquals("application/vnd.apache.parquet", contentType);
+        
+        extractVOTableFromOutputStream(out, adql);
+    }
+    
+    private static VOTableTable extractVOTableFromOutputStream(ByteArrayOutputStream out, String adql) throws IOException {
+        ParquetReader reader = new ParquetReader();
+        InputStream inputStream = new ByteArrayInputStream(out.toByteArray());
+        ParquetReader.TableShape readerResponse = reader.read(inputStream);
+
+        log.info(readerResponse.getColumnCount() + " columns, " + readerResponse.getRecordCount() + " records");
+
+        Assert.assertTrue(readerResponse.getRecordCount() > 0);
+        Assert.assertTrue(readerResponse.getColumnCount() > 0);
+
+        VOTableDocument voTableDocument = readerResponse.getVoTableDocument();
+
+        Assert.assertNotNull(voTableDocument.getResources());
+
+        VOTableResource results = voTableDocument.getResourceByType("results");
+        Assert.assertNotNull(results);
+
+        boolean queryFound = false;
+        boolean queryStatusFound = false;
+
+        for (VOTableInfo voTableInfo : results.getInfos()) {
+            if (voTableInfo.getName().equals("QUERY")) {
+                queryFound = true;
+                Assert.assertEquals(adql, voTableInfo.getValue());
+            } else if (voTableInfo.getName().equals("QUERY_STATUS")) {
+                queryStatusFound = true;
+                Assert.assertEquals("OK", voTableInfo.getValue());
+            }
+        }
+
+        Assert.assertTrue(queryFound);
+        Assert.assertTrue(queryStatusFound);
+
+        Assert.assertNotNull(results.getTable());
+        Assert.assertEquals(readerResponse.getColumnCount(), results.getTable().getFields().size());
+        return results.getTable();
     }
 }
