@@ -1,3 +1,6 @@
 # caom2db/caom2persistence
 
-If a file named 'test.schema' is available in this directory, the contents of that file will be used as the schema for running the unit tests.
+This module will remain at `caom2-2.4.x` and not be updated for CAOM-2.5 or later.
+
+For CAOM-2.5, use `caom2-db` instead.
+

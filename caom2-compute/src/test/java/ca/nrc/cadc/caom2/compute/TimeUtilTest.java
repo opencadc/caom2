@@ -69,22 +69,7 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Energy;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.wcs.Axis;
-import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -92,6 +77,20 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.ReleaseType;
+import org.opencadc.caom2.Time;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.Axis;
+import org.opencadc.caom2.wcs.CoordAxis1D;
+import org.opencadc.caom2.wcs.CoordBounds1D;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.RefCoord;
+import org.opencadc.caom2.wcs.TemporalWCS;
 import org.opencadc.erfa.ERFALib;
 
 /**
@@ -118,14 +117,9 @@ public class TimeUtilTest {
     @Test
     public void testEmptyList() {
         try {
-            Plane plane = new Plane("foo");
+            Plane plane = new Plane(URI.create("caom:FOO/foo"));
             Time tim = TimeUtil.compute(plane.getArtifacts());
-            Assert.assertNotNull(tim);
-            Assert.assertNull(tim.bounds);
-            Assert.assertNull(tim.dimension);
-            Assert.assertNull(tim.exposure);
-            Assert.assertNull(tim.resolution);
-            Assert.assertNull(tim.sampleSize);
+            Assert.assertNull(tim);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -144,7 +138,7 @@ public class TimeUtilTest {
             
             Time t = TimeUtil.compute(plane.getArtifacts());
 
-            Assert.assertNull("no time bounds", t.bounds);
+            Assert.assertNull("no time bounds", t);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -165,8 +159,8 @@ public class TimeUtilTest {
         CoordAxis1D time = new CoordAxis1D(new Axis("TIME", "d"));
         
         try {
-            Plane plane = new Plane("foo");
-            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
+            Plane plane = new Plane(URI.create("caom:FOO/foo"));
+            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), DataLinkSemantics.THIS, ReleaseType.DATA);
             plane.getArtifacts().add(a);
             Part p = new Part(1);
             a.getParts().add(p);
@@ -185,7 +179,6 @@ public class TimeUtilTest {
                 log.info("testComputeTimesysCtypeCunit: " + actual);
                 
                 Assert.assertNotNull(actual);
-                Assert.assertNotNull(actual.bounds);
             }
             // allowed: CTYPE=TIME && TIMESYS
             for (String ts : timeSys) {
@@ -198,7 +191,6 @@ public class TimeUtilTest {
                 log.info("testComputeTimesysCtypeCunit: " + actual);
                 
                 Assert.assertNotNull(actual);
-                Assert.assertNotNull(actual.bounds);
             }
             
             // allowed: CTYPE and redundant TIMESYS
@@ -212,7 +204,6 @@ public class TimeUtilTest {
                 log.info("testComputeTimesysCtypeCunit: " + actual);
                 
                 Assert.assertNotNull(actual);
-                Assert.assertNotNull(actual.bounds);
             }
             
             // not allowed: CTYPE=TIME only
@@ -266,10 +257,9 @@ public class TimeUtilTest {
             log.debug("testComputeFromRange: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -303,10 +293,10 @@ public class TimeUtilTest {
             log.debug("testComputeFromBounds: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertEquals(2, actual.bounds.getSamples().size());
+            Assert.assertNotNull(actual.getBounds());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertEquals(2, actual.getSamples().size());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue(), 1L);
             Assert.assertNotNull(actual.exposure);
@@ -329,8 +319,8 @@ public class TimeUtilTest {
             final long expectedDimension = 1L;
             final double expectedSS = 0.3;
 
-            Plane plane = new Plane("foo");
-            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), ProductType.SCIENCE, ReleaseType.DATA);
+            Plane plane = new Plane(URI.create("caom:FOO/foo"));
+            Artifact a = new Artifact(URI.create("cadc:FOO/bar"), DataLinkSemantics.THIS, ReleaseType.DATA);
             plane.getArtifacts().add(a);
             Part p = new Part(1);
             a.getParts().add(p);
@@ -350,10 +340,10 @@ public class TimeUtilTest {
             log.info("testMultiSampleComputeFromBounds: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertEquals(3, actual.bounds.getSamples().size());
+            Assert.assertNotNull(actual.getBounds());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.01);
+            Assert.assertEquals(3, actual.getSamples().size());
             
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals("dimension", expectedDimension, actual.dimension.longValue());
@@ -384,10 +374,10 @@ public class TimeUtilTest {
             log.debug("testComputeFromFunction: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.getBounds());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -410,7 +400,7 @@ public class TimeUtilTest {
             TemporalWCS wcs = new TemporalWCS(axis);
             wcs.timesys = "UTC";
             wcs.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 54321.0));
-            Interval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
             Assert.fail("expected IllegalArgumentException, got: " + i);
         } catch (IllegalArgumentException expected) {
             log.info("caught expected: " + expected);
@@ -425,7 +415,7 @@ public class TimeUtilTest {
             wcs.timesys = "UTC";
             // delata==0 allowed for single bin
             wcs.getAxis().function = new CoordFunction1D(1L, 0.0, new RefCoord(0.5, 54321.0));
-            Interval i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> i = TimeUtil.toInterval(wcs, wcs.getAxis().function);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -451,10 +441,10 @@ public class TimeUtilTest {
             log.info("testComputeFromFunction: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.getBounds());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -488,10 +478,10 @@ public class TimeUtilTest {
             log.info("testComputeFromMultipleFunctionOverlap: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.getBounds());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.01);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -520,12 +510,12 @@ public class TimeUtilTest {
             Plane plane;
             Time actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.THIS);
 
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -535,10 +525,10 @@ public class TimeUtilTest {
 
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.getBounds());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.01);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -566,32 +556,17 @@ public class TimeUtilTest {
             Plane plane;
             Time actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.CALIBRATION);
 
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
             actual = TimeUtil.compute(plane.getArtifacts());
-
-            log.debug("testComputeFromScience: " + actual);
-
-            Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
-            Assert.assertNotNull(actual.dimension);
-            Assert.assertEquals(expectedDimension, actual.dimension.longValue());
-            Assert.assertNotNull(actual.exposure);
-            Assert.assertEquals(expectedExposure, actual.exposure.doubleValue(), 0.01);
-            Assert.assertNotNull(actual.resolution);
-            Assert.assertEquals(expectedResolution, actual.resolution.doubleValue(), 0.0001);
-            Assert.assertNotNull(actual.sampleSize);
-            Assert.assertEquals(expectedSS, actual.sampleSize, 0.01);
+            Assert.assertNull(actual);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -611,12 +586,12 @@ public class TimeUtilTest {
             Plane plane;
             Time actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.THIS);
 
             // add some CAL artifacts, should not effect result since SCIENCE above
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -625,10 +600,10 @@ public class TimeUtilTest {
             log.debug("testComputeFromScience: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertNotNull(actual.getBounds());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.01);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
             Assert.assertNotNull(actual.exposure);
@@ -672,7 +647,7 @@ public class TimeUtilTest {
             wcs.getAxis().function = new CoordFunction1D(1L, 0.0, refCoord);
 
             wcs.timesys = "UTC";
-            Interval interval = TimeUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> interval = TimeUtil.toInterval(wcs, wcs.getAxis().function);
             log.debug(String.format("%s - > UTC interval: %s", wcs.getAxis().function, interval));
             Assert.assertEquals(mjdref + mjd, interval.getLower(), 0.0000000001);
             Assert.assertEquals(mjdref + mjd, interval.getUpper(), 0.0000000001);
@@ -731,16 +706,16 @@ public static double jd2mjd(double[] jd) {
 
     Plane getTestSetRange(int numA, int numP, int numC)
         throws URISyntaxException {
-        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+        return getTestSetRange(numA, numP, numC, DataLinkSemantics.THIS);
     }
 
-    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
+    Plane getTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype)
         throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
             Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
@@ -767,10 +742,10 @@ public static double jd2mjd(double[] jd) {
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.THIS, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));
@@ -794,10 +769,10 @@ public static double jd2mjd(double[] jd) {
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.THIS, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
                 Part np = new Part(new Integer(p));

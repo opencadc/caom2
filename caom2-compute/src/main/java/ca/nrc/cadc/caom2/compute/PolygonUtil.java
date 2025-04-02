@@ -69,15 +69,15 @@ package ca.nrc.cadc.caom2.compute;
 
 import ca.nrc.cadc.caom2.compute.convex.GrahamScan;
 import ca.nrc.cadc.caom2.compute.convex.SortablePoint2D;
-import ca.nrc.cadc.caom2.types.CartesianTransform;
-import ca.nrc.cadc.caom2.types.Circle;
-import ca.nrc.cadc.caom2.types.IllegalPolygonException;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.types.Polygon;
-import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.caom2.types.Shape;
-import ca.nrc.cadc.caom2.types.Vertex;
+import ca.nrc.cadc.caom2.compute.types.CartesianTransform;
+import ca.nrc.cadc.caom2.compute.types.IllegalPolygonException;
+import ca.nrc.cadc.caom2.compute.types.MultiPolygon;
+import ca.nrc.cadc.caom2.compute.types.SegmentType;
+import ca.nrc.cadc.caom2.compute.types.Vertex;
+import ca.nrc.cadc.dali.Circle;
+import ca.nrc.cadc.dali.InvalidPolygonException;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Polygon;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
@@ -103,16 +103,23 @@ public final class PolygonUtil {
     private static final double MAX_SCALE = 0.07;
     private static Logger log = Logger.getLogger(PolygonUtil.class);
 
-    public static Polygon toPolygon(Shape s) {
-        if (s == null) {
-            return null;
+    public static MultiPolygon convert(Polygon in) {
+        MultiPolygon ret = new MultiPolygon();
+        SegmentType t = SegmentType.MOVE;
+        for (Point p : in.getVertices()) {
+            ret.getVertices().add(new Vertex(p.getLongitude(), p.getLatitude(), t));
+            t = SegmentType.LINE;
         }
-
-        if (s instanceof Polygon) {
-            return (Polygon) s;
+        ret.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        return ret;
+    }
+    
+    static List<MultiPolygon> convert(List<Polygon> ps) {
+        List<MultiPolygon> ret = new ArrayList<>(ps.size());
+        for (Polygon p : ps) {
+            ret.add(convert(p));
         }
-
-        throw new UnsupportedOperationException(s.getClass().getSimpleName() + " -> Polygon");
+        return ret;
     }
 
     /**
@@ -179,25 +186,30 @@ public final class PolygonUtil {
             scale += DEFAULT_SCALE; // 2x, 3x, etc
         }
         if (outer != null) {
+            Polygon ret = new Polygon();
             boolean ccw = outer.getCCW();
             log.info("[getConcaveHull] SUCCESS: " + outer + " ccw=" + ccw);
-            List<Point> pts = new ArrayList<Point>();
             for (Vertex v : outer.getVertices()) {
                 if (!SegmentType.CLOSE.equals(v.getType())) {
-                    Point p = new Point(v.cval1, v.cval2);
+                    Point p = new Point(v.getLongitude(), v.getLatitude());
                     if (ccw) {
-                        pts.add(p);
+                        ret.getVertices().add(p);
                     } else {
-                        pts.add(0, p); // add to start aka reverse list
+                        ret.getVertices().add(0, p); // add to start aka reverse list
                     }
                 }
             }
-            Polygon ret = new Polygon(pts, poly);
-            ret.validate();
-            return ret;
+            
+            try {
+                ret.validate();
+                return ret;
+            } catch (InvalidPolygonException ex) {
+                log.debug("[getConcaveHull] FAILED: " + ex);
+                return null;
+            }
         }
 
-        log.debug("[getConcaveHull] FAILED");
+        log.debug("[getConcaveHull] FAILED: not simple");
         return null;
     }
 
@@ -231,7 +243,7 @@ public final class PolygonUtil {
         List<Point> pts = new ArrayList<Point>();
         for (Vertex v : convex.getVertices()) {
             if (!SegmentType.CLOSE.equals(v.getType())) {
-                Point p = new Point(v.cval1, v.cval2);
+                Point p = new Point(v.getLongitude(), v.getLatitude());
                 if (ccw) {
                     pts.add(p); // add to end
                 } else {
@@ -239,9 +251,46 @@ public final class PolygonUtil {
                 }
             }
         }
-        Polygon ret = new Polygon(pts, poly);
-        ret.validate();
-        return ret;
+        Polygon ret = new Polygon();
+        ret.getVertices().addAll(pts);
+        try {
+            ret.validate();
+            return ret;
+        } catch (InvalidPolygonException ex) {
+            log.debug("[getConvexHull] FAILED: " + ex);
+            return null;
+        }
+    }
+
+    static Polygon intersection(Polygon p1, Polygon p2) {
+        SegmentType st = SegmentType.MOVE;
+        MultiPolygon mp1 = new MultiPolygon();
+        for (Point p : p1.getVertices()) {
+            mp1.getVertices().add(new Vertex(p.getLongitude(), p.getLatitude(), st));
+            st = SegmentType.LINE;
+        }
+        mp1.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        
+        st = SegmentType.MOVE;
+        MultiPolygon mp2 = new MultiPolygon();
+        for (Point p : p2.getVertices()) {
+            mp2.getVertices().add(new Vertex(p.getLongitude(), p.getLatitude(), st));
+            st = SegmentType.LINE;
+        }
+        mp2.getVertices().add(new Vertex(0.0, 0.0, SegmentType.CLOSE));
+        
+        MultiPolygon inter = intersection(mp1, mp2);
+        if (inter != null) {
+            Polygon ret = new Polygon();
+            for (Vertex v : inter.getVertices()) {
+                if (!SegmentType.CLOSE.equals(v.getType())) {
+                    Point p = new Point(v.getLongitude(), v.getLatitude());
+                    ret.getVertices().add(p);
+                }
+            }
+            return ret;
+        }
+        return null;
     }
 
     static MultiPolygon intersection(MultiPolygon p1, MultiPolygon p2) {
@@ -463,7 +512,7 @@ public final class PolygonUtil {
         }
 
         Circle msc = poly.getMinimumSpanningCircle();
-        double tol = msc.getSize() * rsl;
+        double tol = 2.0 * msc.getRadius() * rsl;
         //double tol = Math.sqrt(pp.area)*rsl; // ~same for squares, smaller for skinny rectangles
         log.debug("[smooth.adjacent] radius=" + msc.getRadius()
                 + " tol=" + tol);
@@ -511,7 +560,8 @@ public final class PolygonUtil {
                     Vertex nv1 = ab.v1;
 
                     // remove v1 and v2 from poly - replace with average
-                    Vertex nv2 = new Vertex((bc.v1.cval1 + bc.v2.cval1) / 2.0, (bc.v1.cval2 + bc.v2.cval2) / 2.0, SegmentType.LINE);
+                    Vertex nv2 = new Vertex((bc.v1.getLongitude() + bc.v2.getLongitude()) / 2.0, 
+                            (bc.v1.getLatitude() + bc.v2.getLatitude()) / 2.0, SegmentType.LINE);
 
                     Vertex nv3 = cd.v2;
 
@@ -539,7 +589,7 @@ public final class PolygonUtil {
             log.debug("[smooth.adjacent] after: seg.length " + s.length());
             Vertex v = s.v1;
             if (i == 0 && !v.getType().equals(SegmentType.MOVE)) {
-                v = new Vertex(v.cval1, v.cval2, SegmentType.MOVE);
+                v = new Vertex(v.getLongitude(), v.getLatitude(), SegmentType.MOVE);
             }
             poly.getVertices().add(v);
         }
@@ -581,7 +631,7 @@ public final class PolygonUtil {
                 }
                 Segment bc = segs.get(n);
                 if (segs.size() > 4 && colinear(ab, bc, tol)) { // realistically: rectangle is the smallest
-                    Vertex nv1 = new Vertex(ab.v1.cval1, ab.v1.cval2, SegmentType.LINE);
+                    Vertex nv1 = new Vertex(ab.v1.getLongitude(), ab.v1.getLatitude(), SegmentType.LINE);
                     Vertex nv2 = bc.v2;
                     Segment ns = new Segment(ab.v1, bc.v2);
                     log.debug("[smooth.colinear] " + i + " " + ab + " + " + bc + ": removing " + ab.v2 + " aka " + bc.v1);
@@ -602,7 +652,7 @@ public final class PolygonUtil {
             log.debug("[smooth.colinear] after: seg.length " + s.length());
             Vertex v = s.v1;
             if (i == 0 && !v.getType().equals(SegmentType.MOVE)) {
-                v = new Vertex(v.cval1, v.cval2, SegmentType.MOVE);
+                v = new Vertex(v.getLongitude(), v.getLatitude(), SegmentType.MOVE);
             }
             poly.getVertices().add(v);
         }
@@ -642,7 +692,7 @@ public final class PolygonUtil {
                         // change the next from  LINE to MOVE
                         Vertex vl = verts.get(i);
                         if (SegmentType.LINE.equals(vl.getType())) {
-                            Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
+                            Vertex vm = new Vertex(vl.getLongitude(), vl.getLatitude(), SegmentType.MOVE);
                             log.debug("[smooth.area] (try) change " + vl + " -> " + vm);
                             verts.set(i, vm);
                         } else {
@@ -675,7 +725,7 @@ public final class PolygonUtil {
                 if (SegmentType.MOVE.equals(posV.getType())) {
                     // change the next from  LINE to MOVE
                     Vertex vl = poly.getVertices().get(posI);
-                    Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
+                    Vertex vm = new Vertex(vl.getLongitude(), vl.getLatitude(), SegmentType.MOVE);
                     log.debug("[smooth.area] change " + vl + " -> " + vm);
                     poly.getVertices().set(posI, vm);
                 }
@@ -686,7 +736,7 @@ public final class PolygonUtil {
                 if (SegmentType.MOVE.equals(negV.getType())) {
                     // change the next from  LINE to MOVE
                     Vertex vl = poly.getVertices().get(negI);
-                    Vertex vm = new Vertex(vl.cval1, vl.cval2, SegmentType.MOVE);
+                    Vertex vm = new Vertex(vl.getLongitude(), vl.getLatitude(), SegmentType.MOVE);
                     log.debug("[smooth.area] change " + vl + " -> " + vm);
                     poly.getVertices().set(negI, vm);
                 }
@@ -711,9 +761,9 @@ public final class PolygonUtil {
                 Vertex sv = new ScaledVertex(0.0, 0.0, v.getType(), v);
                 ret.getVertices().add(sv);
             } else {
-                double dx = (v.cval1 - c.cval1) * scale;
-                double dy = (v.cval2 - c.cval2) * scale;
-                Vertex sv = new ScaledVertex(v.cval1 + dx, v.cval2 + dy, v.getType(), v);
+                double dx = (v.getLongitude() - c.getLongitude()) * scale;
+                double dy = (v.getLatitude() - c.getLatitude()) * scale;
+                Vertex sv = new ScaledVertex(v.getLongitude() + dx, v.getLatitude() + dy, v.getType(), v);
                 ret.getVertices().add(sv);
             }
         }
@@ -745,7 +795,7 @@ public final class PolygonUtil {
 
                 if (d < tol) {
                     // use orig coords but keep current segtype
-                    Vertex v = new Vertex(sv.orig.cval1, sv.orig.cval2, pv.getType());
+                    Vertex v = new Vertex(sv.orig.getLongitude(), sv.orig.getLatitude(), pv.getType());
                     log.debug("[unscaleMultiPolygon] replace: " + pv + " -> " + v + " (d=" + d + ")");
                     ret.getVertices().set(i, v);
                     if (validSeg) {
@@ -790,70 +840,13 @@ public final class PolygonUtil {
         return trans;
     }
 
-    // validate a simple polygon (single loop) for intersecting segments
-    // used by PositionUtil to validate CoordMultiPolygon2D
-    /*
-     * static void validateSegments(MultiPolygon poly)
-     * throws IllegalPolygonException {
-     * CartesianTransform trans = CartesianTransform.getTransform(poly);
-     * MultiPolygon tpoly = trans.transform(poly);
-     *
-     * Iterator<Vertex> vi = tpoly.getVertices().iterator();
-     * List<Segment> tsegs = new ArrayList<Segment>();
-     * List<Segment> psegs = tsegs;
-     * Vertex start = vi.next();
-     * Vertex v1 = start;
-     * while (vi.hasNext()) {
-     * Vertex v2 = vi.next();
-     * if (SegmentType.CLOSE.equals(v2.getType())) {
-     * v2 = start;
-     * }
-     * Segment s = new Segment(v1, v2);
-     * log.debug("[validateSegments] tsegs: " + s);
-     * tsegs.add(s);
-     * v1 = v2;
-     * }
-     * if (poly != tpoly) {
-     * // make segments with orig coords for reporting
-     * vi = poly.getVertices().iterator();
-     * psegs = new ArrayList<Segment>();
-     * start = (Vertex) vi.next();
-     * v1 = start;
-     * while (vi.hasNext()) {
-     * Vertex v2 = vi.next();
-     * if (SegmentType.CLOSE.equals(v2.getType())) {
-     * v2 = start;
-     * }
-     * Segment s = new Segment(v1, v2);
-     * //log.debug("[validateSegments] psegs: " + s);
-     * psegs.add(s);
-     * v1 = v2;
-     * }
-     * }
-     *
-     * for (int i = 0; i < tsegs.size(); i++) {
-     * Segment s1 = tsegs.get(i);
-     * for (int j = 0; j < tsegs.size(); j++) {
-     * if (i != j) {
-     * Segment s2 = tsegs.get(j);
-     * if (intersects(s1, s2, true)) {
-     * Segment r1 = psegs.get(i);
-     * Segment r2 = psegs.get(j);
-     * throw new IllegalPolygonException("invalid polygon: " + r1 + " intersects
-     * " + r2);
-     * }
-     * }
-     * }
-     * }
-     * }
-     */
     // ab.v2 == bc.v1
     private static boolean colinear(Segment ab, Segment bc, double da) {
         // determine dot-product of ba.bc since b is in the middle
-        double v1x = (ab.v2.cval1 - ab.v1.cval1);
-        double v1y = (ab.v2.cval2 - ab.v1.cval2);
-        double v2x = (bc.v2.cval1 - bc.v1.cval1);
-        double v2y = (bc.v2.cval2 - bc.v1.cval2);
+        double v1x = (ab.v2.getLongitude() - ab.v1.getLongitude());
+        double v1y = (ab.v2.getLatitude() - ab.v1.getLatitude());
+        double v2x = (bc.v2.getLongitude() - bc.v1.getLongitude());
+        double v2y = (bc.v2.getLatitude() - bc.v1.getLatitude());
 
         double ang2 = Math.atan2(v2y, v2x) - Math.atan2(v1y, v1x);
         log.debug("[colinear] ang2=" + ang2);
@@ -877,8 +870,8 @@ public final class PolygonUtil {
     }
 
     private static double distanceSquared(Vertex v1, Vertex v2) {
-        return (v1.cval1 - v2.cval1) * (v1.cval1 - v2.cval1)
-                + (v1.cval2 - v2.cval2) * (v1.cval2 - v2.cval2);
+        return (v1.getLongitude() - v2.getLongitude()) * (v1.getLongitude() - v2.getLongitude())
+                + (v1.getLatitude() - v2.getLatitude()) * (v1.getLatitude() - v2.getLatitude());
     }
 
     // use java.awt CAG implementation for 2D cartesian geometry
@@ -935,9 +928,9 @@ public final class PolygonUtil {
         GeneralPath gp = new GeneralPath();
         for (Vertex v : poly.getVertices()) {
             if (SegmentType.MOVE.equals(v.getType())) {
-                gp.moveTo((float) v.cval1, (float) v.cval2);
+                gp.moveTo((float) v.getLongitude(), (float) v.getLatitude());
             } else if (SegmentType.LINE.equals(v.getType())) {
-                gp.lineTo((float) v.cval1, (float) v.cval2);
+                gp.lineTo((float) v.getLongitude(), (float) v.getLatitude());
             } else if (SegmentType.CLOSE.equals(v.getType())) {
                 gp.closePath();
             } else {
@@ -958,7 +951,7 @@ public final class PolygonUtil {
         List<SortablePoint2D> tmp = new ArrayList<SortablePoint2D>();
         for (Vertex v : poly.getVertices()) {
             if (!SegmentType.CLOSE.equals(v.getType())) {
-                tmp.add(new SortablePoint2D(v.cval1, v.cval2));
+                tmp.add(new SortablePoint2D(v.getLongitude(), v.getLatitude()));
             }
         }
         SortablePoint2D[] points = (SortablePoint2D[]) tmp.toArray(new SortablePoint2D[tmp.size()]);

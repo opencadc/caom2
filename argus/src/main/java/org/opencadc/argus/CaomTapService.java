@@ -94,7 +94,7 @@ public class CaomTapService implements AvailabilityPlugin {
     private static final Logger log = Logger.getLogger(CaomTapService.class);
 
     private static final String TAP_SCHEMA_TEST = "select schema_name from tap_schema.schemas11 where schema_name='caom2'";
-    private static final String CAOM2_TEST = "select collection,observationID from caom2.Observation limit 1";
+    private static final String CAOM2_TEST = "select obsID from caom2.Observation limit 1";
     private static final String UWSDS_TEST = "select jobID from uws.Job limit 1";
     private static final String UWSDS_WRITE_SQL = "insert into uws.JobAvailability (value) values ('T')";
 

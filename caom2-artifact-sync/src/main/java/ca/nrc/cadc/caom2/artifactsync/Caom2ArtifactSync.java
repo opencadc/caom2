@@ -76,17 +76,13 @@ import ca.nrc.cadc.caom2.artifact.ArtifactStore;
 import ca.nrc.cadc.caom2.harvester.HarvestResource;
 import ca.nrc.cadc.caom2.persistence.PostgreSQLGenerator;
 import ca.nrc.cadc.caom2.persistence.SQLGenerator;
-import ca.nrc.cadc.net.NetrcAuthenticator;
 import ca.nrc.cadc.util.ArgumentMap;
 import ca.nrc.cadc.util.Log4jInit;
 import ca.nrc.cadc.util.StringUtil;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.security.auth.Subject;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -277,9 +273,7 @@ public abstract class Caom2ArtifactSync {
     }
     
     protected void createSubject(ArgumentMap am) {
-        if (am.isSet("netrc")) {
-            this.subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-        } else if (am.isSet("cert")) {
+        if (am.isSet("cert")) {
             this.subject = CertCmdArgUtil.initSubject(am);
         }
         

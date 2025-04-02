@@ -106,6 +106,10 @@ public class PositionBoundsShapeFormat extends AbstractResultSetFormat {
     public Object extract(ResultSet resultSet, int columnIndex)
             throws SQLException {
         double[] dd = (double[]) daf.extract(resultSet, columnIndex);
+        if (dd == null) {
+            return null;
+        }
+
         if (dd.length == 3) {
             return new Circle(new Point(dd[0], dd[1]), dd[2]);
         } 

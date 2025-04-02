@@ -68,16 +68,31 @@
 package org.opencadc.torkeep;
 
 
-import ca.nrc.cadc.caom2.repo.integration.CaomRepoDeletedTest;
+import ca.nrc.cadc.auth.RunnableAction;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.SimpleObservation;
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.HttpDownload;
 import ca.nrc.cadc.util.Log4jInit;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.net.URL;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.UUID;
+import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
  * @author pdowler
  */
-public class DeletedTest extends CaomRepoDeletedTest {
+public class DeletedTest extends AbstractIntTest {
     private static final Logger log = Logger.getLogger(DeletedTest.class);
     
     static {
@@ -85,7 +100,117 @@ public class DeletedTest extends CaomRepoDeletedTest {
     }
     
     public DeletedTest() {
-        super(TorkeepIntTest.RESOURCE_ID, TorkeepIntTest.CERT_AUTH, TorkeepIntTest.CERT_AUTH, TorkeepIntTest.CERT_NO_AUTH);
     }
 
+    @Test
+    public void testListCollections() {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            HttpDownload get = new HttpDownload(new URL(baseAnonURL), bos);
+            get.run();
+
+            Assert.assertNull("testListCollections", get.getThrowable());
+            Assert.assertEquals("testListCollections", 200, get.getResponseCode());
+            Assert.assertEquals("testListCollections", "text/tab-separated-values", get.getContentType());
+
+            boolean found = false;
+            LineNumberReader r = new LineNumberReader(new InputStreamReader(new ByteArrayInputStream(bos.toByteArray())));
+            String line = r.readLine();
+            while (line != null) {
+                if (TEST_COLLECTION.equals(line)) {
+                    found = true;
+                }
+                line = r.readLine();
+            }
+            Assert.assertTrue("testListCollections: found " + TEST_COLLECTION, found);
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testListDeletedDenied() {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            HttpDownload get = new HttpDownload(new URL(baseAnonURL + "/" + TEST_COLLECTION), bos);
+            get.run();
+
+            Assert.assertNotNull("testListDeletedDenied", get.getThrowable());
+            Assert.assertEquals("testListDeletedDenied permission denied", 403, get.getResponseCode());
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
+
+    @Test
+    public void testListDeletedSuccess() {
+        try {
+            // setup
+            final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+            Observation obs = new SimpleObservation(TEST_COLLECTION, "testListDeletedSuccess-" + UUID.randomUUID().toString());
+
+            putObservation(obs, subject1, 200, "OK", null);
+            final Date clientInserted = new Date();
+            obs = getObservation(obs.getURI(), subject1, 200, null, null);
+            Assert.assertNotNull("test setup", obs);
+            final Date inserted = obs.getMaxLastModified();
+            log.info("testListDeletedSuccess inserted: " + obs.getURI() + " " + df.format(obs.getMaxLastModified()));
+            
+            deleteObservation(obs.getURI(), subject1, null, null);
+            log.info("testListDeletedSuccess deleted: " + obs.getURI());
+            Date clientDeleted = new Date();
+            final long localDt = clientDeleted.getTime() - clientInserted.getTime();
+            final Date endDate = new Date(inserted.getTime() + localDt + 100);
+
+            log.info("local operation dt: " + df.format(clientDeleted) + " -> " + df.format(clientInserted));
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(baseCertURL).append("/").append(TEST_COLLECTION);
+            sb.append("?").append("maxrec=1");
+            sb.append("&").append("start=").append(df.format(inserted));
+            sb.append("&").append("end=").append(df.format(endDate));
+
+            URL url = new URL(sb.toString());
+            log.info("testListDeletedSuccess: " + url.toExternalForm());
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            HttpDownload get = new HttpDownload(url, bos);
+            Subject.doAs(subject1, new RunnableAction(get));
+
+            Assert.assertNull(get.getThrowable());
+            Assert.assertEquals(200, get.getResponseCode());
+
+            int num = 0;
+            LineNumberReader r = new LineNumberReader(new InputStreamReader(new ByteArrayInputStream(bos.toByteArray())));
+            String line = r.readLine();
+            while (line != null) {
+                num++;
+                String[] tokens = line.split("[\t]");
+                Assert.assertEquals("num tokens", 4, tokens.length);
+
+                UUID id = UUID.fromString(tokens[0]);
+                Assert.assertNotNull("id", id);
+                Assert.assertEquals("id", obs.getID(), id);
+
+                String suri = tokens[1];
+                Assert.assertEquals("uri", obs.getURI().toASCIIString(), suri);
+
+                Date lastModified = df.parse(tokens[3]);
+                Assert.assertTrue(inserted.compareTo(lastModified) < 0);
+                //Assert.assertTrue(afterDelete.compareTo(lastModified) > 0);
+
+                log.info("testListDeletedSuccess " + id + " " + suri + " " + df.format(lastModified));
+
+                line = r.readLine();
+            }
+            Assert.assertEquals("one line", 1, num); // if zero then test setup assumptions fail
+
+        } catch (Exception unexpected) {
+            log.error("unexpected exception", unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
+        }
+    }
 }

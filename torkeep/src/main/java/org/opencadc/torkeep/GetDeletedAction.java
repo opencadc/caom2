@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,11 +67,9 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.caom2.DeletedObservation;
-import ca.nrc.cadc.caom2.persistence.DeletedEntityDAO;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.net.ResourceNotFoundException;
+import ca.nrc.cadc.io.ResourceIterator;
 import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -79,8 +77,9 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.List;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.DeletedObservationEvent;
+import org.opencadc.caom2.db.DeletedObservationEventDAO;
 
 /**
  *
@@ -110,21 +109,16 @@ public class GetDeletedAction extends RepoAction {
 
         checkReadPermission();
 
-        DeletedEntityDAO dao = getDeletedEntityDAO();
+        DeletedObservationEventDAO dao = getDeletedDAO();
 
-        List<DeletedObservation> dels = dao.getList(getCollection(), start, end, maxRec);
-
-        if (dels == null) {
-            throw new ResourceNotFoundException("Collection not found: " + getCollection());
+        try (ResourceIterator<DeletedObservationEvent> iter = dao.iterator(getCollection(), start, end, maxRec)) {
+            long byteCount = writeDeleted(iter);
+            logInfo.setBytes(byteCount);
         }
-
-        long byteCount = writeDeleted(dels);
-        logInfo.setBytes(byteCount);
-
         log.debug("DONE: " + getCollection());
     }
     
-    private long writeDeleted(List<DeletedObservation> dels) throws IOException {
+    private long writeDeleted(ResourceIterator<DeletedObservationEvent> iter) throws IOException {
         DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
         syncOutput.setHeader("Content-Type", "text/tab-separated-values");
         
@@ -132,15 +126,12 @@ public class GetDeletedAction extends RepoAction {
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
         OutputStreamWriter out = new OutputStreamWriter(bc, StandardCharsets.US_ASCII);
         CsvWriter writer = new CsvWriter(out, '\t');
-        for (DeletedObservation ddo : dels) {
+        while (iter.hasNext()) {
+            DeletedObservationEvent ddo = iter.next();
             writer.write(ddo.getID().toString());
-            writer.write(ddo.getURI().getCollection());
-            writer.write(ddo.getURI().getObservationID());
-            if (ddo.lastModified != null) {
-                writer.write(df.format(ddo.lastModified));
-            } else {
-                writer.write("");
-            }
+            writer.write(ddo.getURI().toASCIIString());
+            writer.write(df.format(ddo.getLastModified()));
+            writer.write(ddo.getMetaChecksum().toASCIIString());
             writer.endRecord();
         }
         writer.flush();

@@ -32,7 +32,7 @@ jobs:
 
     - name: build and test caom2-validator
       run: cd caom2-validator && ../gradlew --info clean build
-##
+
     - name: build and test caom2-access-control
       run: cd caom2-access-control && ../gradlew --info clean build javadoc checkstyleMain install
 
@@ -42,9 +42,13 @@ jobs:
     - name: build and test caom2-repo
       run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
 
+## deprecated:
     - name: build and test caom2persistence
       run: cd caom2persistence && ../gradlew --info clean build javadoc checkstyleMain install
-
+## fork:
+    - name: build and test caom2-db
+      run: cd caom2-db && ../gradlew --info clean build javadoc checkstyleMain install
+      
     - name: build and test caom2-artifact-sync
       run: cd caom2-artifact-sync && ../gradlew --info clean build javadoc checkstyleMain install
 

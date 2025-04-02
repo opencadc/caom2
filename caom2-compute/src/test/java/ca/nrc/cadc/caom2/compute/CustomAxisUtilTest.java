@@ -65,27 +65,11 @@
 *  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.CustomAxis;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.Plane;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.ReleaseType;
-import ca.nrc.cadc.caom2.Time;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.wcs.Axis;
-import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
-import ca.nrc.cadc.caom2.wcs.CoordBounds1D;
-import ca.nrc.cadc.caom2.wcs.CoordFunction1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.RefCoord;
-import ca.nrc.cadc.caom2.wcs.CustomWCS;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.util.Log4jInit;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -93,11 +77,26 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.CustomAxis;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.ReleaseType;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.Axis;
+import org.opencadc.caom2.wcs.CoordAxis1D;
+import org.opencadc.caom2.wcs.CoordBounds1D;
+import org.opencadc.caom2.wcs.CoordFunction1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.CustomWCS;
+import org.opencadc.caom2.wcs.RefCoord;
 
 /**
  * @author hjeeves
  */
 public class CustomAxisUtilTest {
+
     private static final Logger log = Logger.getLogger(CustomAxisUtilTest.class);
     public static final String TEST_CTYPE = "FARADAY";
     public static final String TEST_RM_CTYPE = "RM";
@@ -114,7 +113,7 @@ public class CustomAxisUtilTest {
         try {
             // All chunks within artifact must have same ctype. Get one that has
             // mixed ctypes that are all valid
-            Plane plane = getMixedTestSetRange(1, 2, 6, ProductType.SCIENCE);
+            Plane plane = getMixedTestSetRange(1, 2, 6, DataLinkSemantics.THIS);
 
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
@@ -129,7 +128,7 @@ public class CustomAxisUtilTest {
     @Test
     public void testInvalidCtype() {
         try {
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, "foo", "foo_unit");
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.THIS, "foo", "foo_unit");
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
         } catch (IllegalArgumentException expected) {
@@ -143,7 +142,7 @@ public class CustomAxisUtilTest {
     @Test
     public void testInvalidCunit() {
         try {
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, TEST_RM_CTYPE, TEST_INVALID_CUNIT);
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.THIS, TEST_RM_CTYPE, TEST_INVALID_CUNIT);
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.fail("zeroErr -- expected IllegalArgumentException. Validator passed when it should not have.");
         } catch (IllegalArgumentException expected) {
@@ -159,7 +158,7 @@ public class CustomAxisUtilTest {
         try {
             // Normalization should happen with the alternate cunits,
             // compute should still pass
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.SCIENCE, TEST_CTYPE, TEST_ALT_CUNIT);
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.THIS, TEST_CTYPE, TEST_ALT_CUNIT);
             log.info("plane: " + plane);
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
         } catch (Exception unexpected) {
@@ -168,15 +167,13 @@ public class CustomAxisUtilTest {
         }
     }
 
-
-
     @Test
     public void testNoComputableChunks() {
         // The product type used in the set range here will not be detected by the
         // Util.choseProductType90 function in the compute function, so it
         // should return a null
         try {
-            Plane plane = getTestSetRange(1, 2, 3, ProductType.DARK);
+            Plane plane = getTestSetRange(1, 2, 3, DataLinkSemantics.DARK);
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.assertNull(ca);
         } catch (IllegalArgumentException expected) {
@@ -190,7 +187,7 @@ public class CustomAxisUtilTest {
     @Test
     public void testEmptyList() {
         try {
-            Plane plane = new Plane("foo");
+            Plane plane = new Plane(URI.create("caom:FOO/foo"));
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
             Assert.assertNull(ca);
         } catch (Exception unexpected) {
@@ -198,7 +195,7 @@ public class CustomAxisUtilTest {
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    
+
     @Test
     public void testSkippableCompute() {
         try {
@@ -206,10 +203,10 @@ public class CustomAxisUtilTest {
             Chunk c = plane.getArtifacts().iterator().next().getParts().iterator().next().getChunks().iterator().next();
             CoordAxis1D axis = new CoordAxis1D(new Axis(TEST_CTYPE, TEST_CUNIT));
             c.custom = new CustomWCS(axis);
-            
+
             CustomAxis ca = CustomAxisUtil.compute(plane.getArtifacts());
 
-            Assert.assertNull("no custom bounds", ca.bounds);
+            Assert.assertNull("no custom bounds", ca);
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
@@ -233,10 +230,9 @@ public class CustomAxisUtilTest {
             log.debug("testComputeFromRange: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
         } catch (Exception unexpected) {
@@ -261,10 +257,9 @@ public class CustomAxisUtilTest {
             log.debug("testComputeFromBounds: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertEquals(2, actual.bounds.getSamples().size());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertEquals(2, actual.getSamples().size());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue(), 1L);
         } catch (Exception unexpected) {
@@ -288,10 +283,9 @@ public class CustomAxisUtilTest {
             log.debug("testComputeFromFunction: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
         } catch (Exception unexpected) {
@@ -306,7 +300,7 @@ public class CustomAxisUtilTest {
             CoordAxis1D axis = new CoordAxis1D(new Axis(TEST_CTYPE, TEST_CUNIT));
             CustomWCS wcs = new CustomWCS(axis);
             wcs.getAxis().function = new CoordFunction1D(10L, 0.0, new RefCoord(0.5, 54321.0));
-            Interval i = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
+            Interval<Double> i = CustomAxisUtil.toInterval(wcs, wcs.getAxis().function);
             Assert.fail("expected IllegalArgumentException, got: " + i);
         } catch (IllegalArgumentException expected) {
             log.info("caught expected: " + expected);
@@ -343,10 +337,9 @@ public class CustomAxisUtilTest {
             log.info("testComputeFromFunction: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.0001);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.0001);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.0001);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.0001);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
 
@@ -371,10 +364,9 @@ public class CustomAxisUtilTest {
             log.info("testComputeFromMultipleFunctionOverlap: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.01);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
 
@@ -394,12 +386,12 @@ public class CustomAxisUtilTest {
             Plane plane;
             CustomAxis actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.THIS);
 
             // add some aux artifacts, should not effect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -408,10 +400,9 @@ public class CustomAxisUtilTest {
             log.debug("testComputeFromScience: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.01);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
 
@@ -424,34 +415,17 @@ public class CustomAxisUtilTest {
     @Test
     public void testComputeFromCalibration() {
         try {
-            double expectedLB = 54321.0;
-            double expectedUB = expectedLB + 200 * 0.01;
-            long expectedDimension = 200L;
-
-            Plane plane;
-            CustomAxis actual;
-
-            plane = getTestSetRange(1, 1, 1, ProductType.CALIBRATION);
+            Plane plane = getTestSetRange(1, 1, 1, DataLinkSemantics.CALIBRATION);
 
             // add some aux artifacts, should not affect result
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.AUXILIARY, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.AUXILIARY, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
-            actual = CustomAxisUtil.compute(plane.getArtifacts());
-
-            log.debug("testComputeFromScience: " + actual);
-
-            Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
-            Assert.assertNotNull(actual.dimension);
-            Assert.assertEquals(expectedDimension, actual.dimension.longValue());
-
+            CustomAxis actual = CustomAxisUtil.compute(plane.getArtifacts());
+            Assert.assertNull(actual);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -468,12 +442,12 @@ public class CustomAxisUtilTest {
             Plane plane;
             CustomAxis actual;
 
-            plane = getTestSetRange(1, 1, 1, ProductType.SCIENCE);
+            plane = getTestSetRange(1, 1, 1, DataLinkSemantics.THIS);
 
             // add some CAL artifacts, should not effect result since SCIENCE above
             Plane tmp = getTestSetRange(1, 1, 3);
             Artifact tmpA = tmp.getArtifacts().iterator().next();
-            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), ProductType.CALIBRATION, ReleaseType.DATA);
+            Artifact aux = new Artifact(new URI("ad:foo/bar/aux"), DataLinkSemantics.CALIBRATION, ReleaseType.DATA);
             aux.getParts().addAll(tmpA.getParts());
             plane.getArtifacts().add(aux);
 
@@ -482,10 +456,9 @@ public class CustomAxisUtilTest {
             log.debug("testComputeFromScience: " + actual);
 
             Assert.assertNotNull(actual);
-            Assert.assertNotNull(actual.bounds);
-            Assert.assertEquals(expectedLB, actual.bounds.getLower(), 0.01);
-            Assert.assertEquals(expectedUB, actual.bounds.getUpper(), 0.01);
-            Assert.assertFalse(actual.bounds.getSamples().isEmpty());
+            Assert.assertEquals(expectedLB, actual.getBounds().getLower(), 0.01);
+            Assert.assertEquals(expectedUB, actual.getBounds().getUpper(), 0.01);
+            Assert.assertFalse(actual.getSamples().isEmpty());
             Assert.assertNotNull(actual.dimension);
             Assert.assertEquals(expectedDimension, actual.dimension.longValue());
         } catch (Exception unexpected) {
@@ -495,22 +468,22 @@ public class CustomAxisUtilTest {
     }
 
     Plane getTestSetRange(int numA, int numP, int numC)
-        throws URISyntaxException {
-        return getTestSetRange(numA, numP, numC, ProductType.SCIENCE);
+            throws URISyntaxException {
+        return getTestSetRange(numA, numP, numC, DataLinkSemantics.THIS);
     }
 
-    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype)
-        throws URISyntaxException {
+    Plane getTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype)
+            throws URISyntaxException {
         return getTestSetRange(numA, numP, numC, ptype, TEST_CTYPE, TEST_CUNIT);
     }
 
-    Plane getTestSetRange(int numA, int numP, int numC, ProductType ptype, String ctype, String cunit)
-        throws URISyntaxException {
+    Plane getTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype, String ctype, String cunit)
+            throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
             Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
@@ -532,19 +505,19 @@ public class CustomAxisUtilTest {
         return plane;
     }
 
-    Plane getMixedTestSetRange(int numA, int numP, int numC, ProductType ptype)
-        throws URISyntaxException {
+    Plane getMixedTestSetRange(int numA, int numP, int numC, DataLinkSemantics ptype)
+            throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
             Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
-                Part np = new Part(new Integer(p));
+                Part np = new Part(p);
                 na.getParts().add(np);
                 for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
@@ -565,24 +538,24 @@ public class CustomAxisUtilTest {
     }
 
     Plane getMixedProductTypeRange(int numA, int numP, int numC)
-        throws URISyntaxException {
+            throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        ProductType ptype;
-        Plane plane = new Plane("foo");
+        DataLinkSemantics ptype;
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
             if ((a % 2) == 0) {
-                ptype = ProductType.CALIBRATION;
+                ptype = DataLinkSemantics.CALIBRATION;
             } else {
-                ptype = ProductType.SCIENCE;
+                ptype = DataLinkSemantics.THIS;
             }
             Artifact na = new Artifact(new URI("foo", "bar" + a, null), ptype, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
-                Part np = new Part(new Integer(p));
+                Part np = new Part(p);
                 na.getParts().add(np);
                 for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
@@ -599,18 +572,18 @@ public class CustomAxisUtilTest {
     }
 
     Plane getTestSetBounds(int numA, int numP, int numC)
-        throws URISyntaxException {
+            throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.THIS, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
-                Part np = new Part(new Integer(p));
+                Part np = new Part(p);
                 na.getParts().add(np);
                 for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
@@ -626,23 +599,23 @@ public class CustomAxisUtilTest {
     }
 
     Plane getTestSetFunction(int numA, int numP, int numC, boolean shift)
-        throws URISyntaxException {
+            throws URISyntaxException {
         double px = 0.5;
         double sx = 54321.0;
         double nx = 200.0;
         double ds = 0.01;
-        Plane plane = new Plane("foo");
+        Plane plane = new Plane(URI.create("caom:FOO/foo"));
         int n = 0;
         for (int a = 0; a < numA; a++) {
-            Artifact na = new Artifact(new URI("foo", "bar" + a, null), ProductType.SCIENCE, ReleaseType.DATA);
+            Artifact na = new Artifact(new URI("foo", "bar" + a, null), DataLinkSemantics.THIS, ReleaseType.DATA);
             plane.getArtifacts().add(na);
             for (int p = 0; p < numP; p++) {
-                Part np = new Part(new Integer(p));
+                Part np = new Part(p);
                 na.getParts().add(np);
                 for (int c = 0; c < numC; c++) {
                     Chunk nc = new Chunk();
                     np.getChunks().add(nc);
-                    nc.custom = getTestFunction( px, sx + n * nx * ds, nx, ds);
+                    nc.custom = getTestFunction(px, sx + n * nx * ds, nx, ds);
                     if (shift) {
                         n++;
                     }
@@ -690,7 +663,5 @@ public class CustomAxisUtilTest {
         return wcs;
     }
 
-
     // TODO: add getBounds test as in EnergyUtilTest. testGetBoundsWaveBounds()
-
 }

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,27 +69,27 @@
 
 package ca.nrc.cadc.caom2.compute;
 
-import ca.nrc.cadc.caom2.Artifact;
-import ca.nrc.cadc.caom2.Chunk;
-import ca.nrc.cadc.caom2.Part;
-import ca.nrc.cadc.caom2.PolarizationState;
-import ca.nrc.cadc.caom2.ProductType;
-import ca.nrc.cadc.caom2.types.IllegalPolygonException;
-import ca.nrc.cadc.caom2.types.Interval;
-import ca.nrc.cadc.caom2.types.MultiPolygon;
-import ca.nrc.cadc.caom2.types.Point;
-import ca.nrc.cadc.caom2.wcs.CoordAxis1D;
-import ca.nrc.cadc.caom2.wcs.CoordRange1D;
-import ca.nrc.cadc.caom2.wcs.CustomWCS;
-import ca.nrc.cadc.caom2.wcs.PolarizationWCS;
-import ca.nrc.cadc.caom2.wcs.SpatialWCS;
-import ca.nrc.cadc.caom2.wcs.SpectralWCS;
-import ca.nrc.cadc.caom2.wcs.TemporalWCS;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.InvalidPolygonException;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.wcs.Transform;
 import ca.nrc.cadc.wcs.exceptions.NoSuchKeywordException;
 import ca.nrc.cadc.wcs.exceptions.WCSLibRuntimeException;
 import java.util.TreeMap;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.Chunk;
+import org.opencadc.caom2.Part;
+import org.opencadc.caom2.PolarizationState;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
+import org.opencadc.caom2.wcs.CoordAxis1D;
+import org.opencadc.caom2.wcs.CoordRange1D;
+import org.opencadc.caom2.wcs.CustomWCS;
+import org.opencadc.caom2.wcs.PolarizationWCS;
+import org.opencadc.caom2.wcs.SpatialWCS;
+import org.opencadc.caom2.wcs.SpectralWCS;
+import org.opencadc.caom2.wcs.TemporalWCS;
 
 /**
  * Created by jeevesh
@@ -112,11 +112,11 @@ public class CaomWCSValidator {
         filterByProductType = "true".equals(System.getProperty(CaomWCSValidator.class.getName() + ".filterByProductType"));
     }
     
-    private static boolean typeFilter(ProductType t) {
+    private static boolean typeFilter(DataLinkSemantics t) {
         if (!filterByProductType) {
             return true;
         }
-        return t == null || ProductType.SCIENCE.equals(t) || ProductType.CALIBRATION.equals(t);
+        return t == null || DataLinkSemantics.THIS.equals(t) || DataLinkSemantics.CALIBRATION.equals(t);
     }
     
     /**
@@ -165,7 +165,7 @@ public class CaomWCSValidator {
                 // Convert to polygon using native coordinate system
                 PositionUtil.CoordSys csys = PositionUtil.inferCoordSys(position);
                 Point center = null;
-                MultiPolygon mp = PositionUtil.toPolygon(position, csys.swappedAxes);
+                Shape mp = PositionUtil.toShape(position, csys.swappedAxes);
                 if (mp != null) {
                     center = mp.getCenter();
                 }
@@ -173,8 +173,8 @@ public class CaomWCSValidator {
                 if (center != null && position.getAxis().function != null) {
                     log.debug("center: " + center);
                     double[] coords = new double[2];
-                    coords[0] = center.cval1;
-                    coords[1] = center.cval2;
+                    coords[0] = center.getLongitude();
+                    coords[1] = center.getLatitude();
                     
                     WCSWrapper map = new WCSWrapper(position, 1, 2);
                     Transform transform = new Transform(map);
@@ -182,7 +182,7 @@ public class CaomWCSValidator {
                     log.debug("center pixels: " + tr.coordinates[0] + "," + tr.coordinates[1]);
                 }
             } catch (NoSuchKeywordException | WCSLibRuntimeException 
-                    | UnsupportedOperationException | IllegalPolygonException ex) {
+                    | UnsupportedOperationException | InvalidPolygonException ex) {
                 throw new IllegalArgumentException(SPATIAL_WCS_VALIDATION_ERROR + ex.getMessage() + " in " + context, ex);
             }
         }
@@ -192,7 +192,7 @@ public class CaomWCSValidator {
         if (energy != null) {
             try {
                 CoordAxis1D energyAxis = energy.getAxis();
-                Interval si = null;
+                Interval<Double> si = null;
 
                 if (energyAxis.range != null) {
                     si = EnergyUtil.toInterval(energy, energyAxis.range);
