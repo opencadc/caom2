@@ -178,7 +178,8 @@ public class ObservationStateIteratorQuery  {
             }
             if (minLastModified != null) {
                 ps.setTimestamp(col++, new Timestamp(minLastModified.getTime()), utc);
-            } else if (maxLastModified != null) {
+            }
+            if (maxLastModified != null) {
                 ps.setTimestamp(col++, new Timestamp(maxLastModified.getTime()), utc);
             }
             if (batchSize != null) {

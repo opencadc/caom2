@@ -69,13 +69,11 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
-import org.opencadc.caom2.DeletedObservationEvent;
-import org.opencadc.caom2.Observation;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.ConnectionConfig;
 import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
+import ca.nrc.cadc.io.ResourceIterator;
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;
@@ -87,6 +85,8 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
+import org.opencadc.caom2.DeletedObservationEvent;
 
 /**
  *
@@ -158,11 +158,11 @@ public abstract class AbstractDeletedEntityDAOTest {
 
             log.info("put: " + o1);
             doeDAO.put(o1);
-            Assert.assertNotNull("side effect: DeletedObservation.lastModified", o1.getLastModified());
+            Assert.assertNotNull("side effect: DeletedObservationEvent.lastModified", o1.getLastModified());
 
             DeletedObservationEvent per = doeDAO.get(id1);
-            Assert.assertNotNull("found DeletedObservation " + id1, per);
-            Assert.assertNotNull("DeletedObservation.lastModified", per.getLastModified());
+            Assert.assertNotNull("found DeletedObservationEvent " + id1, per);
+            Assert.assertNotNull("DeletedObservationEvent.lastModified", per.getLastModified());
 
             doeDAO.delete(per.getID());
 
@@ -188,7 +188,7 @@ public abstract class AbstractDeletedEntityDAOTest {
 
             log.info("put: " + o1);
             dadeDAO.put(o1);
-            Assert.assertNotNull("side effect: DeletedObservation.lastModified", o1.getLastModified());
+            Assert.assertNotNull("side effect: DeletedObservationEvent.lastModified", o1.getLastModified());
 
             DeletedArtifactDescriptionEvent per = dadeDAO.get(id1);
             Assert.assertNotNull("found DeletedArtifactDescriptionEvent " + id1, per);
@@ -205,9 +205,8 @@ public abstract class AbstractDeletedEntityDAOTest {
         }
     }
 
-    /*
     @Test
-    public void testGetListDeletedObservation() {
+    public void testGetListDeletedObservationEvent() {
         try {
             UUID id1 = new UUID(0L, 100L);
             UUID id2 = new UUID(0L, 200L);
@@ -227,11 +226,11 @@ public abstract class AbstractDeletedEntityDAOTest {
             URI u4 = new URI("caom:FOO/bar4");
             URI u5 = new URI("caom:FOO/bar5");
 
-            DeletedObservation o1 = new DeletedObservation(id1, u1);
-            DeletedObservation o2 = new DeletedObservation(id2, u2);
-            DeletedObservation o3 = new DeletedObservation(id3, u3);
-            DeletedObservation o4 = new DeletedObservation(id4, u4);
-            DeletedObservation o5 = new DeletedObservation(id5, u5);
+            DeletedObservationEvent o1 = new DeletedObservationEvent(id1, u1);
+            DeletedObservationEvent o2 = new DeletedObservationEvent(id2, u2);
+            DeletedObservationEvent o3 = new DeletedObservationEvent(id3, u3);
+            DeletedObservationEvent o4 = new DeletedObservationEvent(id4, u4);
+            DeletedObservationEvent o5 = new DeletedObservationEvent(id5, u5);
 
             log.info("put: \n"
                 + o1 + "\n"
@@ -241,41 +240,44 @@ public abstract class AbstractDeletedEntityDAOTest {
                 + o5 + "\n"
             );
             
-            dao.put(o1);
+            doeDAO.put(o1);
             Thread.sleep(10L);
-            dao.put(o2);
+            doeDAO.put(o2);
             Thread.sleep(10L);
-            dao.put(o3);
+            doeDAO.put(o3);
             Thread.sleep(10L);
-            dao.put(o4);
+            doeDAO.put(o4);
             Thread.sleep(10L);
-            dao.put(o5);
+            doeDAO.put(o5);
 
-            Assert.assertNotNull("DeletedObservation.lastModified", o1.lastModified);
-            Date start = new Date(o1.lastModified.getTime() - 100L); // past
-            Date end = null;
-            Integer batchSize = new Integer(3);
-            List<DeletedObservation> dels;
+            Assert.assertNotNull("DeletedObservationEvent.lastModified", o1.getLastModified());
+            Date start = new Date(o1.getLastModified().getTime() - 100L); // in the past
+            Date end = null; // no end limit
+            Integer batchSize = 3;
             
-            // get first batch
-            dels = dao.getList(DeletedObservation.class, start, end, batchSize);
-            Assert.assertNotNull("deleted list", dels);
-            Assert.assertEquals(3, dels.size());
-            Assert.assertEquals(o1.getID(), dels.get(0).getID());
-            Assert.assertEquals(o2.getID(), dels.get(1).getID());
-            Assert.assertEquals(o3.getID(), dels.get(2).getID());
-
-            // get next batch
-            dels = dao.getList(DeletedObservation.class, o3.lastModified, end, batchSize);
-            Assert.assertNotNull("deleted list/next batch", dels);
-            Assert.assertEquals(3, dels.size()); // o3 gets picked up by the >=
-            Assert.assertEquals(o3.getID(), dels.get(0).getID());
-            Assert.assertEquals(o4.getID(), dels.get(1).getID());
-            Assert.assertEquals(o5.getID(), dels.get(2).getID());
+            try (ResourceIterator<DeletedObservationEvent> dels = doeDAO.iterator("caom:", start, end, batchSize)) {
+                Assert.assertNotNull(dels);
+                Assert.assertTrue("iter has 1", dels.hasNext());
+                Assert.assertEquals(o1.getID(), dels.next().getID());
+                Assert.assertTrue("iter has 2", dels.hasNext());
+                Assert.assertEquals(o2.getID(), dels.next().getID());
+                Assert.assertTrue("iter has 3", dels.hasNext());
+                Assert.assertEquals(o3.getID(), dels.next().getID());
+            }
+            
+            try (ResourceIterator<DeletedObservationEvent> dels = doeDAO.iterator("caom:", o3.getLastModified(), end, batchSize)) {
+                Assert.assertNotNull(dels);
+                Assert.assertTrue("iter has 3", dels.hasNext());
+                Assert.assertEquals(o3.getID(), dels.next().getID());
+                Assert.assertTrue("iter has 4", dels.hasNext());
+                Assert.assertEquals(o4.getID(), dels.next().getID());
+                Assert.assertTrue("iter has 5", dels.hasNext());
+                Assert.assertEquals(o5.getID(), dels.next().getID());
+            }
+            
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-     */
 }

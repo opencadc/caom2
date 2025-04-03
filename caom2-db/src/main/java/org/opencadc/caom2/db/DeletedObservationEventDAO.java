@@ -74,6 +74,7 @@ import java.util.Date;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.DeletedObservationEvent;
+import org.springframework.jdbc.BadSqlGrammarException;
 
 /**
  *
@@ -91,8 +92,24 @@ public class DeletedObservationEventDAO extends AbstractEntityDAO<DeletedObserva
     }
 
     // use case: repo sync API
-    public ResourceIterator<DeletedObservationEvent> iterator(String namespace, Date start, Date end, Integer maxrec) {
-        throw new UnsupportedOperationException("not implemented");
+    public ResourceIterator<DeletedObservationEvent> iterator(String collection, 
+        Date minLastModified, Date maxLastModified, Integer batchSize) {
+        checkInit();
+        long t = System.currentTimeMillis();
+
+        try {
+            DeletedObservationEventIteratorQuery iter = new DeletedObservationEventIteratorQuery(gen, collection);
+            iter.setMinLastModified(minLastModified);
+            iter.setMaxLastModified(maxLastModified);
+            iter.setBatchSize(batchSize);
+            return iter.query(dataSource);
+        } catch (BadSqlGrammarException ex) {
+            handleInternalFail(ex);
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("iterator: " + dt + "ms");
+        }
+        throw new RuntimeException("BUG: should be unreachable");
     }
 
     // standard crud operations
