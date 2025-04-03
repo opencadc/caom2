@@ -73,20 +73,23 @@ import java.net.URI;
 
 public class CollectionEntry {
     private final String collection;
+    private final String obsIdentifierPrefix;
     private final URI basePublisherID;
-    private final boolean computeMetadata;
-    private final boolean proposalGroup;
+    public boolean computeMetadata;
+    public boolean proposalGroup;
 
-    public CollectionEntry(String collection, URI basePublisherID, boolean computeMetadata, boolean proposalGroup) {
-
+    public CollectionEntry(String collection, String obsIdentifierPrefix, URI basePublisherID) {
         this.collection = collection;
+        this.obsIdentifierPrefix = obsIdentifierPrefix;
         this.basePublisherID = basePublisherID;
-        this.computeMetadata = computeMetadata;
-        this.proposalGroup = proposalGroup;
     }
 
     public String getCollection() {
         return this.collection;
+    }
+
+    public String getObsIdentifierPrefix() {
+        return obsIdentifierPrefix;
     }
 
     public URI getBasePublisherID() {
@@ -103,9 +106,8 @@ public class CollectionEntry {
 
     @Override
     public String toString() {
-        return String.format("CollectionEntry=[collection=[%s], bashPublisherID=[%s], "
-                        + "computeMetadata=[%s], proposalGroup=[%s]]",
-                collection, basePublisherID, computeMetadata, proposalGroup);
+        return String.format("CollectionEntry=[%s, %s, basePublisherID=%s, computeMetadata=[%s], proposalGroup=[%s]]",
+                collection, obsIdentifierPrefix, basePublisherID, computeMetadata, proposalGroup);
     }
 
 }

@@ -111,7 +111,7 @@ public class GetDeletedAction extends RepoAction {
 
         DeletedObservationEventDAO dao = getDeletedDAO();
 
-        try (ResourceIterator<DeletedObservationEvent> iter = dao.iterator(getCollection(), start, end, maxRec)) {
+        try (ResourceIterator<DeletedObservationEvent> iter = dao.iterator(getNamespace(), start, end, maxRec)) {
             long byteCount = writeDeleted(iter);
             logInfo.setBytes(byteCount);
         }

@@ -67,7 +67,7 @@
  ************************************************************************
  */
 
-package org.opencadc.caom2.db;
+package org.opencadc.caom2.db.mappers;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
