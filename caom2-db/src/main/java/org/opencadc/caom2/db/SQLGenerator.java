@@ -69,7 +69,6 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.db.mappers.PartialRowMapper;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.mappers.TimestampRowMapper;
 import java.net.URI;
@@ -106,6 +105,7 @@ import org.opencadc.caom2.db.mappers.ObservationMapper;
 import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateMapper;
+import org.opencadc.caom2.db.mappers.PartialRowMapper;
 import org.opencadc.caom2.db.mappers.PlaneMapper;
 import org.opencadc.caom2.db.skel.ArtifactSkeleton;
 import org.opencadc.caom2.db.skel.ChunkSkeleton;

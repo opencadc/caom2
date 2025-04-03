@@ -88,19 +88,15 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.CalibrationLevel;
-import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.Instrument;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.ObservationIntentType;
-import org.opencadc.caom2.Part;
 import org.opencadc.caom2.Plane;
 import org.opencadc.caom2.ReleaseType;
 import org.opencadc.caom2.SimpleObservation;
 import org.opencadc.caom2.Telescope;
 import org.opencadc.caom2.util.CaomValidator;
 import org.opencadc.caom2.vocab.DataLinkSemantics;
-import org.opencadc.caom2.vocab.DataProductType;
 import org.opencadc.caom2.xml.ObservationWriter;
 
 /**
