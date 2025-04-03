@@ -84,17 +84,18 @@ public class ObservationState {
 
     private final UUID id;
     private final URI uri;
-
-    private Date maxLastModified;
-    private URI accMetaChecksum;
+    private final Date maxLastModified;
+    private final URI accMetaChecksum;
     
     // optional complete observation OR error
     public Observation observation;
     public Exception error;
     
-    public ObservationState(UUID id, URI uri) {
+    public ObservationState(UUID id, URI uri, Date maxLastModified, URI accMetaChecksum) {
         this.id = id;
         this.uri = uri;
+        this.maxLastModified = maxLastModified;
+        this.accMetaChecksum = accMetaChecksum;
     }
 
     public UUID getID() {
