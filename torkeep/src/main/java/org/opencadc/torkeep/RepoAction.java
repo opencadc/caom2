@@ -113,6 +113,7 @@ public abstract class RepoAction extends RestAction {
     protected boolean computeMetadata;
     // protected Map<String, Object> raGroupConfig = new HashMap<String, Object>();
     private String collection;
+    private String namespace;
     private transient TorkeepConfig torkeepConfig;
     private transient ObservationDAO observationDAO;
     private transient DeletedObservationEventDAO deletedDAO;
@@ -127,28 +128,42 @@ public abstract class RepoAction extends RestAction {
             if (path == null) {
                 return;
             }
-            log.warn("raw path: " + path);
+            log.debug("raw path: " + path);
             try {
                 String[] ss = path.split("/");
                 this.collection = ss[0];
+                log.warn("collection: " + collection);
+                
+                TorkeepConfig tc = getTorkeepConfig();
+                CollectionEntry ce = tc.getConfig(collection);
+                if (ce == null) {
+                    // done parsing path
+                    return;
+                }
+                String base = ce.getObsIdentifierPrefix();
+                this.namespace = base + collection;
+                if (base.startsWith("ivo://")) {
+                    this.namespace += "?";
+                } else {
+                    this.namespace += "/";
+                }
+                log.warn("namespace: " + namespace);
+                
+                StringBuilder sb = new StringBuilder();
+                sb.append(namespace);
+                    
                 if (ss.length > 1) {
-                    TorkeepConfig tc = getTorkeepConfig();
-                    CollectionEntry ce = tc.getConfig(collection);
-                    if (ce == null) {
-                        // done parsing path
-                        return;
+                    for (int i = 1; i < ss.length; i++) {
+                        sb.append(ss[i]);
+                        if (i + 1 < ss.length) {
+                            sb.append("/");
+                        }
                     }
-                    String base = ce.getObsIdentifierPrefix();
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(base);
-                    if (base.startsWith("ivo://")) {
-                        path = path.replace('/', '?');  // first occurance only
-                    }
-                    sb.append(path);
                     log.warn("path-to-uri: " + sb.toString());
                     URI uri = new URI(sb.toString());
                     CaomValidator.assertValidIdentifier(RepoAction.class, "observation.uri", uri, true);
                     this.observationURI = uri;
+                    log.warn("observation.uri: " + observationURI);
                 }
             } catch (URISyntaxException ex) {
                 throw new IllegalArgumentException("invalid path-to-URI: " + path);
@@ -244,6 +259,10 @@ public abstract class RepoAction extends RestAction {
         return collection;
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
     private Map<String, Object> getDAOConfig(String collection) throws IOException {
         Map<String, Object> daoConfig = TorkeepInitAction.getDAOConfig();
         TorkeepConfig tc = getTorkeepConfig();
@@ -330,7 +349,7 @@ public abstract class RepoAction extends RestAction {
                 grantURI = URI.create(base + getCollection() + "?");
             }
         }
-        log.warn("authorizing: " + grantURI);
+        log.debug("authorizing: " + grantURI);
 
         try {
             PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);

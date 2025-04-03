@@ -87,7 +87,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.SimpleObservation;
-import static org.opencadc.torkeep.AbstractIntTest.TEST_COLLECTION;
 
 /**
  *
@@ -194,11 +193,13 @@ public class DeletedTest extends AbstractIntTest {
                 String suri = tokens[1];
                 Assert.assertEquals("uri", obs.getURI().toASCIIString(), suri);
 
-                Date lastModified = df.parse(tokens[3]);
+                Date lastModified = df.parse(tokens[2]);
                 Assert.assertTrue(inserted.compareTo(lastModified) < 0);
                 //Assert.assertTrue(afterDelete.compareTo(lastModified) > 0);
 
-                log.info("testListDeletedSuccess " + id + " " + suri + " " + df.format(lastModified));
+                URI metaChecksum = new URI(tokens[3]);
+                Assert.assertNotNull(metaChecksum);
+                log.info("testListDeletedSuccess " + id + " " + suri + " " + df.format(lastModified) + " " + metaChecksum);
 
                 line = r.readLine();
             }
