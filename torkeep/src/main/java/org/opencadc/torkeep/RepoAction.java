@@ -73,6 +73,7 @@ import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
+import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -117,30 +118,44 @@ public abstract class RepoAction extends RestAction {
     private transient DeletedObservationEventDAO deletedDAO;
 
     protected RepoAction() {
+        super();
     }
 
     private void initTarget() {
-        log.debug("initTarget collection: " + this.collection);
         if (this.collection == null) {
             String path = syncInput.getPath();
-            log.debug("syncInput path: " + path);
-            if (path != null) {
-                String[] parts = path.split("/");
-                this.collection = parts[0];
-                log.debug("path collection: " + parts[0]);
-                if (parts.length > 1) {
-                    String suri = "caom:" + path;
-                    log.debug("path uri: " + suri);
-                    try {
-                        this.observationURI = new URI(suri);
-                    } catch (URISyntaxException | IllegalArgumentException ex) {
-                        throw new IllegalArgumentException("invalid input: " + suri, ex);
+            if (path == null) {
+                return;
+            }
+            log.warn("raw path: " + path);
+            try {
+                String[] ss = path.split("/");
+                this.collection = ss[0];
+                if (ss.length > 1) {
+                    TorkeepConfig tc = getTorkeepConfig();
+                    CollectionEntry ce = tc.getConfig(collection);
+                    if (ce == null) {
+                        // done parsing path
+                        return;
                     }
+                    String base = ce.getObsIdentifierPrefix();
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(base);
+                    if (base.startsWith("ivo://")) {
+                        path = path.replace('/', '?');  // first occurance only
+                    }
+                    sb.append(path);
+                    log.warn("path-to-uri: " + sb.toString());
+                    URI uri = new URI(sb.toString());
+                    CaomValidator.assertValidIdentifier(RepoAction.class, "observation.uri", uri, true);
+                    this.observationURI = uri;
                 }
+            } catch (URISyntaxException ex) {
+                throw new IllegalArgumentException("invalid path-to-URI: " + path);
             }
         }
     }
-
+    
     // used by GetAction and GetDeletedAction
     protected void doGetCollectionList() throws Exception {
         log.debug("START: (collection list)");
@@ -219,16 +234,14 @@ public abstract class RepoAction extends RestAction {
         return ret;
     }
     
-    // return uri for get-observation, null for get-list, and throw for invalid
-    protected URI getObservationURI() {
+    protected final URI getObservationURI() {
         initTarget();
-        return this.observationURI;
+        return observationURI;
     }
 
-    // return the specified collection or throw for invalid
-    protected String getCollection() {
+    protected final String getCollection() {
         initTarget();
-        return this.collection;
+        return collection;
     }
 
     private Map<String, Object> getDAOConfig(String collection) throws IOException {
@@ -273,7 +286,10 @@ public abstract class RepoAction extends RestAction {
         }
         Object obs = this.syncInput.getContent(ObservationInlineContentHandler.CONTENT_KEY);
         if (obs != null) {
-            return (Observation) obs;
+            Observation ret = (Observation) obs;
+            this.collection = ret.getCollection();  // config
+            this.observationURI = ret.getURI();     // permissions
+            return ret;
         }
         return null;
     }
@@ -300,16 +316,21 @@ public abstract class RepoAction extends RestAction {
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry collectionEntry = tc.getConfig(getCollection());
         if (collectionEntry == null) {
-            throw new ResourceNotFoundException("not found: " + getObservationURI());
+            throw new ResourceNotFoundException("not found: " + getCollection());
         }
 
         URI grantURI;
         if (getObservationURI() != null) {
             grantURI = getObservationURI();
         } else {
-            grantURI = URI.create("caom:" + getCollection() + "/");
+            String base = collectionEntry.getObsIdentifierPrefix();
+            if (base.equals("caom:")) {
+                grantURI = URI.create("caom:" + getCollection() + "/");
+            } else {
+                grantURI = URI.create(base + getCollection() + "?");
+            }
         }
-        log.debug("authorizing: " + grantURI);
+        log.warn("authorizing: " + grantURI);
 
         try {
             PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
@@ -340,7 +361,7 @@ public abstract class RepoAction extends RestAction {
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry entry = tc.getConfig(getCollection());
         if (entry == null) {
-            throw new ResourceNotFoundException("not found: " + getObservationURI());
+            throw new ResourceNotFoundException("not found: " + getCollection());
         }
 
         URI grantURI;
@@ -360,21 +381,31 @@ public abstract class RepoAction extends RestAction {
     }
 
     protected void assignPublisherID(Observation obs) throws URISyntaxException {
-        Map<String, Object> daoConfig = TorkeepInitAction.getDAOConfig();
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry collectionEntry = tc.getConfig(obs.getCollection());
         String basePublisherID = null;
         if (collectionEntry != null) {
             basePublisherID = collectionEntry.getBasePublisherID().toASCIIString();
         }
+        assignPublisherID(obs, basePublisherID);
+    }
+    
+    static void assignPublisherID(Observation obs, String basePublisherID) throws URISyntaxException {
         for (Plane p : obs.getPlanes()) {
             URI uri = p.getURI();
             if ("caom".equals(uri.getScheme())) {
+                if (basePublisherID == null) {
+                    throw new IllegalArgumentException("invalid Plane.uri: " + uri.toASCIIString()
+                        + " reason: collection " + obs.getCollection() + " not configured with a base publisherID");
+                }
+                // {basePublisherID}/{collection}?{plane identifier}
+                // assume caom:{collection}/{plane identifier}
                 String s1 = obs.getCollection() + "/";
                 String s2 = obs.getCollection() + "?";
                 String s = uri.getSchemeSpecificPart().replace(s1, s2);
                 p.publisherID = new URI(basePublisherID + s);
             } else {
+                // assume Plane.uri -> publisherID because this is the origin metadata repository
                 p.publisherID = p.getURI();
             }
         }

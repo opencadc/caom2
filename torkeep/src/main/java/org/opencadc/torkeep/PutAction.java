@@ -85,6 +85,7 @@ public class PutAction extends RepoAction {
     private static final Logger log = Logger.getLogger(PutAction.class);
 
     public PutAction() {
+        super();
     }
 
     @Override
@@ -106,7 +107,7 @@ public class PutAction extends RepoAction {
         validate(obs);
 
         ObservationDAO dao = getDAO();
-        // TODO: allow PUT to update? replace?
+        // TODO: allow PUT to overwrite?
         ObservationState s = dao.getState(obs.getID());
         if (s == null) {
             s = dao.getState(obs.getURI());

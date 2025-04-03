@@ -98,6 +98,7 @@ public class GetAction extends RepoAction {
     public static final String CAOM_MIMETYPE = "text/x-caom+xml";
 
     public GetAction() {
+        super();
     }
 
     @Override

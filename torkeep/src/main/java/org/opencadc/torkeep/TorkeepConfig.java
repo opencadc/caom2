@@ -90,6 +90,7 @@ public class TorkeepConfig {
 
     private static final String GRANT_PROVIDER_KEY = "org.opencadc.torkeep.grantProvider";
     private static final String COLLECTION_KEY = "org.opencadc.torkeep.collection";
+    private static final String OBS_IDENT_KEY = ".obsIdentifierPrefix";
     private static final String BASE_PUBLISHER_ID_KEY = ".basePublisherID";
     private static final String COMPUTE_METADATA_KEY = ".computeMetadata";
     private static final String PROPOSAL_GROUP_KEY = ".proposalGroup";
@@ -158,6 +159,16 @@ public class TorkeepConfig {
         for (String collection : collections) {
             log.debug("reading collection: " + collection);
 
+            final String obsIdentifierPrefix = getProperty(properties, collection + OBS_IDENT_KEY, errors, true);
+            if (obsIdentifierPrefix != null) {
+                if (obsIdentifierPrefix.equals("caom:") 
+                    || (obsIdentifierPrefix.startsWith("ivo://") && obsIdentifierPrefix.endsWith("/"))) {
+                    log.debug("obsIdentifierPrefix: " + obsIdentifierPrefix);
+                } else {
+                    errors.append(String.format("%s: invalid obsIdentifierPrefix %s, expected caom: or ivo://{authority}/",
+                                collection + OBS_IDENT_KEY, obsIdentifierPrefix));
+                }
+            }
             final URI basePublisherID = getBasePublisherID(properties, collection + BASE_PUBLISHER_ID_KEY, errors);
 
             String computeMetadataValue = getProperty(properties, collection + COMPUTE_METADATA_KEY, errors, false);
@@ -177,7 +188,9 @@ public class TorkeepConfig {
                 continue;
             }
 
-            CollectionEntry cc = new CollectionEntry(collection, basePublisherID, computeMetadata, proposalGroup);
+            CollectionEntry cc = new CollectionEntry(collection, obsIdentifierPrefix, basePublisherID);
+            cc.computeMetadata = computeMetadata;
+            cc.proposalGroup = proposalGroup;
             this.configs.add(cc);
             log.debug("added " + cc);
         }
