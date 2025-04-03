@@ -75,6 +75,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 import org.opencadc.caom2.db.Util;
+import org.opencadc.caom2.util.CaomUtil;
 import org.opencadc.caom2.util.ObservationState;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -96,15 +97,10 @@ public class ObservationStateMapper implements RowMapper<ObservationState> {
     public ObservationState mapRow(ResultSet rs, int i)
             throws SQLException {
         int col = 1;
-
         URI uri = Util.getURI(rs, col++);
         Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
         URI accMetaChecksum = Util.getURI(rs, col++);
         UUID id = Util.getUUID(rs, col++);
-
-        ObservationState ret = new ObservationState(id, uri);
-        ret.accMetaChecksum = accMetaChecksum;
-        ret.maxLastModified = maxLastModified;
-        return ret;
+        return new ObservationState(id, uri, maxLastModified, accMetaChecksum);
     }
 }

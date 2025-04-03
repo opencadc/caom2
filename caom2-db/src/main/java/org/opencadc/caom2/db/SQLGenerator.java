@@ -3,7 +3,7 @@
  *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
  **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
  *
- *  (c) 2024.                            (c) 2024.
+ *  (c) 2025.                            (c) 2025.
  *  Government of Canada                 Gouvernement du Canada
  *  National Research Council            Conseil national de recherches
  *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,10 +69,7 @@
 
 package org.opencadc.caom2.db;
 
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Shape;
+import org.opencadc.caom2.db.mappers.PartialRowMapper;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.db.mappers.TimestampRowMapper;
 import java.net.URI;
@@ -80,60 +77,36 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.text.DateFormat;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.log4j.Logger;
-import org.opencadc.caom2.Algorithm;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.ArtifactDescription;
-import org.opencadc.caom2.CalibrationLevel;
 import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.CustomAxis;
-import org.opencadc.caom2.DataQuality;
 import org.opencadc.caom2.DeletedArtifactDescriptionEvent;
 import org.opencadc.caom2.DeletedObservationEvent;
 import org.opencadc.caom2.DerivedObservation;
 import org.opencadc.caom2.Energy;
 import org.opencadc.caom2.EnergyTransition;
-import org.opencadc.caom2.Environment;
-import org.opencadc.caom2.Instrument;
-import org.opencadc.caom2.Metrics;
-import org.opencadc.caom2.Observable;
 import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.ObservationIntentType;
 import org.opencadc.caom2.Part;
 import org.opencadc.caom2.Plane;
-import org.opencadc.caom2.Polarization;
 import org.opencadc.caom2.Position;
-import org.opencadc.caom2.Proposal;
-import org.opencadc.caom2.Provenance;
-import org.opencadc.caom2.Quality;
-import org.opencadc.caom2.ReleaseType;
-import org.opencadc.caom2.Requirements;
-import org.opencadc.caom2.SimpleObservation;
-import org.opencadc.caom2.Status;
-import org.opencadc.caom2.Target;
-import org.opencadc.caom2.TargetPosition;
-import org.opencadc.caom2.TargetType;
-import org.opencadc.caom2.Telescope;
 import org.opencadc.caom2.Time;
-import org.opencadc.caom2.Visibility;
 import org.opencadc.caom2.db.mappers.ArtifactDescriptionMapper;
+import org.opencadc.caom2.db.mappers.ArtifactMapper;
 import org.opencadc.caom2.db.mappers.DeletedArtifactDescriptionEventMapper;
 import org.opencadc.caom2.db.mappers.DeletedObservationEventMapper;
+import org.opencadc.caom2.db.mappers.ObservationMapper;
 import org.opencadc.caom2.db.mappers.ObservationSkeletonExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateExtractor;
 import org.opencadc.caom2.db.mappers.ObservationStateMapper;
+import org.opencadc.caom2.db.mappers.PlaneMapper;
 import org.opencadc.caom2.db.skel.ArtifactSkeleton;
 import org.opencadc.caom2.db.skel.ChunkSkeleton;
 import org.opencadc.caom2.db.skel.ObservationSkeleton;
@@ -142,11 +115,7 @@ import org.opencadc.caom2.db.skel.PlaneSkeleton;
 import org.opencadc.caom2.db.skel.Skeleton;
 import org.opencadc.caom2.util.CaomUtil;
 import org.opencadc.caom2.util.ObservationState;
-import org.opencadc.caom2.vocab.CalibrationStatus;
 import org.opencadc.caom2.vocab.DataLinkSemantics;
-import org.opencadc.caom2.vocab.DataProductType;
-import org.opencadc.caom2.vocab.Tracking;
-import org.opencadc.caom2.vocab.UCD;
 import org.opencadc.caom2.wcs.Axis;
 import org.opencadc.caom2.wcs.Coord2D;
 import org.opencadc.caom2.wcs.CoordAxis1D;
@@ -200,8 +169,8 @@ public class SQLGenerator {
         ObservationMember.class, ProvenanceInput.class
     };
 
-    static final String SIMPLE_TYPE = "S";
-    static final String DERIVED_TYPE = "D";
+    public static final String SIMPLE_TYPE = "S";
+    public static final String DERIVED_TYPE = "D";
 
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
@@ -245,24 +214,17 @@ public class SQLGenerator {
     // map of Class to standard alias name used in all select queries (w/ joins)
     protected final Map<Class, String> aliasMap = new TreeMap<>(new ClassComp());
 
-    private SQLGenerator() {
-    }
-
-    protected SQLGenerator(String database, String schema) {
+    private SQLDialect dbDialect;
+    
+    SQLGenerator(String database, String schema) {
         this.database = database;
         this.schema = schema;
+        init();
     }
 
-    /**
-     * Subclasses must call this after configuring various settings.
-     * Configurable flags and their default values:
-     * <pre>
-     * protected boolean persistTransientState = false;      // persist computed metadata
-     * protected boolean persistReadAccessWithAsset = false; // store opimized read access tuples in asset table(s)
-     * protected String fakeSchemaTablePrefix = null;        // table-name prefix for implementations that don't use schema
-     * </pre>
-     */
-    protected void init() {
+    private void init() {
+        this.dbDialect = new PostgreSQLDialect(useIntegerForBoolean);
+        
         for (Class c : ENTITY_CLASSES) {
             String s = c.getSimpleName();
             tableMap.put(c, s);
@@ -293,28 +255,7 @@ public class SQLGenerator {
         //   it hits a null object
         // - the typeCode column is first so the right subclass of observation can be created
         
-        String[] obsColumns = new String[] {
-            "typeCode",
-            "uri", "uriBucket", "collection",
-            "algorithm_name",
-            "obstype", "intent", "sequenceNumber", "metaRelease", "metaReadGroups",
-            "proposal_id", "proposal_pi", "proposal_project", "proposal_title", 
-            "proposal_keywords", "proposal_reference",
-            "target_name", "target_targetID", "target_type", "target_standard",
-            "target_redshift", "target_moving", "target_keywords",
-            "targetPosition_coordsys", "targetPosition_coordinates", "targetPosition_equinox",
-            "telescope_name", "telescope_geoLocationX", "telescope_geoLocationY", "telescope_geoLocationZ", 
-            "telescope_keywords", "telescope_trackingMode",
-            "instrument_name", "instrument_keywords",
-            "environment_seeing", "environment_humidity", "environment_elevation",
-            "environment_tau", "environment_wavelengthTau", "environment_ambientTemp",
-            "environment_photometric",
-            "requirements_flag",
-            "members",
-            "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum", "metaProducer",
-            "obsID" // PK
-        };
+        String[] obsColumns = ObservationMapper.COLUMNS;
         if (persistOptimisations) {
             String[] extraCols = new String[]{
                 // TODO
@@ -329,59 +270,7 @@ public class SQLGenerator {
         };
         columnMap.put(ObservationMember.class, obsMembersColumns);
 
-        String[] planeColumns = new String[] {
-            "obsID", // FK
-            "uri",
-            "publisherID",
-            "metaRelease", "metaReadGroups", 
-            "dataRelease", "dataReadGroups",
-            "dataProductType", 
-            "calibrationLevel",
-
-            "provenance_name", "provenance_reference", "provenance_version", "provenance_project",
-            "provenance_producer", "provenance_runID", "provenance_lastExecuted",
-            "provenance_keywords", "provenance_inputs",
-
-            "metrics_sourceNumberDensity", "metrics_background", "metrics_backgroundStddev",
-            "metrics_fluxDensityLimit", "metrics_magLimit", "metrics_sampleSNR",
-            "quality_flag",
-            
-            "observable_ucd", "observable_calibration",
-            
-            "position_bounds", "position_samples", "position_minBounds",
-            "position_dimension",
-            "position_maxRecoverableScale",
-            "position_resolution", "position_resolutionBounds",
-            "position_sampleSize",
-            "position_calibration",
-
-            "energy_bounds", "energy_samples",
-            "energy_bandpassName", "energy_energyBands",
-            "energy_dimension", 
-            "energy_resolvingPower", "energy_resolvingPowerBounds",
-            "energy_resolution", "energy_resolutionBounds",
-            "energy_sampleSize",
-            "energy_transition_species", "energy_transition_transition",
-            "energy_rest",
-            "energy_calibration",
-
-            "time_bounds", "time_samples",
-            "time_dimension", 
-            "time_exposure", "time_exposureBounds",
-            "time_resolution", "time_resolutionBounds",
-            "time_sampleSize", 
-            "time_calibration",
-
-            "polarization_states", "polarization_dimension",
-
-            "custom_ctype", "custom_bounds", "custom_samples", "custom_dimension",
-
-            "uv_distance", "uv_distributionEccentricity", "uv_distributionFill",
-            
-            "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum", "metaProducer",
-            "planeID" // PK
-        };
+        String[] planeColumns = PlaneMapper.COLUMNS;
         if (persistOptimisations) {
             String[] extraCols = new String[]{
                 //"_q_position_bounds", "_q_position_minBounds,
@@ -405,17 +294,7 @@ public class SQLGenerator {
         };
         columnMap.put(ProvenanceInput.class, provInputColumns);
 
-        String[] artifactColumns = new String[]{
-            "planeID", // FK
-            "uri", "uriBucket",
-            "productType", "releaseType",
-            "contentType", "contentLength", "contentChecksum",
-            "contentRelease", "contentReadGroups",
-            "descriptionID",
-            "lastModified", "maxLastModified",
-            "metaChecksum", "accMetaChecksum", "metaProducer",
-            "artifactID" // PK
-        };
+        String[] artifactColumns = ArtifactMapper.COLUMNS;
         if (persistOptimisations) {
             String[] extraCols = new String[] {
                 // TODO
@@ -572,28 +451,6 @@ public class SQLGenerator {
         return "select CURRENT_TIMESTAMP";
     }
 
-    public String getSelectSQL(URI uri, int depth, boolean skeleton) {
-        StringBuilder sb = new StringBuilder();
-        String alias = getAlias(Observation.class);
-        if (skeleton) {
-            alias = getAlias(ObservationSkeleton.class);
-        }
-        sb.append("SELECT ");
-        sb.append(getObservationSelect(depth, skeleton));
-        sb.append(" WHERE ");
-        sb.append(alias);
-        sb.append(".").append("uri").append(" = ").append(literal(uri));
-        String orderBy = getOrderColumns(depth);
-        if (skeleton) {
-            orderBy = getSkeletonOrderColumns(depth);
-        }
-        if (orderBy != null) {
-            sb.append(" ORDER BY ");
-            sb.append(orderBy);
-        }
-        return sb.toString();
-    }
-
     public String getSelectSQL(UUID id, int depth, boolean skeleton) {
         StringBuilder sb = new StringBuilder();
         String alias = getAlias(Observation.class);
@@ -611,7 +468,7 @@ public class SQLGenerator {
             sb.append(getPrimaryKeyColumn(Observation.class));
         }
         sb.append(" = ");
-        sb.append(literal(id));
+        sb.append(dbDialect.literal(id));
         String orderBy = getOrderColumns(depth);
         if (skeleton) {
             orderBy = getSkeletonOrderColumns(depth);
@@ -623,7 +480,7 @@ public class SQLGenerator {
         return sb.toString();
     }
 
-    // just SELECT {columns} FROM {table}
+    // just SELECT {columns} FROM {table} AS {alias}
     protected StringBuilder getSelectSQL(Class clz) {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -634,55 +491,6 @@ public class SQLGenerator {
         sb.append(getAlias(clz));
         
         return sb;
-    }
-
-    // select batchSize instances of c, starting at minLastModified and in lastModified order
-    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize) {
-        return getSelectSQL(c, minLastModified, maxLastModified, batchSize, true, null);
-    }
-
-    
-    public String getSelectSQL(Class c, Date minLastModified, Date maxLastModified, Integer batchSize, boolean ascending, String collection) {
-        DateFormat df = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
-
-        String lastModifiedColumn = "lastModified";
-        if (Observation.class.equals(c)) {
-            lastModifiedColumn = "maxLastModified";
-        }
-
-        StringBuilder sb = getSelectSQL(c);
-        String alias = getAlias(c);
-        String predCombine = " WHERE ";
-        if (collection != null) {
-            sb.append(predCombine);
-            predCombine = " AND ";
-            sb.append(alias).append(".collection = '").append(collection).append("'");
-        }
-        if (minLastModified != null) {
-            sb.append(predCombine);
-            predCombine = " AND ";
-            sb.append(alias).append(".").append(lastModifiedColumn).append(" >= '");
-            sb.append(df.format(minLastModified));
-            sb.append("'");
-        }
-        if (maxLastModified != null) {
-            sb.append(predCombine);
-            predCombine = " AND ";
-            sb.append(alias).append(".").append(lastModifiedColumn).append(" <= '");
-            sb.append(df.format(maxLastModified));
-            sb.append("'");
-        }
-        sb.append(" ORDER BY ");
-        sb.append(alias).append(".").append(lastModifiedColumn);
-        if (!ascending) {
-            sb.append(" DESC");
-        }
-        String limit = getLimitConstraint(batchSize);
-        if (limit != null && limit.length() > 0) {
-            sb.append(" ");
-            sb.append(limit);
-        }
-        return sb.toString();
     }
 
     public String getSelectSQL(Class clz, UUID id) {
@@ -698,7 +506,7 @@ public class SQLGenerator {
             sb.append(getForeignKeyColumn(clz));
         }
         sb.append(" = ");
-        sb.append(literal(id));
+        sb.append(dbDialect.literal(id));
         if (forUpdate) {
             sb.append(" FOR UPDATE");
         }
@@ -727,7 +535,7 @@ public class SQLGenerator {
             sb.append(getForeignKeyColumn(c));
         }
         sb.append(" = ");
-        sb.append(literal(id));
+        sb.append(dbDialect.literal(id));
         return sb.toString();
     }
 
@@ -1063,11 +871,11 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetURI(sb, ps, col++, value.getURI());
-            safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, value.getMetaChecksum());
-            safeSetURI(sb, ps, col++, value.metaProducer);
-            safeSetUUID(sb, ps, col++, value.getID());
+            dbDialect.safeSetURI(sb, ps, col++, value.getURI());
+            dbDialect.safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, value.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, value.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, value.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -1119,11 +927,11 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetURI(sb, ps, col++, value.getURI());
-            safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, value.getMetaChecksum());
-            safeSetURI(sb, ps, col++, value.metaProducer);
-            safeSetUUID(sb, ps, col++, value.getID());
+            dbDialect.safeSetURI(sb, ps, col++, value.getURI());
+            dbDialect.safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, value.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, value.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, value.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -1174,12 +982,12 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetURI(sb, ps, col++, value.getURI());
-            safeSetString(sb, ps, col++, value.getDescription());
-            safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, value.getMetaChecksum());
-            safeSetURI(sb, ps, col++, value.metaProducer);
-            safeSetUUID(sb, ps, col++, value.getID());
+            dbDialect.safeSetURI(sb, ps, col++, value.getURI());
+            dbDialect.safeSetString(sb, ps, col++, value.getDescription());
+            dbDialect.safeSetDate(sb, ps, col++, value.getLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, value.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, value.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, value.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -1316,135 +1124,135 @@ public class SQLGenerator {
 
             int col = 1;
             if (obs instanceof DerivedObservation) {
-                safeSetString(sb, ps, col++, DERIVED_TYPE);
+                dbDialect.safeSetString(sb, ps, col++, DERIVED_TYPE);
             } else {
-                safeSetString(sb, ps, col++, SIMPLE_TYPE);
+                dbDialect.safeSetString(sb, ps, col++, SIMPLE_TYPE);
             }
-            safeSetURI(sb, ps, col++, obs.getURI());
-            safeSetString(sb, ps, col++, obs.getUriBucket());
-            safeSetString(sb, ps, col++, obs.getCollection());
-            safeSetString(sb, ps, col++, obs.getAlgorithm().getName());
-            safeSetString(sb, ps, col++, obs.type);
+            dbDialect.safeSetURI(sb, ps, col++, obs.getURI());
+            dbDialect.safeSetString(sb, ps, col++, obs.getUriBucket());
+            dbDialect.safeSetString(sb, ps, col++, obs.getCollection());
+            dbDialect.safeSetString(sb, ps, col++, obs.getAlgorithm().getName());
+            dbDialect.safeSetString(sb, ps, col++, obs.type);
             if (obs.intent != null) {
-                safeSetString(sb, ps, col++, obs.intent.getValue());
+                dbDialect.safeSetString(sb, ps, col++, obs.intent.getValue());
             } else {
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
-            safeSetInteger(sb, ps, col++, obs.sequenceNumber);
-            safeSetDate(sb, ps, col++, obs.metaRelease, utcCalendar);
-            safeSetArray(sb, ps, col++, obs.getMetaReadGroups());
+            dbDialect.safeSetInteger(sb, ps, col++, obs.sequenceNumber);
+            dbDialect.safeSetDate(sb, ps, col++, obs.metaRelease, utcCalendar);
+            dbDialect.safeSetArray(sb, ps, col++, obs.getMetaReadGroups());
             
             if (obs.proposal != null) {
-                safeSetString(sb, ps, col++, obs.proposal.getID());
-                safeSetString(sb, ps, col++, obs.proposal.pi);
-                safeSetString(sb, ps, col++, obs.proposal.project);
-                safeSetString(sb, ps, col++, obs.proposal.title);
-                safeSetKeywords(sb, ps, col++, obs.proposal.getKeywords());
-                safeSetURI(sb, ps, col++, obs.proposal.reference);
+                dbDialect.safeSetString(sb, ps, col++, obs.proposal.getID());
+                dbDialect.safeSetString(sb, ps, col++, obs.proposal.pi);
+                dbDialect.safeSetString(sb, ps, col++, obs.proposal.project);
+                dbDialect.safeSetString(sb, ps, col++, obs.proposal.title);
+                dbDialect.safeSetKeywords(sb, ps, col++, obs.proposal.getKeywords());
+                dbDialect.safeSetURI(sb, ps, col++, obs.proposal.reference);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetKeywords(sb, ps, col++, null);
-                safeSetURI(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetKeywords(sb, ps, col++, null);
+                dbDialect.safeSetURI(sb, ps, col++, null);
             }
             if (obs.target != null) {
-                safeSetString(sb, ps, col++, obs.target.getName());
-                safeSetURI(sb, ps, col++, obs.target.targetID);
+                dbDialect.safeSetString(sb, ps, col++, obs.target.getName());
+                dbDialect.safeSetURI(sb, ps, col++, obs.target.targetID);
                 if (obs.target.type != null) {
-                    safeSetString(sb, ps, col++, obs.target.type.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, obs.target.type.getValue());
                 } else {
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
-                safeSetBoolean(sb, ps, col++, obs.target.standard);
-                safeSetDouble(sb, ps, col++, obs.target.redshift);
-                safeSetBoolean(sb, ps, col++, obs.target.moving);
-                safeSetKeywords(sb, ps, col++, obs.target.getKeywords());
+                dbDialect.safeSetBoolean(sb, ps, col++, obs.target.standard);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.target.redshift);
+                dbDialect.safeSetBoolean(sb, ps, col++, obs.target.moving);
+                dbDialect.safeSetKeywords(sb, ps, col++, obs.target.getKeywords());
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetURI(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetBoolean(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetBoolean(sb, ps, col++, null);
-                safeSetKeywords(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetURI(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetBoolean(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetBoolean(sb, ps, col++, null);
+                dbDialect.safeSetKeywords(sb, ps, col++, null);
             }
             if (obs.targetPosition != null) {
-                safeSetString(sb, ps, col++, obs.targetPosition.getCoordsys());
-                safeSetPoint(sb, ps, col++, obs.targetPosition.getCoordinates());
-                safeSetDouble(sb, ps, col++, obs.targetPosition.equinox);
+                dbDialect.safeSetString(sb, ps, col++, obs.targetPosition.getCoordsys());
+                dbDialect.safeSetPoint(sb, ps, col++, obs.targetPosition.getCoordinates());
+                dbDialect.safeSetDouble(sb, ps, col++, obs.targetPosition.equinox);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetPoint(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetPoint(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
 
             if (obs.telescope != null) {
-                safeSetString(sb, ps, col++, obs.telescope.getName());
-                safeSetDouble(sb, ps, col++, obs.telescope.geoLocationX);
-                safeSetDouble(sb, ps, col++, obs.telescope.geoLocationY);
-                safeSetDouble(sb, ps, col++, obs.telescope.geoLocationZ);
-                safeSetKeywords(sb, ps, col++, obs.telescope.getKeywords());
+                dbDialect.safeSetString(sb, ps, col++, obs.telescope.getName());
+                dbDialect.safeSetDouble(sb, ps, col++, obs.telescope.geoLocationX);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.telescope.geoLocationY);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.telescope.geoLocationZ);
+                dbDialect.safeSetKeywords(sb, ps, col++, obs.telescope.getKeywords());
                 if (obs.telescope.trackingMode != null) {
-                    safeSetString(sb, ps, col++, obs.telescope.trackingMode.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, obs.telescope.trackingMode.getValue());
                 } else {
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetKeywords(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetKeywords(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
 
             if (obs.instrument != null) {
-                safeSetString(sb, ps, col++, obs.instrument.getName());
-                safeSetKeywords(sb, ps, col++, obs.instrument.getKeywords());
+                dbDialect.safeSetString(sb, ps, col++, obs.instrument.getName());
+                dbDialect.safeSetKeywords(sb, ps, col++, obs.instrument.getKeywords());
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetKeywords(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetKeywords(sb, ps, col++, null);
             }
             
             if (obs.environment != null) {
-                safeSetDouble(sb, ps, col++, obs.environment.seeing);
-                safeSetDouble(sb, ps, col++, obs.environment.humidity);
-                safeSetDouble(sb, ps, col++, obs.environment.elevation);
-                safeSetDouble(sb, ps, col++, obs.environment.tau);
-                safeSetDouble(sb, ps, col++, obs.environment.wavelengthTau);
-                safeSetDouble(sb, ps, col++, obs.environment.ambientTemp);
-                safeSetBoolean(sb, ps, col++, obs.environment.photometric);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.environment.seeing);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.environment.humidity);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.environment.elevation);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.environment.tau);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.environment.wavelengthTau);
+                dbDialect.safeSetDouble(sb, ps, col++, obs.environment.ambientTemp);
+                dbDialect.safeSetBoolean(sb, ps, col++, obs.environment.photometric);
             } else {
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetBoolean(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetBoolean(sb, ps, col++, null);
             }
 
             if (obs.requirements != null) {
-                safeSetString(sb, ps, col++, obs.requirements.getFlag().getValue());
+                dbDialect.safeSetString(sb, ps, col++, obs.requirements.getFlag().getValue());
             } else {
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
             
             if (obs instanceof DerivedObservation) {
                 DerivedObservation co = (DerivedObservation) obs;
-                safeSetArray(sb, ps, col++, co.getMembers());
+                dbDialect.safeSetArray(sb, ps, col++, co.getMembers());
             } else {
-                safeSetArray(sb, ps, col++, null);
+                dbDialect.safeSetArray(sb, ps, col++, null);
             }
 
-            safeSetDate(sb, ps, col++, obs.getLastModified(), utcCalendar);
-            safeSetDate(sb, ps, col++, obs.getMaxLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, obs.getMetaChecksum());
-            safeSetURI(sb, ps, col++, obs.getAccMetaChecksum());
-            safeSetURI(sb, ps, col++, obs.metaProducer);
-            safeSetUUID(sb, ps, col++, obs.getID());
+            dbDialect.safeSetDate(sb, ps, col++, obs.getLastModified(), utcCalendar);
+            dbDialect.safeSetDate(sb, ps, col++, obs.getMaxLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, obs.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, obs.getAccMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, obs.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, obs.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -1463,8 +1271,8 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetUUID(sb, ps, col++, member.getParentID());
-            safeSetURI(sb, ps, col++, member.getMemberID());
+            dbDialect.safeSetUUID(sb, ps, col++, member.getParentID());
+            dbDialect.safeSetURI(sb, ps, col++, member.getMemberID());
         }
     }
 
@@ -1568,242 +1376,242 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetUUID(sb, ps, col++, parent); // obsID
-            safeSetURI(sb, ps, col++, plane.getURI());
-            safeSetURI(sb, ps, col++, plane.publisherID);
-            safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
-            safeSetArray(sb, ps, col++, plane.getMetaReadGroups());
-            safeSetDate(sb, ps, col++, plane.dataRelease, utcCalendar);
-            safeSetArray(sb, ps, col++, plane.getDataReadGroups());
+            dbDialect.safeSetUUID(sb, ps, col++, parent); // obsID
+            dbDialect.safeSetURI(sb, ps, col++, plane.getURI());
+            dbDialect.safeSetURI(sb, ps, col++, plane.publisherID);
+            dbDialect.safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
+            dbDialect.safeSetArray(sb, ps, col++, plane.getMetaReadGroups());
+            dbDialect.safeSetDate(sb, ps, col++, plane.dataRelease, utcCalendar);
+            dbDialect.safeSetArray(sb, ps, col++, plane.getDataReadGroups());
             if (plane.dataProductType != null) {
-                safeSetString(sb, ps, col++, plane.dataProductType.getValue());
+                dbDialect.safeSetString(sb, ps, col++, plane.dataProductType.getValue());
             } else {
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
             if (plane.calibrationLevel != null) {
-                safeSetInteger(sb, ps, col++, plane.calibrationLevel.getValue());
+                dbDialect.safeSetInteger(sb, ps, col++, plane.calibrationLevel.getValue());
             } else {
-                safeSetInteger(sb, ps, col++, null);
+                dbDialect.safeSetInteger(sb, ps, col++, null);
             }
 
             if (plane.provenance != null) {
-                safeSetString(sb, ps, col++, plane.provenance.getName());
+                dbDialect.safeSetString(sb, ps, col++, plane.provenance.getName());
                 if (plane.provenance.reference != null) {
-                    safeSetString(sb, ps, col++, plane.provenance.reference.toASCIIString());
+                    dbDialect.safeSetString(sb, ps, col++, plane.provenance.reference.toASCIIString());
                 } else {
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
-                safeSetString(sb, ps, col++, plane.provenance.version);
-                safeSetString(sb, ps, col++, plane.provenance.project);
-                safeSetString(sb, ps, col++, plane.provenance.producer);
-                safeSetString(sb, ps, col++, plane.provenance.runID);
-                safeSetDate(sb, ps, col++, plane.provenance.lastExecuted, utcCalendar);
-                safeSetKeywords(sb, ps, col++, plane.provenance.getKeywords());
-                safeSetArray(sb, ps, col++, plane.provenance.getInputs());
+                dbDialect.safeSetString(sb, ps, col++, plane.provenance.version);
+                dbDialect.safeSetString(sb, ps, col++, plane.provenance.project);
+                dbDialect.safeSetString(sb, ps, col++, plane.provenance.producer);
+                dbDialect.safeSetString(sb, ps, col++, plane.provenance.runID);
+                dbDialect.safeSetDate(sb, ps, col++, plane.provenance.lastExecuted, utcCalendar);
+                dbDialect.safeSetKeywords(sb, ps, col++, plane.provenance.getKeywords());
+                dbDialect.safeSetArray(sb, ps, col++, plane.provenance.getInputs());
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDate(sb, ps, col++, null, utcCalendar);
-                safeSetKeywords(sb, ps, col++, null);
-                safeSetArray(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDate(sb, ps, col++, null, utcCalendar);
+                dbDialect.safeSetKeywords(sb, ps, col++, null);
+                dbDialect.safeSetArray(sb, ps, col++, null);
             }
 
             if (plane.metrics != null) {
-                safeSetDouble(sb, ps, col++, plane.metrics.sourceNumberDensity);
-                safeSetDouble(sb, ps, col++, plane.metrics.background);
-                safeSetDouble(sb, ps, col++, plane.metrics.backgroundStddev);
-                safeSetDouble(sb, ps, col++, plane.metrics.fluxDensityLimit);
-                safeSetDouble(sb, ps, col++, plane.metrics.magLimit);
-                safeSetDouble(sb, ps, col++, plane.metrics.sampleSNR);
+                dbDialect.safeSetDouble(sb, ps, col++, plane.metrics.sourceNumberDensity);
+                dbDialect.safeSetDouble(sb, ps, col++, plane.metrics.background);
+                dbDialect.safeSetDouble(sb, ps, col++, plane.metrics.backgroundStddev);
+                dbDialect.safeSetDouble(sb, ps, col++, plane.metrics.fluxDensityLimit);
+                dbDialect.safeSetDouble(sb, ps, col++, plane.metrics.magLimit);
+                dbDialect.safeSetDouble(sb, ps, col++, plane.metrics.sampleSNR);
             } else {
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
 
             if (plane.quality != null) {
-                safeSetString(sb, ps, col++, plane.quality.getFlag().getValue());
+                dbDialect.safeSetString(sb, ps, col++, plane.quality.getFlag().getValue());
             } else {
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
             
             // observable
             if (plane.observable != null) {
-                safeSetString(sb, ps, col++, plane.observable.getUCD().getValue());
+                dbDialect.safeSetString(sb, ps, col++, plane.observable.getUCD().getValue());
                 if (plane.observable.calibration != null) {
-                    safeSetString(sb, ps, col++, plane.observable.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, plane.observable.calibration.getValue());
                 } else {
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
             
             //position
             Position pos = plane.position;
             if (pos != null) {
-                safeSetShape(sb, ps, col++, pos.getBounds());
-                safeSetMultiShape(sb, ps, col++, pos.getSamples());
+                dbDialect.safeSetShape(sb, ps, col++, pos.getBounds());
+                dbDialect.safeSetMultiShape(sb, ps, col++, pos.getSamples());
                 if (pos.minBounds != null) {
-                    safeSetShape(sb, ps, col++, pos.minBounds);
+                    dbDialect.safeSetShape(sb, ps, col++, pos.minBounds);
                 } else {
-                    safeSetShape(sb, ps, col++, null);
+                    dbDialect.safeSetShape(sb, ps, col++, null);
                 }
-                //safeSetShapeAsPolygon(sb, ps, col++, pos.getBounds());
-                //safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                //safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                //safeSetDouble(sb, ps, col++, pos.bounds.getSize());
-                safeSetDimension(sb, ps, col++, pos.dimension);
-                safeSetInterval(sb, ps, col++, pos.maxRecoverableScale);
-                safeSetDouble(sb, ps, col++, pos.resolution);
-                safeSetInterval(sb, ps, col++, pos.resolutionBounds);
-                safeSetDouble(sb, ps, col++, pos.sampleSize);
+                //dbDialect.safeSetShapeAsPolygon(sb, ps, col++, pos.getBounds());
+                //dbDialect.safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
+                //dbDialect.safeSetDouble(sb, ps, col++, pos.bounds.getArea());
+                //dbDialect.safeSetDouble(sb, ps, col++, pos.bounds.getSize());
+                dbDialect.safeSetDimension(sb, ps, col++, pos.dimension);
+                dbDialect.safeSetInterval(sb, ps, col++, pos.maxRecoverableScale);
+                dbDialect.safeSetDouble(sb, ps, col++, pos.resolution);
+                dbDialect.safeSetInterval(sb, ps, col++, pos.resolutionBounds);
+                dbDialect.safeSetDouble(sb, ps, col++, pos.sampleSize);
                 if (pos.calibration != null) {
-                    safeSetString(sb, ps, col++, pos.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, pos.calibration.getValue());
                 } else {
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
             } else {
-                safeSetShape(sb, ps, col++, null);
-                //safeSetMultiShape(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetShape(sb, ps, col++, null);
-                //safeSetPoint(sb, ps, col++, null);
-                //safeSetDouble(sb, ps, col++, null);
-                //safeSetDouble(sb, ps, col++, null);
-                //safeSetShapeAsPolygon(sb, ps, col++, null);
-                safeSetDimension(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetShape(sb, ps, col++, null);
+                //dbDialect.safeSetMultiShape(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetShape(sb, ps, col++, null);
+                //dbDialect.safeSetPoint(sb, ps, col++, null);
+                //dbDialect.safeSetDouble(sb, ps, col++, null);
+                //dbDialect.safeSetDouble(sb, ps, col++, null);
+                //dbDialect.safeSetShapeAsPolygon(sb, ps, col++, null);
+                dbDialect.safeSetDimension(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
 
             //energy
             if (plane.energy != null) {
                 Energy nrg = plane.energy;
-                safeSetInterval(sb, ps, col++, nrg.getBounds());
-                safeSetIntervalList(sb, ps, col++, nrg.getSamples());
-                //safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
-                safeSetString(sb, ps, col++, nrg.bandpassName);
-                safeSetString(sb, ps, col++, CaomUtil.encodeBands(nrg.getEnergyBands()));
-                safeSetLong(sb, ps, col++, nrg.dimension);
-                safeSetDouble(sb, ps, col++, nrg.resolvingPower);
-                safeSetInterval(sb, ps, col++, nrg.resolvingPowerBounds);
-                safeSetDouble(sb, ps, col++, nrg.resolution);
-                safeSetInterval(sb, ps, col++, nrg.resolutionBounds);
-                safeSetDouble(sb, ps, col++, nrg.sampleSize);
+                dbDialect.safeSetInterval(sb, ps, col++, nrg.getBounds());
+                dbDialect.safeSetIntervalList(sb, ps, col++, nrg.getSamples());
+                //dbDialect.safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
+                dbDialect.safeSetString(sb, ps, col++, nrg.bandpassName);
+                dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeBands(nrg.getEnergyBands()));
+                dbDialect.safeSetLong(sb, ps, col++, nrg.dimension);
+                dbDialect.safeSetDouble(sb, ps, col++, nrg.resolvingPower);
+                dbDialect.safeSetInterval(sb, ps, col++, nrg.resolvingPowerBounds);
+                dbDialect.safeSetDouble(sb, ps, col++, nrg.resolution);
+                dbDialect.safeSetInterval(sb, ps, col++, nrg.resolutionBounds);
+                dbDialect.safeSetDouble(sb, ps, col++, nrg.sampleSize);
                 if (nrg.transition != null) {
-                    safeSetString(sb, ps, col++, nrg.transition.getSpecies());
-                    safeSetString(sb, ps, col++, nrg.transition.getTransition());
+                    dbDialect.safeSetString(sb, ps, col++, nrg.transition.getSpecies());
+                    dbDialect.safeSetString(sb, ps, col++, nrg.transition.getTransition());
                 } else {
-                    safeSetString(sb, ps, col++, null);
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
-                safeSetDouble(sb, ps, col++, nrg.rest);
+                dbDialect.safeSetDouble(sb, ps, col++, nrg.rest);
                 if (nrg.calibration != null) {
-                    safeSetString(sb, ps, col++, nrg.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, nrg.calibration.getValue());
                 } else {
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
             } else {
-                safeSetInterval(sb, ps, col++, null);
-                safeSetIntervalList(sb, ps, col++, null);
-                //safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetLong(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetIntervalList(sb, ps, col++, null);
+                //dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
 
             //time
             if (plane.time != null) {
                 Time tim = plane.time;
-                safeSetInterval(sb, ps, col++, tim.getBounds());
-                safeSetIntervalList(sb, ps, col++, tim.getSamples());
-                //safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
-                safeSetLong(sb, ps, col++, tim.dimension);
-                safeSetDouble(sb, ps, col++, tim.exposure);
-                safeSetInterval(sb, ps, col++, tim.exposureBounds);
-                safeSetDouble(sb, ps, col++, tim.resolution);
-                safeSetInterval(sb, ps, col++, tim.resolutionBounds);
-                safeSetDouble(sb, ps, col++, tim.sampleSize);
+                dbDialect.safeSetInterval(sb, ps, col++, tim.getBounds());
+                dbDialect.safeSetIntervalList(sb, ps, col++, tim.getSamples());
+                //dbDialect.safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
+                dbDialect.safeSetLong(sb, ps, col++, tim.dimension);
+                dbDialect.safeSetDouble(sb, ps, col++, tim.exposure);
+                dbDialect.safeSetInterval(sb, ps, col++, tim.exposureBounds);
+                dbDialect.safeSetDouble(sb, ps, col++, tim.resolution);
+                dbDialect.safeSetInterval(sb, ps, col++, tim.resolutionBounds);
+                dbDialect.safeSetDouble(sb, ps, col++, tim.sampleSize);
                 if (tim.calibration != null) {
-                    safeSetString(sb, ps, col++, tim.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, tim.calibration.getValue());
                 } else {
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
             } else {
-                safeSetInterval(sb, ps, col++, null);
-                safeSetIntervalList(sb, ps, col++, null);
-                //safeSetDouble(sb, ps, col++, null);
-                safeSetLong(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetIntervalList(sb, ps, col++, null);
+                //dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
 
             //polarization
             if (plane.polarization != null) {
-                safeSetString(sb, ps, col++, CaomUtil.encodeStates(plane.polarization.getStates()));
-                safeSetInteger(sb, ps, col++, plane.polarization.dimension);
+                dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeStates(plane.polarization.getStates()));
+                dbDialect.safeSetInteger(sb, ps, col++, plane.polarization.dimension);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetInteger(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetInteger(sb, ps, col++, null);
             }
             
             // custom
             if (plane.custom != null) {
-                safeSetString(sb, ps, col++, plane.custom.getCtype());
-                safeSetInterval(sb, ps, col++, plane.custom.getBounds());
-                safeSetIntervalList(sb, ps, col++, plane.custom.getSamples());
-                //safeSetDouble(sb, ps, col++, plane.custom.bounds.getWidth());
-                safeSetLong(sb, ps, col++, plane.custom.dimension);
+                dbDialect.safeSetString(sb, ps, col++, plane.custom.getCtype());
+                dbDialect.safeSetInterval(sb, ps, col++, plane.custom.getBounds());
+                dbDialect.safeSetIntervalList(sb, ps, col++, plane.custom.getSamples());
+                //dbDialect.safeSetDouble(sb, ps, col++, plane.custom.bounds.getWidth());
+                dbDialect.safeSetLong(sb, ps, col++, plane.custom.dimension);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetInterval(sb, ps, col++, null);
-                safeSetIntervalList(sb, ps, col++, null);
-                //safeSetDouble(sb, ps, col++, null);
-                safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetIntervalList(sb, ps, col++, null);
+                //dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
             }
 
             // visibility
             if (plane.visibility != null) {
-                safeSetInterval(sb, ps, col++, plane.visibility.getDistance());
-                safeSetDouble(sb, ps, col++, plane.visibility.getDistributionEccentricity());
-                safeSetDouble(sb, ps, col++, plane.visibility.getDistributionFill());
+                dbDialect.safeSetInterval(sb, ps, col++, plane.visibility.getDistance());
+                dbDialect.safeSetDouble(sb, ps, col++, plane.visibility.getDistributionEccentricity());
+                dbDialect.safeSetDouble(sb, ps, col++, plane.visibility.getDistributionFill());
             } else {
-                safeSetInterval(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetInterval(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
 
-            safeSetDate(sb, ps, col++, plane.getLastModified(), utcCalendar);
-            safeSetDate(sb, ps, col++, plane.getMaxLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, plane.getMetaChecksum());
-            safeSetURI(sb, ps, col++, plane.getAccMetaChecksum());
-            safeSetURI(sb, ps, col++, plane.metaProducer);
-            safeSetUUID(sb, ps, col++, plane.getID());
+            dbDialect.safeSetDate(sb, ps, col++, plane.getLastModified(), utcCalendar);
+            dbDialect.safeSetDate(sb, ps, col++, plane.getMaxLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, plane.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, plane.getAccMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, plane.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, plane.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -1818,8 +1626,8 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetUUID(sb, ps, col++, input.getOutputID());
-            safeSetURI(sb, ps, col++, input.getInputID());
+            dbDialect.safeSetUUID(sb, ps, col++, input.getOutputID());
+            dbDialect.safeSetURI(sb, ps, col++, input.getInputID());
             if (sb != null) {
                 log.debug(sb.toString());
             }
@@ -1833,8 +1641,8 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
-            safeSetUUID(sb, ps, col++, plane.getID());
+            dbDialect.safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
+            dbDialect.safeSetUUID(sb, ps, col++, plane.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -1886,25 +1694,25 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetUUID(sb, ps, col++, parent);
+            dbDialect.safeSetUUID(sb, ps, col++, parent);
 
-            safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
-            safeSetString(sb, ps, col++, artifact.getUriBucket());
-            safeSetString(sb, ps, col++, artifact.getProductType().getValue());
-            safeSetString(sb, ps, col++, artifact.getReleaseType().getValue());
-            safeSetString(sb, ps, col++, artifact.contentType);
-            safeSetLong(sb, ps, col++, artifact.contentLength);
-            safeSetURI(sb, ps, col++, artifact.contentChecksum);
-            safeSetDate(sb, ps, col++, artifact.contentRelease, utcCalendar);
-            safeSetArray(sb, ps, col++, artifact.getContentReadGroups());
-            safeSetURI(sb, ps, col++, artifact.descriptionID);
+            dbDialect.safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
+            dbDialect.safeSetString(sb, ps, col++, artifact.getUriBucket());
+            dbDialect.safeSetString(sb, ps, col++, artifact.getProductType().getValue());
+            dbDialect.safeSetString(sb, ps, col++, artifact.getReleaseType().getValue());
+            dbDialect.safeSetString(sb, ps, col++, artifact.contentType);
+            dbDialect.safeSetLong(sb, ps, col++, artifact.contentLength);
+            dbDialect.safeSetURI(sb, ps, col++, artifact.contentChecksum);
+            dbDialect.safeSetDate(sb, ps, col++, artifact.contentRelease, utcCalendar);
+            dbDialect.safeSetArray(sb, ps, col++, artifact.getContentReadGroups());
+            dbDialect.safeSetURI(sb, ps, col++, artifact.descriptionID);
             
-            safeSetDate(sb, ps, col++, artifact.getLastModified(), utcCalendar);
-            safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, artifact.getMetaChecksum());
-            safeSetURI(sb, ps, col++, artifact.getAccMetaChecksum());
-            safeSetURI(sb, ps, col++, artifact.metaProducer);
-            safeSetUUID(sb, ps, col++, artifact.getID());
+            dbDialect.safeSetDate(sb, ps, col++, artifact.getLastModified(), utcCalendar);
+            dbDialect.safeSetDate(sb, ps, col++, artifact.getMaxLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, artifact.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, artifact.getAccMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, artifact.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, artifact.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -1957,26 +1765,26 @@ public class SQLGenerator {
 
             int col = 1;
 
-            safeSetUUID(sb, ps, col++, parent);
-            safeSetString(sb, ps, col++, part.getName());
+            dbDialect.safeSetUUID(sb, ps, col++, parent);
+            dbDialect.safeSetString(sb, ps, col++, part.getName());
 
             if (part.productType != null) {
-                safeSetString(sb, ps, col++, part.productType.getValue());
+                dbDialect.safeSetString(sb, ps, col++, part.productType.getValue());
             } else {
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
 
             //if (persistOptimisations) {
-            //safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
-            //safeSetMultiURI(sb, ps, col++, plane.getMetaReadGroups());
+            //dbDialect.safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
+            //dbDialect.safeSetMultiURI(sb, ps, col++, plane.getMetaReadGroups());
             //}
 
-            safeSetDate(sb, ps, col++, part.getLastModified(), utcCalendar);
-            safeSetDate(sb, ps, col++, part.getMaxLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, part.getMetaChecksum());
-            safeSetURI(sb, ps, col++, part.getAccMetaChecksum());
-            safeSetURI(sb, ps, col++, part.metaProducer);
-            safeSetUUID(sb, ps, col++, part.getID());
+            dbDialect.safeSetDate(sb, ps, col++, part.getLastModified(), utcCalendar);
+            dbDialect.safeSetDate(sb, ps, col++, part.getMaxLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, part.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, part.getAccMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, part.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, part.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -2028,271 +1836,271 @@ public class SQLGenerator {
             }
 
             int col = 1;
-            safeSetUUID(sb, ps, col++, parent);
+            dbDialect.safeSetUUID(sb, ps, col++, parent);
 
             if (chunk.productType != null) {
-                safeSetString(sb, ps, col++, chunk.productType.getValue());
+                dbDialect.safeSetString(sb, ps, col++, chunk.productType.getValue());
             } else {
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
-            safeSetInteger(sb, ps, col++, chunk.naxis);
-            safeSetInteger(sb, ps, col++, chunk.positionAxis1);
-            safeSetInteger(sb, ps, col++, chunk.positionAxis2);
-            safeSetInteger(sb, ps, col++, chunk.energyAxis);
-            safeSetInteger(sb, ps, col++, chunk.timeAxis);
-            safeSetInteger(sb, ps, col++, chunk.polarizationAxis);
-            safeSetInteger(sb, ps, col++, chunk.customAxis);
-            safeSetInteger(sb, ps, col++, chunk.observableAxis);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.naxis);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.positionAxis1);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.positionAxis2);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.energyAxis);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.timeAxis);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.polarizationAxis);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.customAxis);
+            dbDialect.safeSetInteger(sb, ps, col++, chunk.observableAxis);
 
             if (chunk.position != null) {
-                safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis1().getCtype());
-                safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis1().getCunit());
-                safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis2().getCtype());
-                safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis2().getCunit());
+                dbDialect.safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis1().getCtype());
+                dbDialect.safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis1().getCunit());
+                dbDialect.safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis2().getCtype());
+                dbDialect.safeSetString(sb, ps, col++, chunk.position.getAxis().getAxis2().getCunit());
                 if (chunk.position.getAxis().error1 != null) {
-                    safeSetDouble(sb, ps, col++, chunk.position.getAxis().error1.syser);
-                    safeSetDouble(sb, ps, col++, chunk.position.getAxis().error1.rnder);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.position.getAxis().error1.syser);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.position.getAxis().error1.rnder);
                 } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
                 }
                 if (chunk.position.getAxis().error2 != null) {
-                    safeSetDouble(sb, ps, col++, chunk.position.getAxis().error2.syser);
-                    safeSetDouble(sb, ps, col++, chunk.position.getAxis().error2.rnder);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.position.getAxis().error2.syser);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.position.getAxis().error2.rnder);
                 } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
                 }
                 //range
                 col += safeSet(sb, ps, col, chunk.position.getAxis().range);
 
                 // bounds
-                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds2D(chunk.position.getAxis().bounds));
+                dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds2D(chunk.position.getAxis().bounds));
 
                 // function
                 col += safeSet(sb, ps, col, chunk.position.getAxis().function);
 
                 // other fields
-                safeSetString(sb, ps, col++, chunk.position.coordsys);
-                safeSetDouble(sb, ps, col++, chunk.position.equinox);
-                safeSetDouble(sb, ps, col++, chunk.position.resolution);
+                dbDialect.safeSetString(sb, ps, col++, chunk.position.coordsys);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.position.equinox);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.position.resolution);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
                 //range
                 col += safeSet(sb, ps, col, (CoordRange2D) null);
                 // bounds
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
                 // function
                 col += safeSet(sb, ps, col, (CoordFunction2D) null);
                 // other fields
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
 
             if (chunk.energy != null) {
-                safeSetString(sb, ps, col++, chunk.energy.getAxis().getAxis().getCtype());
-                safeSetString(sb, ps, col++, chunk.energy.getAxis().getAxis().getCunit());
+                dbDialect.safeSetString(sb, ps, col++, chunk.energy.getAxis().getAxis().getCtype());
+                dbDialect.safeSetString(sb, ps, col++, chunk.energy.getAxis().getAxis().getCunit());
                 if (chunk.energy.getAxis().error != null) {
-                    safeSetDouble(sb, ps, col++, chunk.energy.getAxis().error.syser);
-                    safeSetDouble(sb, ps, col++, chunk.energy.getAxis().error.rnder);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.getAxis().error.syser);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.getAxis().error.rnder);
                 } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
                 }
                 //range
                 col += safeSet(sb, ps, col, chunk.energy.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.energy.getAxis().bounds));
+                dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.energy.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.energy.getAxis().function);
 
                 // other fields
-                safeSetString(sb, ps, col++, chunk.energy.getSpecsys());
-                safeSetString(sb, ps, col++, chunk.energy.ssysobs);
-                safeSetString(sb, ps, col++, chunk.energy.ssyssrc);
-                safeSetDouble(sb, ps, col++, chunk.energy.restfrq);
-                safeSetDouble(sb, ps, col++, chunk.energy.restwav);
-                safeSetDouble(sb, ps, col++, chunk.energy.velosys);
-                safeSetDouble(sb, ps, col++, chunk.energy.zsource);
-                safeSetDouble(sb, ps, col++, chunk.energy.velang);
-                safeSetString(sb, ps, col++, chunk.energy.bandpassName);
-                safeSetDouble(sb, ps, col++, chunk.energy.resolvingPower);
+                dbDialect.safeSetString(sb, ps, col++, chunk.energy.getSpecsys());
+                dbDialect.safeSetString(sb, ps, col++, chunk.energy.ssysobs);
+                dbDialect.safeSetString(sb, ps, col++, chunk.energy.ssyssrc);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.restfrq);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.restwav);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.velosys);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.zsource);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.velang);
+                dbDialect.safeSetString(sb, ps, col++, chunk.energy.bandpassName);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.energy.resolvingPower);
                 if (chunk.energy.transition != null) {
-                    safeSetString(sb, ps, col++, chunk.energy.transition.getSpecies());
-                    safeSetString(sb, ps, col++, chunk.energy.transition.getTransition());
+                    dbDialect.safeSetString(sb, ps, col++, chunk.energy.transition.getSpecies());
+                    dbDialect.safeSetString(sb, ps, col++, chunk.energy.transition.getTransition());
                 } else {
-                    safeSetString(sb, ps, col++, null);
-                    safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
                 }
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
                 //range
                 col += safeSet(sb, ps, col, (CoordRange1D) null);
                 // bounds
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
                 // function
                 col += safeSet(sb, ps, col, (CoordFunction1D) null);
 
                 // other fields
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
             }
 
             if (chunk.time != null) {
-                safeSetString(sb, ps, col++, chunk.time.getAxis().getAxis().getCtype());
-                safeSetString(sb, ps, col++, chunk.time.getAxis().getAxis().getCunit());
+                dbDialect.safeSetString(sb, ps, col++, chunk.time.getAxis().getAxis().getCtype());
+                dbDialect.safeSetString(sb, ps, col++, chunk.time.getAxis().getAxis().getCunit());
                 if (chunk.time.getAxis().error != null) {
-                    safeSetDouble(sb, ps, col++, chunk.time.getAxis().error.syser);
-                    safeSetDouble(sb, ps, col++, chunk.time.getAxis().error.rnder);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.time.getAxis().error.syser);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.time.getAxis().error.rnder);
                 } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
                 }
                 //range
                 col += safeSet(sb, ps, col, chunk.time.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.time.getAxis().bounds));
+                dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.time.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.time.getAxis().function);
                 // other fields
-                safeSetString(sb, ps, col++, chunk.time.timesys);
-                safeSetString(sb, ps, col++, chunk.time.trefpos);
-                safeSetDouble(sb, ps, col++, chunk.time.mjdref);
-                safeSetDouble(sb, ps, col++, chunk.time.exposure);
-                safeSetDouble(sb, ps, col++, chunk.time.resolution);
+                dbDialect.safeSetString(sb, ps, col++, chunk.time.timesys);
+                dbDialect.safeSetString(sb, ps, col++, chunk.time.trefpos);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.time.mjdref);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.time.exposure);
+                dbDialect.safeSetDouble(sb, ps, col++, chunk.time.resolution);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
                 //range
                 col += safeSet(sb, ps, col, (CoordRange1D) null);
                 // bounds
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
                 // function
                 col += safeSet(sb, ps, col, (CoordFunction1D) null);
                 // other fields
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
 
             if (chunk.polarization != null) {
-                safeSetString(sb, ps, col++, chunk.polarization.getAxis().getAxis().getCtype());
-                safeSetString(sb, ps, col++, chunk.polarization.getAxis().getAxis().getCunit());
+                dbDialect.safeSetString(sb, ps, col++, chunk.polarization.getAxis().getAxis().getCtype());
+                dbDialect.safeSetString(sb, ps, col++, chunk.polarization.getAxis().getAxis().getCunit());
                 if (chunk.polarization.getAxis().error != null) {
-                    safeSetDouble(sb, ps, col++, chunk.polarization.getAxis().error.syser);
-                    safeSetDouble(sb, ps, col++, chunk.polarization.getAxis().error.rnder);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.polarization.getAxis().error.syser);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.polarization.getAxis().error.rnder);
                 } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
                 }
                 //range
                 col += safeSet(sb, ps, col, chunk.polarization.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.polarization.getAxis().bounds));
+                dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.polarization.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.polarization.getAxis().function);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
                 //range
                 col += safeSet(sb, ps, col, (CoordRange1D) null);
                 // bounds
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
                 // function
                 col += safeSet(sb, ps, col, (CoordFunction1D) null);
                 // other fields
             }
             
             if (chunk.custom != null) {
-                safeSetString(sb, ps, col++, chunk.custom.getAxis().getAxis().getCtype());
-                safeSetString(sb, ps, col++, chunk.custom.getAxis().getAxis().getCunit());
+                dbDialect.safeSetString(sb, ps, col++, chunk.custom.getAxis().getAxis().getCtype());
+                dbDialect.safeSetString(sb, ps, col++, chunk.custom.getAxis().getAxis().getCunit());
                 if (chunk.custom.getAxis().error != null) {
-                    safeSetDouble(sb, ps, col++, chunk.custom.getAxis().error.syser);
-                    safeSetDouble(sb, ps, col++, chunk.custom.getAxis().error.rnder);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.custom.getAxis().error.syser);
+                    dbDialect.safeSetDouble(sb, ps, col++, chunk.custom.getAxis().error.rnder);
                 } else {
-                    safeSetDouble(sb, ps, col++, null);
-                    safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
                 }
                 //range
                 col += safeSet(sb, ps, col, chunk.custom.getAxis().range);
                 // bounds
-                safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.custom.getAxis().bounds));
+                dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeCoordBounds1D(chunk.custom.getAxis().bounds));
                 // function
                 col += safeSet(sb, ps, col, chunk.custom.getAxis().function);
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
                 //range
                 col += safeSet(sb, ps, col, (CoordRange1D) null);
                 // bounds
-                safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
                 // function
                 col += safeSet(sb, ps, col, (CoordFunction1D) null);
                 // other fields
             }
 
             if (chunk.observable != null) {
-                safeSetString(sb, ps, col++, chunk.observable.getDependent().getAxis().getCtype());
-                safeSetString(sb, ps, col++, chunk.observable.getDependent().getAxis().getCunit());
-                safeSetLong(sb, ps, col++, chunk.observable.getDependent().getBin());
+                dbDialect.safeSetString(sb, ps, col++, chunk.observable.getDependent().getAxis().getCtype());
+                dbDialect.safeSetString(sb, ps, col++, chunk.observable.getDependent().getAxis().getCunit());
+                dbDialect.safeSetLong(sb, ps, col++, chunk.observable.getDependent().getBin());
                 if (chunk.observable.independent != null) {
-                    safeSetString(sb, ps, col++, chunk.observable.independent.getAxis().getCtype());
-                    safeSetString(sb, ps, col++, chunk.observable.independent.getAxis().getCunit());
-                    safeSetLong(sb, ps, col++, chunk.observable.independent.getBin());
+                    dbDialect.safeSetString(sb, ps, col++, chunk.observable.independent.getAxis().getCtype());
+                    dbDialect.safeSetString(sb, ps, col++, chunk.observable.independent.getAxis().getCunit());
+                    dbDialect.safeSetLong(sb, ps, col++, chunk.observable.independent.getBin());
                 } else {
-                    safeSetString(sb, ps, col++, null);
-                    safeSetString(sb, ps, col++, null);
-                    safeSetLong(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetString(sb, ps, col++, null);
+                    dbDialect.safeSetLong(sb, ps, col++, null);
                 }
             } else {
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetLong(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetString(sb, ps, col++, null);
-                safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
             }
 
             //if (persistOptimisations) {
-            //safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
-            //safeSetMultiURI(sb, ps, col++, plane.getMetaReadGroups());
+            //dbDialect.safeSetDate(sb, ps, col++, plane.metaRelease, utcCalendar);
+            //dbDialect.safeSetMultiURI(sb, ps, col++, plane.getMetaReadGroups());
             //}
 
-            safeSetDate(sb, ps, col++, chunk.getLastModified(), utcCalendar);
-            safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), utcCalendar);
-            safeSetURI(sb, ps, col++, chunk.getMetaChecksum());
-            safeSetURI(sb, ps, col++, chunk.getAccMetaChecksum());
-            safeSetURI(sb, ps, col++, chunk.metaProducer);
-            safeSetUUID(sb, ps, col++, chunk.getID());
+            dbDialect.safeSetDate(sb, ps, col++, chunk.getLastModified(), utcCalendar);
+            dbDialect.safeSetDate(sb, ps, col++, chunk.getMaxLastModified(), utcCalendar);
+            dbDialect.safeSetURI(sb, ps, col++, chunk.getMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, chunk.getAccMetaChecksum());
+            dbDialect.safeSetURI(sb, ps, col++, chunk.metaProducer);
+            dbDialect.safeSetUUID(sb, ps, col++, chunk.getID());
 
             if (sb != null) {
                 log.debug(sb.toString());
@@ -2302,15 +2110,15 @@ public class SQLGenerator {
         private int safeSet(StringBuilder sb, PreparedStatement ps, int col, CoordRange1D r)
                 throws SQLException {
             if (r != null) {
-                safeSetDouble(sb, ps, col++, r.getStart().pix);
-                safeSetDouble(sb, ps, col++, r.getStart().val);
-                safeSetDouble(sb, ps, col++, r.getEnd().pix);
-                safeSetDouble(sb, ps, col++, r.getEnd().val);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getStart().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getStart().val);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getEnd().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getEnd().val);
             } else {
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
             return 4;
         }
@@ -2318,15 +2126,15 @@ public class SQLGenerator {
         private int safeSet(StringBuilder sb, PreparedStatement ps, int col, CoordFunction1D f)
                 throws SQLException {
             if (f != null) {
-                safeSetLong(sb, ps, col++, f.getNaxis());
-                safeSetDouble(sb, ps, col++, f.getRefCoord().pix);
-                safeSetDouble(sb, ps, col++, f.getRefCoord().val);
-                safeSetDouble(sb, ps, col++, f.getDelta());
+                dbDialect.safeSetLong(sb, ps, col++, f.getNaxis());
+                dbDialect.safeSetDouble(sb, ps, col++, f.getRefCoord().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, f.getRefCoord().val);
+                dbDialect.safeSetDouble(sb, ps, col++, f.getDelta());
             } else {
-                safeSetLong(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
             return 4;
         }
@@ -2334,23 +2142,23 @@ public class SQLGenerator {
         private int safeSet(StringBuilder sb, PreparedStatement ps, int col, CoordRange2D r)
                 throws SQLException {
             if (r != null) {
-                safeSetDouble(sb, ps, col++, r.getStart().getCoord1().pix);
-                safeSetDouble(sb, ps, col++, r.getStart().getCoord1().val);
-                safeSetDouble(sb, ps, col++, r.getStart().getCoord2().pix);
-                safeSetDouble(sb, ps, col++, r.getStart().getCoord2().val);
-                safeSetDouble(sb, ps, col++, r.getEnd().getCoord1().pix);
-                safeSetDouble(sb, ps, col++, r.getEnd().getCoord1().val);
-                safeSetDouble(sb, ps, col++, r.getEnd().getCoord2().pix);
-                safeSetDouble(sb, ps, col++, r.getEnd().getCoord2().val);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getStart().getCoord1().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getStart().getCoord1().val);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getStart().getCoord2().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getStart().getCoord2().val);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getEnd().getCoord1().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getEnd().getCoord1().val);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getEnd().getCoord2().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, r.getEnd().getCoord2().val);
             } else {
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
             return 8;
         }
@@ -2358,323 +2166,32 @@ public class SQLGenerator {
         private int safeSet(StringBuilder sb, PreparedStatement ps, int col, CoordFunction2D f)
                 throws SQLException {
             if (f != null) {
-                safeSetLong(sb, ps, col++, f.getDimension().naxis1);
-                safeSetLong(sb, ps, col++, f.getDimension().naxis2);
-                safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord1().pix);
-                safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord1().val);
-                safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord2().pix);
-                safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord2().val);
-                safeSetDouble(sb, ps, col++, f.getCd11());
-                safeSetDouble(sb, ps, col++, f.getCd12());
-                safeSetDouble(sb, ps, col++, f.getCd21());
-                safeSetDouble(sb, ps, col++, f.getCd22());
+                dbDialect.safeSetLong(sb, ps, col++, f.getDimension().naxis1);
+                dbDialect.safeSetLong(sb, ps, col++, f.getDimension().naxis2);
+                dbDialect.safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord1().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord1().val);
+                dbDialect.safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord2().pix);
+                dbDialect.safeSetDouble(sb, ps, col++, f.getRefCoord().getCoord2().val);
+                dbDialect.safeSetDouble(sb, ps, col++, f.getCd11());
+                dbDialect.safeSetDouble(sb, ps, col++, f.getCd12());
+                dbDialect.safeSetDouble(sb, ps, col++, f.getCd21());
+                dbDialect.safeSetDouble(sb, ps, col++, f.getCd22());
             } else {
-                safeSetLong(sb, ps, col++, null);
-                safeSetLong(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
-                safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetLong(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
+                dbDialect.safeSetDouble(sb, ps, col++, null);
             }
             return 10;
         }
     }
 
-    protected void safeSetDate(StringBuilder sb, PreparedStatement ps, int col, Date val, Calendar cal)
-            throws SQLException {
-        if (val != null) {
-            ps.setTimestamp(col, new Timestamp(val.getTime()), cal);
-        } else {
-            ps.setNull(col, Types.TIMESTAMP);
-        }
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-
-    protected void safeSetString(StringBuilder sb, PreparedStatement ps, int col, String val)
-            throws SQLException {
-        if (val != null) {
-            ps.setString(col, val);
-        } else {
-            ps.setNull(col, Types.VARCHAR);
-        }
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-
-    protected void safeSetURI(StringBuilder sb, PreparedStatement ps, int col, URI val)
-            throws SQLException {
-        String str = null;
-        if (val != null) {
-            str = val.toASCIIString();
-        }
-        safeSetString(sb, ps, col, str);
-    }
-    
-    protected void safeSetArray(StringBuilder sb, PreparedStatement prep, int col, Set<URI> values)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void extractMultiURI(ResultSet rs, int col, Set<URI> out)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void safeSetDimension(StringBuilder sb, PreparedStatement ps, int col, Dimension2D val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected Dimension2D getDimension(ResultSet rs, int col)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void safeSetKeywords(StringBuilder sb, PreparedStatement ps, int col, Set<String> vals)
-            throws SQLException {
-        // default impl: 
-        String val = CaomUtil.encodeKeywordList(vals);
-        if (val != null) {
-            ps.setString(col, val);
-        } else {
-            ps.setNull(col, Types.VARCHAR);
-        }
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-
-    protected void getKeywords(ResultSet rs, int col, Set<String> keywords)
-            throws SQLException {
-        CaomUtil.decodeKeywordList(rs.getString(col), keywords);
-    }
-
-    protected void safeSetDouble(StringBuilder sb, PreparedStatement ps, int col, Double val)
-            throws SQLException {
-        if (val != null) {
-            ps.setDouble(col, val);
-        } else {
-            ps.setNull(col, Types.DOUBLE);
-        }
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-
-    protected void safeSetUUID(StringBuilder sb, PreparedStatement ps, int col, UUID val)
-            throws SQLException {
-        // null UUID is always a bug
-        ps.setObject(col, val);
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-    
-    protected final UUID getUUID(ResultSet rs, int col)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    // optimisation to persist group names in a separate field for easier querying
-    protected void safeSetGroupOptimisation(StringBuilder sb, PreparedStatement ps, int col, Collection<URI> groups) 
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void safeSetLong(StringBuilder sb, PreparedStatement ps, int col, Long val)
-            throws SQLException {
-        if (val != null) {
-            ps.setLong(col, val);
-        } else {
-            ps.setNull(col, Types.BIGINT);
-        }
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-
-    protected void safeSetInteger(StringBuilder sb, PreparedStatement ps, int col, Integer val)
-            throws SQLException {
-        if (val != null) {
-            ps.setLong(col, val);
-        } else {
-            ps.setNull(col, Types.INTEGER);
-        }
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-
-    protected void safeSetBoolean(StringBuilder sb, PreparedStatement ps, int col, Boolean val)
-            throws SQLException {
-        if (useIntegerForBoolean) {
-            Integer ival = null;
-            if (val != null) {
-                if (val.booleanValue()) {
-                    ival = new Integer(1);
-                } else {
-                    ival = new Integer(0);
-                }
-            }
-            safeSetInteger(sb, ps, col, ival);
-            return;
-        }
-
-        if (val != null) {
-            ps.setBoolean(col, val);
-        } else {
-            ps.setNull(col, Types.BOOLEAN);
-        }
-        if (sb != null) {
-            sb.append(val);
-            sb.append(",");
-        }
-    }
-
-    protected void safeSetBinary(StringBuilder sb, PreparedStatement ps, int col, byte[] val)
-            throws SQLException {
-        if (val == null) {
-            ps.setBytes(col, val);
-            if (sb != null) {
-                sb.append("null,");
-            }
-        } else {
-            ps.setNull(col, Types.VARBINARY);
-            if (sb != null) {
-                sb.append("byte[");
-                sb.append(val.length);
-                sb.append("],");
-            }
-        }
-    }
-
-    protected void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected Point getPoint(ResultSet rs, int col)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-    
-    protected void safeSetShape(StringBuilder sb, PreparedStatement ps, int col, Shape val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-    
-    protected Shape getShape(ResultSet rc, int col)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-    
-    protected void safeSetMultiShape(StringBuilder sb, PreparedStatement ps, int col, MultiShape val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected MultiShape getMultiShape(ResultSet rs, int col)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void extractIntervalList(ResultSet rc, int col, List<Interval<Double>> vals)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected void safeSetInterval(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-    
-    protected Interval<Double> getInterval(ResultSet rs, int col)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    protected List<Interval<Double>> getIntervalList(ResultSet rs, int col)
-            throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    public String literal(Object obj) {
-        if (obj == null) {
-            return "NULL";
-        }
-
-        if (obj instanceof Number) {
-            return obj.toString();
-        }
-
-        if (obj instanceof String) {
-            return "'" + obj + "'";
-        }
-
-        if (obj instanceof UUID) {
-            return literal((UUID) obj);
-        }
-
-        if (obj instanceof URI) {
-            return literal((URI) obj);
-        }
-
-        throw new IllegalArgumentException("unsupported literal: " + obj.getClass().getName());
-    }
-
-    protected String literal(boolean value) {
-        return Boolean.toString(value);
-    }
-
-    protected String literal(double value) {
-        return Double.toString(value);
-    }
-
-    protected String literal(float value) {
-        return Float.toString(value);
-    }
-
-    protected String literal(int value) {
-        return Integer.toString(value);
-    }
-
-    protected String literal(long value) {
-        return Long.toString(value);
-    }
-
-    protected String literal(URI value) {
-        return "'" + value.toASCIIString() + "'";
-    }
-
-    protected String literal(UUID value) {
-        // subclass must override this until useLongForUUID is usable for all UUID values
-        throw new UnsupportedOperationException();
-    }
-    
     String getColumns(Class c) {
         return getColumns(c, null);
     }
@@ -2724,7 +2241,7 @@ public class SQLGenerator {
         sb.append(getAlias(c));
         return sb.toString();
     }
-
+    
     public String getFrom(Class c, int depth, boolean skeleton) {
         log.debug("getFrom: " + c + ", depth = " + depth);
 
@@ -2964,15 +2481,15 @@ public class SQLGenerator {
     }
 
     PartialRowMapper<Observation> getObservationMapper() {
-        return new ObservationMapper();
+        return new ObservationMapper(dbDialect);
     }
 
     PartialRowMapper<Plane> getPlaneMapper() {
-        return new PlaneMapper();
+        return new PlaneMapper(dbDialect);
     }
 
     public PartialRowMapper<Artifact> getArtifactMapper() {
-        return new ArtifactMapper();
+        return new ArtifactMapper(dbDialect);
     }
 
     PartialRowMapper<Part> getPartMapper() {
@@ -2981,556 +2498,6 @@ public class SQLGenerator {
 
     PartialRowMapper<Chunk> getChunkMapper() {
         return new ChunkMapper();
-    }
-
-    class ObservationMapper implements PartialRowMapper<Observation> {
-        @Override
-        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
-            int n = getColumnCount() - 1;
-            UUID id = Util.getUUID(rs, offset + n);
-            log.debug("found: entity ID = " + id);
-            return id;
-        }
-        
-        @Override
-        public int getColumnCount() {
-            return columnMap.get(Observation.class).length;
-        }
-
-        public Observation mapRow(ResultSet rs, int row)
-                throws SQLException {
-            return mapRow(rs, row, 1);
-        }
-
-        /**
-         * Map columns from the current row into an Observation, starting at the
-         * specified column offset.
-         *
-         * @param rs
-         * @param row
-         * @param col JDBC column offset where observation columns are located
-         * @return
-         * @throws java.sql.SQLException
-         */
-        public Observation mapRow(ResultSet rs, int row, int col)
-                throws SQLException {
-            // first column is a constant that dictates the type
-            String typeCode = rs.getString(col++);
-            if (typeCode == null) {
-                return null;
-            }
-
-            URI uri = Util.getURI(rs, col++);
-            String uriBucket = rs.getString(col++); // unused
-            String collection = rs.getString(col++);
-            Algorithm algorithm = new Algorithm(rs.getString(col++));
-            log.debug("found: algorithm = " + algorithm);
-
-            Observation o = null;
-            if (SIMPLE_TYPE.equals(typeCode)) {
-                o = new SimpleObservation(collection, uri, algorithm);
-            } else if (DERIVED_TYPE.equals(typeCode)) {
-                o = new DerivedObservation(collection, uri, algorithm);
-            } else {
-                throw new RuntimeException("BUG: unexpected observation.typeCode " + typeCode);
-            }
-
-            o.type = rs.getString(col++);
-            String intent = rs.getString(col++);
-            log.debug("found: intent = " + intent);
-            if (intent != null) {
-                o.intent = ObservationIntentType.toValue(intent);
-            }
-
-            o.sequenceNumber = Util.getInteger(rs, col++);
-            o.metaRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found metaRelease: " + o.metaRelease);
-            extractMultiURI(rs, col++, o.getMetaReadGroups());
-            log.debug("found metaReadGroups: " + o.getMetaReadGroups().size());
-            
-            String pid = rs.getString(col++);
-            if (pid != null) {
-                o.proposal = new Proposal(pid);
-                o.proposal.pi = rs.getString(col++);
-                o.proposal.project = rs.getString(col++);
-                o.proposal.title = rs.getString(col++);
-                getKeywords(rs, col++, o.proposal.getKeywords());
-                o.proposal.reference = Util.getURI(rs, col++);
-                
-            } else {
-                col += 6; // skip
-            }
-            log.debug("found proposal: " + o.proposal);
-            
-            String targ = rs.getString(col++);
-            if (targ != null) {
-                o.target = new Target(targ);
-                o.target.targetID = Util.getURI(rs, col++);
-                String tt = rs.getString(col++);
-                if (tt != null) {
-                    o.target.type = TargetType.toValue(tt);
-                }
-                o.target.standard = Util.getBoolean(rs, col++);
-                o.target.redshift = Util.getDouble(rs, col++);
-                o.target.moving = Util.getBoolean(rs, col++);
-                getKeywords(rs, col++, o.target.getKeywords());
-            } else {
-                col += 6; // skip
-            }
-            log.debug("found target: " + o.target);
-
-            String tposCs = rs.getString(col++);
-            if (tposCs != null) {
-                Point tpos = getPoint(rs, col++);
-                o.targetPosition = new TargetPosition(tposCs, tpos);
-                o.targetPosition.equinox = Util.getDouble(rs, col++);
-            } else {
-                col += 2; // skip
-            }
-            log.debug("found targetPosition: " + o.targetPosition);
-            
-            String tn = rs.getString(col++);
-            if (tn != null) {
-                o.telescope = new Telescope(tn);
-                o.telescope.geoLocationX = Util.getDouble(rs, col++);
-                o.telescope.geoLocationY = Util.getDouble(rs, col++);
-                o.telescope.geoLocationZ = Util.getDouble(rs, col++);
-                getKeywords(rs, col++, o.telescope.getKeywords());
-                String tm = rs.getString(col++);
-                if (tm != null) {
-                    o.telescope.trackingMode = Tracking.toValue(tm);
-                }
-            } else {
-                col += 4; // skip
-            }
-            log.debug("found telescope: " + o.telescope);
-            
-            String in = rs.getString(col++);
-            if (in != null) {
-                o.instrument = new Instrument(in);
-                getKeywords(rs, col++, o.instrument.getKeywords());
-            } else {
-                col += 1; // skip
-            }
-            log.debug("found instrument: " + o.instrument);
-            
-            Environment e = new Environment();
-            e.seeing = Util.getDouble(rs, col++);
-            e.humidity = Util.getDouble(rs, col++);
-            e.elevation = Util.getDouble(rs, col++);
-            e.tau = Util.getDouble(rs, col++);
-            e.wavelengthTau = Util.getDouble(rs, col++);
-            e.ambientTemp = Util.getDouble(rs, col++);
-            e.photometric = Util.getBoolean(rs, col++);
-
-            if (e.seeing != null || e.humidity != null || e.elevation != null
-                    || e.tau != null || e.wavelengthTau != null || e.ambientTemp != null
-                    || e.photometric != null) {
-                o.environment = e;
-            }
-            log.debug("found environment: " + o.environment);
-            
-            String rflag = rs.getString(col++);
-            if (rflag != null) {
-                o.requirements = new Requirements(Status.toValue(rflag));
-            }
-            log.debug("found requirements: " + o.requirements);
-            
-            if (o instanceof DerivedObservation) {
-                DerivedObservation der = (DerivedObservation) o;
-                extractMultiURI(rs, col++, der.getMembers());
-                log.debug("found members: " + der.getMembers().size());
-            } else {
-                col += 1; // skip
-            }
-            
-            //if (persistOptimisations) {
-            //    col += numOptObservationColumns;
-            //}
-
-            Date lastModified = Util.getDate(rs, col++, utcCalendar);
-            Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            CaomUtil.assignLastModified(o, lastModified, "lastModified");
-            CaomUtil.assignLastModified(o, maxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(rs, col++);
-            URI accMetaChecksum = Util.getURI(rs, col++);
-            CaomUtil.assignMetaChecksum(o, metaChecksum, "metaChecksum");
-            CaomUtil.assignMetaChecksum(o, accMetaChecksum, "accMetaChecksum");
-            o.metaProducer = Util.getURI(rs, col++);
-
-            UUID id = Util.getUUID(rs, col++);
-            log.debug("found: observation.id = " + id);
-            CaomUtil.assignID(o, id);
-
-            return o;
-        }
-    }
-
-    class PlaneMapper implements PartialRowMapper<Plane> {
-        @Override
-        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
-            int n = getColumnCount() - 1;
-            UUID id = Util.getUUID(rs, offset + n);
-            log.debug("found: entity ID = " + id);
-            return id;
-        }
-        
-        @Override
-        public int getColumnCount() {
-            return columnMap.get(Plane.class).length;
-        }
-        
-        public Plane mapRow(ResultSet rs, int row)
-                throws SQLException {
-            return mapRow(rs, row, 1);
-        }
-
-        /**
-         * Map columns from the current row into a Plane, starting at the
-         * specified column offset.
-         *
-         * @param rs
-         * @param row
-         * @param col JDBC column offset where plane columns are located
-         * @return
-         * @throws java.sql.SQLException
-         */
-        public Plane mapRow(ResultSet rs, int row, int col)
-                throws SQLException {
-            UUID obsID = Util.getUUID(rs, col++); // FK
-            if (obsID == null) {
-                return null;
-            }
-
-            URI uri = Util.getURI(rs, col++);
-            if (uri == null) {
-                return null;
-            }
-            log.debug("found p.uri = " + uri);
-            
-            Plane p = new Plane(uri);
-            p.publisherID = Util.getURI(rs, col++);
-
-            p.metaRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found p.metaRelease = " + p.metaRelease);
-            extractMultiURI(rs, col++, p.getMetaReadGroups());
-            p.dataRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found p.dataRelease = " + p.dataRelease);
-            extractMultiURI(rs, col++, p.getDataReadGroups());
-
-            String dpt = rs.getString(col++);
-            log.debug("found p.dataProductType = " + dpt);
-            if (dpt != null) {
-                p.dataProductType = DataProductType.toValue(dpt);
-            }
-
-            Integer cl = Util.getInteger(rs, col++);
-            log.debug("found p.calibrationLevel = " + cl);
-            if (cl != null) {
-                p.calibrationLevel = CalibrationLevel.toValue(cl.intValue());
-            }
-
-            String pname = rs.getString(col++);
-            log.debug("found p.provenance.name = " + pname);
-            if (pname != null) {
-                p.provenance = new Provenance(pname);
-                p.provenance.reference = Util.getURI(rs, col++);
-                log.debug("found p.provenance.reference = " + p.provenance.reference);
-                p.provenance.version = rs.getString(col++);
-                log.debug("found p.provenance.version = " + p.provenance.version);
-                p.provenance.project = rs.getString(col++);
-                log.debug("found p.provenance.project = " + p.provenance.project);
-                p.provenance.producer = rs.getString(col++);
-                log.debug("found p.provenance.producer = " + p.provenance.producer);
-                p.provenance.runID = rs.getString(col++);
-                log.debug("found p.provenance.runID = " + p.provenance.runID);
-                p.provenance.lastExecuted = Util.getDate(rs, col++, utcCalendar);
-                log.debug("found p.provenance.lastExecuted = " + p.provenance.lastExecuted);
-                getKeywords(rs, col++, p.provenance.getKeywords());
-                log.debug("found p.provenance.keywords: " + p.provenance.getKeywords().size());
-                extractMultiURI(rs, col++, p.provenance.getInputs());
-                log.debug("found p.provenance.inpts: " + p.provenance.getInputs().size());
-            } else {
-                col += 8;
-            }
-
-            Metrics m = new Metrics();
-            m.sourceNumberDensity = Util.getDouble(rs, col++);
-            m.background = Util.getDouble(rs, col++);
-            m.backgroundStddev = Util.getDouble(rs, col++);
-            m.fluxDensityLimit = Util.getDouble(rs, col++);
-            m.magLimit = Util.getDouble(rs, col++);
-            m.sampleSNR = Util.getDouble(rs, col++);
-            if (m.sourceNumberDensity != null || m.background != null || m.backgroundStddev != null
-                    || m.fluxDensityLimit != null || m.magLimit != null || m.sampleSNR != null) {
-                p.metrics = m;
-            }
-
-            String qflag = rs.getString(col++);
-            if (qflag != null) {
-                p.quality = new DataQuality(Quality.toValue(qflag));
-            }
-
-            // observable
-            String oucd = rs.getString(col++);
-            if (oucd != null) {
-                p.observable = new Observable(new UCD(oucd));
-                String cs = rs.getString(col++);
-                if (cs != null) {
-                    p.observable.calibration = new CalibrationStatus(cs);
-                }
-            } else {
-                col += 1;
-            }
-
-            // position
-            Shape s = getShape(rs, col++);
-            if (s != null) {
-                MultiShape ms = getMultiShape(rs, col++);
-                Position pos = new Position(s, ms);
-                pos.minBounds = getShape(rs, col++);
-                pos.dimension = getDimension(rs, col++);
-                log.debug("position.dimension: " + pos.dimension);
-
-                pos.maxRecoverableScale = getInterval(rs, col++);
-                log.debug("position.maxRecoverableScale: " + pos.maxRecoverableScale);
-                pos.resolution = Util.getDouble(rs, col++);
-                log.debug("position.resolution: " + pos.resolution);
-                pos.resolutionBounds = getInterval(rs, col++);
-                log.debug("position.resolutionBounds: " + pos.resolutionBounds);
-                pos.sampleSize = Util.getDouble(rs, col++);
-                log.debug("position_sampleSize: " + pos.sampleSize);
-                String cs = rs.getString(col++);
-                log.debug("position_calibration: " + cs);
-                if (cs != null) {
-                    pos.calibration = new CalibrationStatus(cs);
-                }
-                p.position = pos;
-            } else {
-                col += 8;
-            }
-            
-            // energy
-            Interval<Double> eb = getInterval(rs, col++);
-            if (eb != null) {
-                Energy nrg = new Energy(eb);
-                log.debug("energy_bounds: " + eb);
-                extractIntervalList(rs, col++, nrg.getSamples());
-                nrg.bandpassName = rs.getString(col++);
-                log.debug("energy.bandpassName: " + nrg.bandpassName);
-                String emStr = rs.getString(col++);
-                CaomUtil.decodeBands(emStr, nrg.getEnergyBands());
-                log.debug("energy.energyBands: " + nrg.getEnergyBands().size());
-                nrg.dimension = rs.getLong(col++);
-                log.debug("energy.dimension: " + nrg.dimension);
-                
-                nrg.resolvingPower = Util.getDouble(rs, col++);
-                log.debug("energy.resolvingPower: " + nrg.resolvingPower);
-                nrg.resolvingPowerBounds = getInterval(rs, col++);
-                log.debug("energy.resolvingPowerBounds: " + nrg.resolvingPowerBounds);
-                
-                nrg.resolution = Util.getDouble(rs, col++);
-                log.debug("energy.resolution: " + nrg.resolution);
-                nrg.resolutionBounds = getInterval(rs, col++);
-                log.debug("energy.resolutionBounds: " + nrg.resolutionBounds);
-                
-                nrg.sampleSize = Util.getDouble(rs, col++);
-                log.debug("energy.sampleSize: " + nrg.sampleSize);
-                
-                String ets = rs.getString(col++);
-                String ett = rs.getString(col++);
-                if (ets != null) {
-                    nrg.transition = new EnergyTransition(ets, ett);
-                }
-                log.debug("energy.transition: " + nrg.transition);
-                
-                nrg.rest = Util.getDouble(rs, col++);
-                log.debug("energy.rest: " + nrg.rest);
-                p.energy = nrg;
-                
-                String cs = rs.getString(col++);
-                if (cs != null) {
-                    nrg.calibration = new CalibrationStatus(cs);
-                }
-            } else {
-                col += 13;
-            }
-            
-            // time
-            Interval<Double> tb = getInterval(rs, col++);
-            if (tb != null) {
-                Time tim = new Time(tb);
-                extractIntervalList(rs, col++, tim.getSamples());
-                tim.dimension = Util.getLong(rs, col++);
-                log.debug("time.dimension: " + tim.dimension);
-                
-                tim.exposure = Util.getDouble(rs, col++);
-                log.debug("time.exposure: " + tim.exposure);
-                tim.exposureBounds = getInterval(rs, col++);
-                log.debug("time.exposureBounds: " + tim.exposureBounds);
-                
-                tim.resolution = Util.getDouble(rs, col++);
-                log.debug("time.resolution: " + tim.resolution);
-                tim.resolutionBounds = getInterval(rs, col++);
-                log.debug("time.resolutionBounds: " + tim.resolutionBounds);
-                
-                tim.sampleSize = Util.getDouble(rs, col++);
-                log.debug("time_sampleSize: " + tim.sampleSize);
-                p.time = tim;
-                
-                String cs = rs.getString(col++);
-                if (cs != null) {
-                    tim.calibration = new CalibrationStatus(cs);
-                }
-            } else {
-                col += 8;
-            }
-
-            // polarization
-            String polStr = rs.getString(col++);
-            log.debug("polarization.states: " + polStr);
-            if (polStr != null) {
-                p.polarization = new Polarization();
-                CaomUtil.decodeStates(polStr, p.polarization.getStates());
-                p.polarization.dimension = Util.getInteger(rs, col++);
-                log.debug("polarization.dimension: " + p.polarization.dimension);
-            } else {
-                col += 1;
-            }
-            
-            // custom
-            String cct = rs.getString(col++);
-            if (cct != null) {
-                log.debug("custom.ctype: " + cct);
-                Interval<Double> cb = getInterval(rs, col++);
-                p.custom = new CustomAxis(cct, cb);
-                extractIntervalList(rs, col++, p.custom.getSamples());
-                p.custom.dimension = Util.getLong(rs, col++);
-                log.debug("custom.dimension: " + p.custom.dimension);
-            } else {
-                col += 3;
-            }
-            
-            // visibility
-            Interval<Double> uvd = getInterval(rs, col++);
-            if (uvd != null) {
-                log.debug("visibility.distance: " + uvd);
-                Double ecc = rs.getDouble(col++);
-                log.debug("visibility.ecc: " + ecc);
-                Double fill = rs.getDouble(col++);
-                log.debug("visibility.fill: " + fill);
-                p.visibility = new Visibility(uvd, ecc, fill);
-            } else {
-                col += 2;
-            }
-            
-            if (persistOptimisations) {
-                col += numOptPlaneColumns;
-            }
-            
-            Date lastModified = Util.getDate(rs, col++, utcCalendar);
-            Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            CaomUtil.assignLastModified(p, lastModified, "lastModified");
-            CaomUtil.assignLastModified(p, maxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(rs, col++);
-            URI accMetaChecksum = Util.getURI(rs, col++);
-            CaomUtil.assignMetaChecksum(p, metaChecksum, "metaChecksum");
-            CaomUtil.assignMetaChecksum(p, accMetaChecksum, "accMetaChecksum");
-            p.metaProducer = Util.getURI(rs, col++);
-
-            UUID id = Util.getUUID(rs, col++);
-            log.debug("found: plane.id = " + id);
-            CaomUtil.assignID(p, id);
-
-            return p;
-        }
-    }
-
-    class ArtifactMapper implements PartialRowMapper<Artifact> {
-        @Override
-        public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
-            int n = getColumnCount() - 1;
-            UUID id = Util.getUUID(rs, offset + n);
-            log.debug("found: entity ID = " + id);
-            return id;
-        }
-        
-        @Override
-        public int getColumnCount() {
-            return columnMap.get(Artifact.class).length;
-        }
-        
-        public Artifact mapRow(ResultSet rs, int row)
-                throws SQLException {
-            return mapRow(rs, row, 1);
-        }
-
-        /**
-         * Map columns from the current row into an Artifact, starting at the
-         * specified column offset.
-         *
-         * @param rs
-         * @param row
-         * @param col JDBC column offset where plane columns are located
-         * @return
-         * @throws java.sql.SQLException
-         */
-        public Artifact mapRow(ResultSet rs, int row, int col)
-                throws SQLException {
-            UUID planeID = Util.getUUID(rs, col++); // FK
-            if (planeID == null) {
-                return null;
-            }
-
-            URI uri = Util.getURI(rs, col++);
-            log.debug("found a.uri = " + uri);
-            String uriBucket = rs.getString(col++); // unused
-
-            String pt = rs.getString(col++);
-            log.debug("found a.productType = " + pt);
-            DataLinkSemantics ptype = DataLinkSemantics.toValue(pt);
-
-            String rt = rs.getString(col++);
-            log.debug("found a.releaseType = " + rt);
-            ReleaseType rtype = ReleaseType.toValue(rt);
-
-            Artifact a = new Artifact(uri, ptype, rtype);
-
-            a.contentType = rs.getString(col++);
-            log.debug("found a.contentType = " + a.contentType);
-            a.contentLength = Util.getLong(rs, col++);
-            log.debug("found a.contentLength = " + a.contentLength);
-            a.contentChecksum = Util.getURI(rs, col++);
-            log.debug("found a.contentChecksum = " + a.contentChecksum);
-            a.contentRelease = Util.getDate(rs, col++, utcCalendar);
-            log.debug("found a.contentRelease = " + a.contentRelease);
-            extractMultiURI(rs, col++, a.getContentReadGroups());
-            log.debug("found a.contentReadGrouops: " + a.getContentReadGroups().size());
-            a.descriptionID = Util.getURI(rs, col++);
-            log.debug("a.descriptionID: " + a.descriptionID);
-            if (persistOptimisations) {
-                col += numOptArtifactColumns;
-            }
-
-            Date lastModified = Util.getDate(rs, col++, utcCalendar);
-            Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
-            CaomUtil.assignLastModified(a, lastModified, "lastModified");
-            CaomUtil.assignLastModified(a, maxLastModified, "maxLastModified");
-
-            URI metaChecksum = Util.getURI(rs, col++);
-            URI accMetaChecksum = Util.getURI(rs, col++);
-            CaomUtil.assignMetaChecksum(a, metaChecksum, "metaChecksum");
-            CaomUtil.assignMetaChecksum(a, accMetaChecksum, "accMetaChecksum");
-            a.metaProducer = Util.getURI(rs, col++);
-
-            UUID id = Util.getUUID(rs, col++);
-            log.debug("found artifact.id = " + id);
-            CaomUtil.assignID(a, id);
-
-            return a;
-        }
     }
 
     class PartMapper implements PartialRowMapper<Part> {

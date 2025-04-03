@@ -63,61 +63,129 @@
 *                                       <http://www.gnu.org/licenses/>.
 *
 ************************************************************************
-*/
+ */
 
-package org.opencadc.caom2.util;
+package org.opencadc.caom2.db.mappers;
 
+import ca.nrc.cadc.date.DateUtil;
 import java.net.URI;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 import org.apache.log4j.Logger;
-import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Artifact;
+import org.opencadc.caom2.ReleaseType;
+import org.opencadc.caom2.db.SQLDialect;
+import org.opencadc.caom2.db.Util;
+import org.opencadc.caom2.util.CaomUtil;
+import org.opencadc.caom2.vocab.DataLinkSemantics;
 
 /**
- * Utility class that captures the minimal esssential observation state
- * to support metadata synchronization.
- * 
+ *
  * @author pdowler
  */
-public class ObservationState {
-    private static final Logger log = Logger.getLogger(ObservationState.class);
+public class ArtifactMapper implements PartialRowMapper<Artifact> {
 
-    private final UUID id;
-    private final URI uri;
-    private final Date maxLastModified;
-    private final URI accMetaChecksum;
-    
-    // optional complete observation OR error
-    public Observation observation;
-    public Exception error;
-    
-    public ObservationState(UUID id, URI uri, Date maxLastModified, URI accMetaChecksum) {
-        this.id = id;
-        this.uri = uri;
-        this.maxLastModified = maxLastModified;
-        this.accMetaChecksum = accMetaChecksum;
+    private static final Logger log = Logger.getLogger(ArtifactMapper.class);
+
+    public static final String[] COLUMNS = new String[]{
+        "planeID", // FK
+        "uri", "uriBucket",
+        "productType", "releaseType",
+        "contentType", "contentLength", "contentChecksum",
+        "contentRelease", "contentReadGroups",
+        "descriptionID",
+        "lastModified", "maxLastModified",
+        "metaChecksum", "accMetaChecksum", "metaProducer",
+        "artifactID" // PK
+    };
+
+    private final SQLDialect dbDialect;
+    private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
+
+    public ArtifactMapper(SQLDialect dbDialect) {
+        this.dbDialect = dbDialect;
     }
 
-    public UUID getID() {
+    @Override
+    public UUID getID(ResultSet rs, int row, int offset) throws SQLException {
+        int n = getColumnCount() - 1;
+        UUID id = Util.getUUID(rs, offset + n);
+        log.debug("found: entity ID = " + id);
         return id;
     }
 
-    public URI getURI() {
-        return uri;
-    }
-
-    public URI getAccMetaChecksum() {
-        return accMetaChecksum;
-    }
-
-    public Date getMaxLastModified() {
-        return maxLastModified;
-    }
-    
     @Override
-    public String toString() {
-        return ObservationState.class.getSimpleName() + "[" + id + "," + uri + "]";
+    public int getColumnCount() {
+        return COLUMNS.length;
     }
-    
-    
+
+    public Artifact mapRow(ResultSet rs, int row)
+        throws SQLException {
+        return mapRow(rs, row, 1);
+    }
+
+    /**
+     * Map columns from the current row into an Artifact, starting at the
+     * specified column offset.
+     *
+     * @param rs
+     * @param row
+     * @param col JDBC column offset where plane columns are located
+     * @return
+     * @throws java.sql.SQLException
+     */
+    public Artifact mapRow(ResultSet rs, int row, int col)
+        throws SQLException {
+        UUID planeID = Util.getUUID(rs, col++); // FK
+        if (planeID == null) {
+            return null;
+        }
+
+        URI uri = Util.getURI(rs, col++);
+        log.debug("found a.uri = " + uri);
+        String uriBucket = rs.getString(col++); // unused
+
+        String pt = rs.getString(col++);
+        log.debug("found a.productType = " + pt);
+        DataLinkSemantics ptype = DataLinkSemantics.toValue(pt);
+
+        String rt = rs.getString(col++);
+        log.debug("found a.releaseType = " + rt);
+        ReleaseType rtype = ReleaseType.toValue(rt);
+
+        Artifact a = new Artifact(uri, ptype, rtype);
+
+        a.contentType = rs.getString(col++);
+        log.debug("found a.contentType = " + a.contentType);
+        a.contentLength = Util.getLong(rs, col++);
+        log.debug("found a.contentLength = " + a.contentLength);
+        a.contentChecksum = Util.getURI(rs, col++);
+        log.debug("found a.contentChecksum = " + a.contentChecksum);
+        a.contentRelease = Util.getDate(rs, col++, utcCalendar);
+        log.debug("found a.contentRelease = " + a.contentRelease);
+        dbDialect.extractMultiURI(rs, col++, a.getContentReadGroups());
+        log.debug("found a.contentReadGrouops: " + a.getContentReadGroups().size());
+        a.descriptionID = Util.getURI(rs, col++);
+        log.debug("a.descriptionID: " + a.descriptionID);
+
+        Date lastModified = Util.getDate(rs, col++, utcCalendar);
+        Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
+        CaomUtil.assignLastModified(a, lastModified, "lastModified");
+        CaomUtil.assignLastModified(a, maxLastModified, "maxLastModified");
+
+        URI metaChecksum = Util.getURI(rs, col++);
+        URI accMetaChecksum = Util.getURI(rs, col++);
+        CaomUtil.assignMetaChecksum(a, metaChecksum, "metaChecksum");
+        CaomUtil.assignMetaChecksum(a, accMetaChecksum, "accMetaChecksum");
+        a.metaProducer = Util.getURI(rs, col++);
+
+        UUID id = Util.getUUID(rs, col++);
+        log.debug("found artifact.id = " + id);
+        CaomUtil.assignID(a, id);
+
+        return a;
+    }
 }

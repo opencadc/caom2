@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2017.                            (c) 2017.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,17 +67,15 @@
 
 package org.opencadc.torkeep;
 
-
 import ca.nrc.cadc.auth.RunnableAction;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.SimpleObservation;
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.net.URI;
 import java.net.URL;
 import java.text.DateFormat;
 import java.util.Date;
@@ -87,6 +85,9 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.SimpleObservation;
+import static org.opencadc.torkeep.AbstractIntTest.TEST_COLLECTION;
 
 /**
  *
@@ -106,7 +107,7 @@ public class DeletedTest extends AbstractIntTest {
     public void testListCollections() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpDownload get = new HttpDownload(new URL(baseAnonURL), bos);
+            HttpGet get = new HttpGet(new URL(baseObsURL), bos);
             get.run();
 
             Assert.assertNull("testListCollections", get.getThrowable());
@@ -134,7 +135,7 @@ public class DeletedTest extends AbstractIntTest {
     public void testListDeletedDenied() {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpDownload get = new HttpDownload(new URL(baseAnonURL + "/" + TEST_COLLECTION), bos);
+            HttpGet get = new HttpGet(new URL(baseObsURL + "/" + TEST_COLLECTION), bos);
             get.run();
 
             Assert.assertNotNull("testListDeletedDenied", get.getThrowable());
@@ -151,9 +152,10 @@ public class DeletedTest extends AbstractIntTest {
         try {
             // setup
             final DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-            Observation obs = new SimpleObservation(TEST_COLLECTION, "testListDeletedSuccess-" + UUID.randomUUID().toString());
+            URI ouri = URI.create("caom:" + TEST_COLLECTION + "/testListDeletedSuccess-" + UUID.randomUUID().toString());
+            Observation obs = new SimpleObservation(TEST_COLLECTION, ouri, SimpleObservation.EXPOSURE);
 
-            putObservation(obs, subject1, 200, "OK", null);
+            putObservation(obs, subject1, 200, "OK");
             final Date clientInserted = new Date();
             obs = getObservation(obs.getURI(), subject1, 200, null, null);
             Assert.assertNotNull("test setup", obs);
@@ -162,24 +164,18 @@ public class DeletedTest extends AbstractIntTest {
             
             deleteObservation(obs.getURI(), subject1, null, null);
             log.info("testListDeletedSuccess deleted: " + obs.getURI());
-            Date clientDeleted = new Date();
-            final long localDt = clientDeleted.getTime() - clientInserted.getTime();
-            final Date endDate = new Date(inserted.getTime() + localDt + 100);
-
-            log.info("local operation dt: " + df.format(clientDeleted) + " -> " + df.format(clientInserted));
-
+            
             StringBuilder sb = new StringBuilder();
-            sb.append(baseCertURL).append("/").append(TEST_COLLECTION);
+            sb.append(baseDeletedObsURL).append("/").append(TEST_COLLECTION);
             sb.append("?").append("maxrec=1");
             sb.append("&").append("start=").append(df.format(inserted));
-            sb.append("&").append("end=").append(df.format(endDate));
 
             URL url = new URL(sb.toString());
-            log.info("testListDeletedSuccess: " + url.toExternalForm());
+            log.info("GET " + url.toExternalForm());
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            HttpDownload get = new HttpDownload(url, bos);
+            HttpGet get = new HttpGet(url, bos);
             Subject.doAs(subject1, new RunnableAction(get));
-
+            log.info("GET " + get.getResponseCode() + " " + get.getThrowable());
             Assert.assertNull(get.getThrowable());
             Assert.assertEquals(200, get.getResponseCode());
 

@@ -69,11 +69,11 @@
 
 package org.opencadc.caom2.util;
 
-import ca.nrc.cadc.dali.InvalidPolygonException;
 import ca.nrc.cadc.util.HexUtil;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.Plane;
@@ -83,6 +83,8 @@ import org.opencadc.caom2.Plane;
  * @author pdowler
  */
 public final class CaomValidator {
+    private static final Logger log = Logger.getLogger(CaomValidator.class);
+    
     private CaomValidator() {
     }
 
@@ -183,13 +185,14 @@ public final class CaomValidator {
         boolean slash = (test.indexOf('/') >= 0);
         boolean escape = (test.indexOf('\\') >= 0);
         boolean percent = (test.indexOf('%') >= 0);
-
-        if (!space && !slash && !escape && !percent) {
+        boolean q = (test.indexOf('?') >= 0);
+        boolean hash = (test.indexOf('#') >= 0);
+        if (!space && !slash && !escape && !percent && !q && !hash) {
             return;
         }
         throw new IllegalArgumentException(caller.getSimpleName() + ": invalid "
                 + name + ": " + test
-                + " -- value may not contain space ( ), slash (/), escape (\\), or percent (%)");
+                + " -- value may not contain space ( ), slash (/), escape (\\), or percent (%), question (?), hash (#)");
     }
 
     /**
@@ -221,70 +224,90 @@ public final class CaomValidator {
                     caller.getSimpleName() + ": " + name + " must be > 0.0");
         }
     }
-    
+
     public static void assertValidIdentifier(Class caller, String name, URI uri) {
+        assertValidIdentifier(caller, name, uri, false);
+    }
+
+    public static void assertValidIdentifier(Class caller, String name, URI uri, boolean allowCollectionURI) {
         String scheme = uri.getScheme();
 
         if ("caom".equals(scheme)) {
-            assertValidCaomURI(caller, name, uri);
+            assertValidCaomURI(caller, name, uri, allowCollectionURI);
             return;
         }
         if ("ivo".equals(scheme)) {
-            assertValidIvorn(caller, name, uri);
+            assertValidIvorn(caller, name, uri, allowCollectionURI);
             return;
         }
 
         throw new IllegalArgumentException(
             caller.getSimpleName() + ": " + name + " scheme must be caom|ivo: " + uri.toASCIIString());
     }
-
-    private static void assertValidCaomURI(Class caller, String name, URI uri) {
+    
+    // caom:{relative path}
+    private static void assertValidCaomURI(Class caller, String name, URI uri, boolean allowCollectionURI) {
         String auth = uri.getAuthority();
-        if (auth != null) {
+        String query = uri.getQuery();
+        String frag = uri.getFragment();
+        if (auth != null || query != null || frag != null) {
             throw new IllegalArgumentException(
-                caller.getSimpleName() + ": " + name + " caom scheme does not allow authority: " 
-                        + uri.toASCIIString());
+                caller.getSimpleName() + ": " + name 
+                    + " caom scheme does not allow authority|query|fragment: " 
+                    + uri.toASCIIString());
         }
         String ssp = uri.getSchemeSpecificPart();
-        if (ssp == null) {
+        if (ssp == null || ssp.startsWith("/")) {
             throw new IllegalArgumentException(
-                caller.getSimpleName() + ": " + name + " caom scheme requires scheme-specific part: " 
-                        + uri.toASCIIString());
+                caller.getSimpleName() + ": " + name 
+                    + " caom scheme requires scheme-specific part (relative path): " 
+                    + uri.toASCIIString());
         }
+        
         String[] cop = ssp.split("/");
-        if (cop.length > 3) {
+        for (String pc : cop) {
+            CaomValidator.assertValidPathComponent(caller, "caom:{relative path}", pc);
+        }
+
+        if (allowCollectionURI) {
+            return;
+        }
+
+        if (cop.length < 2) {
             throw new IllegalArgumentException(
-                caller.getSimpleName() + ": " + name + " caom scheme requires 2-3 path components in scheme-specific part: " 
-                        + uri.toASCIIString());
-        }
-        if (cop.length > 1) {
-            String collection = cop[0];
-            String observationID = cop[1];
-            CaomValidator.assertNotNull(caller, "caom: {collection}", collection);
-            CaomValidator.assertValidPathComponent(caller, "caom: {collection}", collection);
-            CaomValidator.assertNotNull(caller, "caom: {observationID}", observationID);
-            CaomValidator.assertValidPathComponent(caller, "caom: {observationID}", observationID);
-        }
-        if (cop.length == 3) {
-            String productID = cop[2];
-            CaomValidator.assertNotNull(caller, "caom: {productID}", productID);
-            CaomValidator.assertValidPathComponent(caller, "caom: {productID}", productID);
+                caller.getSimpleName() + ": " + name 
+                    + " caom scheme requires at least 2 path components in scheme-specific part " 
+                    + uri.toASCIIString());
         }
     }
 
-    private static void assertValidIvorn(Class caller, String name, URI uri) {
+    private static void assertValidIvorn(Class caller, String name, URI uri, boolean allowCollectionURI) {
         String path = uri.getPath();
         String query = uri.getQuery();
+        String frag = uri.getFragment();
         if (path == null) {
             throw new IllegalArgumentException(
-                caller.getSimpleName() + ": " + name + " ivo scheme requires a path: " 
-                        + uri.toASCIIString());
+                caller.getSimpleName() + ": " + name 
+                    + " ivo scheme usage requires a path: " 
+                    + uri.toASCIIString());
         }
-        if (query == null) {
+        if (frag != null) {
             throw new IllegalArgumentException(
-                caller.getSimpleName() + ": " + name + " ivo scheme requires a query string: " 
-                        + uri.toASCIIString());
+                caller.getSimpleName() + ": " + name 
+                    + " ivo scheme usage does not allow fragment: " 
+                    + uri.toASCIIString());
         }
+
+        if (query == null) {
+            if (allowCollectionURI) {
+                return;
+            }
+            throw new IllegalArgumentException(
+                caller.getSimpleName() + ": " + name 
+                    + " ivo scheme usage requires a query string: " 
+                    + uri.toASCIIString());
+        }
+
         String[] cop = query.split("/");
         for (String pc : cop) {
             CaomValidator.assertValidPathComponent(caller, "ivo: path components in query", pc);

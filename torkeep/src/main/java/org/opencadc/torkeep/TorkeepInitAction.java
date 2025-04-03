@@ -78,8 +78,8 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
-import org.opencadc.caom2.db.PostgreSQLGenerator;
-import org.opencadc.caom2.db.SQLGenerator;
+import org.opencadc.caom2.db.PostgreSQLDialect;
+import org.opencadc.caom2.db.SQLDialect;
 import org.opencadc.caom2.db.version.InitDatabase;
 
 public class TorkeepInitAction extends InitAction {
@@ -106,7 +106,7 @@ public class TorkeepInitAction extends InitAction {
 
     static Map<String, Object> getDAOConfig() {
         Map<String,Object> ret = new TreeMap<>();
-        ret.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+        ret.put(SQLDialect.class.getName(), PostgreSQLDialect.class);
         ret.put("jndiDataSourceName", JNDI_DATASOURCE);
         ret.put("schema", SCHEMA);
         return ret;

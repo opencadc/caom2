@@ -83,6 +83,7 @@ public class DeleteAction extends RepoAction {
     private static final Logger log = Logger.getLogger(DeleteAction.class);
 
     public DeleteAction() {
+        super();
     }
 
     @Override

@@ -98,6 +98,7 @@ public class GetAction extends RepoAction {
     public static final String CAOM_MIMETYPE = "text/x-caom+xml";
 
     public GetAction() {
+        super();
     }
 
     @Override
@@ -154,9 +155,7 @@ public class GetAction extends RepoAction {
 
         ObservationDAO dao = getDAO();
 
-        //List<ObservationState> states = dao.getObservationList(getCollection(), start, end, maxRec,
-        //        isAscending);
-        try (ResourceIterator<ObservationState> iter = dao.iterator(getCollection(), null, start, end, maxRec)) {
+        try (ResourceIterator<ObservationState> iter = dao.iterator(getCollection(), start, end, maxRec)) {
             long byteCount = writeObservationList(iter);
             logInfo.setBytes(byteCount);
         }
@@ -179,8 +178,8 @@ public class GetAction extends RepoAction {
             ObservationState state = iter.next();
             writer.write(state.getID().toString());
             writer.write(state.getURI().toASCIIString());
-            writer.write(df.format(state.maxLastModified));
-            writer.write(state.accMetaChecksum.toASCIIString());
+            writer.write(df.format(state.getMaxLastModified()));
+            writer.write(state.getAccMetaChecksum().toASCIIString());
             writer.endRecord();
         }
         writer.flush();

@@ -173,11 +173,16 @@ public class CaomUtil {
     }
 
     public static void assignLastModified(Object ce, Date d, String fieldName) {
+        Class c = Entity.class;
+        if ("maxLastModified".equals(fieldName)) {
+            c = CaomEntity.class;
+        }
+        assignLastModified(c, ce, d, fieldName);
+    }
+    
+    public static void assignLastModified(Class declaringClass, Object ce, Date d, String fieldName) {
         try {
-            Class c = Entity.class;
-            if ("maxLastModified".equals(fieldName)) {
-                c = CaomEntity.class;
-            }
+            Class c = declaringClass;
             log.debug("assignLastModified: " + c.getSimpleName() + "." + fieldName);
             Field f = c.getDeclaredField(fieldName);
             f.setAccessible(true);
@@ -191,11 +196,16 @@ public class CaomUtil {
     }
 
     public static void assignMetaChecksum(Object ce, URI v, String fieldName) {
+        Class c = Entity.class;
+        if ("accMetaChecksum".equals(fieldName)) {
+            c = CaomEntity.class;
+        }
+        assignMetaChecksum(c, ce, v, fieldName);
+    }
+
+    public static void assignMetaChecksum(Class declaringClass, Object ce, URI v, String fieldName) {
         try {
-            Class c = Entity.class;
-            if ("accMetaChecksum".equals(fieldName)) {
-                c = CaomEntity.class;
-            }
+            Class c = declaringClass;
             log.debug("assignMetaChecksum: " + c.getSimpleName() + "." + fieldName);
             Field f = c.getDeclaredField(fieldName);
             f.setAccessible(true);
