@@ -97,15 +97,10 @@ public class ObservationStateMapper implements RowMapper<ObservationState> {
     public ObservationState mapRow(ResultSet rs, int i)
             throws SQLException {
         int col = 1;
-
         URI uri = Util.getURI(rs, col++);
         Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
         URI accMetaChecksum = Util.getURI(rs, col++);
         UUID id = Util.getUUID(rs, col++);
-
-        ObservationState ret = new ObservationState(id, uri);
-        CaomUtil.assignLastModified(ObservationState.class, ret, maxLastModified, "maxLastModified");
-        CaomUtil.assignMetaChecksum(ObservationState.class, ret, accMetaChecksum, "accMetaChecksum");
-        return ret;
+        return new ObservationState(id, uri, maxLastModified, accMetaChecksum);
     }
 }
