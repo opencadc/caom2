@@ -40,7 +40,7 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,t
 
 insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
 ( 'ivoa.ObsCore', 'obs_publisher_did', 	'obscore:Curation.PublisherDID',
-    'publisher dataset identifier', 'meta.ref.ivoid', NULL, 'char', '256*','uri', 1,1,1,1, 'caomPublisherID')
+    'publisher dataset identifier', 'meta.ref.ivoid', NULL, 'char', '256*','uri', 1,1,1,1, 'ivoaPublisherID')
 ;
 insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std, column_index) values
 ( 'ivoa.ObsCore', 'obs_collection', 	'obscore:DataID.Collection',

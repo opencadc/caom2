@@ -46,7 +46,7 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,u
 ;
 
 -- Observation
-insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
+insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,column_id) values
 ( 'caom2.Observation', 'uri', 'unique URI for this observation', 'caom2:Observation.uri', NULL, NULL, 'char', '*','uri', 1,1,1,1, 'caomObservationURI')
 ;
 
@@ -111,7 +111,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ;
 
 -- Plane
-insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
+insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,column_id) values
 ( 'caom2.Plane', 'publisherID', 'unique publisher identifier for this product', 'caom2:Plane.publisherID', NULL, NULL, 'char', '*', 'uri', 1,1,1,1, 'caomPublisherID')
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
@@ -152,7 +152,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_maxRecoverableScale', 'TBD [new in 2.5]', 'caom2:Plane.position.maxRecoverableScale', NULL, 'arcsec', 'double', '2', 'interval', 0,0,0 , 54),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 55),
 ( 'caom2.Plane', 'position_sampleSize', 'median sample (pixel) size on spatial axes', 'caom2:Plane.position.sampleSize', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 56),
-( 'caom2.Plane', 'position_calibration', 'calibration of the position metadata (astrometry) [new in 2.5]', 'caom2:Plane.position.timeDependent', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 56),
+( 'caom2.Plane', 'position_calibration', 'calibration of the position metadata (astrometry) [new in 2.5]', 'caom2:Plane.position.timeDependent', NULL, NULL, 'char', '64*', NULL, 0,0,0 , 56),
 
 ( 'caom2.Plane', 'energy_bounds', 'queryable energy coverage', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,1,0 , 61),
 ( 'caom2.Plane', 'energy_samples', 'detailed energy coverage', 'caom2:Plane.energy.samples', NULL, 'm', 'double', '*', 'interval', 0,0,0 , 62),
@@ -200,7 +200,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 -- Artifact
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,
-    principal,indexed,std,column_index,id) values
+    principal,indexed,std,column_index,column_id) values
 ( 'caom2.Artifact', 'uri', 'external URI for the physical artifact', 'caom2:Artifact.uri', NULL, NULL, 'char', '*','uri', 1,1,0 , 1, 'caomArtifactURI')
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values

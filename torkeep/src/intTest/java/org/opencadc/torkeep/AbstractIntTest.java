@@ -73,16 +73,11 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.xml.ObservationReader;
-import org.opencadc.caom2.xml.ObservationWriter;
-import org.opencadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
-import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -96,9 +91,12 @@ import java.util.UUID;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.xml.ObservationReader;
+import org.opencadc.caom2.xml.ObservationWriter;
+import org.opencadc.caom2.xml.XmlConstants;
 
 /**
  * Base setup for other integration tests.
@@ -111,8 +109,8 @@ abstract class AbstractIntTest {
 
     static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/caom25/torkeep");
             
-    static final URI OBS_STANDARD_ID = URI.create("ivo://ivoa.net/std/CAOM-Repo#observations-1.0");
-    static final URI DEL_STANDARD_ID = URI.create("ivo://ivoa.net/std/CAOM-Repo#deleted-observations-1.0");
+    static final URI OBS_STANDARD_ID = URI.create("https://www.opencadc.org/caom2/repo/v2#observation-2.5");
+    static final URI DEL_STANDARD_ID = URI.create("https://www.opencadc.org/caom2/repo/v2#deleted-2.5");
     
     static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_5_NAMESPACE;
     

@@ -25,7 +25,7 @@
     </interface> 
   </capability>
 
-  <capability standardID="ivo://ivoa.net/std/CAOM-Repo#observations-1.0">
+  <capability standardID="https://www.opencadc.org/caom2/repo/v2#observation-2.5">
     <interface xsi:type="vs:ParamHTTP" role="std">
       <accessURL use="base">https://replace.me.com/torkeep/observations</accessURL>
       <securityMethod />
@@ -35,7 +35,7 @@
     </interface>
   </capability>
 
-  <capability standardID="ivo://ivoa.net/std/CAOM-Repo#deleted-observations-1.0">
+  <capability standardID="https://www.opencadc.org/caom2/repo/v2#deleted-2.5">
     <interface xsi:type="vs:ParamHTTP" role="std">
       <accessURL use="base">https://replace.me.com/torkeep/deletions</accessURL>
       <securityMethod />
@@ -45,5 +45,5 @@
     </interface>
   </capability>
   
-  <!-- TODO ArtifactDescription endpoints -->
+  <!-- TODO ArtifactDescription endpoints?? -->
 </vosi:capabilities>
