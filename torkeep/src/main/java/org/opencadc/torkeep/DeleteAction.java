@@ -69,6 +69,7 @@
 
 package org.opencadc.torkeep;
 
+import ca.nrc.cadc.db.TransactionManager;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import java.net.URI;
 import org.apache.log4j.Logger;
@@ -96,28 +97,53 @@ public class DeleteAction extends RepoAction {
         checkWritePermission();
 
         ObservationDAO dao = getDAO();
-        ObservationState state = dao.getState(uri);
-
-        if (state == null) {
+        ObservationState existing = dao.getState(uri);
+        if (existing == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
-        final DeletedObservationEventDAO doeDAO = new DeletedObservationEventDAO(dao);
+        DeletedObservationEventDAO doeDAO = new DeletedObservationEventDAO(dao);
+        TransactionManager txnMgr = dao.getTransactionManager();
         try {
-            // start txn
-            // lock
+            log.debug("starting transaction");
+            txnMgr.startTransaction();
+            log.debug("start txn: OK");
             
-            DeletedObservationEvent doe = new DeletedObservationEvent(state.getID(), state.getURI());
-            log.warn("delete: " + state);
-            dao.delete(state.getID());
+            boolean locked = false;
+            while (existing != null && !locked) {
+                existing = dao.lock(existing.getID());
+                if (existing != null) {
+                    locked = true;
+                } else {
+                    // try again by uri, not locked
+                    existing = dao.getState(uri);
+                }
+            }
+            if (existing == null) {
+                // observation deleted while trying to get a lock
+                throw new ResourceNotFoundException("not found: " + uri);
+            }
+ 
+            DeletedObservationEvent doe = new DeletedObservationEvent(existing.getID(), existing.getURI());
+            log.warn("delete: " + existing);
+            dao.delete(existing.getID());
             log.warn("put: " + doe);
             doeDAO.put(doe);
 
-            // commit txn
+            log.debug("committing transaction");
+            txnMgr.commitTransaction();
+            log.debug("commit txn: OK");
         } catch (Exception ex) {
-            // rollback
+            log.error("failed to delete " + uri, ex);
+            txnMgr.rollbackTransaction();
+            log.debug("rollback txn: OK");
+            throw ex;
         } finally {
-            // check for open txn
+            if (txnMgr.isOpen()) {
+                log.error("BUG - open transaction in finally");
+                txnMgr.rollbackTransaction();
+                log.error("rollback txn: OK");
+            }
         }
         
         log.debug("DONE: " + uri);

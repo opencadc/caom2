@@ -764,6 +764,7 @@ public class SQLGenerator {
         private SQLGenerator gen;
         private UUID id;
         private URI uri;
+        private boolean forUpdate;
         
         ObservationStateGet(SQLGenerator gen) {
             this.gen = gen;
@@ -772,6 +773,10 @@ public class SQLGenerator {
         public void setIdentifier(UUID id, URI uri) {
             this.id = id;
             this.uri = uri;
+        }
+
+        public void setForUpdate(boolean forUpdate) {
+            this.forUpdate = forUpdate;
         }
         
         public ObservationState execute(JdbcTemplate jdbc) {
@@ -788,6 +793,9 @@ public class SQLGenerator {
                 sb.append(" WHERE obsID = ?");
             } else {
                 sb.append(" WHERE uri = ?");
+            }
+            if (forUpdate) {
+                sb.append(" FOR UPDATE");
             }
             String sql = sb.toString();
             PreparedStatement prep = conn.prepareStatement(sql);

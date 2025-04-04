@@ -121,16 +121,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         this.planeDAO = new PlaneDAO(this);
     }
 
+    public ObservationState lock(UUID id) {
+        return getState(id, null, true);
+    }
+
     // use case: repo get-by-uri
     public ObservationState getState(URI uri) {
-        return getState(null, uri);
+        return getState(null, uri, false);
     }
     
     public ObservationState getState(UUID id) {
-        return getState(id, null);
+        return getState(id, null, false);
     }
     
-    private ObservationState getState(UUID id, URI uri) {
+    private ObservationState getState(UUID id, URI uri, boolean forUpdate) {
         checkInit();
         if (uri == null && id == null) {
             throw new IllegalArgumentException("args cannot be null");
