@@ -147,7 +147,7 @@ public abstract class RepoAction extends RestAction {
                 } else {
                     this.namespace += "/";
                 }
-                log.warn("namespace: " + namespace);
+                log.debug("namespace: " + namespace);
                 
                 StringBuilder sb = new StringBuilder();
                 sb.append(namespace);
@@ -159,11 +159,11 @@ public abstract class RepoAction extends RestAction {
                             sb.append("/");
                         }
                     }
-                    log.warn("path-to-uri: " + sb.toString());
+                    log.debug("path-to-uri: " + sb.toString());
                     URI uri = new URI(sb.toString());
                     CaomValidator.assertValidIdentifier(RepoAction.class, "observation.uri", uri, true);
                     this.observationURI = uri;
-                    log.warn("observation.uri: " + observationURI);
+                    log.debug("observation.uri: " + observationURI);
                 }
             } catch (URISyntaxException ex) {
                 throw new IllegalArgumentException("invalid path-to-URI: " + path);

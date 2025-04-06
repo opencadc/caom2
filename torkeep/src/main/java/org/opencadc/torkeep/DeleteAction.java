@@ -125,9 +125,9 @@ public class DeleteAction extends RepoAction {
             }
  
             DeletedObservationEvent doe = new DeletedObservationEvent(existing.getID(), existing.getURI());
-            log.warn("delete: " + existing);
+            log.debug("delete: " + existing);
             dao.delete(existing.getID());
-            log.warn("put: " + doe);
+            log.debug("put: " + doe);
             doeDAO.put(doe);
 
             log.debug("committing transaction");
