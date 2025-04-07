@@ -87,22 +87,20 @@ public class PostAction extends RepoAction {
     private static final Logger log = Logger.getLogger(PostAction.class);
 
     public PostAction() {
+        super();
     }
 
     @Override
     public void doAction() throws Exception {
         URI uri = getObservationURI();
         log.debug("START: " + uri);
-
+        
         checkWritePermission();
 
         Observation obs = getInputObservation();
         if (obs == null) {
-            throw new IllegalArgumentException("invalid input: " + uri + " but no observation document in body");
+            throw new IllegalArgumentException("no observation document in body");
         }
-
-        // allow rename: same ID but change Observation.uri?
-        // rationale: you can modify Plane.uri ...
         if (!uri.equals(obs.getURI())) {
             throw new IllegalArgumentException("invalid input: " + uri + " (path) must match : " + obs.getURI() + "(document)");
         }
@@ -130,13 +128,12 @@ public class PostAction extends RepoAction {
             // TODO: obtain lock and check vs state here
             s = dao.getState(obs.getID());
             if (s == null) {
-                throw new ResourceNotFoundException("not found: observation " + obs.getID() + " aka " + obs.getURI()); 
+                throw new ResourceNotFoundException("not found: " + uri);
             }
-
-            if (expectedMetaChecksum != null) {
-                if (!s.accMetaChecksum.equals(expectedMetaChecksum)) {
-                    throw new PreconditionFailedException(obs.getURI() + " checksum " + s.accMetaChecksum 
-                            + " does not match condition " + expectedMetaChecksum);
+            if (s != null && expectedMetaChecksum != null) {
+                if (!s.getAccMetaChecksum().equals(expectedMetaChecksum)) {
+                    throw new PreconditionFailedException("update blocked: " + obs.getURI() + " checksum " + s.getAccMetaChecksum()
+                            + " does not match expected " + expectedMetaChecksum);
                 }
             }
 
@@ -144,10 +141,7 @@ public class PostAction extends RepoAction {
 
             dao.put(obs);
             // TODO: commit txn
-        } catch (PreconditionFailedException ex) {
-            // TODO: rollback
-            throw ex;
-        } catch (ResourceNotFoundException ex) {
+        } catch (PreconditionFailedException | ResourceNotFoundException ex) {
             // TODO: rollback
             throw ex;
         } catch (Exception ex) {
@@ -157,7 +151,7 @@ public class PostAction extends RepoAction {
             // TODO: check for open txn and rollback
         }
         
-        log.debug("DONE: " + uri);
+        log.debug("DONE: " + observationURI);
     }
 
     @Override

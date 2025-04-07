@@ -1,6 +1,11 @@
 ## deployable containers have a semantic and build tag
 # semantic version tag: major.minor
 # build version tag: timestamp
-VER=1.0.14
+VER=2.0-ALPHA
 TAGS="${VER} ${VER}-$(date -u +"%Y%m%dT%H%M%S")"
 unset VER
+
+# intent of VER tag: 
+## will use ALPHA while implementation is incomplete
+## will use BETA when implementation is ~complete and CAOM model is still WD
+

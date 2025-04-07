@@ -98,6 +98,7 @@ import org.opencadc.caom2.util.ObservationState;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -120,16 +121,20 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         this.planeDAO = new PlaneDAO(this);
     }
 
+    public ObservationState lock(UUID id) {
+        return getState(id, null, true);
+    }
+
     // use case: repo get-by-uri
     public ObservationState getState(URI uri) {
-        return getState(null, uri);
+        return getState(null, uri, false);
     }
     
     public ObservationState getState(UUID id) {
-        return getState(id, null);
+        return getState(id, null, false);
     }
     
-    private ObservationState getState(UUID id, URI uri) {
+    private ObservationState getState(UUID id, URI uri, boolean forUpdate) {
         checkInit();
         if (uri == null && id == null) {
             throw new IllegalArgumentException("args cannot be null");
@@ -155,35 +160,25 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         if (uri == null) {
             throw new IllegalArgumentException("uri cannot be null");
         }
-        return get(uri, null, SQLGenerator.MAX_DEPTH);
+        ObservationState s = getState(uri);
+        if (s == null) {
+            return null;
+        }
+        return get(s.getID());
     }
 
     @Override
     public Observation get(UUID id) {
+        checkInit();
         if (id == null) {
             throw new IllegalArgumentException("id cannot be null");
         }
-        return get(null, id, SQLGenerator.MAX_DEPTH);
-    }
-
-    private Observation get(URI uri, UUID id, int depth) {
-        checkInit();
-        if (uri == null && id == null) {
-            throw new IllegalArgumentException("args cannot be null");
-        }
-        String idStr = (uri != null ? uri.toString() : id.toString());
-        log.debug("GET: " + idStr);
+        log.debug("GET: " + id);
         long t = System.currentTimeMillis();
 
         boolean txnOpen = false;
         try {
-            String sql;
-            if (uri != null) {
-                sql = gen.getSelectSQL(uri, depth, false);
-            } else {
-                sql = gen.getSelectSQL(id, depth, false);
-            }
-
+            String sql = gen.getSelectSQL(id, SQLGenerator.MAX_DEPTH, false);
             if (log.isDebugEnabled()) {
                 log.debug("GET: " + Util.formatSQL(sql));
             }
@@ -209,13 +204,13 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 if (oops.getCause() != null) {
                     cause = oops.getCause();
                 }
-                throw new IllegalStateException("failed to get observation: " + idStr
+                throw new IllegalStateException("failed to get observation: " + id
                     + " cause: " + cause.getMessage());
             }
         } catch (RuntimeException ex) {
             if (txnOpen) {
                 try {
-                    log.debug("failed to get " + idStr);
+                    log.debug("failed to get " + id);
                     getTransactionManager().rollbackTransaction();
                     log.debug("rollback: OK");
                 } catch (Exception ex2) {
@@ -235,7 +230,7 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 }
             }
             long dt = System.currentTimeMillis() - t;
-            log.debug("GET: " + idStr + " " + dt + "ms");
+            log.debug("GET: " + id + " " + dt + "ms");
         }
     }
 
@@ -532,10 +527,43 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         }
     }
 
-    // use case: repo list API
+    // use case: backwards compatible repo list API
+    public ResourceIterator<ObservationState> iterator(String collection, 
+            Date minLastModified, Date maxLastModified, Integer batchSize) {
+        checkInit();
+        long t = System.currentTimeMillis();
+
+        try {
+            ObservationStateIteratorQuery iter = new ObservationStateIteratorQuery(gen, collection, null);
+            iter.setMinLastModified(minLastModified);
+            iter.setMaxLastModified(maxLastModified);
+            iter.setBatchSize(batchSize);
+            return iter.query(dataSource);
+        } catch (BadSqlGrammarException ex) {
+            handleInternalFail(ex);
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("iterator: " + dt + "ms");
+        }
+        throw new RuntimeException("BUG: should be unreachable");
+    }
+
     // use case: caom2-meta-validate aka icewind validate mode
-    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucket, Date start, Date end, Integer maxrec) {
-        throw new UnsupportedOperationException("not implemented");
+    public ResourceIterator<ObservationState> iterator(String namespace, String uriBucketPrefix) {
+        checkInit();
+        long t = System.currentTimeMillis();
+
+        try {
+            ObservationStateIteratorQuery iter = new ObservationStateIteratorQuery(gen, null, namespace);
+            iter.setUriBucket(uriBucketPrefix);
+            return iter.query(dataSource);
+        } catch (BadSqlGrammarException ex) {
+            handleInternalFail(ex);
+        } finally {
+            long dt = System.currentTimeMillis() - t;
+            log.debug("iterator: " + dt + "ms");
+        }
+        throw new RuntimeException("BUG: should be unreachable");
     }
 
     // update CaomEntity state:

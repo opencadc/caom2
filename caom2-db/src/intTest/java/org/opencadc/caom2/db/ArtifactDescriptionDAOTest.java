@@ -116,7 +116,7 @@ public class ArtifactDescriptionDAOTest {
             config.put("jndiDataSourceName", "jdbc/caom2-db-test");
             //config.put("database", database);
             config.put("schema", "caom2");
-            config.put(SQLGenerator.class.getName(), PostgreSQLGenerator.class);
+            config.put(SQLDialect.class.getName(), PostgreSQLDialect.class);
             this.dao = new ArtifactDescriptionDAO(true);
             dao.setConfig(config);
         } catch (Exception ex) {

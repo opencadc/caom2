@@ -79,7 +79,7 @@ import org.apache.log4j.Logger;
 public class Constants {
     private static final Logger log = Logger.getLogger(Constants.class);
 
-    public static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/argus");
+    public static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/caom25/argus");
     //public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/argus");
     //public static final URI RESOURCE_ID = URI.create("ivo://cadc.nrc.ca/sc2tap");
     

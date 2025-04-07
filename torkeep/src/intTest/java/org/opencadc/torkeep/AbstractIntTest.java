@@ -73,16 +73,11 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.auth.SSLUtil;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.xml.ObservationReader;
-import org.opencadc.caom2.xml.ObservationWriter;
-import org.opencadc.caom2.xml.XmlConstants;
 import ca.nrc.cadc.io.ByteCountOutputStream;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileUtil;
-import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -96,9 +91,12 @@ import java.util.UUID;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.Subject;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.xml.ObservationReader;
+import org.opencadc.caom2.xml.ObservationWriter;
+import org.opencadc.caom2.xml.XmlConstants;
 
 /**
  * Base setup for other integration tests.
@@ -109,9 +107,10 @@ abstract class AbstractIntTest {
 
     private static final Logger log = Logger.getLogger(AbstractIntTest.class);
 
-    static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/torkeep");
+    static final URI RESOURCE_ID = URI.create("ivo://opencadc.org/caom25/torkeep");
             
-    static final URI STANDARD_ID = URI.create("ivo://ivoa.net/std/CAOM-Repo/v1");
+    static final URI OBS_STANDARD_ID = URI.create("https://www.opencadc.org/caom2/repo/v2#observation-2.5");
+    static final URI DEL_STANDARD_ID = URI.create("https://www.opencadc.org/caom2/repo/v2#deleted-2.5");
     
     static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_5_NAMESPACE;
     
@@ -127,8 +126,8 @@ abstract class AbstractIntTest {
 
     final Subject subject3 = AuthenticationUtil.getAnonSubject();
     
-    final String baseAnonURL;
-    final String baseCertURL;
+    final String baseObsURL;
+    final String baseDeletedObsURL;
 
     static final String SCHEME = "caom:";
 
@@ -144,13 +143,13 @@ abstract class AbstractIntTest {
             subject2 = SSLUtil.createSubject(sslCert2);
 
             RegistryClient rc = new RegistryClient();
-
-            URL serviceURL = rc.getServiceURL(RESOURCE_ID, STANDARD_ID, AuthMethod.ANON);
-            baseAnonURL = serviceURL.toExternalForm();
-            baseCertURL = baseAnonURL; // FIX
-
-            log.debug("test service URL: " + baseAnonURL);
-            log.debug("test service URL: " + baseCertURL);
+            URL url = rc.getServiceURL(RESOURCE_ID, OBS_STANDARD_ID, AuthMethod.ANON);
+            baseObsURL = url.toExternalForm();
+            url = rc.getServiceURL(RESOURCE_ID, DEL_STANDARD_ID, AuthMethod.ANON);
+            baseDeletedObsURL = url.toExternalForm();
+            
+            log.info("observations URL: " + baseObsURL);
+            log.info("   deletions URL: " + baseDeletedObsURL);
         } catch (Throwable t) {
             String message = "Failed int-test initialization: " + t.getMessage();
             log.fatal(message, t);
@@ -158,24 +157,28 @@ abstract class AbstractIntTest {
         }
     }
 
+    protected String uriToPath(URI uri) {
+        if ("caom".equals(uri.getScheme())) {
+            return uri.getSchemeSpecificPart();
+        }
+        if ("ivo".equals(uri.getScheme())) {
+            // strip preceeding / since baseURL has it
+            return uri.getPath().substring(1) + "/" + uri.getQuery();
+        }
+        throw new RuntimeException("TEST SETUP: unexpected uriToPath for " + uri);
+    }
+
     public String generateID(String base) {
         return base + "-" + UUID.randomUUID().toString();
     }
 
-    private HttpURLConnection openConnection(Subject subject, String urlPath)
-        throws Exception {
-        HttpURLConnection conn;
-        URL url;
-        if (subject == null) {
-            url = new URL(baseAnonURL + "/" + urlPath);
-            log.debug("opening connection to: " + url.toString());
-            conn = (HttpURLConnection) url.openConnection();
-        } else {
-            url = new URL(baseCertURL + "/" + urlPath);
-            log.debug("opening connection to: " + url.toString());
-            conn = (HttpsURLConnection) url.openConnection();
+    private HttpURLConnection openConnection(Subject subject, URL url)
+            throws Exception {
+        
+        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+        if (subject != null) {
             SSLSocketFactory sf = SSLUtil.getSocketFactory(subject);
-            ((HttpsURLConnection) conn).setSSLSocketFactory(sf);
+            conn.setSSLSocketFactory(sf);
         }
         conn.setInstanceFollowRedirects(false);
         conn.setDoOutput(true);
@@ -183,7 +186,17 @@ abstract class AbstractIntTest {
         return conn;
     }
 
-    protected void putObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
+    protected void updateObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage)
+        throws Exception {
+        sendObservation("POST", observation, subject, expectedResponse, expectedMessage, null);
+    }
+
+    protected void putObservation(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage)
+        throws Exception {
+        sendObservation("PUT", observation, subject, expectedResponse, expectedMessage, null);
+    }
+
+    protected void putObservationCompat(final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage, String path)
         throws Exception {
         sendObservation("PUT", observation, subject, expectedResponse, expectedMessage, path);
     }
@@ -201,11 +214,12 @@ abstract class AbstractIntTest {
 
         String urlPath = path;
         if (urlPath == null) {
-            // extract the path from the observation
-            urlPath = observation.getURI().getSchemeSpecificPart();
+            urlPath = uriToPath(observation.getURI());
         }
-
-        HttpURLConnection conn = openConnection(subject, urlPath);
+        String surl = baseObsURL + "/" + urlPath;
+        URL url = new URL(surl);
+        log.info(method + " " + url.toString());
+        HttpURLConnection conn = openConnection(subject, url);
         conn.setRequestMethod(method);
         conn.setRequestProperty("Content-Type", TEXT_XML);
         if (httpIfMatchHeaderValue != null) {
@@ -221,9 +235,7 @@ abstract class AbstractIntTest {
 
         int response = -1;
         try {
-            log.debug("getResponseCode()");
             response = conn.getResponseCode();
-            log.debug("getResponseCode() returned " + response);
         } catch (IOException ex) {
             if (expectedResponse != null && expectedResponse == 413) {
                 log.warn("expected 413 and getResponseCode() threw " + ex + ": known issue in JDK http lib");
@@ -235,16 +247,14 @@ abstract class AbstractIntTest {
         if (response != 200) {
             message = NetUtil.getErrorBody(conn).trim();
         }
-
-        log.debug(method.toLowerCase() + " response: " + message + " (" + response + ")");
+        
+        log.info(method + " " + response + " "  + message);
 
         if (expectedResponse != null) {
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
         }
 
-        if (response == 200) {
-            log.info("200 message: " + message);
-        } else {
+        if (response != 200) {
             if (expectedMessage != null) {
                 Assert.assertNotNull(message);
                 if (expectedResponse != null 
@@ -270,10 +280,8 @@ abstract class AbstractIntTest {
         log.debug("start get on " + uri);
 
         // extract the path from the uri
-        String surl = baseAnonURL + "/" + uri.getSchemeSpecificPart();
-        if (subject != null) {
-            surl = baseCertURL + "/" + uri.getSchemeSpecificPart();
-        }
+        String surl = baseObsURL + "/" + uriToPath(uri);
+        log.info("GET " + surl);
         URL url = new URL(surl);
         ObservationReader reader = new ObservationReader();
 
@@ -322,10 +330,10 @@ abstract class AbstractIntTest {
         throws Exception {
         log.debug("start delete on " + uri);
 
-        // extract the path from the uri
-        String urlPath = uri.getSchemeSpecificPart();
-
-        HttpURLConnection conn = openConnection(subject, urlPath);
+        String surl = baseObsURL + "/" + uriToPath(uri);
+        log.info("DELETE " + surl);
+        URL url = new URL(surl);
+        HttpURLConnection conn = openConnection(subject, url);
         conn.setRequestMethod("DELETE");
 
         int response = conn.getResponseCode();
@@ -334,15 +342,13 @@ abstract class AbstractIntTest {
             message = NetUtil.getErrorBody(conn).trim();
         }
 
-        log.debug("delete response: " + message + " (" + response + ")");
+        log.info("DELETE " + response + " "  + message);
 
         if (expectedResponse != null) {
             Assert.assertEquals("Wrong response", expectedResponse.intValue(), response);
         }
 
-        if (response == 200) {
-            log.info("200 message: " + message);
-        } else {
+        if (response != 200) {
             if (expectedMessage != null) {
                 Assert.assertNotNull(message);
                 Assert.assertEquals("Wrong response message", expectedMessage, message);

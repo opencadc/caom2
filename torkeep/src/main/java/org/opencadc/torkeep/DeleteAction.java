@@ -69,9 +69,12 @@
 
 package org.opencadc.torkeep;
 
+import ca.nrc.cadc.db.TransactionManager;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import java.net.URI;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.DeletedObservationEvent;
+import org.opencadc.caom2.db.DeletedObservationEventDAO;
 import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.caom2.util.ObservationState;
 
@@ -83,6 +86,7 @@ public class DeleteAction extends RepoAction {
     private static final Logger log = Logger.getLogger(DeleteAction.class);
 
     public DeleteAction() {
+        super();
     }
 
     @Override
@@ -93,15 +97,55 @@ public class DeleteAction extends RepoAction {
         checkWritePermission();
 
         ObservationDAO dao = getDAO();
-        ObservationState state = dao.getState(uri);
-
-        if (state == null) {
+        ObservationState existing = dao.getState(uri);
+        if (existing == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
 
-        // TODO: obtain lock, create DeletedObservationEvent, use txn
-        dao.delete(state.getID());
+        DeletedObservationEventDAO doeDAO = new DeletedObservationEventDAO(dao);
+        TransactionManager txnMgr = dao.getTransactionManager();
+        try {
+            log.debug("starting transaction");
+            txnMgr.startTransaction();
+            log.debug("start txn: OK");
+            
+            boolean locked = false;
+            while (existing != null && !locked) {
+                existing = dao.lock(existing.getID());
+                if (existing != null) {
+                    locked = true;
+                } else {
+                    // try again by uri, not locked
+                    existing = dao.getState(uri);
+                }
+            }
+            if (existing == null) {
+                // observation deleted while trying to get a lock
+                throw new ResourceNotFoundException("not found: " + uri);
+            }
+ 
+            DeletedObservationEvent doe = new DeletedObservationEvent(existing.getID(), existing.getURI());
+            log.debug("delete: " + existing);
+            dao.delete(existing.getID());
+            log.debug("put: " + doe);
+            doeDAO.put(doe);
 
+            log.debug("committing transaction");
+            txnMgr.commitTransaction();
+            log.debug("commit txn: OK");
+        } catch (Exception ex) {
+            log.error("failed to delete " + uri, ex);
+            txnMgr.rollbackTransaction();
+            log.debug("rollback txn: OK");
+            throw ex;
+        } finally {
+            if (txnMgr.isOpen()) {
+                log.error("BUG - open transaction in finally");
+                txnMgr.rollbackTransaction();
+                log.error("rollback txn: OK");
+            }
+        }
+        
         log.debug("DONE: " + uri);
     }
 }

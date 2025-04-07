@@ -80,6 +80,7 @@ import ca.nrc.cadc.db.DBConfig;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.db.IntRowMapper;
 import ca.nrc.cadc.db.TransactionManager;
+import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.net.PreconditionFailedException;
 import ca.nrc.cadc.util.FileUtil;
 import ca.nrc.cadc.util.Log4jInit;
@@ -144,7 +145,7 @@ public abstract class AbstractObservationDAOTest {
     public static final long TIME_TOLERANCE = 0L;
 
     public static final Long TEST_LONG = 123456789L;
-    public static final List<String> TEST_KEYWORDS = new ArrayList<String>();
+    public static final List<String> TEST_KEYWORDS = new ArrayList<>();
     public static Date TEST_DATE;
 
     static {
@@ -180,7 +181,7 @@ public abstract class AbstractObservationDAOTest {
             config.put("jndiDataSourceName", "jdbc/caom2-db-test");
             //config.put("database", database);
             config.put("schema", schema);
-            config.put(SQLGenerator.class.getName(), genClass);
+            config.put(SQLDialect.class.getName(), genClass);
             this.dao = new ObservationDAO(true);
             dao.setConfig(config);
         } catch (Exception ex) {
@@ -286,190 +287,113 @@ public abstract class AbstractObservationDAOTest {
         }
     }
     
-    /*
     @Test
-    public void testGetObservationStateList() {
+    public void testObservationStateIterator() {
         try {
-            String collection = "FOO";
+            final String collection = "FOO";
+            final String namespace = "caom:FOO/";
 
-            Thread.sleep(10);
-
-            Observation obs = new SimpleObservation(collection, "bar1");
-            dao.put(obs);
-            ObservationState o = dao.getState(obs.getID());
-            Assert.assertNotNull(o);
-            log.info("created: " + o);
-            Date start = new Date(o.getMaxLastModified().getTime() - 2 * TIME_TOLERANCE); // before 1
-            Thread.sleep(10);
-
-            obs = new SimpleObservation(collection, "bar2");
-            dao.put(obs);
-            o = dao.getState(obs.getID());
-            Assert.assertNotNull(o);
-            log.info("created: " + o);
-            Date mid = new Date(o.getMaxLastModified().getTime() + 2 * TIME_TOLERANCE); // after 2
-            Thread.sleep(10);
-
-            obs = new SimpleObservation(collection, "bar3");
-            dao.put(obs);
-            Assert.assertNotNull(dao.getState(obs.getURI()));
-            log.info("created: " + obs);
-            Thread.sleep(10);
-
-            obs = new SimpleObservation(collection, "bar4");
-            dao.put(obs);
-            o = dao.getState(obs.getID());
-            Assert.assertNotNull(o);
-            log.info("created: " + o);
-            Date end = new Date(o.getMaxLastModified().getTime() + 2 * TIME_TOLERANCE); // after 4
-            Thread.sleep(10);
-
-            Integer batchSize = 100;
-            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-
-            List<ObservationState> result = dao.getObservationList(collection, start, end, batchSize);
-            for (int i = 0; i < result.size(); i++) {
-                ObservationState os = result.get(i);
-                log.info("found: " + df.format(os.maxLastModified) + " " + os);
-                ObservationURI exp = new ObservationURI(collection, "bar" + (i + 1)); // 1 2 3 4
-                Assert.assertEquals(exp, os.getURI());
+            // test setup: create in reverse-uri order so we can test iterate order
+            Date t1 = new Date();
+            Date t2 = null;
+            for (int i = 4; i > 0; i--) {
+                Thread.sleep(10);
+                Observation obs = new SimpleObservation(collection, URI.create(namespace + "bar" + i), SimpleObservation.EXPOSURE);
+                dao.put(obs);
+                ObservationState o = dao.getState(obs.getID());
+                Assert.assertNotNull(o);
+                log.info("created: " + o);
+                if (i == 2) {
+                    t2 = obs.getMaxLastModified();
+                }
+                    
             }
-            Assert.assertEquals("start-end", 4, result.size());
-
-            result = dao.getObservationList(collection, start, end, batchSize, false); // descending order
-            for (int i = 0; i < result.size(); i++) {
-                ObservationState os = result.get(i);
-                log.info("start-end found: " + df.format(os.maxLastModified) + " " + os);
-                ObservationURI exp = new ObservationURI(collection, "bar" + (4 - i)); // 4 3 2 1
-                Assert.assertEquals(exp, os.getURI());
+            Thread.sleep(10);
+            Date t3 = new Date();
+            
+            ObservationState prev;
+            
+            log.info("iterate over namespace...");
+            prev = null;
+            try (ResourceIterator<ObservationState> iter = dao.iterator(namespace, null)) {
+                while (iter.hasNext()) {
+                    ObservationState os = iter.next();
+                    log.info("found: " + os.getURI());
+                    Assert.assertNotNull(os.getID());
+                    Assert.assertNotNull(os.getURI());
+                    Assert.assertNotNull(os.getAccMetaChecksum());
+                    Assert.assertNotNull(os.getMaxLastModified());
+                    if (prev != null) {
+                        Assert.assertEquals("uri order", -1, prev.getURI().compareTo(os.getURI()));
+                    }
+                    prev = os;
+                }
             }
-            Assert.assertEquals("start-end", 4, result.size());
-
-            result = dao.getObservationList(collection, start, mid, batchSize);
-            for (ObservationState os : result) {
-                log.info("start-mid found: " + df.format(os.maxLastModified) + " " + os);
+            
+            log.info("iterate over collection...");
+            prev = null;
+            try (ResourceIterator<ObservationState> iter = dao.iterator(collection,null, null, 999)) {
+                while (iter.hasNext()) {
+                    ObservationState os = iter.next();
+                    log.info("found: " + os.getURI());
+                    Assert.assertNotNull(os.getID());
+                    Assert.assertNotNull(os.getURI());
+                    Assert.assertNotNull(os.getAccMetaChecksum());
+                    Assert.assertNotNull(os.getMaxLastModified());
+                    if (prev != null) {
+                        Assert.assertTrue("timestamp order", prev.getMaxLastModified().before(os.getMaxLastModified()));
+                    }
+                    prev = os;
+                }
             }
-            Assert.assertEquals("start-mid", 2, result.size());
-
-            result = dao.getObservationList(collection, mid, end, batchSize);
-
-            for (ObservationState os : result) {
-                log.info("mid-end found: " + df.format(os.maxLastModified) + " " + os);
+            
+            try (ResourceIterator<ObservationState> iter = dao.iterator(collection, null, t1, null)) {
+                Assert.assertFalse("before all", iter.hasNext());
             }
-            Assert.assertEquals(2, result.size());
-
-            try {
-                result = dao.getObservationList(null, start, end, batchSize);
-                Assert.fail("expected IllegalArgumentException for null collection, got results");
-            } catch (IllegalArgumentException ex) {
-                log.info("caught expected exception: " + ex);
+            
+            try (ResourceIterator<ObservationState> iter = dao.iterator(collection, t3, null, null)) {
+                Assert.assertFalse("after all", iter.hasNext());
             }
-
-            result = dao.getObservationList(collection, null, end, batchSize);
-            Assert.assertEquals("-end", 4, result.size());
-
-            result = dao.getObservationList(collection, start, null, batchSize);
-            Assert.assertEquals("start-", 4, result.size());
-
-            result = dao.getObservationList(collection, null, null, batchSize);
-
-            result = dao.getObservationList(collection, start, null, null);
+            
+            try (ResourceIterator<ObservationState> iter = dao.iterator(collection, null, t2, null)) {
+                int num = 0;
+                while (iter.hasNext()) {
+                    ObservationState os = iter.next();
+                    log.info("before mid: " + os.getURI());
+                    Assert.assertTrue(os.getMaxLastModified().compareTo(t2) <= 0);
+                    num++;
+                }
+                Assert.assertEquals(3, num);
+            }
+            
+            try (ResourceIterator<ObservationState> iter = dao.iterator(collection, t2, null, null)) {
+                int num = 0;
+                while (iter.hasNext()) {
+                    ObservationState os = iter.next();
+                    log.info("after mid: " + os.getURI());
+                    Assert.assertTrue(os.getMaxLastModified().compareTo(t2) >= 0);
+                    num++;
+                }
+                Assert.assertEquals(2, num);
+            }
+            
+            try (ResourceIterator<ObservationState> iter = dao.iterator(collection, null, null, 2)) {
+                int num = 0;
+                while (iter.hasNext()) {
+                    ObservationState os = iter.next();
+                    log.info("batch=2: " + os.getURI());
+                    num++;
+                }
+                Assert.assertEquals(2, num);
+            }
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }
     }
-    */
     
-    /*
     @Test
-    public void testGetObservationListByCollection() {
-        try {
-            String collection = "FOO";
-
-            Observation obs = new SimpleObservation(collection, "bar1");
-            dao.put(obs);
-            obs = dao.get(obs.getURI());
-            Assert.assertNotNull(obs);
-            Date start = new Date(obs.getMaxLastModified().getTime() - 5L);
-            log.info("created: " + obs);
-
-            Thread.sleep(10);
-
-            obs = new SimpleObservation(collection, "bar2");
-            dao.put(obs);
-            obs = dao.get(obs.getURI());
-            Assert.assertNotNull(obs);
-            log.info("created: " + obs);
-            Date mid = new Date(obs.getMaxLastModified().getTime() + 5L);
-
-            Thread.sleep(10);
-
-            obs = new SimpleObservation(collection, "bar3");
-            dao.put(obs);
-            Assert.assertNotNull(dao.getState(obs.getURI()));
-            log.info("created: " + obs);
-            Thread.sleep(10);
-
-            obs = new SimpleObservation(collection, "bar4");
-            dao.put(obs);
-            obs = dao.get(obs.getURI());
-            Assert.assertNotNull(obs);
-            log.info("created: " + obs);
-            Date end = new Date(obs.getMaxLastModified().getTime() + 5L);
-
-            Integer batchSize = 100;
-
-            List<ObservationResponse> result = dao.getList(collection, start, end, batchSize);
-            for (ObservationResponse os : result) {
-                log.info("found: " + os);
-                Assert.assertNotNull(os.observationState);
-                Assert.assertNotNull(os.observation);
-            }
-            Assert.assertEquals(4, result.size());
-
-            result = dao.getList(collection, start, mid, batchSize);
-            for (ObservationResponse os : result) {
-                log.info("found: " + os);
-                Assert.assertNotNull(os.observationState);
-                Assert.assertNotNull(os.observation);
-            }
-            Assert.assertEquals(2, result.size());
-
-            result = dao.getList(collection, mid, end, batchSize);
-            for (ObservationResponse os : result) {
-                log.info("found: " + os);
-                Assert.assertNotNull(os.observationState);
-                Assert.assertNotNull(os.observation);
-            }
-            Assert.assertEquals(2, result.size());
-
-            try {
-                String str = null;
-                result = dao.getList(str, start, end, batchSize);
-                Assert.fail("expected IllegalArgumentException for null collection, got results");
-            } catch (IllegalArgumentException ex) {
-                log.info("caught expected exception: " + ex);
-            }
-
-            result = dao.getList(collection, null, end, batchSize);
-            Assert.assertEquals(4, result.size());
-
-            result = dao.getList(collection, start, null, batchSize);
-            Assert.assertEquals(4, result.size());
-
-            result = dao.getList(collection, null, null, batchSize);
-
-            result = dao.getList(collection, start, null, null);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-    */
-
-    @Test
-    public void testGetDeleteNonExistentObservation() {
+    public void testGetDeleteNotFound() {
         try {
             URI uri = new URI("caom:TEST/NonExistentObservation");
             
@@ -895,11 +819,12 @@ public abstract class AbstractObservationDAOTest {
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             TransactionManager txnManager = dao.getTransactionManager();
-            if (txnManager.isOpen())
+            if (txnManager.isOpen()) {
                 try {
-                txnManager.rollbackTransaction();
-            } catch (Throwable t) {
-                log.error("failed to rollback transaction", t);
+                    txnManager.rollbackTransaction();
+                } catch (Throwable t) {
+                    log.error("failed to rollback transaction", t);
+                }
             }
             Assert.fail("unexpected exception: " + unexpected);
         }
@@ -915,7 +840,7 @@ public abstract class AbstractObservationDAOTest {
             log.debug("put: comp DONE");
 
             String sql = "SELECT count(*) from " + dao.gen.getTable(ObservationMember.class)
-                    + " WHERE parentID = " + dao.gen.literal(comp.getID());
+                    + " WHERE parentID = '" + comp.getID() + "'";
             JdbcTemplate jdbc = new JdbcTemplate(dao.dataSource);
 
             if (dao.gen.persistOptimisations) {

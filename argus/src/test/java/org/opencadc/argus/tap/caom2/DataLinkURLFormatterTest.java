@@ -69,19 +69,16 @@
 
 package org.opencadc.argus.tap.caom2;
 
-import org.opencadc.argus.tap.format.DataLinkURLFormat;
 import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
-import static ca.nrc.cadc.uws.JobAttribute.JOB_ID;
 import java.net.URI;
-import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.argus.tap.format.DataLinkURLFormat;
 
 /**
  *
@@ -92,7 +89,7 @@ public class DataLinkURLFormatterTest {
     private static Logger log = Logger.getLogger(DataLinkURLFormatterTest.class);
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.tap.caom2", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
     }
 
     String columnID = "pubid";

@@ -52,10 +52,15 @@ Each collection in the properties file configures a collection name, followed by
 org.opencadc.torkeep.grantProvider = {URI}
 
 # collection name and one or more collection properties
-org.opencadc.torkeep.collection = {CAOM collection name}
-{collection name}.basePublisherID = {URI}
-{collection name}.computeMetadata = {true | false}
-{collection name}.proposalGroup = {true | false}
+org.opencadc.torkeep.collection = {collection}
+# required: define REST API path to Observation.uri mapping
+{collection}.obsIdentifierPrefix = {URI prefix}
+# optional: define an alternate base URI for Plane.publisherID values
+{collection}.basePublisherID = {URI}
+
+## TODO:
+# optional (default: false)
+{collection}.proposalGroup = true|false
 ```
 _grantProvider_ is URI to a permissions service that provides grants to read and write CAOM collections.
 The URI is a resourceID (e.g. ivo://opencadc.org/baldur) to a permissions service defined in the registry, 
@@ -66,20 +71,26 @@ requests that `torkeep` will make.
 
 _collection_ specifies the CAOM collection name and defines a new set of config keys for that collection.
 
-_bashPublisherID_ is the base for generating Plane publisherID values.
-The base is an uri of the form `ivo://<authority>[/<path>]`
-publisherID values: `<basePublisherID>/<collection>?<observationID>/<productID>`
+_obsIdentifierPrefix_ defines the mapping from the REST API (`/observations/{collection}/{obs identifier}`) to
+the Observation.uri style used for the collection. Two styles are supported:
+* `{collection}.obsIdentifierPrefix = caom:` maps to URIs of the form `caom:{collection}/{obs identifier}`
+* `{collection}.obsIdentifierPrefix = ivo://{authority}/` maps to URIs of the form `ivo://{authority}/{collection}?{obs identifier}`
 
-_computeMetadata_ (optional, default: false) enables computation and persistence of computed metadata
-(generally, Plane metadata aggregated from the artifacts).
+_basePublisherID_ is the base for generating a local Plane publisherID value from the Plane.uri value. This would be
+ommitted if the Plane.uri values used for the collection are already `ivo` identifiers; in this case the Plane.uri 
+(nominally the creator id in IVOA use) is simply copied to the publisherID field. If the Plane.uri values use the traditional internal style (`caom:{collection}/{plane identifier}`) then the _basePublisherID_ is required to transform
+those internal values into `ivo` URIs of the form `{basePublisherID}/{collection}?{plane identifier}`. For example,
+```
+org.opencadc.torkeep.collection = CFHT
+{collection name}.obsIdentifierPrefix = ivo://opencadc.org/
+```
+would transform a Plane.uri `caom:CFHT/123456p` into publisherID `ivo://opencadc.org/CFHT?123456p`.
 
-_proposalGroup_ (optional, default: false) is a boolean flag which indicates whether CAOM read access grant(s)
-are generated to allow the proposal group to access CAOM metadata and/or data (if needed because it is not 
-currently public). A proposal group is always of the form 
-`{GMS service resourceID}?{Observation.collection}-{Observation.proposal.id}` 
-where the GMS resourceID is the one configured as the local GMS service (see `cadc-registry` above) and the 
-group name is generated from the CAOM collection and proposal ID as shown. NOTE: not yet enabled in this code 
-pending code re-org. `torkeep` *does not* check if the group exists or attempt to create it.
+Not implemented yet: _proposalGroup_ (optional, default: false) is a boolean flag which indicates whether CAOM 
+read access grant(s) are generated to allow the proposal group to access CAOM metadata and/or data (if needed 
+because it is not currently public). A proposal group is always of the form `{GMS service resourceID}?{Observation.collection}-{Observation.proposal.id}` where the GMS resourceID is the one configured as the local GMS service (see `cadc-registry` above) and the group name is generated from the CAOM collection and proposal ID as shown.
+NOTE: not yet enabled in this code pending code re-org. `torkeep` *does not* check if the group exists or attempt to
+create it.
 
 ## building it
 ```

@@ -80,6 +80,7 @@ import org.opencadc.caom2.Chunk;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.Part;
 import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.db.mappers.PartialRowMapper;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
 /**

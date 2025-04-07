@@ -93,7 +93,7 @@ public class DataLinkURLFormat implements Format<Object> {
     private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
 
     // HACK: need this to try to lookup local datalink service from config
-    private static final String DATALINK_COL_ID = "caomPublisherID";
+    private static final String DATALINK_COL_ID = "ivoaPublisherID";
     
     private transient URL baseLinksURL;
     private transient boolean baseLinksConfigChecked = false;
