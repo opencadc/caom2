@@ -112,7 +112,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     @Override
     public Format<Object> getFormat(TapSelectItem d) {
         Format<Object> ret = super.getFormat(d);
-        log.warn("fomatter: " + d + " " + ret.getClass().getName());
+        log.debug("fomatter: " + d + " " + ret.getClass().getName());
         return ret;
     }
 
