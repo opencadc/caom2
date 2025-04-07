@@ -106,10 +106,14 @@ public class ParquetOutputTest {
     @Test
     public void testParquetOutput() throws Exception {
         TapClient tap = new TapClient(Constants.RESOURCE_ID);
-        URL tapURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
+        final URL tapURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
         log.info(" sync: " + syncURL);
         
+        // hits duplicate column name bug in ParquetWriter:
+        //String adql = "select top 10 * from caom2.Observation o join caom2.Plane p on o.obsID=p.obsID";
+        
         String adql = "select top 10 * from caom2.Plane";
+        log.info("query: " + adql);
         Map<String, Object> params = new TreeMap<>();
         params.put("LANG", "ADQL");
         params.put("QUERY", adql);
@@ -118,7 +122,8 @@ public class ParquetOutputTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         HttpPost httpPost = new HttpPost(tapURL, params, out);
         httpPost.run();
-
+        log.info("response: " + httpPost.getResponseCode() + " " + httpPost.getThrowable());
+        
         if (httpPost.getThrowable() != null) {
             log.error("Post failed", httpPost.getThrowable());
             Assert.fail("exception on post: " + httpPost.getThrowable());
