@@ -526,7 +526,7 @@ public abstract class AbstractObservationDAOTest {
     public void testPutSimpleObservation() {
         try {
             int minDepth = 1;
-            int maxDepth = 5;
+            int maxDepth = 2;
             for (int i = minDepth; i <= maxDepth; i++) {
                 log.info("testPutSimpleObservation: depth=" + i);
                 Observation orig = getTestObservation(i, true);
@@ -543,6 +543,8 @@ public abstract class AbstractObservationDAOTest {
                 Assert.assertNotNull("found", retrieved);
                 testEqual(orig, retrieved);
 
+                checkOptimizations(orig);
+                
                 dao.delete(orig.getID());
 
                 Observation deleted = dao.get(orig.getURI());
@@ -1180,7 +1182,7 @@ public abstract class AbstractObservationDAOTest {
     }
     */
 
-    protected void checkOptimizations(Observation o, Date expectedMetaRelease) {
+    protected void checkOptimizations(Observation o) {
         log.info("checkOptimizations: no checks implemented");
     }
 

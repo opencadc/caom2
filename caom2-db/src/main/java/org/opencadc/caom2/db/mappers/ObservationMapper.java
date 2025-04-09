@@ -104,7 +104,7 @@ public class ObservationMapper implements PartialRowMapper<Observation> {
 
     private static final Logger log = Logger.getLogger(ObservationMapper.class);
 
-    public static final String[] COLUMNS = new String[]{
+    public static final String[] COLUMNS = new String[] {
         "typeCode",
         "uri", "uriBucket", "collection",
         "algorithm_name",
@@ -126,12 +126,18 @@ public class ObservationMapper implements PartialRowMapper<Observation> {
         "metaChecksum", "accMetaChecksum", "metaProducer",
         "obsID" // PK
     };
+    
+    public static final String[] OPT_COLUMNS =  new String[]{
+        "_q_targetPosition_coordinates"
+    };
 
     private final SQLDialect dbDialect;
+    private final boolean persistOptimisations;
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
-    public ObservationMapper(SQLDialect dbDialect) {
+    public ObservationMapper(SQLDialect dbDialect, boolean persistOptimisations) {
         this.dbDialect = dbDialect;
+        this.persistOptimisations = persistOptimisations;
     }
 
     
@@ -145,6 +151,9 @@ public class ObservationMapper implements PartialRowMapper<Observation> {
 
     @Override
     public int getColumnCount() {
+        if (persistOptimisations) {
+            return COLUMNS.length + OPT_COLUMNS.length;
+        }
         return COLUMNS.length;
     }
 
@@ -295,9 +304,9 @@ public class ObservationMapper implements PartialRowMapper<Observation> {
             col += 1; // skip
         }
 
-        //if (persistOptimisations) {
-        //    col += numOptObservationColumns;
-        //}
+        if (persistOptimisations) {
+            col += OPT_COLUMNS.length;
+        }
         Date lastModified = Util.getDate(rs, col++, utcCalendar);
         Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
         CaomUtil.assignLastModified(o, lastModified, "lastModified");

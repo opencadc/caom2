@@ -159,7 +159,15 @@ public class SQLDialect {
         throw new UnsupportedOperationException();
     }
 
+    public void safeSetIntervalOptimization(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val) throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+
     public void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val) throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+    
+    public void safeSetPointOptimization(StringBuilder sb, PreparedStatement ps, int col, Point val) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
@@ -192,10 +200,6 @@ public class SQLDialect {
             sb.append(val);
             sb.append(",");
         }
-    }
-
-    public void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val) throws SQLException {
-        throw new UnsupportedOperationException();
     }
 
     public void safeSetDimension(StringBuilder sb, PreparedStatement ps, int col, Dimension2D val) throws SQLException {
@@ -245,18 +249,26 @@ public class SQLDialect {
     public void safeSetIntervalList(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> val) throws SQLException {
         throw new UnsupportedOperationException();
     }
+    
+    public void safeSetIntervalListOptimization(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> val) throws SQLException {
+        throw new UnsupportedOperationException();
+    }
 
     public void safeSetBoolean(StringBuilder sb, PreparedStatement ps, int col, Boolean val) throws SQLException {
         if (useIntegerForBoolean) {
             Integer ival = null;
             if (val != null) {
-                if (val.booleanValue()) {
-                    ival = new Integer(1);
+                if (val) {
+                    ival = 1;
                 } else {
-                    ival = new Integer(0);
+                    ival = 0;
                 }
             }
             safeSetInteger(sb, ps, col, ival);
+            if (sb != null) {
+                sb.append(val);
+                sb.append(",");
+            }
             return;
         }
         if (val != null) {
@@ -271,6 +283,10 @@ public class SQLDialect {
     }
 
     public void safeSetShape(StringBuilder sb, PreparedStatement ps, int col, Shape val) throws SQLException {
+        throw new UnsupportedOperationException();
+    }
+
+    public void safeSetShapeOptimization(StringBuilder sb, PreparedStatement ps, int col, Shape val) throws SQLException {
         throw new UnsupportedOperationException();
     }
 

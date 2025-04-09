@@ -69,25 +69,21 @@
 
 package org.opencadc.caom2.db;
 
-import org.opencadc.caom2.Artifact;
-import org.opencadc.caom2.Chunk;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.Part;
-import org.opencadc.caom2.Plane;
-import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.util.Log4jInit;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.Plane;
+import org.opencadc.caom2.db.mappers.ObservationMapper;
+import org.opencadc.caom2.db.mappers.PlaneMapper;
 import org.opencadc.caom2.db.version.InitDatabase;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  *
@@ -99,7 +95,7 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest {
 
     static {
         log = Logger.getLogger(PostgresqlObservationDAOTest.class);
-        Log4jInit.setLevel("org.opencadc.caom2.db", Level.DEBUG);
+        Log4jInit.setLevel("org.opencadc.caom2.db", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
 
@@ -125,41 +121,46 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest {
     }
 
     @Override
-    protected void checkOptimizations(Observation o, Date expectedMetaRelease) {
+    protected void checkOptimizations(Observation o) {
         JdbcTemplate jdbc = new JdbcTemplate(dao.dataSource);
-        ResultSetExtractor dateExtractor = new ResultSetExtractor() {
-
-            @Override
-            public Object extractData(ResultSet rs) throws SQLException, DataAccessException {
-                if (rs.next()) {
-                    return Util.getDate(rs, 1, Calendar.getInstance(DateUtil.UTC));
-                }
-                return null;
+        
+        SQLGenerator gen = dao.getSQLGenerator();
+        StringBuilder sb = new StringBuilder();
+        
+        StringMapper sm = new StringMapper();
+        for (String s : ObservationMapper.OPT_COLUMNS) {
+            sb.setLength(0); // clear
+            sb.append("SELECT ");
+            sb.append(s);
+            sb.append(" FROM ").append(gen.getTable(Observation.class));
+            String sql = sb.toString();
+            List<String> result = jdbc.query(sql, sm);
+            Assert.assertNotNull(result);
+            for (String r : result) {
+                log.info("observation: " + s + " = " + r);
             }
-        };
-        Date actual;
-        String sql;
-
-        // check for metaRelease in artifact, part, chunk = d1
-        for (Plane p : o.getPlanes()) {
-            Assert.assertEquals("plane.metaRelease", expectedMetaRelease, p.metaRelease);
-            for (Artifact a : p.getArtifacts()) {
-                sql = "select metaRelease from " + schema + ".Artifact where artifactID='" + a.getID().toString() + "'";
-                actual = (Date) jdbc.query(sql, dateExtractor);
-                testEqualSeconds("artifact.metaRelease", expectedMetaRelease, actual);
-
-                for (Part pp : a.getParts()) {
-                    sql = "select metaRelease from " + schema + ".Part where partID='" + pp.getID().toString() + "'";
-                    actual = (Date) jdbc.query(sql, dateExtractor);
-                    testEqualSeconds("part.metaRelease", expectedMetaRelease, actual);
-
-                    for (Chunk c : pp.getChunks()) {
-                        sql = "select metaRelease from " + schema + ".Chunk where chunkID='" + c.getID().toString() + "'";
-                        actual = (Date) jdbc.query(sql, dateExtractor);
-                        testEqualSeconds("chunk.metaRelease", expectedMetaRelease, actual);
-                    }
-                }
+        }
+        for (String s : PlaneMapper.OPT_COLUMNS) {
+            sb.setLength(0); // clear
+            sb.append("SELECT ");
+            sb.append(s);
+            sb.append(" FROM ").append(gen.getTable(Plane.class));
+            String sql = sb.toString();
+            List<String> result = jdbc.query(sql, sm);
+            Assert.assertNotNull(result);
+            for (String r : result) {
+                log.info("plane: " + s + " = " + r);
+                // test includes fully populated plane so all opt fields should be non-null
+                Assert.assertNotNull(r);
             }
+        }
+        
+    }
+    
+    private static class StringMapper implements RowMapper<String> {
+        @Override
+        public String mapRow(ResultSet rs, int i) throws SQLException {
+            return rs.getString(1);
         }
     }
 }

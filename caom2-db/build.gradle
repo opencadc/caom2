@@ -1,4 +1,4 @@
-plugins {
+    plugins {
     id 'java-library'
     id 'maven-publish'
     id 'checkstyle'
@@ -22,7 +22,7 @@ def git_url = 'https://github.com/opencadc/caom2'
 
 dependencies {
     api 'org.opencadc:caom2:[2.5.0,2.6)'
-    
+    api 'org.opencadc:cadc-dali:[1.2.25,)'
     implementation 'org.opencadc:cadc-util:[1.12.0,2.0)'
     implementation 'org.opencadc:cadc-dali-pg:[0.3,0.4)'
     implementation 'org.postgresql:postgresql:[42.2,43.0)'

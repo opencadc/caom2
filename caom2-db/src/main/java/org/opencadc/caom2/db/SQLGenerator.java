@@ -186,7 +186,7 @@ public class SQLGenerator {
     /**
      * Persist alternate representations to support optimisations. Default: false.
      */
-    protected boolean persistOptimisations = false;
+    protected boolean persistOptimisations = true;
     
     /**
      * Store optimized read access tuples in asset table(s). Default: false.
@@ -256,12 +256,9 @@ public class SQLGenerator {
         // - the typeCode column is first so the right subclass of observation can be created
         
         String[] obsColumns = ObservationMapper.COLUMNS;
-        if (persistOptimisations) {
-            String[] extraCols = new String[]{
-                // TODO
-            };
-            this.numOptObservationColumns = extraCols.length;
-            obsColumns = addExtraColumns(obsColumns, extraCols);
+        if (persistOptimisations && ObservationMapper.OPT_COLUMNS.length > 0) {
+            this.numOptObservationColumns = ObservationMapper.OPT_COLUMNS.length;
+            obsColumns = addExtraColumns(obsColumns, ObservationMapper.OPT_COLUMNS);
         }
         columnMap.put(Observation.class, obsColumns);
         
@@ -271,21 +268,10 @@ public class SQLGenerator {
         columnMap.put(ObservationMember.class, obsMembersColumns);
 
         String[] planeColumns = PlaneMapper.COLUMNS;
-        if (persistOptimisations) {
-            String[] extraCols = new String[]{
-                //"_q_position_bounds", "_q_position_minBounds,
-                //"_q_position_bounds_center", "_q_position_bounds_area", "_q_position_bounds_size",
-                //"_q_energy_bounds", "_q_energy_samples",
-                //"_q_energy_resolvingPowerBounds",
-                //"_q_energy_resolutionBounds",
-                //"_q_time_bounds", "_q_time_samples",
-                //"_q_time_exposureBounds",
-                //"_q_time_resolutionBounds",
-                //"_q_custom_bounds", //"_q_custom_samples",
-                //"_q_uv_distance",
-            };
-            this.numOptPlaneColumns = extraCols.length;
-            planeColumns = addExtraColumns(planeColumns, extraCols);
+        if (persistOptimisations && PlaneMapper.OPT_COLUMNS.length > 0) {
+            
+            this.numOptPlaneColumns = PlaneMapper.OPT_COLUMNS.length;
+            planeColumns = addExtraColumns(planeColumns, PlaneMapper.OPT_COLUMNS);
         }
         columnMap.put(Plane.class, planeColumns);
         
@@ -421,8 +407,8 @@ public class SQLGenerator {
         columnMap.put(ChunkSkeleton.class, new String[] {"partID", "lastModified", "maxLastModified", "metaChecksum", "accMetaChecksum", "chunkID"});
     }
 
+    // insert the extra columns before the CaomEntity columns and PK (last 6)
     private String[] addExtraColumns(String[] origCols, String[] extraCols) {
-        // insert the extra columns before the CaomEntity columns and PK (last 6)
         int n = origCols.length + extraCols.length;
         String[] allCols = new String[n];
 
@@ -1254,6 +1240,12 @@ public class SQLGenerator {
             } else {
                 dbDialect.safeSetArray(sb, ps, col++, null);
             }
+            
+            if (persistOptimisations) {
+                if (obs.targetPosition != null) {
+                    dbDialect.safeSetPointOptimization(sb, ps, col++, obs.targetPosition.getCoordinates());
+                }
+            }
 
             dbDialect.safeSetDate(sb, ps, col++, obs.getLastModified(), utcCalendar);
             dbDialect.safeSetDate(sb, ps, col++, obs.getMaxLastModified(), utcCalendar);
@@ -1302,6 +1294,7 @@ public class SQLGenerator {
             this.update = update;
         }
 
+        @Override
         public void execute(JdbcTemplate jdbc) {
             jdbc.update(this);
 
@@ -1337,11 +1330,13 @@ public class SQLGenerator {
             */
         }
         
+        @Override
         public void setValue(Plane plane, UUID parent) {
             this.plane = plane;
             this.parent = parent;
         }
         
+        @Override
         public PreparedStatement createPreparedStatement(Connection conn) throws SQLException {
             String sql = null;
             if (deleteInputs) {
@@ -1364,8 +1359,8 @@ public class SQLGenerator {
                 // no values to set
             } else if (insertInputs) {
                 loadValuesInput(prep);
-            } else if (doOpt) {
-                loadValuesForOpt(prep);
+            //} else if (doOpt) {
+            //    loadValuesForOpt(prep);
             } else {
                 loadValues(prep);
             }
@@ -1464,8 +1459,8 @@ public class SQLGenerator {
             }
             
             //position
-            Position pos = plane.position;
-            if (pos != null) {
+            if (plane.position != null) {
+                Position pos = plane.position;
                 dbDialect.safeSetShape(sb, ps, col++, pos.getBounds());
                 dbDialect.safeSetMultiShape(sb, ps, col++, pos.getSamples());
                 if (pos.minBounds != null) {
@@ -1473,10 +1468,6 @@ public class SQLGenerator {
                 } else {
                     dbDialect.safeSetShape(sb, ps, col++, null);
                 }
-                //dbDialect.safeSetShapeAsPolygon(sb, ps, col++, pos.getBounds());
-                //dbDialect.safeSetPoint(sb, ps, col++, pos.bounds.getCenter());
-                //dbDialect.safeSetDouble(sb, ps, col++, pos.bounds.getArea());
-                //dbDialect.safeSetDouble(sb, ps, col++, pos.bounds.getSize());
                 dbDialect.safeSetDimension(sb, ps, col++, pos.dimension);
                 dbDialect.safeSetInterval(sb, ps, col++, pos.maxRecoverableScale);
                 dbDialect.safeSetDouble(sb, ps, col++, pos.resolution);
@@ -1489,13 +1480,8 @@ public class SQLGenerator {
                 }
             } else {
                 dbDialect.safeSetShape(sb, ps, col++, null);
-                //dbDialect.safeSetMultiShape(sb, ps, col++, null);
-                dbDialect.safeSetString(sb, ps, col++, null);
+                dbDialect.safeSetMultiShape(sb, ps, col++, null);
                 dbDialect.safeSetShape(sb, ps, col++, null);
-                //dbDialect.safeSetPoint(sb, ps, col++, null);
-                //dbDialect.safeSetDouble(sb, ps, col++, null);
-                //dbDialect.safeSetDouble(sb, ps, col++, null);
-                //dbDialect.safeSetShapeAsPolygon(sb, ps, col++, null);
                 dbDialect.safeSetDimension(sb, ps, col++, null);
                 dbDialect.safeSetInterval(sb, ps, col++, null);
                 dbDialect.safeSetDouble(sb, ps, col++, null);
@@ -1509,7 +1495,6 @@ public class SQLGenerator {
                 Energy nrg = plane.energy;
                 dbDialect.safeSetInterval(sb, ps, col++, nrg.getBounds());
                 dbDialect.safeSetIntervalList(sb, ps, col++, nrg.getSamples());
-                //dbDialect.safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
                 dbDialect.safeSetString(sb, ps, col++, nrg.bandpassName);
                 dbDialect.safeSetString(sb, ps, col++, CaomUtil.encodeBands(nrg.getEnergyBands()));
                 dbDialect.safeSetLong(sb, ps, col++, nrg.dimension);
@@ -1534,7 +1519,6 @@ public class SQLGenerator {
             } else {
                 dbDialect.safeSetInterval(sb, ps, col++, null);
                 dbDialect.safeSetIntervalList(sb, ps, col++, null);
-                //dbDialect.safeSetDouble(sb, ps, col++, null);
                 dbDialect.safeSetString(sb, ps, col++, null);
                 dbDialect.safeSetString(sb, ps, col++, null);
                 dbDialect.safeSetLong(sb, ps, col++, null);
@@ -1554,7 +1538,6 @@ public class SQLGenerator {
                 Time tim = plane.time;
                 dbDialect.safeSetInterval(sb, ps, col++, tim.getBounds());
                 dbDialect.safeSetIntervalList(sb, ps, col++, tim.getSamples());
-                //dbDialect.safeSetDouble(sb, ps, col++, nrg.bounds.getWidth());
                 dbDialect.safeSetLong(sb, ps, col++, tim.dimension);
                 dbDialect.safeSetDouble(sb, ps, col++, tim.exposure);
                 dbDialect.safeSetInterval(sb, ps, col++, tim.exposureBounds);
@@ -1569,7 +1552,6 @@ public class SQLGenerator {
             } else {
                 dbDialect.safeSetInterval(sb, ps, col++, null);
                 dbDialect.safeSetIntervalList(sb, ps, col++, null);
-                //dbDialect.safeSetDouble(sb, ps, col++, null);
                 dbDialect.safeSetLong(sb, ps, col++, null);
                 dbDialect.safeSetDouble(sb, ps, col++, null);
                 dbDialect.safeSetInterval(sb, ps, col++, null);
@@ -1593,13 +1575,11 @@ public class SQLGenerator {
                 dbDialect.safeSetString(sb, ps, col++, plane.custom.getCtype());
                 dbDialect.safeSetInterval(sb, ps, col++, plane.custom.getBounds());
                 dbDialect.safeSetIntervalList(sb, ps, col++, plane.custom.getSamples());
-                //dbDialect.safeSetDouble(sb, ps, col++, plane.custom.bounds.getWidth());
                 dbDialect.safeSetLong(sb, ps, col++, plane.custom.dimension);
             } else {
                 dbDialect.safeSetString(sb, ps, col++, null);
                 dbDialect.safeSetInterval(sb, ps, col++, null);
                 dbDialect.safeSetIntervalList(sb, ps, col++, null);
-                //dbDialect.safeSetDouble(sb, ps, col++, null);
                 dbDialect.safeSetLong(sb, ps, col++, null);
             }
 
@@ -1613,6 +1593,88 @@ public class SQLGenerator {
                 dbDialect.safeSetDouble(sb, ps, col++, null);
                 dbDialect.safeSetDouble(sb, ps, col++, null);
             }
+
+            int mainCols = col  - 1;
+            log.debug("main columns: " + (PlaneMapper.COLUMNS.length - 6) + " filled: " + mainCols);
+            
+            if (persistOptimisations) {
+                if (plane.position != null) {
+                    Position pos = plane.position;
+                    dbDialect.safeSetShapeOptimization(sb, ps, col++, pos.getBounds());
+                    dbDialect.safeSetPointOptimization(sb, ps, col++, pos.getBounds().getCenter());
+                    dbDialect.safeSetDouble(sb, ps, col++, pos.getBounds().getArea());
+                    dbDialect.safeSetDouble(sb, ps, col++, pos.getBounds().getSize());
+                    if (pos.minBounds != null) {
+                        dbDialect.safeSetShapeOptimization(sb, ps, col++, pos.minBounds);
+                        dbDialect.safeSetPointOptimization(sb, ps, col++, pos.getBounds().getCenter());
+                        dbDialect.safeSetDouble(sb, ps, col++, pos.minBounds.getArea());
+                        dbDialect.safeSetDouble(sb, ps, col++, pos.minBounds.getSize());
+                    } else {
+                        dbDialect.safeSetShapeOptimization(sb, ps, col++, null);
+                        dbDialect.safeSetPointOptimization(sb, ps, col++, null);
+                        dbDialect.safeSetDouble(sb, ps, col++, null);
+                        dbDialect.safeSetDouble(sb, ps, col++, null);
+                    }
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, pos.maxRecoverableScale);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, pos.resolutionBounds);
+                } else {
+                    dbDialect.safeSetShapeOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetPointOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetShapeOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetPointOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetDouble(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                }
+                
+                if (plane.energy != null) {
+                    Energy nrg = plane.energy;
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, nrg.getBounds());
+                    dbDialect.safeSetIntervalListOptimization(sb, ps, col++, nrg.getSamples());
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, nrg.resolvingPowerBounds);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, nrg.resolutionBounds);
+                } else {
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalListOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                }
+                
+                if (plane.time != null) {
+                    Time tim = plane.time;
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, tim.getBounds());
+                    dbDialect.safeSetIntervalListOptimization(sb, ps, col++, tim.getSamples());
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, tim.exposureBounds);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, tim.resolutionBounds);
+                } else {
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalListOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                }
+                
+                // plane.polarization: no optimizations
+                
+                if (plane.custom != null) {
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, plane.custom.getBounds());
+                    dbDialect.safeSetIntervalListOptimization(sb, ps, col++, plane.custom.getSamples());
+                } else {
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                    dbDialect.safeSetIntervalListOptimization(sb, ps, col++, null);
+                }
+                
+                if (plane.visibility != null) {
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, plane.visibility.getDistance());
+                } else {
+                    dbDialect.safeSetIntervalOptimization(sb, ps, col++, null);
+                }
+            }
+            
+            int optCols = col - mainCols - 1;
+            log.debug("opt columns: " + PlaneMapper.OPT_COLUMNS.length + " filled: " + optCols);
 
             dbDialect.safeSetDate(sb, ps, col++, plane.getLastModified(), utcCalendar);
             dbDialect.safeSetDate(sb, ps, col++, plane.getMaxLastModified(), utcCalendar);
@@ -2489,11 +2551,11 @@ public class SQLGenerator {
     }
 
     PartialRowMapper<Observation> getObservationMapper() {
-        return new ObservationMapper(dbDialect);
+        return new ObservationMapper(dbDialect, persistOptimisations);
     }
 
     PartialRowMapper<Plane> getPlaneMapper() {
-        return new PlaneMapper(dbDialect);
+        return new PlaneMapper(dbDialect, persistOptimisations);
     }
 
     public PartialRowMapper<Artifact> getArtifactMapper() {

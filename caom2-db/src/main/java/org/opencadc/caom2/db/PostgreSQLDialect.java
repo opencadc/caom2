@@ -205,7 +205,6 @@ public class PostgreSQLDialect extends SQLDialect {
         throw new IllegalStateException("array length " + vals.length + " invalid for Dimension2D");
     }
     
-    // store as array to make it round trip
     @Override
     public void safeSetPoint(StringBuilder sb, PreparedStatement ps, int col, Point val)
             throws SQLException {
@@ -244,7 +243,8 @@ public class PostgreSQLDialect extends SQLDialect {
     }
     
     // store as spoint to make it queryable
-    public void safeSetPointOpt(StringBuilder sb, PreparedStatement ps, int col, Point val)
+    @Override
+    public void safeSetPointOptimization(StringBuilder sb, PreparedStatement ps, int col, Point val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -254,7 +254,7 @@ public class PostgreSQLDialect extends SQLDialect {
         } else {
             log.debug("[safeSetPoint] in: " + val);
             PgSpoint pgs = new PgSpoint();
-            PGobject pgo = pgs.generatePoint(new ca.nrc.cadc.dali.Point(val.getLongitude(), val.getLatitude()));
+            PGobject pgo = pgs.generatePoint(val);
             ps.setObject(col, pgo);
             if (sb != null) {
                 sb.append(pgo.getValue());
@@ -329,17 +329,8 @@ public class PostgreSQLDialect extends SQLDialect {
         throw new UnsupportedOperationException("toArray: " + val.getClass().getName());
     }
     
-    /**
-     * Store polygon value in an spoly column.
-     * 
-     * @param sb
-     * @param ps
-     * @param col
-     * @param val
-     * @throws SQLException 
-     */
     @Override
-    public void safeSetShapeAsPolygon(StringBuilder sb, PreparedStatement ps, int col, Shape val)
+    public void safeSetShapeOptimization(StringBuilder sb, PreparedStatement ps, int col, Shape val)
             throws SQLException {
         if (val == null) {
             ps.setObject(col, null);
@@ -349,7 +340,7 @@ public class PostgreSQLDialect extends SQLDialect {
             return;
         } 
         
-        log.debug("[safeSetShapeAsPolygon] in: " + val);
+        log.debug("[safeSetShapeOptimization] in: " + val);
         if (val instanceof Polygon) {
             Polygon poly = (Polygon) val;
             PgSpoly pgs = new PgSpoly();
@@ -433,6 +424,7 @@ public class PostgreSQLDialect extends SQLDialect {
         throw new IllegalStateException("array length " + vals.length + " invalid for Interval");
     }
 
+    @Override
     public void safeSetIntervalOptimization(StringBuilder sb, PreparedStatement ps, int col, Interval<Double> val)
             throws SQLException {
         if (val == null) {
@@ -498,6 +490,7 @@ public class PostgreSQLDialect extends SQLDialect {
         }
     }
 
+    @Override
     public void safeSetIntervalListOptimization(StringBuilder sb, PreparedStatement ps, int col, List<Interval<Double>> subs)
             throws SQLException {
         if (subs == null || subs.isEmpty()) {
