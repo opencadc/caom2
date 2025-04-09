@@ -151,11 +151,32 @@ public class PlaneMapper implements PartialRowMapper<Plane> {
         "planeID" // PK
     };
 
+    public static final String[] OPT_COLUMNS = new String[] {
+        "_q_position_bounds",
+        "_q_position_bounds_centroid", "_q_position_bounds_area", "_q_position_bounds_size",
+        "_q_position_minBounds",
+        "_q_position_minBounds_centroid", "_q_position_minBounds_area", "_q_position_minBounds_size",
+        "_q_position_maxRecoverableScale","_q_position_resolutionBounds",
+        "_q_energy_bounds", 
+        "_q_energy_samples", 
+        "_q_energy_resolvingPowerBounds",
+        "_q_energy_resolutionBounds",
+        "_q_time_bounds", 
+        "_q_time_samples", 
+        "_q_time_exposureBounds", 
+        "_q_time_resolutionBounds",
+        "_q_custom_bounds", 
+        "_q_custom_samples",
+        "_q_uv_distance",
+    };
+
     private final SQLDialect dbDialect;
+    private final boolean persistOptimisations;
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
-    public PlaneMapper(SQLDialect dbDialect) {
+    public PlaneMapper(SQLDialect dbDialect, boolean persistOptimisations) {
         this.dbDialect = dbDialect;
+        this.persistOptimisations = persistOptimisations;
     }
 
     @Override
@@ -168,6 +189,9 @@ public class PlaneMapper implements PartialRowMapper<Plane> {
 
     @Override
     public int getColumnCount() {
+        if (persistOptimisations) {
+            return COLUMNS.length + OPT_COLUMNS.length;
+        }
         return COLUMNS.length;
     }
 
@@ -413,6 +437,10 @@ public class PlaneMapper implements PartialRowMapper<Plane> {
             p.visibility = new Visibility(uvd, ecc, fill);
         } else {
             col += 2;
+        }
+
+        if (persistOptimisations) {
+            col += OPT_COLUMNS.length;
         }
 
         Date lastModified = Util.getDate(rs, col++, utcCalendar);

@@ -89,6 +89,9 @@ import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import static org.opencadc.caom2.db.AbstractObservationDAOTest.log;
+import static org.opencadc.caom2.db.PostgresqlObservationDAOTest.schema;
+import org.opencadc.caom2.db.version.InitDatabase;
 
 /**
  *
@@ -119,6 +122,11 @@ public class ArtifactDescriptionDAOTest {
             config.put(SQLDialect.class.getName(), PostgreSQLDialect.class);
             this.dao = new ArtifactDescriptionDAO(true);
             dao.setConfig(config);
+            
+            log.info("calling InitDatabase...");
+            InitDatabase init = new InitDatabase(dao.getDataSource(), null, schema);
+            init.doInit();
+            log.info("calling InitDatabase... OK");
         } catch (Exception ex) {
             // make sure it gets fully dumped
             log.error("setup DataSource failed", ex);

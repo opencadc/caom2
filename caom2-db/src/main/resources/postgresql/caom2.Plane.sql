@@ -47,13 +47,16 @@ create table <schema>.Plane
     position_sampleSize          double precision,
     position_calibration         varchar(64),
 -- alternate representation for optimized query execution or ADQL function implementation
---    _q_position_bounds           spoly,
---    _q_position_minBounds        spoly,
---    _q_position_bounds_center    spoint,
---    _q_position_bounds_area      double precision,
---    _q_position_bounds_size      double precision,
---    _q_position_maxRecoverableScale polygon,
---    _q_position_resolutionBounds polygon,
+    _q_position_bounds           spoly,
+    _q_position_bounds_centroid  spoint,
+    _q_position_bounds_area      double precision,
+    _q_position_bounds_size      double precision,
+    _q_position_minBounds        spoly,
+    _q_position_minBounds_centroid  spoint,
+    _q_position_minBounds_area      double precision,
+    _q_position_minBounds_size      double precision,
+    _q_position_maxRecoverableScale polygon,
+    _q_position_resolutionBounds    polygon,
 
 -- energy
     energy_bounds                   double precision[2],
@@ -71,10 +74,10 @@ create table <schema>.Plane
     energy_rest                     double precision,
     energy_calibration              varchar(64),
 -- alternate representation for optimized query execution or ADQL function implementation
---    _q_energy_bounds               polygon,
---    _q_energy_samples              polygon,
---    _q_energy_resolvingPowerBounds polygon,
---    _q_energy_resolutionBounds     polygon,
+    _q_energy_bounds                polygon,
+    _q_energy_samples               polygon,
+    _q_energy_resolvingPowerBounds  polygon,
+    _q_energy_resolutionBounds      polygon,
 
 -- time
     time_bounds              double precision[2],
@@ -87,10 +90,10 @@ create table <schema>.Plane
     time_sampleSize          double precision,
     time_calibration         varchar(64),
 -- alternate representation for optimized query execution or ADQL function implementation
---    _q_time_bounds           polygon,
---    _q_time_samples          polygon,
---    _q_time_exposureBounds   polygon,
---    _q_time_resolutionBounds polygon,
+    _q_time_bounds           polygon,
+    _q_time_samples          polygon,
+    _q_time_exposureBounds   polygon,
+    _q_time_resolutionBounds polygon,
     
 -- polarization
     polarization_states     text,
@@ -102,15 +105,18 @@ create table <schema>.Plane
     custom_samples          double precision[],
     custom_dimension        bigint,
 -- alternate representation for optimized query execution or ADQL function implementation
---    _q_custom_bounds        polygon,
---    _q_custom_samples       polygon,
+    _q_custom_bounds        polygon,
+    _q_custom_samples       polygon,
 
 -- visibility
     uv_distance                 double precision[2],
     uv_distributionEccentricity double precision,
     uv_distributionFill         double precision,
 -- alternate representation for optimized query execution or ADQL function implementation
---    _q_uv_distance              polygon,
+    _q_uv_distance              polygon,
+
+-- optimisation
+--    metaReadAccessGroups tsvector default '',
 
 -- parent
     obsID uuid not null references <schema>.Observation (obsID),
