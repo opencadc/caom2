@@ -120,36 +120,14 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
      */
     @Override
     protected Expression handleContains(Expression left, Expression right) {
-        log.debug("handleContains: " + left + " " + right);
-
-        // column renaming
+        log.warn("handleContains: " + left + " " + right);
         List<Table> tabs = ParserUtil.getFromTableList(super.getPlainSelect());
-        if (left instanceof Column) {
-            Column c = (Column) left;
-            Table t = c.getTable();
-            if (t == null || t.getName() == null) {
-                log.debug("c.getTable: " + t + " ... searching TapSchema");
-                t = Util.findTableWithColumn(c, tabs, tapSchema);
-            }
-            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
-                renameShapeCol(c);
-            }
-        }
-        if (right instanceof Column) {
-            Column c = (Column) right;
-            Table t = c.getTable();
-            if (t == null || t.getName() == null) {
-                log.debug("c.getTable: " + t + " ... searching TapSchema");
-                t = Util.findTableWithColumn(c, tabs, tapSchema);
-            }
-            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
-                renameShapeCol(c);
-            }
-        }
-
+        boolean toIntersect = false;
         // CONTAINS(<number>, <interval>)
-        TapDataType tdt = getColumnType(right);
+        TapDataType tdt = getColumnType(tabs, right);
         boolean rhsIntervalCol = (tdt != null && "interval".equals(tdt.xtype));
+        log.warn("rhs: " + tdt + " " + rhsIntervalCol);
+        
         if (right instanceof Interval || rhsIntervalCol) {
             if (left instanceof Column) {
                 // OK
@@ -161,19 +139,54 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
                 double d = dv.getValue();
                 double d1 = Double.longBitsToDouble(Double.doubleToLongBits(d) - 1L);
                 double d2 = Double.longBitsToDouble(Double.doubleToLongBits(d) + 1L);
-                Interval p = new Interval(new DoubleValue(Double.toString(d1)), new DoubleValue(Double.toString(d2)));
-                return super.handleIntersects(p, right);
+                left = new Interval(new DoubleValue(Double.toString(d1)), new DoubleValue(Double.toString(d2)));
+                toIntersect = true;
             } else {
                 throw new IllegalArgumentException("invalid argument type for contains: " + left.getClass().getSimpleName());
             }
         }
+
+        // column renaming
+        log.warn("left: " + left.getClass().getName());
+        if (left instanceof Column) {
+            Column c = (Column) left;
+            Table t = c.getTable();
+            if (t == null || t.getName() == null) {
+                log.debug("c.getTable: " + t + " ... searching TapSchema");
+                t = Util.findTableWithColumn(c, tabs, tapSchema);
+            }
+            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
+                renameColumnToInternal(c);
+            }
+        }
+        log.warn("right: " + right.getClass().getName());
+        if (right instanceof Column) {
+            Column c = (Column) right;
+            Table t = c.getTable();
+            if (t == null || t.getName() == null) {
+                log.debug("c.getTable: " + t + " ... searching TapSchema");
+                t = Util.findTableWithColumn(c, tabs, tapSchema);
+            }
+            if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
+                renameColumnToInternal(c);
+            }
+        }
+
+        if (toIntersect) {
+            return super.handleIntersects(left, right);
+        }
         return super.handleContains(left, right);
     }
 
-    private TapDataType getColumnType(Expression e) {
+    private TapDataType getColumnType(List<Table> tabs, Expression e) {
         if (e instanceof Column) {
             Column c = (Column) e;
-            TableDesc td = TapSchemaUtil.findTableDesc(tapSchema, c.getTable());
+            Table t = c.getTable();
+            if (t == null || t.getName() == null) {
+                log.debug("c.getTable: " + t + " ... searching TapSchema");
+                t = Util.findTableWithColumn(c, tabs, tapSchema);
+            }
+            TableDesc td = TapSchemaUtil.findTableDesc(tapSchema, t);
             if (td != null) {
                 ColumnDesc cd = td.getColumn(c.getColumnName());
                 if (cd != null && cd.getColumnName().equalsIgnoreCase(c.getColumnName())) {
@@ -181,9 +194,8 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
                 } else {
                     log.warn("column not found: " + c.getColumnName() + " in " + c.getTable());
                 }
-            } else {
-                log.warn("table not found: " + c.getTable());
             }
+            log.warn("column not found: " + c.getColumnName() + " in caom2 schema");
         }
         return null; // unknown
     }
@@ -212,7 +224,7 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
                 t = Util.findTableWithColumn(c, tabs, tapSchema);
             }
             if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
-                renameShapeCol(c);
+                renameColumnToInternal(c);
             }
         }
         if (right instanceof Column) {
@@ -223,7 +235,7 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
                 t = Util.findTableWithColumn(c, tabs, tapSchema);
             }
             if (!Util.isUploadedTable(t, tabs) && Util.isCAOM2(t, tabs)) {
-                renameShapeCol(c);
+                renameColumnToInternal(c);
             }
         }
 
@@ -232,14 +244,27 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
         return super.handleIntersects(left, right);
     }
     
-    private void renameShapeCol(Column c) {
-        if (c.getColumnName().equalsIgnoreCase("position_bounds") || c.getColumnName().equalsIgnoreCase("position_samples")) {
-            c.setColumnName("_q_position_bounds");
-        } else if (c.getColumnName().equalsIgnoreCase("s_region")) {
+    private void renameColumnToInternal(Column c) {
+        String orig = c.getColumnName();
+        if (c.getColumnName().equalsIgnoreCase("targetPosition_coordinates")) {
+            c.setColumnName("_q_targetPosition_coordinates");
+        } else if (c.getColumnName().equalsIgnoreCase("position_bounds") 
+                || c.getColumnName().equalsIgnoreCase("position_samples")
+                || c.getColumnName().equalsIgnoreCase("s_region")) {
             c.setColumnName("_q_position_bounds");
         } else if (c.getColumnName().equalsIgnoreCase("position_minBounds")) {
             c.setColumnName("_q_position_minBounds");
+        } else if (c.getColumnName().equalsIgnoreCase("energy_bounds")) {
+            c.setColumnName("_q_energy_bounds");
+        } else if (c.getColumnName().equalsIgnoreCase("energy_samples")) {
+            c.setColumnName("_q_energy_samples");
+        } else if (c.getColumnName().equalsIgnoreCase("time_bounds")) {
+            c.setColumnName("_q_time_bounds");
+        } else if (c.getColumnName().equalsIgnoreCase("time_samples")) {
+            c.setColumnName("_q_time_samples");
         }
+        log.warn("renameColumnToInternal: " + orig + " -> " + c.getColumnName());
+        // TODO: more interval columns
     }
 
     // if the argument is an Spoint column cast it to scircle

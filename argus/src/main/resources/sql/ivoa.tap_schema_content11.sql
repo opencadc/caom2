@@ -38,7 +38,7 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,t
 ( 'ivoa', 'ivoa.ObsCore', 'view', 'ObsCore-1.1 observation table', 10 )
 ;
 
-insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,id) values
+insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,column_id) values
 ( 'ivoa.ObsCore', 'obs_publisher_did', 	'obscore:Curation.PublisherDID',
     'publisher dataset identifier', 'meta.ref.ivoid', NULL, 'char', '256*','uri', 1,1,1,1, 'ivoaPublisherID')
 ;
@@ -49,20 +49,21 @@ insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,u
     'telescope name', 'meta.id;instr.tel', NULL, 'char','128*',NULL, 1,0,1,3 ),
 ( 'ivoa.ObsCore', 'instrument_name', 	'obscore:Provenance.ObsConfig.Instrument.name',
     'instrument name', 'meta.id;instr', NULL, 'char','128*',NULL, 1,0,1,4 ),
+( 'ivoa.ObsCore', 'target_name', 'obscore:Target.Name',
+    'name of intended target', 'meta.id;src', NULL, 'char', '32*',NULL, 1,0,1,5 ),
 
 ( 'ivoa.ObsCore', 'obs_id', 	'obscore:DataID.observationID',
-    'internal dataset identifier', 'meta.id', NULL, 'char','128*',NULL, 1,0,1,5 ),
+    'internal dataset identifier', 'meta.id', NULL, 'char','128*',NULL, 1,0,1,6 ),
     
 ( 'ivoa.ObsCore', 'dataproduct_type', 	'obscore:ObsDataset.dataProductType',
-    'type of product', 'meta.code.class', NULL, 'char', '128*',NULL, 1,0,1,6 ),
+    'type of product', 'meta.code.class', NULL, 'char', '128*',NULL, 1,0,1,7 ),
 ( 'ivoa.ObsCore', 'calib_level', 	'obscore:ObsDataset.calibLevel',
-    'calibration level (0,1,2,3)', 'meta.code;obs.calib', NULL, 'int',NULL,NULL, 1,0,1,7 ),
+    'calibration level (0,1,2,3)', 'meta.code;obs.calib', NULL, 'int',NULL,NULL, 1,0,1,8 ),
 
 ( 'ivoa.ObsCore', 'obs_release_date', 'obscore:Curation.releaseDate',
-    'timestamp of date the data becomes publicly available', 'time.release', NULL, 'char','23*','timestamp', 0,0,1,8 ),
+    'timestamp of date the data becomes publicly available', 'time.release', NULL, 'char','23*','timestamp', 0,0,1,9 ),
 
-( 'ivoa.ObsCore', 'target_name', 'obscore:Target.Name',
-    'name of intended target', 'meta.id;src', NULL, 'char', '32*',NULL, 1,0,1,9 ),
+
 
 ( 'ivoa.ObsCore', 's_ra', 'obscore:Char.SpatialAxis.Coverage.Location.Coord.Position2D.Value2.C1',
     'RA of central coordinates', 'pos.eq.ra', 'deg', 'double',NULL,NULL, 1,0,1,10 ),

@@ -69,7 +69,8 @@
 
 package org.opencadc.argus.tap.format;
 
-import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
+import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.util.DoubleIntervalArrayFormat;
 import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
 import ca.nrc.cadc.db.mappers.JdbcMapUtil;
@@ -86,10 +87,12 @@ public class IntervalFormat extends AbstractResultSetFormat {
 
     private static final Logger log = Logger.getLogger(IntervalFormat.class);
 
-    private DoubleIntervalFormat fmt = new DoubleIntervalFormat();
-    private DoubleIntervalArrayFormat afmt = new DoubleIntervalArrayFormat();
-    private boolean intervalArray;
+    private final DoubleIntervalFormat fmt = new DoubleIntervalFormat();
+    private final DoubleIntervalArrayFormat afmt = new DoubleIntervalArrayFormat();
+    private final boolean intervalArray;
 
+    // TODO: to handle both literal and column values in query results, 
+    // this class needs access to the configured DatabaseDataType plugin
     public IntervalFormat(boolean intervalArray) {
         this.intervalArray = intervalArray;
     }
@@ -98,21 +101,40 @@ public class IntervalFormat extends AbstractResultSetFormat {
     public Object extract(ResultSet resultSet, int columnIndex)
             throws SQLException {
         // extract Interval or Interval[]
+        
+        
+        Object o = resultSet.getObject(columnIndex);
+        if (o == null) {
+            return null;
+        }
+        
+        // literal values
+        // HACK: try PgInterval directly
+        // TODO: use DatabaseDataType when available
+        if (PgInterval.isCompatResultObject(o)) {
+            PgInterval pgi = new PgInterval(); // TODO: logScale
+            if (intervalArray) {
+                return pgi.getIntervalArray(o);
+            }
+            return pgi.getInterval(o);
+        }
+        
+        // columns are double[] TODO: expose unwrapDoubleArray to re-use raw object value
         double[] a = JdbcMapUtil.getDoubleArray(resultSet, columnIndex);
         if (a == null) {
             return null;
         }
         if (intervalArray) {
-            DoubleInterval[] ret = new DoubleInterval[a.length / 2];
+            Interval<Double>[] ret = new Interval[a.length / 2];
             for (int i = 0; i < a.length; i += 2) {
                 double lb = a[i];
                 double ub = a[i + 1];
-                ret[i / 2] = new DoubleInterval(lb, ub);
+                ret[i / 2] = new Interval<>(lb, ub);
             }
             return ret;
         }
         if (a.length == 2) {
-            return new DoubleInterval(a[0], a[1]);
+            return new Interval<>(a[0], a[1]);
         }
         throw new IllegalStateException("array length " + a.length + " invalid for Interval");
     }
@@ -122,14 +144,15 @@ public class IntervalFormat extends AbstractResultSetFormat {
         if (object == null) {
             return "";
         }
-        if (object instanceof DoubleInterval) {
-            DoubleInterval di = (DoubleInterval) object;
-            return fmt.format(di);
-        }
-        if (object instanceof DoubleInterval[]) {
-            DoubleInterval[] di = (DoubleInterval[]) object;
+        if (object instanceof Interval[]) {
+            Interval<Double>[] di = (Interval<Double>[]) object;
             return afmt.format(di);
         }
+        if (object instanceof Interval) {
+            Interval<Double> di = (Interval<Double>) object;
+            return fmt.format(di);
+        }
+        
         // this might help debugging more than a throw
         return object.toString();
     }

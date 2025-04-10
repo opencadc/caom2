@@ -139,7 +139,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
                 return new PositionBoundsShapeFormat();
             } else if (columnDesc.utype.equals("caom2:Plane.position.samples")) {
-                return new DefaultFormat(); // text in db
+                return new DefaultFormat(); // currently text in db
             }
         }
         // default to pgsphere formatters

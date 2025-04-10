@@ -145,9 +145,9 @@ public class CaomSelectListConverter extends SelectNavigator {
         if (!Util.isUploadedTable(t, tabs)) {
             if (Util.isCAOM2(t, tabs)) {
                 // caom2.Artifact, caom2.SIAv1
-                if (c.getColumnName().equalsIgnoreCase("accessURL")) {
-                    c.setColumnName("uri");
-                }
+                //if (c.getColumnName().equalsIgnoreCase("accessURL")) {
+                //    c.setColumnName("uri");
+                //}
 
                 // caom2.Plane changes in caom2persistence-2.3.33:
                 // position_bounds is a caom2:shape
