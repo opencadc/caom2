@@ -80,44 +80,38 @@ import net.sf.jsqlparser.schema.Column;
  *
  */
 public abstract class FuntionOnBounds extends Function {
-
-    // these values work for caom1 and caom2
-    public static String[] POSITION_BOUNDS = {"position_bounds", "s_region"};
-    public static String POSITION_BOUNDS_CENTER = "position_bounds_center";
-    public static String POSITION_BOUNDS_AREA = "position_bounds_area";
-
-    protected Column column;
-
-    protected boolean onPositionBounds = false;
+    public static String[] SHAPE_COLS = {"position_bounds", "position_minBounds", "s_region"};
+    
+    private final String funcName;
+    private Column column;
+    private boolean validArg;
 
     public FuntionOnBounds(Function adqlFunction) {
         super();
+        this.funcName = adqlFunction.getName().toLowerCase();
         setParameters(adqlFunction.getParameters());
         convertParameters();
-    }
-
-    public void setOnPositionBounds(boolean onPositionBounds) {
-        this.onPositionBounds = onPositionBounds;
-    }
-
-    public boolean isOnPositionBounds() {
-        return onPositionBounds;
     }
 
     public Expression getExpression() {
         return column;
     }
 
-    @SuppressWarnings("unchecked")
-    protected void convertParameters() {
+    public boolean isValidArg() {
+        return validArg;
+    }
+
+    private void convertParameters() {
         List<Expression> expressions = getParameters().getExpressions();
         Expression expression = expressions.get(0);
-        onPositionBounds = false;
         if (expression instanceof Column) {
             column = (Column) expression;
             String columnName = column.getColumnName();
-            for (String s : POSITION_BOUNDS) {
-                onPositionBounds = onPositionBounds || columnName.equalsIgnoreCase(s);
+            for (String s : SHAPE_COLS) {
+                if (s.equalsIgnoreCase(columnName)) {
+                    column.setColumnName("_q_" + s + "_" + funcName);
+                    validArg = true;
+                }
             }
         }
     }

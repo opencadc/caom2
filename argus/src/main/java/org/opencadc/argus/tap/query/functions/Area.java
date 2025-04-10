@@ -82,8 +82,5 @@ public class Area extends FuntionOnBounds {
 
     public Area(Function adqlFunction) {
         super(adqlFunction);
-        convertParameters();
-        column.setColumnName(POSITION_BOUNDS_AREA);
     }
-
 }

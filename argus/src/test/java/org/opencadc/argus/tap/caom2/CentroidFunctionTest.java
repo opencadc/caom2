@@ -145,7 +145,7 @@ public class CentroidFunctionTest
     @Test
     public void testCentroidOnly()
     {
-        _expected = "SELECT TOP 1 aa.position_bounds_center FROM caom2.Plane AS aa WHERE aa.position_bounds IS NOT NULL";
+        _expected = "SELECT TOP 1 aa._q_position_bounds_centroid FROM caom2.Plane AS aa WHERE aa.position_bounds IS NOT NULL";
         _expected = prepareToCompare(_expected);
         _query = "select top 1 centroid(aa.position_bounds) from caom2.Plane aa where aa.position_bounds is not null";
         run();
@@ -156,7 +156,7 @@ public class CentroidFunctionTest
     @Test
     public void testCentroidCoords()
     {
-        _expected = "SELECT TOP 1 degrees(long(position_bounds_center)), degrees(lat(position_bounds_center)) FROM caom2.Plane WHERE position_bounds IS NOT NULL";
+        _expected = "SELECT TOP 1 degrees(long(_q_position_bounds_centroid)), degrees(lat(_q_position_bounds_centroid)) FROM caom2.Plane WHERE position_bounds IS NOT NULL";
         _expected = prepareToCompare(_expected);
         _query = "select top 1 coord1(centroid(position_bounds)), coord2(centroid(position_bounds)) from caom2.Plane where position_bounds is not null";
         run();
