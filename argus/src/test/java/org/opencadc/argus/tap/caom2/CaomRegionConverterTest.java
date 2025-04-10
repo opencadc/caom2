@@ -155,7 +155,7 @@ public class CaomRegionConverterTest {
         log.debug("testIntersectNoAlias START");
         //_expected = "select planeid from caom.Plane where planeid in"
         //        + " ( select planeid from "+CaomPredicate.SAMPLE_TABLE + " where sample && scircle(spoint(radians(1),radians(2)),radians(3)) )";
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) && position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) && _q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 1";
@@ -163,7 +163,7 @@ public class CaomRegionConverterTest {
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select planeid from caom2.Plane where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
+        _expected = "select planeid from caom2.Plane where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
         run();
@@ -174,7 +174,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testIntersectWithAlias() {
         log.debug("testIntersectWithAlias START");
-        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && p.position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && p._q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane as p where INTERSECTS(CIRCLE('',1,2,3), p.position_bounds) = 1";
@@ -186,7 +186,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testIntersectWithAliasAbuse() {
         log.debug("testIntersectWithAliasAbuse START");
-        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && _q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         // alias in from but not in where
@@ -199,7 +199,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testNotIntersect() {
         log.debug("testNotIntersect START");
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !&& position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !&& _q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 0";
@@ -211,7 +211,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testContains() {
         log.debug("testContains START");
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
@@ -223,7 +223,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testContainsWithAlias() {
         log.debug("testContains START");
-        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) <@ p.position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) <@ p._q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane as p where CONTAINS(CIRCLE('',1,2,3), p.position_bounds) = 1";
@@ -237,7 +237,7 @@ public class CaomRegionConverterTest {
         log.debug("testNotContains START");
         //_expected = "select planeid from caom.Plane where not exists"
         //        + " ( select planeid from "+CaomPredicate.SAMPLE_TABLE + " where scircle(spoint(radians(1),radians(2)),radians(3)) <@ sample )";
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !<@ position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !<@ _q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 0";
@@ -251,7 +251,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testIntersectPoint() {
         log.debug("testIntersectPoint START");
-        _expected = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) && position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) && _q_position_bounds";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane where INTERSECTS(POINT('',1,2), position_bounds) = 1";
@@ -259,7 +259,7 @@ public class CaomRegionConverterTest {
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select planeid from caom2.Plane where position_bounds_spoly && cast(spoint(radians(1), radians(2)) as scircle)";
+        _expected = "select planeid from caom2.Plane where _q_position_bounds && cast(spoint(radians(1), radians(2)) as scircle)";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where INTERSECTS(position_bounds, POINT('',1,2)) = 1";
         run();
@@ -270,7 +270,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testContainPoint() {
         log.debug("testContainPoint START");
-        _expected = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) <@ position_bounds_spoly";
+        _expected = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) <@ _q_position_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where CONTAINS(POINT('',1,2), position_bounds) = 1";
         run();
@@ -283,7 +283,7 @@ public class CaomRegionConverterTest {
     public void testOptimisedSymmetricIntersect() {
         // optimised: put the column on the left of the operator
         log.debug("testOptimisedSymmetricIntersect START");
-        _expected = "select planeid from caom2.Plane where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
+        _expected = "select planeid from caom2.Plane where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
         _expected = prepareToCompare(_expected);
 
         _query = "select planeid from caom2.Plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
@@ -303,14 +303,14 @@ public class CaomRegionConverterTest {
         log.debug("testSiaView START");
 
         // intersects
-        _expected = "select planeid from caom2.SIAv1 where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
+        _expected = "select planeid from caom2.SIAv1 where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.SIAv1 where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select planeid from caom2.SIAv1 where cast(spoint(radians(1), radians(2)) as scircle) && position_bounds_spoly";
+        _expected = "select planeid from caom2.SIAv1 where cast(spoint(radians(1), radians(2)) as scircle) && _q_position_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.SIAv1 where INTERSECTS(POINT('',1,2), position_bounds) = 1";
         run();
@@ -318,7 +318,7 @@ public class CaomRegionConverterTest {
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
         // contains
-        _expected = "select planeid from caom2.SIAv1 where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly";
+        _expected = "select planeid from caom2.SIAv1 where scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.SIAv1 where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
         run();
@@ -331,14 +331,14 @@ public class CaomRegionConverterTest {
         log.debug("testObsTapRegion START");
 
         // intersects
-        _expected = "select planeid from caom2.ObsCore where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
+        _expected = "select planeid from caom2.ObsCore where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from ivoa.ObsCore where INTERSECTS(s_region, CIRCLE('',1,2,3)) = 1";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) && position_bounds_spoly";
+        _expected = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) && _q_position_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from ivoa.ObsCore where INTERSECTS(POINT('',1,2), s_region) = 1";
         run();
@@ -346,7 +346,7 @@ public class CaomRegionConverterTest {
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
         // contains
-        _expected = "select planeid from caom2.ObsCore where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly";
+        _expected = "select planeid from caom2.ObsCore where scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from ivoa.ObsCore where CONTAINS(CIRCLE('',1,2,3), s_region) = 1";
         run();
@@ -358,21 +358,21 @@ public class CaomRegionConverterTest {
     public void testArea() {
         log.debug("testArea START");
 
-        _expected = "select position_bounds_area from someTable";
+        _expected = "select _q_position_bounds_area from someTable";
         _expected = prepareToCompare(_expected);
         _query = "select area(position_bounds) from someTable";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select c.position_bounds_area from c.someTable";
+        _expected = "select c._q_position_bounds_area from c.someTable";
         _expected = prepareToCompare(_expected);
         _query = "select area(c.position_bounds) from c.someTable";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select c.position_bounds_area as \"area\" from c.someTable";
+        _expected = "select c._q_position_bounds_area as \"area\" from c.someTable";
         _expected = prepareToCompare(_expected);
         _query = "select area(c.position_bounds) as \"area\" from c.someTable";
         run();
@@ -384,21 +384,21 @@ public class CaomRegionConverterTest {
     public void testCentroid() {
         log.debug("testCentroid START");
 
-        _expected = "select position_bounds_center from someTable";
+        _expected = "select _q_position_bounds_centroid from someTable";
         _expected = prepareToCompare(_expected);
         _query = "select centroid(position_bounds) from someTable";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select c.position_bounds_center from c.someTable";
+        _expected = "select c._q_position_bounds_centroid from c.someTable";
         _expected = prepareToCompare(_expected);
         _query = "select centroid(c.position_bounds) from c.someTable";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select c.position_bounds_center as \"centroid\" from c.someTable";
+        _expected = "select c._q_position_bounds_centroid as \"centroid\" from c.someTable";
         _expected = prepareToCompare(_expected);
         _query = "select centroid(c.position_bounds) as \"centroid\" from c.someTable";
         run();
@@ -409,7 +409,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testContainsWithSchemaRewrite() {
         log.debug("testContainsWithSchemaRewrite START");
-        _expected = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) <@ caom2.ObsCore.position_bounds_spoly";
+        _expected = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) <@ caom2.ObsCore._q_position_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from ivoa.ObsCore where CONTAINS(POINT('',1,2), ivoa.ObsCore.position_bounds) = 1";
         run();
@@ -421,7 +421,7 @@ public class CaomRegionConverterTest {
     public void testIntervalContains() {
         log.debug("testIntervalContains START");
         //_expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ energy_bounds";
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ energy_bounds";
+        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ _q_energy_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where CONTAINS(1.0, energy_bounds) = 1";
         run();
@@ -432,7 +432,7 @@ public class CaomRegionConverterTest {
         Assert.assertTrue(tmp.contains(" && energy_bounds"));
 
         //_expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
+        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ _q_time_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where CONTAINS(1.0, time_bounds) = 1";
         run();
@@ -446,7 +446,7 @@ public class CaomRegionConverterTest {
     @Test
     public void testNotIntervalContains() {
         log.debug("testNotIntervalContains START");
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) !<@ energy_bounds";
+        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) !<@ _q_energy_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where CONTAINS(1.0, energy_bounds) = 0";
         run();
@@ -456,7 +456,7 @@ public class CaomRegionConverterTest {
         Assert.assertTrue(tmp.contains("polygon(box(point("));
         Assert.assertTrue(tmp.contains(" !&& energy_bounds"));
 
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) !<@ time_bounds";
+        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) !<@ _q_time_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where CONTAINS(1.0, time_bounds) = 0";
         run();
@@ -470,14 +470,14 @@ public class CaomRegionConverterTest {
     @Test
     public void testIntersectsEnergy() {
         log.debug("testContainsEnergy START");
-        _expected = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) && energy_bounds";
+        _expected = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) && _q_energy_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where INTERSECTS(INTERVAL(1.0, 2.0), energy_bounds) = 1";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select planeid from caom2.Plane where energy_bounds && polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
+        _expected = "select planeid from caom2.Plane where _q_energy_bounds && polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where INTERSECTS(energy_bounds, INTERVAL(1.0, 2.0)) = 1";
         run();
@@ -488,14 +488,14 @@ public class CaomRegionConverterTest {
     @Test
     public void testNotIntersectsEnergy() {
         log.debug("testContainsEnergy START");
-        _expected = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) !&& energy_bounds";
+        _expected = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) !&& _q_energy_bounds";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where INTERSECTS(INTERVAL(1.0, 2.0), energy_bounds) = 0";
         run();
         log.debug(" expected: " + _expected);
         Assert.assertEquals(_expected, prepareToCompare(_sql));
 
-        _expected = "select planeid from caom2.Plane where energy_bounds !&& polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
+        _expected = "select planeid from caom2.Plane where _q_energy_bounds !&& polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
         _expected = prepareToCompare(_expected);
         _query = "select planeid from caom2.Plane where INTERSECTS(energy_bounds, INTERVAL(1.0, 2.0)) = 0";
         run();

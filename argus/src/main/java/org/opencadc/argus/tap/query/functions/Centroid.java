@@ -82,8 +82,5 @@ public class Centroid extends FuntionOnBounds {
 
     public Centroid(Function adqlFunction) {
         super(adqlFunction);
-        convertParameters();
-        column.setColumnName(POSITION_BOUNDS_CENTER);
     }
-
 }
