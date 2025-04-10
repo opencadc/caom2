@@ -95,7 +95,7 @@ public class PostgresqlObservationDAOTest extends AbstractObservationDAOTest {
 
     static {
         log = Logger.getLogger(PostgresqlObservationDAOTest.class);
-        Log4jInit.setLevel("org.opencadc.caom2.db", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2.db", Level.DEBUG);
         Log4jInit.setLevel("ca.nrc.cadc.caom2.util", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
 

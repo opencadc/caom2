@@ -1244,6 +1244,8 @@ public class SQLGenerator {
             if (persistOptimisations) {
                 if (obs.targetPosition != null) {
                     dbDialect.safeSetPointOptimization(sb, ps, col++, obs.targetPosition.getCoordinates());
+                } else {
+                    dbDialect.safeSetPointOptimization(sb, ps, col++, null);
                 }
             }
 
