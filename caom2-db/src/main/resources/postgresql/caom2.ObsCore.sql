@@ -3,12 +3,13 @@ drop view if exists <schema>.ObsCore;
 
 create view <schema>.ObsCore
 (
+-- observation
     obs_collection,
     facility_name,
     instrument_name,
     target_name,
     obs_id,
-
+-- plane
     obs_creator_did,
     obs_publisher_did,
     obs_release_date,
@@ -22,27 +23,30 @@ create view <schema>.ObsCore
     s_ra,
     s_dec,
     s_fov,
+    s_fov_min,
     s_region,
     s_resolution,
+    s_resolution_min,
+    s_resolution_max,
     s_xel1, 
     s_xel2,
-
--- support spatial queries
-    _q_position_bounds,
-    _q_position_bounds_area,
-    _q_position_bounds_centroid,
-
-    t_min,
-    t_max,
-    t_exptime,
-    t_resolution,
-    t_xel,
 
     em_min,
     em_max,
     em_res_power,
+    em_resolution,
+    em_resolution_min,
+    em_resolution_max,
     em_xel,
     em_ucd,
+
+    t_min,
+    t_max,
+    t_exptime,
+    t_exptime_min,
+    t_exptime_max,
+    t_resolution,
+    t_xel,
 
     pol_states,
     pol_xel,
@@ -52,7 +56,12 @@ create view <schema>.ObsCore
 -- custom columns
     lastModified,
 
--- for CAOM access control
+-- support spatial queries and functions
+    _q_position_bounds,
+    _q_position_bounds_area,
+    _q_position_bounds_centroid,
+
+-- caom2 access control
     dataRelease, dataReadGroups,
     planeID,
     metaRelease, metaReadGroups
@@ -79,8 +88,11 @@ AS SELECT
     degrees(long(p._q_position_bounds_centroid)),
     degrees(lat(p._q_position_bounds_centroid)),
     p._q_position_bounds_size,
+    p._q_position_minBounds_size,
     p.position_bounds,
     p.position_resolution,
+    p.position_resolutionBounds[1],
+    p.position_resolutionBounds[2],
     p.position_dimension[1],
     p.position_dimension[2],
     p._q_position_bounds,
@@ -91,6 +103,8 @@ AS SELECT
     p.time_bounds[1],
     p.time_bounds[2],
     p.time_exposure,
+    p.time_exposureBounds[1],
+    p.time_exposureBounds[2],
     p.time_resolution,
     p.time_dimension,
 
@@ -98,6 +112,9 @@ AS SELECT
     p.energy_bounds[1],
     p.energy_bounds[2],
     p.energy_resolvingPower,
+    p.energy_resolution,
+    p.energy_resolutionBounds[1],
+    p.energy_resolutionBounds[2],
     p.energy_dimension,
 -- em_ucd currently not known in caom2
     CAST(NULL AS varchar),

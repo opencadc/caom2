@@ -101,6 +101,7 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
         "caom2.DeletedArtifactDescriptionEvent.sql",
         //"caom2.extra_indices.sql",
         "caom2.ObsCore.sql",
+        "caom2.ObsCore_radio.sql",
         //"caom2.SIAv1.sql",
         "caom2.permissions.sql"
     };
@@ -108,6 +109,7 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     static String[] UPGRADE_SQL = new String[]{
         "caom2.upgrade-2.5.0-beta.sql",
         "caom2.ObsCore.sql",
+        "caom2.ObsCore_radio.sql",
         "caom2.permissions.sql"
     };
 
