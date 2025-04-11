@@ -62,95 +62,54 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
- */
+*/
 
 package org.opencadc.argus.tap.format;
 
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.dali.postgresql.PgInterval;
-import ca.nrc.cadc.dali.util.DoubleIntervalArrayFormat;
-import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.postgresql.PgSpoint;
+import ca.nrc.cadc.dali.util.PointFormat;
 import ca.nrc.cadc.db.mappers.JdbcMapUtil;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.apache.log4j.Logger;
-import org.postgresql.geometric.PGpolygon;
+import org.postgresql.util.PGobject;
 
 /**
  *
  * @author pdowler
  */
-public class FlexIntervalFormat extends AbstractResultSetFormat {
+public class FlexPointFormat extends AbstractResultSetFormat {
+    private static final Logger log = Logger.getLogger(FlexPointFormat.class);
 
-    private static final Logger log = Logger.getLogger(FlexIntervalFormat.class);
-
-    private final DoubleIntervalFormat fmt = new DoubleIntervalFormat();
-    private final DoubleIntervalArrayFormat afmt = new DoubleIntervalArrayFormat();
-    private final boolean intervalArray;
+    private final PointFormat fmt = new PointFormat();
 
     // TODO: this class needs access to the configured DatabaseDataType plugin
-    public FlexIntervalFormat(boolean intervalArray) {
-        this.intervalArray = intervalArray;
+    public FlexPointFormat() { 
     }
 
     @Override
-    public Object extract(ResultSet resultSet, int columnIndex)
-            throws SQLException {
+    public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
         Object o = resultSet.getObject(columnIndex);
         if (o == null) {
             return null;
         }
-        
-        // literal values
-        // TODO: use DatabaseDataType when available
-        if (PgInterval.isCompatResultObject(o)) {
-            PgInterval pgi = new PgInterval(); // TODO: logScale
-            if (intervalArray) {
-                return pgi.getIntervalArray(o);
-            }
-            return pgi.getInterval(o);
+
+        if (o instanceof PGobject) {
+            String s = o.toString();
+            PgSpoint pgs = new PgSpoint();
+            return pgs.getPoint(s);
         }
         
-        // columns are double[] TODO: expose unwrapDoubleArray to re-use raw object value
         double[] a = JdbcMapUtil.getDoubleArray(resultSet, columnIndex);
-        if (a == null) {
-            return null;
-        }
-        if (intervalArray) {
-            Interval<Double>[] ret = new Interval[a.length / 2];
-            for (int i = 0; i < a.length; i += 2) {
-                double lb = a[i];
-                double ub = a[i + 1];
-                ret[i / 2] = new Interval<>(lb, ub);
-            }
-            return ret;
-        }
-        if (a.length == 2) {
-            return new Interval<>(a[0], a[1]);
-        }
-        throw new IllegalStateException("array length " + a.length + " invalid for Interval");
+        return new Point(a[0], a[1]);
     }
 
     @Override
-    public String format(Object object) {
-        if (object == null) {
-            return "";
-        }
-        if (object instanceof Interval[]) {
-            Interval<Double>[] di = (Interval<Double>[]) object;
-            return afmt.format(di);
-        }
-        if (object instanceof Interval) {
-            Interval<Double> di = (Interval<Double>) object;
-            return fmt.format(di);
-        }
-        
-        // this might help debugging more than a throw
-        return object.toString();
+    public String format(Object o) {
+        Point p = (Point) o;
+        return fmt.format(p);
     }
-
 }

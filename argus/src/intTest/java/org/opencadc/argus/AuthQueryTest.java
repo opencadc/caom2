@@ -224,7 +224,7 @@ public class AuthQueryTest {
             Date d = new Date(System.currentTimeMillis() + 365 * 86400 * 1000); // one year in future
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
             String future = df.format(d);
-            String adql = "SELECT top 1 * from caom2.Observation where metaRelease IS NULL OR metaRelease > '" + future + "'";
+            String adql = "SELECT top 1 uri,metaRelease from caom2.Observation where metaRelease IS NULL OR metaRelease > '" + future + "'";
 
             Map<String, Object> params = new TreeMap<String, Object>();
             params.put("LANG", "ADQL");

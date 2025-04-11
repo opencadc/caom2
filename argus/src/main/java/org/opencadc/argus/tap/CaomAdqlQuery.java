@@ -100,7 +100,7 @@ public class CaomAdqlQuery extends PgAdqlQuery {
     private final boolean enableMetaReadAccessConverter;
 
     public CaomAdqlQuery() {
-        this(false);
+        this(true);
     }
 
     protected CaomAdqlQuery(boolean enableMetaReadAccessConverter) {
@@ -125,6 +125,7 @@ public class CaomAdqlQuery extends PgAdqlQuery {
         // after CaomRegionConverter: triggering off the same column names and converting some uses
         TableNameConverter tnc = new TableNameConverter(true);
         tnc.put("ivoa.ObsCore", "caom2.ObsCore");
+        tnc.put("ivoa.ObsCore_radio", "caom2.ObsCore_radio");
         // TAP-1.1 version of tap_schema
         tnc.put("tap_schema.schemas", "tap_schema.schemas11");
         tnc.put("tap_schema.tables", "tap_schema.tables11");
@@ -133,16 +134,6 @@ public class CaomAdqlQuery extends PgAdqlQuery {
         tnc.put("tap_schema.key_columns", "tap_schema.key_columns11");
         TableNameReferenceConverter tnrc = new TableNameReferenceConverter(tnc.map);
         super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), tnrc, tnc));
-
-        // temporary backwards compatibility hack for CAOM-2.4 column name change
-        ColumnNameConverter cnc = new ColumnNameConverter(true, tapSchema);
-        ColumnNameConverter.QualifiedColumn emBand = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_emBand");
-        ColumnNameConverter.QualifiedColumn energyBands = new ColumnNameConverter.QualifiedColumn("caom2.Plane", "energy_energyBands");
-        cnc.put(emBand, energyBands);
-        emBand = new ColumnNameConverter.QualifiedColumn("caom2.EnumField", "energy_emBand");
-        energyBands = new ColumnNameConverter.QualifiedColumn("caom2.EnumField", "energy_energyBands");
-        cnc.put(emBand, energyBands);
-        super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), cnc, new FromItemNavigator()));
 
         if (enableMetaReadAccessConverter) {
             // enforce access control policy in queries - must be after TableNameConverter

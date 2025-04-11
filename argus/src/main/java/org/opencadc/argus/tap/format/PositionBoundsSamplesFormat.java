@@ -67,18 +67,22 @@
 
 package org.opencadc.argus.tap.format;
 
+import ca.nrc.cadc.dali.MultiShape;
+import ca.nrc.cadc.dali.util.MultiShapeFormat;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 /**
- * Format position_samples as a xtype="multishape".
+ * Format position_samples as a xtype="caom2:multishape".
  * 
  * @author pdowler
  */
 public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
     private static final Logger log = Logger.getLogger(PositionBoundsSamplesFormat.class);
+
+    private static final MultiShapeFormat fmt = new MultiShapeFormat();
 
     public PositionBoundsSamplesFormat() { 
     }
@@ -87,7 +91,8 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
     // TODO: string -> MultiShape
     @Override
     public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
-        return resultSet.getString(columnIndex);
+        String s = resultSet.getString(columnIndex);
+        return fmt.parse(s);
     }
 
     @Override
@@ -95,8 +100,7 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
         if (o == null) {
             return "";
         }
-        // TODO: MultiShape -> string
-        String ret = (String) o;
-        return ret;
+        MultiShape v = (MultiShape) o;
+        return fmt.format(v);
     }
 }

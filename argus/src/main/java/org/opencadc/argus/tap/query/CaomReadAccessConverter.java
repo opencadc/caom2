@@ -135,12 +135,12 @@ public class CaomReadAccessConverter extends SelectNavigator {
         ASSET_TABLES.put("caom2.Plane".toLowerCase(), new AssetTable("planeID", "metaRelease", "metaReadAccessGroups"));
         //ASSET_TABLES.put("caom2.Artifact".toLowerCase(), new AssetTable("artifactID", "metaRelease", "metaReadAccessGroups"));
         //ASSET_TABLES.put("caom2.Part".toLowerCase(), new AssetTable("partID", "metaRelease", "metaReadAccessGroups"));
-        ASSET_TABLES.put("caom2.Chunk".toLowerCase(), new AssetTable("chunkID", "metaRelease", "metaReadAccessGroups"));
+        //ASSET_TABLES.put("caom2.Chunk".toLowerCase(), new AssetTable("chunkID", "metaRelease", "metaReadAccessGroups"));
 
         AssetTable at = new AssetTable("planeID", "metaRelease", "metaReadAccessGroups");
         at.isView = true;
         ASSET_TABLES.put("caom2.ObsCore".toLowerCase(), at); // observation join plane
-        ASSET_TABLES.put("caom2.SIAv1".toLowerCase(), at);   // observation join plane join artifact
+        //ASSET_TABLES.put("caom2.SIAv1".toLowerCase(), at);   // observation join plane join artifact
     }
 
     private transient DateFormat dateFormat = DateUtil.getDateFormat(DateUtil.ISO_DATE_FORMAT, DateUtil.UTC);
@@ -174,21 +174,22 @@ public class CaomReadAccessConverter extends SelectNavigator {
     }
 
     private Expression accessControlExpression(PlainSelect ps) {
-        List<Expression> exprAcList = new ArrayList<Expression>();
+        List<Expression> exprAcList = new ArrayList<>();
         List<Table> fromTableList = ParserUtil.getFromTableList(ps);
         for (Table assetTable : fromTableList) {
             String fromTableWholeName = assetTable.getWholeTableName().toLowerCase();
             log.debug("check: " + fromTableWholeName);
             AssetTable at = ASSET_TABLES.get(fromTableWholeName);
             if (at != null) {
-                Expression accessControlExpr = null;
+                
                 Expression assetPublicExpr = metaReleaseControlExpression(assetTable, at);
-                if (assetPublicExpr == null) {
-                    assetPublicExpr = publicAssetByID(assetTable, at.keyColumn, at.nullKeyIsPublic);
-                }
+                //if (assetPublicExpr == null) {
+                //    assetPublicExpr = publicAssetByID(assetTable, at.keyColumn, at.nullKeyIsPublic);
+                //}
                 List<String> gids = Util.getGroupIDs(gmsClient);
                 Expression groupControlExpr = groupAccessControlExpression(assetTable, at.metaReadAccessColumn, gids);
 
+                Expression accessControlExpr = null;
                 if (assetPublicExpr != null && groupControlExpr != null) {
                     accessControlExpr = new Parenthesis(new OrExpression(assetPublicExpr, groupControlExpr));
                 } else if (assetPublicExpr != null) {
@@ -206,7 +207,7 @@ public class CaomReadAccessConverter extends SelectNavigator {
                 log.debug("not an asset table: " + fromTableWholeName);
             }
         }
-        if (exprAcList.size() > 0) {
+        if (!exprAcList.isEmpty()) {
             return Util.combineAndExpressions(exprAcList);
         }
         return null;
@@ -223,34 +224,21 @@ public class CaomReadAccessConverter extends SelectNavigator {
     }
 
     private Expression metaReleaseControlExpression(Table fromTable, AssetTable at) {
-        if (at.isView) {
-            // views already force the non-null primary key in left-join
-            return releaseDateControlExpression(fromTable, at.metaReleaseColumn, null, dateFormat);
-        }
-        return releaseDateControlExpression(fromTable, at.metaReleaseColumn, at.keyColumn, dateFormat);
+        return releaseDateControlExpression(fromTable, at.metaReleaseColumn, dateFormat);
     }
 
-    static Expression releaseDateControlExpression(Table fromTable, String releaseDateCol, String assetCol, DateFormat df) {
+    static Expression releaseDateControlExpression(Table fromTable, String releaseDateCol, DateFormat df) {
         if (releaseDateCol == null) {
             return null;
         }
-        // ( alias.metaRelease <  currentTime OR alias.primaryKey is null )
+        // (t.metaRelease <  currentTime)
         String strCurrentTime = df.format(new Date());
         Column columnMeta = Util.useTableAliasIfExists(new Column(fromTable, releaseDateCol));
 
         MinorThan metaReleaseExpr = new MinorThan();
         metaReleaseExpr.setLeftExpression(columnMeta);
         metaReleaseExpr.setRightExpression(new StringValue("'" + strCurrentTime + "'"));
-
-        if (assetCol == null) {
-            return metaReleaseExpr;
-        }
-
-        Column assetMeta = Util.useTableAliasIfExists(new Column(fromTable, assetCol));
-        IsNullExpression nullLeftJoin = new IsNullExpression();
-        nullLeftJoin.setLeftExpression(assetMeta);
-
-        return new Parenthesis(new OrExpression(metaReleaseExpr, nullLeftJoin));
+        return metaReleaseExpr;
     }
 
     static Expression groupAccessControlExpression(Table assetTable, String metaReadAccessColumn, List<String> gids) {

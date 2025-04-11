@@ -69,7 +69,10 @@
 
 package org.opencadc.argus.tap.query.functions;
 
+import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
@@ -80,7 +83,14 @@ import net.sf.jsqlparser.schema.Column;
  *
  */
 public abstract class FuntionOnBounds extends Function {
-    public static String[] SHAPE_COLS = {"position_bounds", "position_minBounds", "s_region"};
+    private static final Map<String,String> SHAPE_COLS;
+    
+    static {
+        SHAPE_COLS = new TreeMap<>(new CaseInsensitiveStringComparator());
+        SHAPE_COLS.put("position_bounds", "_q_position_bounds");
+        SHAPE_COLS.put("position_minBounds", "_q_position_minBounds");
+        SHAPE_COLS.put("s_region", "_q_position_bounds");
+    }
     
     private final String funcName;
     private Column column;
@@ -107,11 +117,10 @@ public abstract class FuntionOnBounds extends Function {
         if (expression instanceof Column) {
             column = (Column) expression;
             String columnName = column.getColumnName();
-            for (String s : SHAPE_COLS) {
-                if (s.equalsIgnoreCase(columnName)) {
-                    column.setColumnName("_q_" + s + "_" + funcName);
-                    validArg = true;
-                }
+            String s = SHAPE_COLS.get(columnName);
+            if (s != null) {
+                column.setColumnName(s + "_" + funcName);
+                validArg = true;
             }
         }
     }
