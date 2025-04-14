@@ -70,6 +70,7 @@
 package ca.nrc.cadc.tap.caom2;
 
 import ca.nrc.cadc.dali.DoubleInterval;
+import ca.nrc.cadc.dali.Interval;
 import ca.nrc.cadc.dali.postgresql.PgInterval;
 import ca.nrc.cadc.dali.util.DoubleIntervalArrayFormat;
 import ca.nrc.cadc.dali.util.DoubleIntervalFormat;
@@ -109,17 +110,17 @@ public class IntervalFormat extends AbstractResultSetFormat {
         }
         
         try {
-            DoubleInterval i = pgi.getInterval(s);
+            Interval<Double> i = pgi.getInterval(s);
             return i;
         } catch (RuntimeException ex) {
             String msg = ex.getMessage();
             if (msg.startsWith("BUG:") && msg.endsWith("values for DoubleInterval")) {
                 // work-around for some values that are interval[] in the 
                 // caom2 energy_bounds and time_bounds columns
-                DoubleInterval[] i = pgi.getIntervalArray(s);
+                Interval<Double>[] i = pgi.getIntervalArray(s);
                 Double lb = i[0].getLower();
                 Double ub = i[i.length - 1].getUpper();
-                DoubleInterval val = new DoubleInterval(lb, ub);
+                Interval<Double> val = new Interval<Double>(lb, ub);
                 return val;
             }
             throw ex;
@@ -132,12 +133,12 @@ public class IntervalFormat extends AbstractResultSetFormat {
             return "";
         }
         log.debug("format: " + object + " type " + object.getClass().getName());
-        if (object instanceof DoubleInterval[]) {
-            DoubleInterval[] v = (DoubleInterval[]) object;
+        if (object instanceof Interval[]) {
+            Interval<Double>[] v = (Interval<Double>[]) object;
             return afmt.format(v);
         }
-        if (object instanceof DoubleInterval) {
-            DoubleInterval v = (DoubleInterval) object;
+        if (object instanceof Interval) {
+            Interval<Double> v = (Interval<Double>) object;
             return fmt.format(v);
         }
         // this might help debugging more than a throw
