@@ -120,13 +120,13 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
      */
     @Override
     protected Expression handleContains(Expression left, Expression right) {
-        log.warn("handleContains: " + left + " " + right);
+        log.debug("handleContains: " + left + " " + right);
         List<Table> tabs = ParserUtil.getFromTableList(super.getPlainSelect());
         boolean toIntersect = false;
         // CONTAINS(<number>, <interval>)
         TapDataType tdt = getColumnType(tabs, right);
         boolean rhsIntervalCol = (tdt != null && "interval".equals(tdt.xtype));
-        log.warn("rhs: " + tdt + " " + rhsIntervalCol);
+        log.debug("rhs: " + tdt + " " + rhsIntervalCol);
         
         if (right instanceof Interval || rhsIntervalCol) {
             if (left instanceof Column) {
@@ -147,7 +147,7 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
         }
 
         // column renaming
-        log.warn("left: " + left.getClass().getName());
+        log.debug("left: " + left.getClass().getName());
         if (left instanceof Column) {
             Column c = (Column) left;
             Table t = c.getTable();
@@ -159,7 +159,7 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
                 renameColumnToInternal(c);
             }
         }
-        log.warn("right: " + right.getClass().getName());
+        log.debug("right: " + right.getClass().getName());
         if (right instanceof Column) {
             Column c = (Column) right;
             Table t = c.getTable();
@@ -192,10 +192,10 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
                 if (cd != null && cd.getColumnName().equalsIgnoreCase(c.getColumnName())) {
                     return cd.getDatatype();
                 } else {
-                    log.warn("column not found: " + c.getColumnName() + " in " + c.getTable());
+                    log.debug("column not found: " + c.getColumnName() + " in " + c.getTable());
                 }
             }
-            log.warn("column not found: " + c.getColumnName() + " in caom2 schema");
+            log.debug("column not found: " + c.getColumnName() + " in caom2 schema");
         }
         return null; // unknown
     }
@@ -263,7 +263,6 @@ public class CaomRegionConverter extends PgsphereRegionConverter {
         } else if (c.getColumnName().equalsIgnoreCase("time_samples")) {
             c.setColumnName("_q_time_samples");
         }
-        log.warn("renameColumnToInternal: " + orig + " -> " + c.getColumnName());
         // TODO: more interval columns
     }
 

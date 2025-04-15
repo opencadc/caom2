@@ -82,7 +82,7 @@ import net.sf.jsqlparser.schema.Column;
  * @author zhangsa
  *
  */
-public abstract class FuntionOnBounds extends Function {
+public abstract class FunctionOnBounds extends Function {
     private static final Map<String,String> SHAPE_COLS;
     
     static {
@@ -96,7 +96,7 @@ public abstract class FuntionOnBounds extends Function {
     private Column column;
     private boolean validArg;
 
-    public FuntionOnBounds(Function adqlFunction) {
+    public FunctionOnBounds(Function adqlFunction) {
         super();
         this.funcName = adqlFunction.getName().toLowerCase();
         setParameters(adqlFunction.getParameters());

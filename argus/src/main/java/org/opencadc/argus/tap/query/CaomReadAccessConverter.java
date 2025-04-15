@@ -133,13 +133,19 @@ public class CaomReadAccessConverter extends SelectNavigator {
         // caom2
         ASSET_TABLES.put("caom2.Observation".toLowerCase(), new AssetTable("obsID", "metaRelease", "metaReadAccessGroups"));
         ASSET_TABLES.put("caom2.Plane".toLowerCase(), new AssetTable("planeID", "metaRelease", "metaReadAccessGroups"));
+        // decision: Artifact metadata is not subject to proprietary metadata constraints from plane
         //ASSET_TABLES.put("caom2.Artifact".toLowerCase(), new AssetTable("artifactID", "metaRelease", "metaReadAccessGroups"));
+        
+        // TODO: either enable or remove these entirely once the fate of part and chunk is decided
         //ASSET_TABLES.put("caom2.Part".toLowerCase(), new AssetTable("partID", "metaRelease", "metaReadAccessGroups"));
         //ASSET_TABLES.put("caom2.Chunk".toLowerCase(), new AssetTable("chunkID", "metaRelease", "metaReadAccessGroups"));
 
         AssetTable at = new AssetTable("planeID", "metaRelease", "metaReadAccessGroups");
         at.isView = true;
         ASSET_TABLES.put("caom2.ObsCore".toLowerCase(), at); // observation join plane
+        
+        // TODO: either enable or remove this if SIAv1 view is added to the database and tap_schema
+        //       (currently not included for prototype)
         //ASSET_TABLES.put("caom2.SIAv1".toLowerCase(), at);   // observation join plane join artifact
     }
 
@@ -183,6 +189,7 @@ public class CaomReadAccessConverter extends SelectNavigator {
             if (at != null) {
                 
                 Expression assetPublicExpr = metaReleaseControlExpression(assetTable, at);
+                // TODO: either enable or remove once the fate of part and chunk is decided
                 //if (assetPublicExpr == null) {
                 //    assetPublicExpr = publicAssetByID(assetTable, at.keyColumn, at.nullKeyIsPublic);
                 //}
@@ -213,6 +220,7 @@ public class CaomReadAccessConverter extends SelectNavigator {
         return null;
     }
 
+    // TODO: remove this if part and chunk are dropped from tap_schema
     private Expression publicAssetByID(Table fromTable, String assetColumn, boolean nullAssetIDPublic) {
         if (!nullAssetIDPublic) {
             return null;

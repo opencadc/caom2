@@ -140,28 +140,16 @@ public class CaomSelectListConverter extends SelectNavigator {
         }
     }
 
+    // TODO: probably remove this as the query contains the correct value columns already
     private void fixColumn(Column c, List<Table> tabs) {
         Table t = c.getTable();
         if (!Util.isUploadedTable(t, tabs)) {
             if (Util.isCAOM2(t, tabs)) {
+                // TODO: probably remove this depending on fate of SIAv1 view
                 // caom2.Artifact, caom2.SIAv1
                 //if (c.getColumnName().equalsIgnoreCase("accessURL")) {
                 //    c.setColumnName("uri");
                 //}
-
-                // caom2.Plane changes in caom2persistence-2.3.33:
-                // position_bounds is a caom2:shape
-                // position_bounds_samples is a caom2:multipolygon
-                // position_bounds_spoly is a polygon for use in predicates
-                // caom2.Plane -- position_bounds_points is polymorphic (circles and polygons)
-                // and position_bounds is not (circle approximated as polygon) so we have to 
-                // return the latter in TAP -- slightly lossy
-                //if (c.getColumnName().equalsIgnoreCase("position_bounds"))
-                //    c.setColumnName("position_bounds_points");
-                // ivoa.ObsCore has STC-S output so we can select the exact polymorphic column
-                // this variant has to match the one in FormatFactoryImpl.getRegionFormat()
-                //if (c.getColumnName().equalsIgnoreCase("s_region"))
-                //    c.setColumnName("position_bounds_points");
             }
 
         }

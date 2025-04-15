@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.argus.tap.CaomAdqlQuery;
 import org.opencadc.argus.tap.query.CaomSelectListConverter;
@@ -58,18 +58,18 @@ public class CaomSelectListConverterTest {
                 log.info("testNotFound, after: " + sql);
 
                 sql = sql.toLowerCase();
-                assertTrue("testNotFound: no change", sql.equalsIgnoreCase(query));
+                Assert.assertTrue("testNotFound: no change", sql.equalsIgnoreCase(query));
             }
         } catch (Throwable t) {
             log.error("testNotFound", t);
-            fail();
+            Assert.fail();
         } finally {
             TestUtil.job.getParameterList().clear();
         }
     }
 
-    /*
     @Test
+    @Ignore
     public final void testAccessURLNoAlias() {
         String[] queries = new String[]{"select foo,accessURL from caom2.Artifact", "select foo,accessURL,bar from caom2.Artifact"};
         try {
@@ -85,20 +85,19 @@ public class CaomSelectListConverterTest {
                 String sql = tq.getSQL();
                 log.info("testAccessURLNoAlias, after: " + sql);
 
-                assertTrue("testAccessURLNoAlias: !accessURL", !sql.contains("accessURL"));
-                assertTrue("testAccessURLNoAlias: uri", sql.contains("uri"));
+                Assert.assertTrue("testAccessURLNoAlias: !accessURL", !sql.contains("accessURL"));
+                Assert.assertTrue("testAccessURLNoAlias: uri", sql.contains("uri"));
             }
         } catch (Throwable t) {
             log.error("testFoundNoAlias", t);
-            fail();
+            Assert.fail();
         } finally {
             TestUtil.job.getParameterList().clear();
         }
     }
-    */
     
-    /*
     @Test
+    @Ignore
     public final void testAccessURLWithAlias() {
         String[] queries = new String[]{"select a.foo,a.accessURL from caom2.Artifact as a",
             "select a.foo,a.accessURL,a.bar from caom2.Artifact as a"};
@@ -115,15 +114,14 @@ public class CaomSelectListConverterTest {
                 String sql = tq.getSQL();
                 log.info("testAccessURLWithAlias, after: " + sql);
 
-                assertTrue("testAccessURLWithAlias: !accessURL", !sql.contains("accessURL"));
-                assertTrue("testAccessURLWithAlias: uri", sql.contains("a.uri"));
+                Assert.assertTrue("testAccessURLWithAlias: !accessURL", !sql.contains("accessURL"));
+                Assert.assertTrue("testAccessURLWithAlias: uri", sql.contains("a.uri"));
             }
         } catch (Throwable t) {
             log.error("testAccessURLWithAlias", t);
-            fail();
+            Assert.fail();
         } finally {
             TestUtil.job.getParameterList().clear();
         }
     }
-    */
 }
