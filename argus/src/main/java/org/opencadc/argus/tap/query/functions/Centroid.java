@@ -78,12 +78,9 @@ import net.sf.jsqlparser.expression.Function;
  * @author zhangsa
  *
  */
-public class Centroid extends FuntionOnBounds {
+public class Centroid extends FunctionOnBounds {
 
     public Centroid(Function adqlFunction) {
         super(adqlFunction);
-        convertParameters();
-        column.setColumnName(POSITION_BOUNDS_CENTER);
     }
-
 }

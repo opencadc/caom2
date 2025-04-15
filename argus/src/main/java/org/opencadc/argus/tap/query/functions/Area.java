@@ -78,12 +78,9 @@ import net.sf.jsqlparser.expression.Function;
  * @author zhangsa
  *
  */
-public class Area extends FuntionOnBounds {
+public class Area extends FunctionOnBounds {
 
     public Area(Function adqlFunction) {
         super(adqlFunction);
-        convertParameters();
-        column.setColumnName(POSITION_BOUNDS_AREA);
     }
-
 }

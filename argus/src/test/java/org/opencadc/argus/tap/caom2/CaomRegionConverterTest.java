@@ -69,7 +69,6 @@
 
 package org.opencadc.argus.tap.caom2;
 
-import org.opencadc.argus.tap.query.CaomRegionConverter;
 import ca.nrc.cadc.tap.TapQuery;
 import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
 import ca.nrc.cadc.tap.parser.converter.TableNameReferenceConverter;
@@ -83,8 +82,10 @@ import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.argus.tap.CaomAdqlQuery;
+import org.opencadc.argus.tap.query.CaomRegionConverter;
 
 /**
  * test predicate function converter in CAOM context
@@ -96,15 +97,15 @@ public class CaomRegionConverterTest {
 
     private static Logger log = Logger.getLogger(CaomRegionConverterTest.class);
 
-    public String _query;
-    public String _expected = "";
-    public String _sql;
+    public String adqlQuery;
+    public String expectedSQL = "";
+    public String actualSQL;
 
     private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
 
     static {
         //Log4jInit.setLevel("ca.nrc.cadc.tap", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.tap.caom2", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
     }
 
     private class TestQuery extends CaomAdqlQuery {
@@ -125,16 +126,16 @@ public class CaomRegionConverterTest {
 
     private void run() {
         try {
-            Parameter para = new Parameter("QUERY", _query);
-            List<Parameter> paramList = new ArrayList<Parameter>();
+            Parameter para = new Parameter("QUERY", adqlQuery);
+            List<Parameter> paramList = new ArrayList<>();
             paramList.add(para);
 
             TapQuery tapQuery = new TestQuery();
             TestUtil.job.getParameterList().addAll(paramList);
             tapQuery.setJob(TestUtil.job);
-            _sql = tapQuery.getSQL();
-            log.info("    input: " + _query);
-            log.info("   result: " + _sql);
+            actualSQL = tapQuery.getSQL();
+            log.info("    input: " + adqlQuery);
+            log.info("   result: " + actualSQL);
         } finally {
             TestUtil.job.getParameterList().clear();
         }
@@ -147,103 +148,99 @@ public class CaomRegionConverterTest {
     }
 
     private void assertContain() {
-        Assert.assertTrue(_sql.toLowerCase().indexOf(_expected.toLowerCase()) > 0);
+        Assert.assertTrue(actualSQL.toLowerCase().indexOf(expectedSQL.toLowerCase()) > 0);
     }
 
     @Test
     public void testIntersectNoAlias() {
         log.debug("testIntersectNoAlias START");
-        //_expected = "select planeid from caom.Plane where planeid in"
-        //        + " ( select planeid from "+CaomPredicate.SAMPLE_TABLE + " where sample && scircle(spoint(radians(1),radians(2)),radians(3)) )";
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) && position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) && _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
-        _query = "select planeid from caom2.Plane where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 1";
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select planeid from caom2.Plane where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
+        expectedSQL = "select planeid from caom2.Plane where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testIntersectWithAlias() {
         log.debug("testIntersectWithAlias START");
-        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && p.position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && p._q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
-        _query = "select planeid from caom2.Plane as p where INTERSECTS(CIRCLE('',1,2,3), p.position_bounds) = 1";
+        adqlQuery = "select planeid from caom2.Plane as p where INTERSECTS(CIRCLE('',1,2,3), p.position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
     
     @Test
     public void testIntersectWithAliasAbuse() {
         log.debug("testIntersectWithAliasAbuse START");
-        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) && _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
         // alias in from but not in where
-        _query = "select planeid from caom2.Plane as p where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 1";
+        adqlQuery = "select planeid from caom2.Plane as p where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotIntersect() {
         log.debug("testNotIntersect START");
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !&& position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !&& _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
-        _query = "select planeid from caom2.Plane where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 0";
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 0";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
-    public void testContains() {
+    public void testContainsSpatial() {
         log.debug("testContains START");
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
-        _query = "select planeid from caom2.Plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
+        adqlQuery = "select planeid from caom2.Plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
-    public void testContainsWithAlias() {
+    public void testContainsSpatialWithAlias() {
         log.debug("testContains START");
-        _expected = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) <@ p.position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane as p where scircle(spoint(radians(1), radians(2)), radians(3)) <@ p._q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
-        _query = "select planeid from caom2.Plane as p where CONTAINS(CIRCLE('',1,2,3), p.position_bounds) = 1";
+        adqlQuery = "select planeid from caom2.Plane as p where CONTAINS(CIRCLE('',1,2,3), p.position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
-    public void testNotContains() {
+    public void testNotContainsSpatial() {
         log.debug("testNotContains START");
-        //_expected = "select planeid from caom.Plane where not exists"
-        //        + " ( select planeid from "+CaomPredicate.SAMPLE_TABLE + " where scircle(spoint(radians(1),radians(2)),radians(3)) <@ sample )";
-        _expected = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !<@ position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane where scircle(spoint(radians(1), radians(2)), radians(3)) !<@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
-        _query = "select planeid from caom2.Plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 0";
+        adqlQuery = "select planeid from caom2.Plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 0";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
         // only test one usage
     }
@@ -251,79 +248,60 @@ public class CaomRegionConverterTest {
     @Test
     public void testIntersectPoint() {
         log.debug("testIntersectPoint START");
-        _expected = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) && position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
+        expectedSQL = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) && _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
 
-        _query = "select planeid from caom2.Plane where INTERSECTS(POINT('',1,2), position_bounds) = 1";
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(POINT('',1,2), position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select planeid from caom2.Plane where position_bounds_spoly && cast(spoint(radians(1), radians(2)) as scircle)";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where INTERSECTS(position_bounds, POINT('',1,2)) = 1";
+        expectedSQL = "select planeid from caom2.Plane where _q_position_bounds && cast(spoint(radians(1), radians(2)) as scircle)";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(position_bounds, POINT('',1,2)) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testContainPoint() {
         log.debug("testContainPoint START");
-        _expected = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) <@ position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where CONTAINS(POINT('',1,2), position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.Plane where cast(spoint(radians(1), radians(2)) as scircle) <@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where CONTAINS(POINT('',1,2), position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
-    }
-
-    // now that we use an spoly column directly in the main table, this does not seem to be necessary
-    //@Test
-    public void testOptimisedSymmetricIntersect() {
-        // optimised: put the column on the left of the operator
-        log.debug("testOptimisedSymmetricIntersect START");
-        _expected = "select planeid from caom2.Plane where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
-        _expected = prepareToCompare(_expected);
-
-        _query = "select planeid from caom2.Plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
-        run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
-
-        // different arg order, same result
-        _query = "select planeid from caom2.Plane where INTERSECTS(CIRCLE('',1,2,3), position_bounds) = 1";
-        run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
+    @Ignore
     public void testSiaView() {
         log.debug("testSiaView START");
 
         // intersects
-        _expected = "select planeid from caom2.SIAv1 where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.SIAv1 where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
+        expectedSQL = "select planeid from caom2.SIAv1 where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.SIAv1 where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select planeid from caom2.SIAv1 where cast(spoint(radians(1), radians(2)) as scircle) && position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.SIAv1 where INTERSECTS(POINT('',1,2), position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.SIAv1 where cast(spoint(radians(1), radians(2)) as scircle) && _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.SIAv1 where INTERSECTS(POINT('',1,2), position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
         // contains
-        _expected = "select planeid from caom2.SIAv1 where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.SIAv1 where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.SIAv1 where scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.SIAv1 where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
@@ -331,506 +309,506 @@ public class CaomRegionConverterTest {
         log.debug("testObsTapRegion START");
 
         // intersects
-        _expected = "select planeid from caom2.ObsCore where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from ivoa.ObsCore where INTERSECTS(s_region, CIRCLE('',1,2,3)) = 1";
+        expectedSQL = "select planeid from caom2.ObsCore where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from ivoa.ObsCore where INTERSECTS(s_region, CIRCLE('',1,2,3)) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) && position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from ivoa.ObsCore where INTERSECTS(POINT('',1,2), s_region) = 1";
+        expectedSQL = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) && _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from ivoa.ObsCore where INTERSECTS(POINT('',1,2), s_region) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
         // contains
-        _expected = "select planeid from caom2.ObsCore where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from ivoa.ObsCore where CONTAINS(CIRCLE('',1,2,3), s_region) = 1";
+        expectedSQL = "select planeid from caom2.ObsCore where scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from ivoa.ObsCore where CONTAINS(CIRCLE('',1,2,3), s_region) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
-    public void testArea() {
+    public void testFunction_Area() {
         log.debug("testArea START");
 
-        _expected = "select position_bounds_area from someTable";
-        _expected = prepareToCompare(_expected);
-        _query = "select area(position_bounds) from someTable";
+        expectedSQL = "select _q_position_bounds_area from someTable";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select area(position_bounds) from someTable";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select c.position_bounds_area from c.someTable";
-        _expected = prepareToCompare(_expected);
-        _query = "select area(c.position_bounds) from c.someTable";
+        expectedSQL = "select c._q_position_bounds_area from c.someTable";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select area(c.position_bounds) from c.someTable";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select c.position_bounds_area as \"area\" from c.someTable";
-        _expected = prepareToCompare(_expected);
-        _query = "select area(c.position_bounds) as \"area\" from c.someTable";
+        expectedSQL = "select c._q_position_bounds_area as \"area\" from c.someTable";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select area(c.position_bounds) as \"area\" from c.someTable";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
-    public void testCentroid() {
+    public void testFunction_Centroid() {
         log.debug("testCentroid START");
 
-        _expected = "select position_bounds_center from someTable";
-        _expected = prepareToCompare(_expected);
-        _query = "select centroid(position_bounds) from someTable";
+        expectedSQL = "select _q_position_bounds_centroid from someTable";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select centroid(position_bounds) from someTable";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select c.position_bounds_center from c.someTable";
-        _expected = prepareToCompare(_expected);
-        _query = "select centroid(c.position_bounds) from c.someTable";
+        expectedSQL = "select c._q_position_bounds_centroid from c.someTable";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select centroid(c.position_bounds) from c.someTable";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select c.position_bounds_center as \"centroid\" from c.someTable";
-        _expected = prepareToCompare(_expected);
-        _query = "select centroid(c.position_bounds) as \"centroid\" from c.someTable";
+        expectedSQL = "select c._q_position_bounds_centroid as \"centroid\" from c.someTable";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select centroid(c.position_bounds) as \"centroid\" from c.someTable";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
+    }
+
+    @Test
+    public void testFunction_Coordsys() {
+        adqlQuery = "select COORDSYS(position_bounds) from caom2.plane";
+        expectedSQL = "SELECT 'ICRS' FROM caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
+        run();
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
+    }
+
+    @Test
+    public void testFunction_Coord1() {
+        // TODO:
+        //_query = "select COORD1(targetPosition_coordinates) from caom2.observation";
+        //_expected = "SELECT targetPosition_coordinates[1] FROM caom2.observation";
+        //run();
+        //log.debug(" expected: " + _expected);
+        //Assert.assertEquals(_expected, prepareToCompare(_sql));
+        //Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        
+        adqlQuery = "select COORD1(CENTROID(position_bounds)) from caom2.plane";
+        expectedSQL = "SELECT degrees(long(_q_position_bounds_centroid)) FROM caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
+        run();
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
+    }
+
+    @Test
+    public void testFunction_Coord2() {
+        // TODO:
+        //_query = "select COORD2(targetPosition_coordinates) from caom2.observation";
+        //_expected = "SELECT degrees(lat(_q_targetPosition_coordinates)) FROM caom2.observation";
+        //run();
+        //log.debug(" expected: " + _expected);
+        //Assert.assertEquals(_expected, prepareToCompare(_sql));
+        //Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        
+        adqlQuery = "select COORD2(CENTROID(position_bounds)) from caom2.plane";
+        expectedSQL = "SELECT degrees(lat(_q_position_bounds_centroid)) FROM caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
+        run();
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testContainsWithSchemaRewrite() {
         log.debug("testContainsWithSchemaRewrite START");
-        _expected = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) <@ caom2.ObsCore.position_bounds_spoly";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from ivoa.ObsCore where CONTAINS(POINT('',1,2), ivoa.ObsCore.position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.ObsCore where cast(spoint(radians(1), radians(2)) as scircle) <@ caom2.ObsCore._q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from ivoa.ObsCore where CONTAINS(POINT('',1,2), ivoa.ObsCore.position_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testIntervalContains() {
         log.debug("testIntervalContains START");
-        //_expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ energy_bounds";
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ energy_bounds";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where CONTAINS(1.0, energy_bounds) = 1";
+        expectedSQL = "select planeid from caom2.Plane where polygon(box(point(0.9999999999999999, -0.1), point(1.0000000000000002, 0.1))) && _q_energy_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where CONTAINS(1.0, energy_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        String tmp = prepareToCompare(_sql);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
+        String tmp = prepareToCompare(actualSQL);
         Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" && energy_bounds"));
+        Assert.assertTrue(tmp.contains(" && _q_energy_bounds"));
 
-        //_expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) <@ time_bounds";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where CONTAINS(1.0, time_bounds) = 1";
+        expectedSQL = "select planeid from caom2.Plane where polygon(box(point(0.9999999999999999, -0.1), point(1.0000000000000002, 0.1))) && _q_time_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where CONTAINS(1.0, time_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        tmp = prepareToCompare(_sql);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
+        tmp = prepareToCompare(actualSQL);
         Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" && time_bounds"));
+        Assert.assertTrue(tmp.contains(" && _q_time_bounds"));
+        
+        // TODO: other interval columns
     }
 
     @Test
     public void testNotIntervalContains() {
         log.debug("testNotIntervalContains START");
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) !<@ energy_bounds";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where CONTAINS(1.0, energy_bounds) = 0";
+        expectedSQL = "select planeid from caom2.Plane where polygon(box(point(0.9999999999999999, -0.1), point(1.0000000000000002, 0.1))) !&& _q_energy_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where CONTAINS(1.0, energy_bounds) = 0";
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        String tmp = prepareToCompare(_sql);
-        Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" !&& energy_bounds"));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select planeid from caom2.Plane where point(1.0, 0.0) !<@ time_bounds";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where CONTAINS(1.0, time_bounds) = 0";
+        expectedSQL = "select planeid from caom2.Plane where polygon(box(point(0.9999999999999999, -0.1), point(1.0000000000000002, 0.1))) !&& _q_time_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where CONTAINS(1.0, time_bounds) = 0";
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        tmp = prepareToCompare(_sql);
-        Assert.assertTrue(tmp.contains("polygon(box(point("));
-        Assert.assertTrue(tmp.contains(" !&& time_bounds"));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testIntersectsEnergy() {
         log.debug("testContainsEnergy START");
-        _expected = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) && energy_bounds";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where INTERSECTS(INTERVAL(1.0, 2.0), energy_bounds) = 1";
+        expectedSQL = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) && _q_energy_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(INTERVAL(1.0, 2.0), energy_bounds) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select planeid from caom2.Plane where energy_bounds && polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where INTERSECTS(energy_bounds, INTERVAL(1.0, 2.0)) = 1";
+        expectedSQL = "select planeid from caom2.Plane where _q_energy_bounds && polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(energy_bounds, INTERVAL(1.0, 2.0)) = 1";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotIntersectsEnergy() {
         log.debug("testContainsEnergy START");
-        _expected = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) !&& energy_bounds";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where INTERSECTS(INTERVAL(1.0, 2.0), energy_bounds) = 0";
+        expectedSQL = "select planeid from caom2.Plane where polygon(box(point(1.0, -0.1), point(2.0, 0.1))) !&& _q_energy_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(INTERVAL(1.0, 2.0), energy_bounds) = 0";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _expected = "select planeid from caom2.Plane where energy_bounds !&& polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
-        _expected = prepareToCompare(_expected);
-        _query = "select planeid from caom2.Plane where INTERSECTS(energy_bounds, INTERVAL(1.0, 2.0)) = 0";
+        expectedSQL = "select planeid from caom2.Plane where _q_energy_bounds !&& polygon(box(point(1.0, -0.1), point(2.0, 0.1)))";
+        expectedSQL = prepareToCompare(expectedSQL);
+        adqlQuery = "select planeid from caom2.Plane where INTERSECTS(energy_bounds, INTERVAL(1.0, 2.0)) = 0";
         run();
-        log.debug(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNone() {
-        _query = "select obsid, planeid from caom2.plane where obsid=planeid ";
-        _expected = "select obsid, planeid from caom2.plane";
+        adqlQuery = "select obsid, planeid from caom2.plane where obsid is not null";
+        expectedSQL = "select obsid, planeid from caom2.plane where obsid is not null";
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
+    
     @Test
-    public void testFunctionCoordsys() {
-        _query = "select COORDSYS(position_bounds) from caom2.plane";
-        _expected = "SELECT 'ICRS' FROM caom2.plane";
+    public void testIntersectsColumn() {
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(CENTROID(position_bounds), position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds_centroid::scircle && _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
-    }
-
-    @Test
-    public void testFunctionCentroid() {
-        _query = "select CENTROID(position_bounds) from caom2.plane";
-        _expected = "SELECT position_bounds_center FROM caom2.plane";
-        run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
-    }
-
-    @Test
-    public void testFunctionCoord1() {
-        _query = "select COORD1(CENTROID(position_bounds)) from caom2.plane";
-        _expected = "SELECT degrees(long(position_bounds_center)) FROM caom2.plane";
-        run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
-    }
-
-    @Test
-    public void testFunctionCoord2() {
-        _query = "select COORD2(CENTROID(position_bounds)) from caom2.plane";
-        _expected = "SELECT degrees(lat(position_bounds_center)) FROM caom2.plane";
-        run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
-    }
-
-    @Test
-    public void testIntersectsColumn() // code casts position_bounds_center to scircle
-    {
-        _query = "select planeid from caom2.plane where INTERSECTS(CENTROID(position_bounds), position_bounds) = 1";
-        _expected = "select planeid from caom2.plane where position_bounds_center::scircle && position_bounds";
-        run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotIntersectsColumn() {
-        _query = "select planeid from caom2.plane where INTERSECTS(CENTROID(position_bounds), position_bounds) = 0";
-        _expected = "select planeid from caom2.plane where position_bounds_center::scircle !&& position_bounds";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(CENTROID(position_bounds), position_bounds) = 0";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds_centroid::scircle !&& _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testIntersectsValue() {
-        _query = "select planeid from caom2.plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
-        _expected = "select planeid from caom2.plane where position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3))";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3))";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotIntersectsValue() {
-        _query = "select planeid from caom2.plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 0";
-        _expected = "select planeid from caom2.plane where position_bounds_spoly !&& scircle(spoint(radians(1), radians(2)), radians(3))";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 0";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds !&& scircle(spoint(radians(1), radians(2)), radians(3))";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _query = "select planeid from caom2.plane where NOT (INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1)";
-        _expected = "select planeid from caom2.plane where not (position_bounds_spoly && scircle(spoint(radians(1), radians(2)), radians(3)))";
+        adqlQuery = "select planeid from caom2.plane where NOT (INTERSECTS(position_bounds, CIRCLE('',1,2,3)) = 1)";
+        expectedSQL = "select planeid from caom2.plane where not (_q_position_bounds && scircle(spoint(radians(1), radians(2)), radians(3)))";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testIntersectsRegion() {
-        _query = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 2.0 3.0')) = 1";
-        _expected = "select planeid from caom2.plane where position_bounds_spoly && scircle(spoint(radians(1.0), radians(2.0)), radians(3.0))";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 2.0 3.0')) = 1";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds && scircle(spoint(radians(1.0), radians(2.0)), radians(3.0))";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotIntersectsRegion() {
-        _query = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 2.0 3.0')) = 0";
-        _expected = "select planeid from caom2.plane where position_bounds_spoly !&& scircle(spoint(radians(1.0), radians(2.0)), radians(3.0))";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('CIRCLE 1.0 2.0 3.0')) = 0";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds !&& scircle(spoint(radians(1.0), radians(2.0)), radians(3.0))";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testIntersectsRegionPos() {
         // spoint has special handling in a predicate
-        _query = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('POSITION 1.0 2.0')) = 1";
-        _expected = "select planeid from caom2.plane where position_bounds_spoly && cast(spoint(radians(1.0), radians(2.0)) as scircle)";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('POSITION 1.0 2.0')) = 1";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds && cast(spoint(radians(1.0), radians(2.0)) as scircle)";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotIntersectsRegionPos() {
         // spoint has special handling in a predicate
-        _query = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('POSITION 1.0 2.0')) = 0";
-        _expected = "select planeid from caom2.plane where position_bounds_spoly !&& cast(spoint(radians(1.0), radians(2.0)) as scircle)";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(position_bounds, REGION('POSITION 1.0 2.0')) = 0";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds !&& cast(spoint(radians(1.0), radians(2.0)) as scircle)";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testIntersectsPoint() {
         // spoint has special handling in a predicate
-        _query = "select planeid from caom2.plane where INTERSECTS(POINT('',1.0,2.0), position_bounds) = 1";
-        _expected = "select planeid from caom2.plane where cast(spoint(radians(1.0), radians(2.0)) as scircle) && position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(POINT('',1.0,2.0), position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.plane where cast(spoint(radians(1.0), radians(2.0)) as scircle) && _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotIntersectsPoint() {
         // spoint has special handling in a predicate
-        _query = "select planeid from caom2.plane where INTERSECTS(POINT('',1.0,2.0), position_bounds) = 0";
-        _expected = "select planeid from caom2.plane where cast(spoint(radians(1.0), radians(2.0)) as scircle) !&& position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane where INTERSECTS(POINT('',1.0,2.0), position_bounds) = 0";
+        expectedSQL = "select planeid from caom2.plane where cast(spoint(radians(1.0), radians(2.0)) as scircle) !&& _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testContainsColumn() {
-        _query = "select planeid from caom2.plane p, cat.Sources s where CONTAINS(s.srcpos, p.position_bounds) = 1";
-        _expected = "select planeid from caom2.plane as p, cat.Sources as s where s.srcpos <@ p.position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane p, cat.Sources s where CONTAINS(s.srcpos, p.position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.plane as p, cat.Sources as s where s.srcpos <@ p._q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotContainsColumn() {
-
-        _query = "select planeid from caom2.plane p, cat.Sources s where CONTAINS(s.srcpos, p.position_bounds) = 0";
-        _expected = "select planeid from caom2.plane as p, cat.Sources as s where s.srcpos !<@ p.position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane p, cat.Sources s where CONTAINS(s.srcpos, p.position_bounds) = 0";
+        expectedSQL = "select planeid from caom2.plane as p, cat.Sources as s where s.srcpos !<@ p._q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testContainsValue() {
-
-        _query = "select planeid from caom2.plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
-        _expected = "select planeid from caom2.plane where scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.plane where scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotContainsValue() {
-
-        _query = "select planeid from caom2.plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 0";
-        _expected = "select planeid from caom2.plane where scircle(spoint(radians(1), radians(2)), radians(3)) !<@ position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane where CONTAINS(CIRCLE('',1,2,3), position_bounds) = 0";
+        expectedSQL = "select planeid from caom2.plane where scircle(spoint(radians(1), radians(2)), radians(3)) !<@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _query = "select planeid from caom2.plane where NOT (CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1)";
-        _expected = "select planeid from caom2.plane where not (scircle(spoint(radians(1), radians(2)), radians(3)) <@ position_bounds_spoly)";
+        adqlQuery = "select planeid from caom2.plane where NOT (CONTAINS(CIRCLE('',1,2,3), position_bounds) = 1)";
+        expectedSQL = "select planeid from caom2.plane where not (scircle(spoint(radians(1), radians(2)), radians(3)) <@ _q_position_bounds)";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testContainsPoint() {
-        _query = "select planeid from caom2.plane where CONTAINS(POINT('',1,2), position_bounds) = 1";
-        _expected = "select planeid from caom2.plane where cast(spoint(radians(1), radians(2)) as scircle) <@ position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane where CONTAINS(POINT('',1,2), position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.plane where cast(spoint(radians(1), radians(2)) as scircle) <@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
 
-        _query = "select planeid from caom2.plane where CONTAINS(position_bounds, POINT('',1,2)) = 1";
-        _expected = "select planeid from caom2.plane where position_bounds_spoly <@ cast(spoint(radians(1), radians(2)) as scircle)";
+        adqlQuery = "select planeid from caom2.plane where CONTAINS(position_bounds, POINT('',1,2)) = 1";
+        expectedSQL = "select planeid from caom2.plane where _q_position_bounds <@ cast(spoint(radians(1), radians(2)) as scircle)";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testNotContainsPoint() {
         // spoint has special handling in a predicate
-        _query = "select planeid from caom2.plane where CONTAINS(POINT('',1,2), position_bounds) = 0";
-        _expected = "select planeid from caom2.plane where cast(spoint(radians(1), radians(2)) as scircle) !<@ position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane where CONTAINS(POINT('',1,2), position_bounds) = 0";
+        expectedSQL = "select planeid from caom2.plane where cast(spoint(radians(1), radians(2)) as scircle) !<@ _q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testSpatialJoinIntersects() {
 
-        _query = "select planeid from caom2.plane as t1 join caom2.siav1 as t2 on INTERSECTS(t1.position_bounds, t2.position_bounds) = 1";
-        _expected = "select planeid from caom2.plane as t1 join caom2.siav1 as t2 on t1.position_bounds_spoly && t2.position_bounds_spoly";
+        adqlQuery = "select planeid from caom2.plane as t1 join caom2.siav1 as t2 on INTERSECTS(t1.position_bounds, t2.position_bounds) = 1";
+        expectedSQL = "select planeid from caom2.plane as t1 join caom2.siav1 as t2 on t1._q_position_bounds && t2._q_position_bounds";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testPoint() {
-        _query = "select POINT('ICRS GEOCENTER', 1, 2) from caom2.plane";
-        _expected = "spoint";
+        adqlQuery = "select POINT('ICRS GEOCENTER', 1, 2) from caom2.plane";
+        expectedSQL = "SELECT spoint(radians(1), radians(2)) FROM caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testCircle() {
-        _query = "select CIRCLE('ICRS GEOCENTER', 10, 10, 1) from caom2.plane";
-        _expected = "scircle";
+        adqlQuery = "select CIRCLE('ICRS GEOCENTER', 10, 10, 1) from caom2.plane";
+        expectedSQL = "SELECT scircle(spoint(radians(10), radians(10)), radians(1)) FROM caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testBox() {
-        _query = "select BOX('ICRS GEOCENTER', 10, 20, 1, 2) from caom2.plane";
-        _expected = "spoly";
+        adqlQuery = "select BOX('ICRS GEOCENTER', 10, 20, 1, 2) from caom2.plane";
+        expectedSQL = "select spoly "
+            + "'{(9.471189659406665d,19.0d),(9.464427503181486d,21.0d),(10.535572496818514d,21.0d),(10.528810340593335d,19.0d)}'"
+            + " from caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testPolygon() {
-        _query = "select POLYGON('ICRS GEOCENTER', 2,2,3,3,1,4) from caom2.plane";
-        _expected = "spoly";
+        adqlQuery = "select POLYGON('ICRS GEOCENTER', 2,2,3,3,1,4) from caom2.plane";
+        expectedSQL = "select spoly '{(2d,2d),(3d,3d),(1d,4d)}' from caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testRegionBox() {
-        _query = "select REGION('BOX ICRS GEOCENTER 11 22 10 20') from caom2.plane";
-        _expected = "spoly";
+        adqlQuery = "select REGION('BOX ICRS GEOCENTER 11 22 10 20') from caom2.plane";
+        expectedSQL = "select spoly "
+            + "'{(5.888297025674854d,12.0d),(5.104107983189518d,32.0d),(16.895892016810482d,32.0d),(16.111702974325148d,12.0d)}'"
+            + " from caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testRegionPolygon() {
-        _query = "select REGION('POLYGON ICRS GEOCENTER 1 2 3 4 5 6 7 8') from caom2.plane";
-        _expected = "spoly";
+        adqlQuery = "select REGION('POLYGON ICRS GEOCENTER 1 2 3 4 5 6 7 8') from caom2.plane";
+        expectedSQL = "select spoly '{(1.0d,2.0d),(3.0d,4.0d),(5.0d,6.0d),(7.0d,8.0d)}' from caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testRegionCircle() {
-        _query = "select REGION('CIRCLE ICRS GEOCENTER 11 22 0.5') from caom2.plane";
-        _expected = "scircle";
+        adqlQuery = "select REGION('CIRCLE ICRS GEOCENTER 11 22 0.5') from caom2.plane";
+        expectedSQL = "select scircle(spoint(radians(11.0), radians(22.0)), radians(0.5)) from caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 
     @Test
     public void testRegionPosition() {
-        _query = "select REGION('POSITION GALACTIC 11 22') from caom2.plane";
-        _expected = "spoint";
+        adqlQuery = "select REGION('POSITION GALACTIC 11 22') from caom2.plane";
+        expectedSQL = "select spoint(radians(11.0), radians(22.0)) from caom2.plane";
+        expectedSQL = prepareToCompare(expectedSQL);
         run();
-        log.debug(" expected: " + _expected);
-        //Assert.assertEquals(_expected, prepareToCompare(_sql));
-        Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
+        log.debug(" expected: " + expectedSQL);
+        Assert.assertEquals(expectedSQL, prepareToCompare(actualSQL));
     }
 }

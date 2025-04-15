@@ -240,18 +240,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
      * @param obs
      */
     public void put(Observation obs) {
-        put(obs, null);
-    }
-    
-    /**
-     * Store an observation. If the optional accMetaChecksum argument is not null and does not
-     * match the accMetaChecksum of the currently observation, the update is rejected.
-     * 
-     * @param obs the observation
-     * @param expectedMetaChecksum optional metadata checksum
-     * @throws PreconditionFailedException if the accMetaChecksum does not match 
-     */
-    public void put(Observation obs, URI expectedMetaChecksum) throws PreconditionFailedException {
         if (readOnly) {
             throw new UnsupportedOperationException("put in readOnly mode");
         }
@@ -295,18 +283,6 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
                 // reacquire with lock
                 cur = getSkelImpl(obs.getID(), jdbc, true, true);
                 lockSkelTime = System.currentTimeMillis() - tt;
-            
-                // check conditional update
-                if (expectedMetaChecksum != null) {
-                    if (cur == null) {
-                        // deleted by another actor since dirtyRead
-                        throw new PreconditionFailedException("update blocked: current entity does not exist");
-                    } else if (!expectedMetaChecksum.equals(cur.accMetaChecksum)) {
-                        throw new PreconditionFailedException("update blocked: current entity is : " + cur.accMetaChecksum);
-                    }
-                }
-            } else if (expectedMetaChecksum != null) {
-                throw new PreconditionFailedException("update blocked: current entity does not exist");
             }
             
             // update metadata checksums, maybe modified timestamps

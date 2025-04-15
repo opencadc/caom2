@@ -83,11 +83,9 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
 
     public static final String MODEL_NAME = "CAOM";
     // alpha: just core columns needed to round-trip
-    // beta1: minimal query optimization columns and indices for TAP queries
-    // beta2: additional query optimization columns that may be needed
-    public static final String MODEL_VERSION = "2.5.0-alpha";
-    public static final String PREV_MODEL_VERSION = "n/a"; // no upgrade to 2.5.0
-    //public static final String PREV_MODEL_VERSION = "DO-NOT_UPGRADE-BY-ACCIDENT";
+    // beta: minimal query optimization columns to support argus (TAP) and ObsCore
+    public static final String MODEL_VERSION = "2.5.0-beta";
+    public static final String PREV_MODEL_VERSION = "2.5.0-alpha";
 
     static String[] CREATE_SQL = new String[]{
         "caom2.ModelVersion.sql",
@@ -102,13 +100,16 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
         "caom2.DeletedObservationEvent.sql",
         "caom2.DeletedArtifactDescriptionEvent.sql",
         //"caom2.extra_indices.sql",
-        //"caom2.ObsCore.sql",
+        "caom2.ObsCore.sql",
+        "caom2.ObsCore_radio.sql",
         //"caom2.SIAv1.sql",
         "caom2.permissions.sql"
     };
 
     static String[] UPGRADE_SQL = new String[]{
+        "caom2.upgrade-2.5.0-beta.sql",
         "caom2.ObsCore.sql",
+        "caom2.ObsCore_radio.sql",
         "caom2.permissions.sql"
     };
 

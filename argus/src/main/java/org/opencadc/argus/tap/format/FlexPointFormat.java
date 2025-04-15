@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2025.                            (c) 2025.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,64 +62,54 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus.tap.query.functions;
+package org.opencadc.argus.tap.format;
 
-import java.util.List;
-import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.schema.Column;
+import ca.nrc.cadc.dali.Point;
+import ca.nrc.cadc.dali.postgresql.PgSpoint;
+import ca.nrc.cadc.dali.util.PointFormat;
+import ca.nrc.cadc.db.mappers.JdbcMapUtil;
+import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.apache.log4j.Logger;
+import org.postgresql.util.PGobject;
 
 /**
  *
- * @author zhangsa
- *
+ * @author pdowler
  */
-public abstract class FuntionOnBounds extends Function {
+public class FlexPointFormat extends AbstractResultSetFormat {
+    private static final Logger log = Logger.getLogger(FlexPointFormat.class);
 
-    // these values work for caom1 and caom2
-    public static String[] POSITION_BOUNDS = {"position_bounds", "s_region"};
-    public static String POSITION_BOUNDS_CENTER = "position_bounds_center";
-    public static String POSITION_BOUNDS_AREA = "position_bounds_area";
+    private final PointFormat fmt = new PointFormat();
 
-    protected Column column;
-
-    protected boolean onPositionBounds = false;
-
-    public FuntionOnBounds(Function adqlFunction) {
-        super();
-        setParameters(adqlFunction.getParameters());
-        convertParameters();
+    // TODO: this class needs access to the configured DatabaseDataType plugin
+    public FlexPointFormat() { 
     }
 
-    public void setOnPositionBounds(boolean onPositionBounds) {
-        this.onPositionBounds = onPositionBounds;
-    }
-
-    public boolean isOnPositionBounds() {
-        return onPositionBounds;
-    }
-
-    public Expression getExpression() {
-        return column;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void convertParameters() {
-        List<Expression> expressions = getParameters().getExpressions();
-        Expression expression = expressions.get(0);
-        onPositionBounds = false;
-        if (expression instanceof Column) {
-            column = (Column) expression;
-            String columnName = column.getColumnName();
-            for (String s : POSITION_BOUNDS) {
-                onPositionBounds = onPositionBounds || columnName.equalsIgnoreCase(s);
-            }
+    @Override
+    public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
+        Object o = resultSet.getObject(columnIndex);
+        if (o == null) {
+            return null;
         }
+
+        if (o instanceof PGobject) {
+            String s = o.toString();
+            PgSpoint pgs = new PgSpoint();
+            return pgs.getPoint(s);
+        }
+        
+        double[] a = JdbcMapUtil.getDoubleArray(resultSet, columnIndex);
+        return new Point(a[0], a[1]);
     }
 
+    @Override
+    public String format(Object o) {
+        Point p = (Point) o;
+        return fmt.format(p);
+    }
 }

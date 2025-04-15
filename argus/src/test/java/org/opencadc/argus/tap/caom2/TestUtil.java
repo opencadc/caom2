@@ -109,16 +109,15 @@ public class TestUtil {
         TableDesc plane = new TableDesc("caom2", "caom2.Plane");
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "obsID", uuidType));
         plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "planeID", uuidType));
-        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
-        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds_samples", new TapDataType("char", "*", "caom2:multipolygon")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_bounds", new TapDataType("char", "*", "shape")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "position_samples", new TapDataType("char", "*", "caom2:multishape")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_bounds", new TapDataType("double", "2", "interval")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_samples", new TapDataType("double", "*", "interval")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds", new TapDataType("double", "2", "interval")));
+        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_samples", new TapDataType("double", "*", "interval")));
 
-        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_bounds", new TapDataType("char", "*", "interval")));
-        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "energy_bounds_samples", new TapDataType("char", "*", "caom2:multiinterval")));
-        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds", new TapDataType("char", "*", "interval")));
-        plane.getColumnDescs().add(new ColumnDesc(plane.getTableName(), "time_bounds_samples", new TapDataType("char", "*", "caom2:multiinterval")));
-
-        TableDesc sia = new TableDesc("caom2", "caom2.SIAv1");
-        sia.getColumnDescs().add(new ColumnDesc(sia.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
+        //TableDesc sia = new TableDesc("caom2", "caom2.SIAv1");
+        //sia.getColumnDescs().add(new ColumnDesc(sia.getTableName(), "position_bounds", new TapDataType("char", "*", "caom2:shape")));
 
         SchemaDesc caom2 = new SchemaDesc("caom2");
         caom2.getTableDescs().add(obs);

@@ -3,7 +3,7 @@
 -- cat caom2.drop_all.sql | sed 's/<schema>/caom2/g' > doit.sql
 
 drop view if exists <schema>.ObsCore;
-drop view if exists <schema>.SIAv1;
+drop view if exists <schema>.ObsCore_radio;
 
 drop table if exists <schema>.Chunk;
 drop table if exists <schema>.Part;

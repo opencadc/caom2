@@ -72,13 +72,13 @@ package org.opencadc.argus.tap;
 import ca.nrc.cadc.dali.util.DefaultFormat;
 import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.tap.TapSelectItem;
-import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
 import ca.nrc.cadc.tap.writer.format.PostgreSQLFormatFactory;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.opencadc.argus.tap.format.DataLinkURLFormat;
-import org.opencadc.argus.tap.format.IntervalFormat;
+import org.opencadc.argus.tap.format.FlexIntervalFormat;
+import org.opencadc.argus.tap.format.FlexPointFormat;
 import org.opencadc.argus.tap.format.PositionBoundsShapeFormat;
 import org.opencadc.argus.tap.format.URISetFormat;
 
@@ -90,7 +90,6 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     private static Logger log = Logger.getLogger(CaomFormatFactory.class);
 
     private static final List<String> URI_SET_UTYPES = new ArrayList<>();
-    private static final List<String> MULTI_INTERVAL_UTYPES = new ArrayList<>();
     
     static {
         URI_SET_UTYPES.add("caom2:Observation.metaReadGroups");
@@ -100,9 +99,6 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
         URI_SET_UTYPES.add("caom2:Plane.metaReadGroups");
         URI_SET_UTYPES.add("caom2:Plane.provenance.inputs");
         URI_SET_UTYPES.add("caom2:Artifact.contentReadGroups");
-        MULTI_INTERVAL_UTYPES.add("caom2:Plane.energy.samples");
-        MULTI_INTERVAL_UTYPES.add("caom2:Plane.time.samples");
-        MULTI_INTERVAL_UTYPES.add("caom2:Plane.custom.samples");
     }
     
     public CaomFormatFactory() {
@@ -127,7 +123,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     
     @Override
     protected Format<Object> getPointFormat(TapSelectItem columnDesc) {
-        return new DoubleArrayFormat();
+        return new FlexPointFormat();
     }
     
     @Override
@@ -139,7 +135,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
                 return new PositionBoundsShapeFormat();
             } else if (columnDesc.utype.equals("caom2:Plane.position.samples")) {
-                return new DefaultFormat(); // text in db
+                return new DefaultFormat(); // currently text in db
             }
         }
         // default to pgsphere formatters
@@ -159,7 +155,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
 
     @Override
     public Format<Object> getIntervalFormat(TapSelectItem columnDesc) {
-        return new IntervalFormat(columnDesc.getDatatype().isVarSize());
+        return new FlexIntervalFormat(columnDesc.getDatatype().isVarSize());
     }
 
     @Override

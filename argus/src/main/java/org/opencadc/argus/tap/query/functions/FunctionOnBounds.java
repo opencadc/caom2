@@ -3,12 +3,12 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2009.                            (c) 2009.
+*  (c) 2016.                            (c) 2016.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
 *  All rights reserved                  Tous droits réservés
-*                                       
+*
 *  NRC disclaims any warranties,        Le CNRC dénie toute garantie
 *  expressed, implied, or               énoncée, implicite ou légale,
 *  statutory, of any kind with          de quelque nature que ce
@@ -31,10 +31,10 @@
 *  software without specific prior      de ce logiciel sans autorisation
 *  written permission.                  préalable et particulière
 *                                       par écrit.
-*                                       
+*
 *  This file is part of the             Ce fichier fait partie du projet
 *  OpenCADC project.                    OpenCADC.
-*                                       
+*
 *  OpenCADC is free software:           OpenCADC est un logiciel libre ;
 *  you can redistribute it and/or       vous pouvez le redistribuer ou le
 *  modify it under the terms of         modifier suivant les termes de
@@ -44,7 +44,7 @@
 *  either version 3 of the              : soit la version 3 de cette
 *  License, or (at your option)         licence, soit (à votre gré)
 *  any later version.                   toute version ultérieure.
-*                                       
+*
 *  OpenCADC is distributed in the       OpenCADC est distribué
 *  hope that it will be useful,         dans l’espoir qu’il vous
 *  but WITHOUT ANY WARRANTY;            sera utile, mais SANS AUCUNE
@@ -54,7 +54,7 @@
 *  PURPOSE.  See the GNU Affero         PARTICULIER. Consultez la Licence
 *  General Public License for           Générale Publique GNU Affero
 *  more details.                        pour plus de détails.
-*                                       
+*
 *  You should have received             Vous devriez avoir reçu une
 *  a copy of the GNU Affero             copie de la Licence Générale
 *  General Public License along         Publique GNU Affero avec
@@ -62,95 +62,67 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 4 $
+*  $Revision: 5 $
 *
 ************************************************************************
-*/
+ */
 
-package org.opencadc.argus.tap.caom2;
+package org.opencadc.argus.tap.query.functions;
 
-import org.opencadc.argus.tap.query.CaomRegionConverter;
-import ca.nrc.cadc.tap.TapQuery;
-import ca.nrc.cadc.tap.schema.TapSchema;
-import ca.nrc.cadc.util.Log4jInit;
-import ca.nrc.cadc.uws.Parameter;
-import java.util.ArrayList;
+import ca.nrc.cadc.util.CaseInsensitiveStringComparator;
 import java.util.List;
-import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
-import org.opencadc.argus.tap.CaomAdqlQuery;
+import java.util.Map;
+import java.util.TreeMap;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.schema.Column;
 
 /**
- * test predicate function converter in CAOM context
- * 
- * @author Sailor Zhang
+ *
+ * @author zhangsa
  *
  */
-public class CoordsysTest
-{
-    private static Logger log = Logger.getLogger(CoordsysTest.class);
-
-    public String _query;
-    public String _expected = "";
-    public String _sql;
+public abstract class FunctionOnBounds extends Function {
+    private static final Map<String,String> SHAPE_COLS;
     
-    private static TapSchema caomTapSchema = TestUtil.loadTapSchema();
-
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.tap.caom", org.apache.log4j.Level.INFO);
+        SHAPE_COLS = new TreeMap<>(new CaseInsensitiveStringComparator());
+        SHAPE_COLS.put("position_bounds", "_q_position_bounds");
+        SHAPE_COLS.put("position_minBounds", "_q_position_minBounds");
+        SHAPE_COLS.put("s_region", "_q_position_bounds");
+    }
+    
+    private final String funcName;
+    private Column column;
+    private boolean validArg;
+
+    public FunctionOnBounds(Function adqlFunction) {
+        super();
+        this.funcName = adqlFunction.getName().toLowerCase();
+        setParameters(adqlFunction.getParameters());
+        convertParameters();
     }
 
-    private class TestQuery extends CaomAdqlQuery
-    {
-        protected void init()
-        {
-            super.navigatorList.add(new CaomRegionConverter(caomTapSchema));
+    public Expression getExpression() {
+        return column;
+    }
+
+    public boolean isValidArg() {
+        return validArg;
+    }
+
+    private void convertParameters() {
+        List<Expression> expressions = getParameters().getExpressions();
+        Expression expression = expressions.get(0);
+        if (expression instanceof Column) {
+            column = (Column) expression;
+            String columnName = column.getColumnName();
+            String s = SHAPE_COLS.get(columnName);
+            if (s != null) {
+                column.setColumnName(s + "_" + funcName);
+                validArg = true;
+            }
         }
-    }
-
-    private void run()
-    {
-        try
-        {
-            Parameter para = new Parameter("QUERY", _query);
-            List<Parameter> paramList = new ArrayList<Parameter>();
-            paramList.add(para);
-
-            TapQuery tapQuery = new TestQuery();
-            TestUtil.job.getParameterList().addAll(paramList);
-            tapQuery.setJob(TestUtil.job);
-            _sql = tapQuery.getSQL();
-            log.info("    input: " + _query);
-            log.info("   result: " + _sql);
-        }
-        finally
-        {
-            TestUtil.job.getParameterList().clear();
-        }
-    }
-
-    private String prepareToCompare(String str)
-    {
-        String ret = str.trim();
-        ret = ret.replaceAll("\\s+", " ");
-        return ret.toLowerCase();
-    }
-
-    private void assertContain()
-    {
-        Assert.assertTrue(_sql.toLowerCase().indexOf(_expected.toLowerCase()) > 0);
-    }
-
-    @Test
-    public void test1()
-    {
-        _expected = "SELECT TOP 1 'ICRS' FROM caom2.Plane WHERE position_bounds IS NOT NULL";
-        _expected = prepareToCompare(_expected);
-        _query = "select top 1 coordsys(area(Plane.position_bounds)) from caom2.Plane where position_bounds is not null";
-        run();
-        log.info(" expected: " + _expected);
-        Assert.assertEquals(_expected, prepareToCompare(_sql));
     }
 
 }

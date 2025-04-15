@@ -132,7 +132,7 @@ public abstract class RepoAction extends RestAction {
             try {
                 String[] ss = path.split("/");
                 this.collection = ss[0];
-                log.warn("collection: " + collection);
+                log.debug("collection: " + collection);
                 
                 TorkeepConfig tc = getTorkeepConfig();
                 CollectionEntry ce = tc.getConfig(collection);

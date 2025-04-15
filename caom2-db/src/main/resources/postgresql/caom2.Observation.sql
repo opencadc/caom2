@@ -32,7 +32,8 @@ create table <schema>.Observation
     targetPosition_coordsys varchar(16),
     targetPosition_equinox double precision,
     targetPosition_coordinates double precision[],
---    _q_targetPosition_coordinates spoint,
+-- alternate representation for optimized query execution
+    _q_targetPosition_coordinates spoint,
 
     telescope_name varchar(64),
     telescope_geoLocationX double precision,
