@@ -85,6 +85,7 @@ import org.apache.log4j.Logger;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.caom2.util.ObservationState;
+import org.opencadc.caom2.xml.JsonWriter;
 import org.opencadc.caom2.xml.ObservationWriter;
 
 /**
@@ -96,6 +97,7 @@ public class GetAction extends RepoAction {
     private static final Logger log = Logger.getLogger(GetAction.class);
 
     public static final String CAOM_MIMETYPE = "text/x-caom+xml";
+    private static final String JSON_FORMAT = "application/json";
 
     public GetAction() {
         super();
@@ -126,19 +128,18 @@ public class GetAction extends RepoAction {
         ObservationDAO dao = getDAO();
         log.debug("getState: " + uri);
         ObservationState state = dao.getState(uri);
-        log.warn("found state: " + state);
+        log.debug("found state: " + state);
         if (state == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
-        //if (resp.error != null) {
-        //    throw resp.error;
-        //}
+
         
         Observation o = dao.get(state.getID());
         log.debug("loaded observation: " + o);
-        ObservationWriter ow = getObservationWriter();
+        String mimeType = getMediaType();
+        ObservationWriter ow = getObservationWriter(mimeType);
         
-        syncOutput.setHeader("Content-Type", CAOM_MIMETYPE);
+        syncOutput.setHeader("Content-Type", mimeType);
         syncOutput.setHeader("ETag", o.getAccMetaChecksum());
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
@@ -162,8 +163,24 @@ public class GetAction extends RepoAction {
         log.debug("DONE: " + getCollection());
     }
 
-    protected ObservationWriter getObservationWriter() {
-        return new ObservationWriter();
+    private String getMediaType() throws UnsupportedOperationException {
+        String accept = syncInput.getHeader("accept");
+        if (accept != null) {
+            if (JSON_FORMAT.equalsIgnoreCase(accept)) {
+                return JSON_FORMAT;
+            }
+        }
+        return CAOM_MIMETYPE;
+    }
+
+    private ObservationWriter getObservationWriter(String mt) throws UnsupportedOperationException {
+        ObservationWriter ret;
+        if (JSON_FORMAT.equals(mt)) {
+            ret = new JsonWriter(true);
+        } else {
+            ret = new ObservationWriter();
+        }
+        return ret;
     }
 
     protected long writeObservationList(ResourceIterator<ObservationState> iter) throws IOException {
