@@ -283,8 +283,10 @@ public class ObservationHarvester extends Harvester {
             while (iter1.hasNext()) {
                 SkippedWrapperURI<ObservationResponse> ow = iter1.next();
                 Observation o = null;
+                ObservationState obsState = null;
                 if (ow.entity != null) {
-                    o = ow.entity.observation;
+                    obsState = ow.entity.observationState; // from list
+                    o = ow.entity.observation; // from get
                 }
                 HarvestSkipURI hs = ow.skip;
                 iter1.remove(); // allow garbage collection during loop
@@ -306,13 +308,19 @@ public class ObservationHarvester extends Harvester {
                         + " ow.entity.error=" + (ow.entity == null ? null : ow.entity.error));
                 try {
                     // o could be null in skip mode cleanup
+                    Date obsStateMLM = null;
+                    String ts = "???";
+                    if (obsState != null && obsState.maxLastModified != null) {
+                        obsStateMLM = obsState.maxLastModified;
+                        ts = format(obsStateMLM);
+                    }
                     if (o != null) {
                         String treeSize = computeTreeSize(o);
-                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + format(o.getMaxLastModified()) + " " + treeSize);
+                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + ts + " " + treeSize);
                     } else if (hs != null) {
                         log.info("put (retry error): " + hs.getName() + " " + hs.getSkipID() + " " + format(hs.getLastModified()));
                     } else {
-                        log.info("put (error): Observation " + ow.entity.observationState.getURI() + " " + format(ow.entity.observationState.maxLastModified));
+                        log.info("put (error): Observation " + ow.entity.observationState.getURI() + " " + format(obsState.maxLastModified));
                     }
 
                     if (skipped) {
@@ -321,7 +329,7 @@ public class ObservationHarvester extends Harvester {
 
                     if (o != null) {
                         if (state != null) {
-                            state.curLastModified = o.getMaxLastModified();
+                            state.curLastModified = obsStateMLM;
                             state.curID = o.getID();
                         }
 
@@ -389,13 +397,13 @@ public class ObservationHarvester extends Harvester {
                         }
                     } else if (ow.entity.error != null) {
                         // o == null when harvesting from service: try to make progress on failures
-                        if (state != null && ow.entity.observationState.maxLastModified != null) {
-                            state.curLastModified = ow.entity.observationState.maxLastModified;
+                        if (state != null && obsStateMLM != null) {
+                            state.curLastModified = obsStateMLM;
                             state.curID = null; // unknown
                         }
                         if (ow.entity.error instanceof ResourceNotFoundException
-                                && ow.entity.observationState != null) {
-                            ObservationState cur = destObservationDAO.getState(ow.entity.observationState.getURI());
+                                && obsState != null) {
+                            ObservationState cur = destObservationDAO.getState(obsState.getURI());
                             if (cur != null) {
                                 log.info("delete: " + cur.getURI() + " aka " + cur.id);
                                 destObservationDAO.delete(cur.id);
@@ -429,11 +437,11 @@ public class ObservationHarvester extends Harvester {
                     }
                     skipMsg = oops.getMessage(); // message for HarvestSkipURI record
                 } catch (MismatchedChecksumException oops) {
-                    log.error("CONTENT PROBLEM - mismatching checksums: " + ow.entity.observationState.getURI());
+                    log.error("CONTENT PROBLEM - mismatching checksums: " + obsState.getURI());
                     ret.handled++;
                     skipMsg = oops.getMessage(); // message for HarvestSkipURI record
                 } catch (IllegalArgumentException oops) {
-                    log.error("CONTENT PROBLEM - invalid observation: " + ow.entity.observationState.getURI() + " - " + oops.getMessage());
+                    log.error("CONTENT PROBLEM - invalid observation: " + obsState.getURI() + " - " + oops.getMessage());
                     if (oops.getCause() != null) {
                         log.error("cause: " + oops.getCause());
                     }
