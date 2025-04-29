@@ -308,11 +308,9 @@ public class ObservationHarvester extends Harvester {
                         + " ow.entity.error=" + (ow.entity == null ? null : ow.entity.error));
                 try {
                     // o could be null in skip mode cleanup
-                    Date obsStateMLM = null;
                     String ts = "???";
                     if (obsState != null && obsState.maxLastModified != null) {
-                        obsStateMLM = obsState.maxLastModified;
-                        ts = format(obsStateMLM);
+                        ts = format(obsState.maxLastModified);
                     }
                     if (o != null) {
                         String treeSize = computeTreeSize(o);
@@ -328,9 +326,10 @@ public class ObservationHarvester extends Harvester {
                     }
 
                     if (o != null) {
-                        if (state != null) {
-                            state.curLastModified = obsStateMLM;
-                            state.curID = o.getID();
+                        if (state != null && obsState != null && obsState.maxLastModified != null) {
+                            // only update HarvestState if we have an event timestamp
+                            state.curLastModified = obsState.maxLastModified;
+                            state.curID = obsState.getID();
                         }
 
                         // try to avoid DataIntegrityViolationException due
@@ -397,8 +396,9 @@ public class ObservationHarvester extends Harvester {
                         }
                     } else if (ow.entity.error != null) {
                         // o == null when harvesting from service: try to make progress on failures
-                        if (state != null && obsStateMLM != null) {
-                            state.curLastModified = obsStateMLM;
+                        if (state != null && obsState != null && obsState.maxLastModified != null) {
+                            // only update HarvestState if we have an event timestamp
+                            state.curLastModified = obsState.maxLastModified;
                             state.curID = null; // unknown
                         }
                         if (ow.entity.error instanceof ResourceNotFoundException
@@ -512,7 +512,7 @@ public class ObservationHarvester extends Harvester {
                             } else {
                                 skip = harvestSkipDAO.get(source, cname, ow.entity.observationState.getURI().getURI());
                             }
-                            Date tryAfter = ow.entity.observationState.maxLastModified;
+                            Date tryAfter = null;
                             if (o != null) {
                                 tryAfter = o.getMaxLastModified();
                             }
@@ -520,7 +520,7 @@ public class ObservationHarvester extends Harvester {
                                 if (o != null) {
                                     skip = new HarvestSkipURI(source, cname, o.getURI().getURI(), tryAfter, skipMsg);
                                 } else {
-                                    skip = new HarvestSkipURI(source, cname, ow.entity.observationState.getURI().getURI(), tryAfter, skipMsg);
+                                    skip = new HarvestSkipURI(source, cname, obsState.getURI().getURI(), tryAfter, skipMsg);
                                 }
                             } else {
                                 skip.errorMessage = skipMsg;
@@ -540,8 +540,8 @@ public class ObservationHarvester extends Harvester {
                             harvestSkipDAO.put(skip);
 
                             // delete previous version of observation (if any)
-                            if (ow.entity.observationState != null) {
-                                ObservationState cur = destObservationDAO.getState(ow.entity.observationState.getURI());
+                            if (obsState != null) {
+                                ObservationState cur = destObservationDAO.getState(obsState.getURI());
                                 if (cur != null) {
                                     log.info("delete: " + cur.getURI() + " aka " + cur.id);
                                     destObservationDAO.delete(cur.id);
