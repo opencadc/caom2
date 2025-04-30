@@ -30,6 +30,7 @@ sourceSets.test {
 
 dependencies {
     implementation 'org.opencadc:cadc-util:[1.12.1,2.0)'
+    implementation 'org.opencadc:cadc-rest:[1.4.5,)'
     implementation 'org.opencadc:cadc-registry:[1.5.0,)'
     implementation 'org.opencadc:cadc-uws-server:[1.2.22,)'
     implementation 'org.opencadc:cadc-tap-schema:[1.1.22,)'
