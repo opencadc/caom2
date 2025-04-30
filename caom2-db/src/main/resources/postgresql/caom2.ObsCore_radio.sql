@@ -20,6 +20,7 @@ AS SELECT
     p.uv_distributionEccentricity,
     p.uv_distributionFill
 FROM <schema>.Plane as p
-WHERE p.uv_distance IS NOT NULL
+WHERE p.position_maxRecoverableScale IS NOT NULL
+   OR p.uv_distance IS NOT NULL
 ;
 
