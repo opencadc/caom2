@@ -71,6 +71,7 @@ package org.opencadc.argus.tap.caom2;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
@@ -88,6 +89,8 @@ public class DataLinkURLFormatterTest {
 
     private static Logger log = Logger.getLogger(DataLinkURLFormatterTest.class);
 
+    private static String TEST_CONFIG_DIR = PropertiesReader.class.getName() + ".dir";
+    
     static {
         Log4jInit.setLevel("org.opencadc.argus", Level.INFO);
     }
@@ -100,6 +103,8 @@ public class DataLinkURLFormatterTest {
         log.debug("testNull");
 
         try {
+            System.setProperty(TEST_CONFIG_DIR, "src/test/resources");
+            
             Subject s = new Subject();
             s.getPublicCredentials().add(AuthMethod.ANON);
             String surl = Subject.doAs(s, new FormatAction(null));
@@ -109,6 +114,8 @@ public class DataLinkURLFormatterTest {
         } catch (Exception unexpected) {
             log.error("unexpected exception: ", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
+        } finally {
+            System.clearProperty(TEST_CONFIG_DIR);
         }
     }
 
@@ -117,6 +124,8 @@ public class DataLinkURLFormatterTest {
         log.debug("testNotNull");
 
         try {
+            System.setProperty(TEST_CONFIG_DIR, "src/test/resources");
+            
             Subject s = new Subject();
             s.getPublicCredentials().add(AuthMethod.ANON);
             String surl = Subject.doAs(s, new FormatAction(uri.toASCIIString()));
@@ -126,6 +135,8 @@ public class DataLinkURLFormatterTest {
         } catch (Exception unexpected) {
             log.error("unexpected exception: ", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
+        }  finally {
+            System.clearProperty(TEST_CONFIG_DIR);
         }
     }
 
