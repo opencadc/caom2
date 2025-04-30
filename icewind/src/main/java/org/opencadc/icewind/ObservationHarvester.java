@@ -85,6 +85,7 @@ import ca.nrc.cadc.caom2.persistence.ObservationDAO;
 import ca.nrc.cadc.caom2.repo.client.RepoClient;
 import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.caom2.xml.ObservationWriter;
+import ca.nrc.cadc.net.RemoteServiceException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import java.net.URI;
@@ -378,22 +379,6 @@ public class ObservationHarvester extends Harvester {
                             log.info("delete: " + hs.getClass().getSimpleName() + "[" + hs.getSkipID() + " " + emsg + "]");
                             harvestSkipDAO.delete(hs);
                         }
-                    } else if (skipped) {
-                        // o == null
-                        if (ow.entity.error instanceof ResourceNotFoundException) {
-                            // observation not obtainable from source == missed deletion
-                            ObservationURI uri = new ObservationURI(hs.getSkipID());
-                            ObservationState cur = destObservationDAO.getState(uri);
-                            if (cur != null) {
-                                log.info("delete: " + cur.getURI() + " aka " + cur.id);
-                                destObservationDAO.delete(cur.id);
-                            }
-                            log.info("delete: " + hs.getClass().getSimpleName() + "[" + hs.getSkipID() + "]");
-                            harvestSkipDAO.delete(hs);
-                        } else {
-                            // defer to the main catch for error handling
-                            throw ow.entity.error;
-                        }
                     } else if (ow.entity.error != null) {
                         // o == null when harvesting from service: try to make progress on failures
                         if (state != null && obsState != null && obsState.maxLastModified != null) {
@@ -401,9 +386,14 @@ public class ObservationHarvester extends Harvester {
                             state.curLastModified = obsState.maxLastModified;
                             state.curID = null; // unknown
                         }
-                        if (ow.entity.error instanceof ResourceNotFoundException
-                                && obsState != null) {
-                            ObservationState cur = destObservationDAO.getState(obsState.getURI());
+                        if (ow.entity.error instanceof ResourceNotFoundException) {
+                            ObservationURI uri;
+                            if (skipped) {
+                                uri = new ObservationURI(hs.getSkipID());
+                            } else {
+                                uri = obsState.getURI();
+                            }
+                            ObservationState cur = destObservationDAO.getState(uri);
                             if (cur != null) {
                                 log.info("delete: " + cur.getURI() + " aka " + cur.id);
                                 destObservationDAO.delete(cur.id);
@@ -447,10 +437,14 @@ public class ObservationHarvester extends Harvester {
                     }
                     ret.handled++;
                     skipMsg = oops.getMessage(); // message for HarvestSkipURI record
-                } catch (TransientException oops) {
-                    log.error("NETWORK PROBLEM - " + oops.getMessage());
+                } catch (TransientException ex) {
+                    log.error("NETWORK PROBLEM - " + ex.getMessage());
                     ret.handled++;
-                    skipMsg = oops.getMessage(); // message for HarvestSkipURI record
+                    skipMsg = ex.getMessage(); // message for HarvestSkipURI record
+                } catch (RemoteServiceException ex) {
+                    log.error("REMOTE PROBLEM - " + ex.getMessage());
+                    ret.handled++;
+                    skipMsg = ex.getMessage(); // message for HarvestSkipURI record
                 } catch (NullPointerException ex) {
                     log.error("BUG", ex);
                     ret.abort = true;
@@ -512,7 +506,7 @@ public class ObservationHarvester extends Harvester {
                             } else {
                                 skip = harvestSkipDAO.get(source, cname, ow.entity.observationState.getURI().getURI());
                             }
-                            Date tryAfter = null;
+                            Date tryAfter = new Date();
                             if (o != null) {
                                 tryAfter = o.getMaxLastModified();
                             }
