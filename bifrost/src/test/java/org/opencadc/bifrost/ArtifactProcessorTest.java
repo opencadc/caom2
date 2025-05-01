@@ -75,12 +75,15 @@ import ca.nrc.cadc.caom2.PublisherID;
 import ca.nrc.cadc.caom2.ReleaseType;
 import ca.nrc.cadc.caom2ops.ArtifactQueryResult;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.opencadc.datalink.DataLink;
 
@@ -98,6 +101,16 @@ public class ArtifactProcessorTest {
 
     static PublisherID PUB_ID = new PublisherID(URI.create("ivo://opencadc.org/BAR?bar/baz"));
     static String BASE_ARTIFACT_URI = "foo:BAR/bar_baz_";
+
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
+    }
 
     public ArtifactProcessorTest() {
     }
