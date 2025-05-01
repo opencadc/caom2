@@ -72,6 +72,7 @@ package ca.nrc.cadc.tap.caom2;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.PropertiesReader;
 import static ca.nrc.cadc.uws.JobAttribute.JOB_ID;
 import java.net.URI;
 import java.net.URL;
@@ -79,7 +80,9 @@ import java.security.PrivilegedExceptionAction;
 import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -96,6 +99,16 @@ public class DataLinkURLFormatterTest {
 
     String columnID = "pubid";
     URI uri = URI.create("ivo://opencadc.org/collection?product");
+
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+    
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
+    }
 
     @Test
     public final void testNull() {
