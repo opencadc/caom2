@@ -130,6 +130,8 @@ public class CaomReadAccessConverter extends SelectNavigator {
     public static final Map<String, AssetTable> ASSET_TABLES = new HashMap<String, AssetTable>();
 
     static {
+        // TODO: for CAOM-2.5 these read group colums are text[] with different names so this does not currently work
+
         // caom2
         ASSET_TABLES.put("caom2.Observation".toLowerCase(), new AssetTable("obsID", "metaRelease", "metaReadAccessGroups"));
         ASSET_TABLES.put("caom2.Plane".toLowerCase(), new AssetTable("planeID", "metaRelease", "metaReadAccessGroups"));

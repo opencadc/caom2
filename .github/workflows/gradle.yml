@@ -26,45 +26,21 @@ jobs:
     - name: build and test caom2-artifact-resolvers
       run: cd caom2-artifact-resolvers && ../gradlew --info clean assemble javadoc checkstyleMain install
 
-# OBSOLETE
-#    - name: build and test fits2caom2
-#      run: cd fits2caom2 && ../gradlew --info clean build javadoc install
-
     - name: build and test caom2-validator
       run: cd caom2-validator && ../gradlew --info clean build
 
     - name: build and test caom2-access-control
       run: cd caom2-access-control && ../gradlew --info clean build javadoc checkstyleMain install
 
-    - name: build and test caom2-persist
-      run: cd caom2-persist && ../gradlew --info clean build javadoc checkstyleMain install
-
     - name: build and test caom2-repo
       run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
 
-## deprecated:
-    - name: build and test caom2persistence
-      run: cd caom2persistence && ../gradlew --info clean build javadoc checkstyleMain install
-## forked:
     - name: build and test caom2-db
       run: cd caom2-db && ../gradlew --info clean build javadoc checkstyleMain install
       
-    - name: build and test caom2-artifact-sync
-      run: cd caom2-artifact-sync && ../gradlew --info clean build javadoc checkstyleMain install
-
     - name: build and test caom2-artifact-store-si
       run: cd caom2-artifact-store-si && ../gradlew --info clean build javadoc checkstyleMain install
       
-    - name: build and test caom2-repo
-      run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
- 
-# OBSOLETE     
-#    - name: build and test caom2-repo-server
-#      run: cd caom2-repo-server && ../gradlew --info clean build javadoc checkstyleMain install
-
-#    - name: build and test caom2-test-repo
-#      run: cd caom2-test-repo && ../gradlew --info clean build javadoc checkstyleMain install
-
     - name: build and test caom2-collection-validator
       run: cd caom2-collection-validator && ../gradlew --info clean build javadoc checkstyleMain
 
@@ -73,22 +49,6 @@ jobs:
 
     - name: build and test caom2-tap
       run: cd caom2-tap && ../gradlew clean build javadoc install
-
-# OBSOLETE
-#    - name: build and test caom2-tap-server
-#      run: cd caom2-tap-server && ../gradlew clean build javadoc install
-    
-#    - name: build and test caom2-datalink-server
-#      run: cd caom2-datalink-server && ../gradlew clean build javadoc install
-    
-#    - name: build and test caom2-meta-server
-#      run: cd caom2-meta-server && ../gradlew clean build javadoc install
-    
-#    - name: build and test caom2-pkg-server
-#      run: cd caom2-pkg-server && ../gradlew clean build javadoc install
-    
-#    - name: build and test caom2-soda-server
-#      run: cd caom2-soda-server && ../gradlew clean build javadoc install
 
 ## applications
     - name: build and test icewind 

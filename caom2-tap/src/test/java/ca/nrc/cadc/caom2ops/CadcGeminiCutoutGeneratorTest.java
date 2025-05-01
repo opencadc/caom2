@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2ops;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
 
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ import org.junit.Test;
 /**
  * @author yeunga
  */
-public class CadcGeminiCutoutGeneratorTest {
+public class CadcGeminiCutoutGeneratorTest extends AbstractTest {
     private static final Logger log = Logger.getLogger(CadcGeminiCutoutGeneratorTest.class);
 
     static {

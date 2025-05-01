@@ -62,100 +62,34 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus.tap;
+package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.tap.parser.BaseExpressionDeParser;
-import ca.nrc.cadc.tap.parser.PgAdqlQuery;
-import ca.nrc.cadc.tap.parser.PgsphereDeParser;
-import ca.nrc.cadc.tap.parser.converter.ColumnNameConverter;
-import ca.nrc.cadc.tap.parser.converter.TableNameConverter;
-import ca.nrc.cadc.tap.parser.converter.TableNameReferenceConverter;
-import ca.nrc.cadc.tap.parser.converter.TopConverter;
-import ca.nrc.cadc.tap.parser.converter.postgresql.PgFunctionNameConverter;
-import ca.nrc.cadc.tap.parser.extractor.FunctionExpressionExtractor;
-import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
-import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
-import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
-import ca.nrc.cadc.tap.parser.navigator.SelectNavigator;
-import net.sf.jsqlparser.util.deparser.SelectDeParser;
+import ca.nrc.cadc.util.PropertiesReader;
 import org.apache.log4j.Logger;
-import org.opencadc.argus.tap.query.CaomReadAccessConverter;
-import org.opencadc.argus.tap.query.CaomRegionConverter;
-import org.opencadc.argus.tap.query.CaomSelectListConverter;
+import org.junit.After;
+import org.junit.Before;
 
 /**
- * AdqlQuery implementation for PostgreSQL + pg_sphere + CAOM-2.
- *
+ * Hack to setup cadc-registry config for unit tests that need it.
+ * 
  * @author pdowler
  */
-public class CaomAdqlQuery extends PgAdqlQuery {
+public class AbstractTest {
+    private static final Logger log = Logger.getLogger(AbstractTest.class);
 
-    private static Logger log = Logger.getLogger(CaomAdqlQuery.class);
-
-    private final boolean enableMetaReadAccessConverter;
-
-    public CaomAdqlQuery() {
-        this(false); // non-functional with the current text[] implementation
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+    
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
     }
 
-    protected CaomAdqlQuery(boolean enableMetaReadAccessConverter) {
-        this.enableMetaReadAccessConverter = enableMetaReadAccessConverter;
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-
-        // convert TOP -> LIMIT
-        super.navigatorList.add(new TopConverter(
-                new ExpressionNavigator(), new ReferenceNavigator(), new FromItemNavigator()));
-
-        // convert ADQL geometry function calls to alternate form
-        super.navigatorList.add(new CaomRegionConverter(tapSchema));
-
-        // convert functions to PG-specific names
-        navigatorList.add(new FunctionExpressionExtractor(
-                new PgFunctionNameConverter(), new ReferenceNavigator(), new FromItemNavigator()));
-
-        // after CaomRegionConverter: triggering off the same column names and converting some uses
-        TableNameConverter tnc = new TableNameConverter(true);
-        tnc.put("ivoa.ObsCore", "caom2.ObsCore");
-        tnc.put("ivoa.ObsCore_radio", "caom2.ObsCore_radio");
-        // TAP-1.1 version of tap_schema
-        tnc.put("tap_schema.schemas", "tap_schema.schemas11");
-        tnc.put("tap_schema.tables", "tap_schema.tables11");
-        tnc.put("tap_schema.columns", "tap_schema.columns11");
-        tnc.put("tap_schema.keys", "tap_schema.keys11");
-        tnc.put("tap_schema.key_columns", "tap_schema.key_columns11");
-        TableNameReferenceConverter tnrc = new TableNameReferenceConverter(tnc.map);
-        super.navigatorList.add(new SelectNavigator(new ExpressionNavigator(), tnrc, tnc));
-
-        if (enableMetaReadAccessConverter) {
-            // enforce access control policy in queries - must be after TableNameConverter
-            super.navigatorList.add(new CaomReadAccessConverter());
-        }
-
-        // change caom2.Artifact.accessURL to caom2.Artifact.uri
-        super.navigatorList.add(new CaomSelectListConverter(tapSchema));
-
-        //for (Object o : navigatorList)
-        //    log.debug("navigator: " + o.getClass().getName());
-    }
-
-    @Override
-    protected BaseExpressionDeParser getExpressionDeparser(SelectDeParser dep, StringBuffer sb) {
-        return new PgsphereDeParser(dep, sb);
-    }
-
-    @Override
-    public String getSQL() {
-        String sql = super.getSQL();
-        log.debug("SQL:\n" + sql);
-        return sql;
+    public AbstractTest() { 
     }
 }
