@@ -100,7 +100,7 @@ public class CaomAdqlQuery extends PgAdqlQuery {
     private final boolean enableMetaReadAccessConverter;
 
     public CaomAdqlQuery() {
-        this(true);
+        this(false); // non-functional with the current text[] implementation
     }
 
     protected CaomAdqlQuery(boolean enableMetaReadAccessConverter) {
