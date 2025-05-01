@@ -73,6 +73,7 @@ import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.caom2.artifact.resolvers.VOSpaceResolver;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -80,13 +81,15 @@ import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author yeunga
  */
-public class VOSpaceCutoutGeneratorTest {
+public class VOSpaceCutoutGeneratorTest extends AbstractTest {
     private static final Logger log = Logger.getLogger(VOSpaceCutoutGeneratorTest.class);
 
     static {
@@ -113,7 +116,7 @@ public class VOSpaceCutoutGeneratorTest {
     @Test
     public void testToURLWithNoLabel() {
         try {
-        	String label = null;
+            String label = null;
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
@@ -145,7 +148,7 @@ public class VOSpaceCutoutGeneratorTest {
     @Test
     public void testToURLWithUncompressedFilename() {
         try {
-        	String label = "label1";
+            String label = "label1";
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
@@ -178,7 +181,7 @@ public class VOSpaceCutoutGeneratorTest {
     @Test
     public void testToURLWithCompressedFilename() {
         try {
-        	String label = "label2";
+            String label = "label2";
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
@@ -211,7 +214,7 @@ public class VOSpaceCutoutGeneratorTest {
     @Test
     public void testToURLWithAlphaCompressedFitsFilename() {
         try {
-        	String label = "label3";
+            String label = "label3";
             List<String> cutouts = new ArrayList<String>();
             cutouts.add(CUTOUT1);
             cutouts.add(CUTOUT2);
