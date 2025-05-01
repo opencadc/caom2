@@ -149,7 +149,7 @@ public class ObservationValidator extends Harvester {
             log.info("finished batch: " + num);
         }
 
-        log.info("DONE: " + entityClass.getSimpleName() + "\n");
+        log.info("DONE: " + Observation.class.getSimpleName() + "\n");
     }
 
     private static class Progress {
@@ -224,8 +224,8 @@ public class ObservationValidator extends Harvester {
             tmpDstState = null; // was GC, now empty
             log.info("destination set: " + dstState.size());
 
+            log.info("comparing sets for discrepancies...");
             Set<ObservationStateError> errlist = calculateErroneousObservationStates(srcState, dstState);
-
             log.info("discrepancies found: " + errlist.size());
 
             timeQuery = System.currentTimeMillis() - t;
@@ -361,7 +361,7 @@ public class ObservationValidator extends Harvester {
                 }
             } else if (!nochecksum && !listCorrect.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "mismatched accMetaChecksum (validate)");
-                log.info("************************ adding mismatched accMetaChecksum: " + os.getURI());
+                log.debug("************************ adding mismatched accMetaChecksum: " + os.getURI());
                 if (!listErroneous.contains(ose)) {
                     listErroneous.add(ose);
                 }
