@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2021.                            (c) 2021.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,115 +62,34 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package ca.nrc.cadc.caom2ops;
 
-import ca.nrc.cadc.net.NetUtil;
-import ca.nrc.cadc.util.Log4jInit;
-
 import ca.nrc.cadc.util.PropertiesReader;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.After;
+import org.junit.Before;
 
 /**
- * @author yeunga
+ * Hack to setup cadc-registry config for unit tests that need it.
+ * 
+ * @author pdowler
  */
-public class CadcGeminiCutoutGeneratorTest extends AbstractTest {
-    private static final Logger log = Logger.getLogger(CadcGeminiCutoutGeneratorTest.class);
+public class AbstractTest {
+    private static final Logger log = Logger.getLogger(AbstractTest.class);
 
-    static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2ops", Level.INFO);
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+    
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
     }
 
-    private static final String CUTOUT1 = "[1][100:200, 100:200]";
-    private static final String CUTOUT2 = "[2][300:400, 300:400]";
-    private static final String CUTOUT3 = "[3][500:600, 500:600]";
-    private static final String CUTOUT4 = "[4][700:800, 700:800]";
-
-    private static final String CADC_FILE_URI = "gemini:GEMINI/bar.fits";
-    private static final String AD_FILE_URI = "ad:Archive/bar.fits.gz"; // invalid uri
-
-    CadcGeminiCutoutGenerator cutoutGenerator = new CadcGeminiCutoutGenerator();
-
-    public CadcGeminiCutoutGeneratorTest() {
-
-    }
-
-    @Test
-    public void testToURLWithNullLabel() {
-        try {
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            cutouts.add(CUTOUT3);
-            cutouts.add(CUTOUT4);
-            URI uri = new URI(CADC_FILE_URI);
-            URL url = cutoutGenerator.toURL(uri, cutouts, null);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            String urlString = url.toExternalForm();
-            URL storageURI = cutoutGenerator.toURL(new URI(CADC_FILE_URI));
-            Assert.assertTrue(urlString.contains(storageURI.toString()));
-            String[] cutoutArray = NetUtil.decode(url.getQuery()).split("&");
-            for (int i = 0; i < cutoutArray.length; i++) {
-                String c = cutoutArray[i];
-                String[] kv = c.split("=");
-                Assert.assertEquals("SUB param", "SUB", kv[0]);
-                Assert.assertEquals("pixel cutout value", cutouts.get(i), kv[1]);
-            }
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testToURLWithInvalidLabel() {
-        try {
-            String label = "label1%";
-            List<String> cutouts = new ArrayList<String>();
-            cutouts.add(CUTOUT1);
-            cutouts.add(CUTOUT2);
-            cutouts.add(CUTOUT3);
-            cutouts.add(CUTOUT4);
-            URI uri = new URI(CADC_FILE_URI);
-            cutoutGenerator.toURL(uri, cutouts, label);
-            Assert.fail("should have thrown a UsageFault due to an invalid label");
-        } catch (UsageFault uf) {
-            // expected, success
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
-    public void testInvalidCadcURI() throws Exception {
-        List<String> cutouts = new ArrayList<String>();
-        cutouts.add(CUTOUT1);
-        cutouts.add(CUTOUT2);
-        cutouts.add(CUTOUT3);
-        cutouts.add(CUTOUT4);
-        URI uri = new URI(AD_FILE_URI);
-        try {
-            URL url = cutoutGenerator.toURL(uri, cutouts, null);
-            Assert.fail("expected IllegalArgumentException, got " + url);
-        } catch (IllegalArgumentException expected) {
-            Assert.assertTrue(expected.getMessage().contains("Invalid URI"));
-            log.debug("expected exception: " + expected);
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
+    public AbstractTest() { 
     }
 }

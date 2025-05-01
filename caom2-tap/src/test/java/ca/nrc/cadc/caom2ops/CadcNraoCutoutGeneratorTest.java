@@ -84,7 +84,7 @@ import org.junit.Test;
 /**
  * @author yeunga
  */
-public class CadcNraoCutoutGeneratorTest {
+public class CadcNraoCutoutGeneratorTest extends AbstractTest {
     private static final Logger log = Logger.getLogger(CadcNraoCutoutGeneratorTest.class);
 
     static {

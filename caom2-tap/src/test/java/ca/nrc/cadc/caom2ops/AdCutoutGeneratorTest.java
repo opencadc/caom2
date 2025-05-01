@@ -84,7 +84,7 @@ import org.junit.Test;
 /**
  * @author yeunga
  */
-public class AdCutoutGeneratorTest {
+public class AdCutoutGeneratorTest extends AbstractTest {
     private static final Logger log = Logger.getLogger(AdCutoutGeneratorTest.class);
 
     static {
