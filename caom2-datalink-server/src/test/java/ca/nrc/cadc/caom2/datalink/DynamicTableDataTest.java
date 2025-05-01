@@ -79,13 +79,16 @@ import ca.nrc.cadc.caom2ops.CaomTapQuery;
 import ca.nrc.cadc.caom2ops.ServiceConfig;
 import ca.nrc.cadc.caom2ops.UsageFault;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.uws.Job;
 import ca.nrc.cadc.uws.Parameter;
 import java.net.URI;
 import java.util.Iterator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.opencadc.datalink.DataLink;
 
@@ -107,6 +110,16 @@ public class DynamicTableDataTest
     
     ServiceConfig conf = new ServiceConfig();
     
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+    
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
+    }
+
     public DynamicTableDataTest() { }
 
     //@Test
