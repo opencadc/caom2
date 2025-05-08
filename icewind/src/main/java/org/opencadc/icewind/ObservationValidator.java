@@ -158,12 +158,13 @@ public class ObservationValidator extends Harvester {
         int mismatch = 0;
         int known = 0;
         int added = 0;
-        int numMissedHarvest = 0;
+        int missed = 0;
+        int future = 0;
 
         @Override
         public String toString() {
             return found + " mismatches: " + mismatch + " known: " + known + " new: " + added
-                    + " missed: " + numMissedHarvest;
+                    + " missed: " + missed + " future: " + future;
         }
     }
 
@@ -203,11 +204,18 @@ public class ObservationValidator extends Harvester {
             Iterator<ObservationState> siter = tmpSrcState.iterator();
             while (siter.hasNext()) {
                 ObservationState s = siter.next();
-                srcState.add(s);
+                boolean added = srcState.add(s);
+                if (!added) {
+                    log.debug("duplicate src entry: " + s.getURI().getURI());
+                    srcState.remove(s); // remove older one and keep newer one
+                    if (!srcState.add(s)) {
+                        log.warn("failed to remove+add to keep latest duplicate: " + s.getURI().getURI());
+                    }    
+                }
                 siter.remove();
             }
-            //srcState.addAll(tmpSrcState);
             tmpSrcState = null; // was GC, now empty
+            
             log.info("source set: " + srcState.size());
 
             log.info("getObservationList: " + dest + " " + collection);
@@ -220,7 +228,6 @@ public class ObservationValidator extends Harvester {
                 dstState.add(s);
                 diter.remove();
             }
-            //dstState.addAll(tmpDstState);
             tmpDstState = null; // was GC, now empty
             log.info("destination set: " + dstState.size());
 
@@ -230,59 +237,72 @@ public class ObservationValidator extends Harvester {
 
             timeQuery = System.currentTimeMillis() - t;
             t = System.currentTimeMillis();
-
-            List<SkippedWrapperURI<ObservationStateError>> entityListSrc = wrap(errlist);
-
             ret.found = srcState.size();
 
-            ListIterator<SkippedWrapperURI<ObservationStateError>> iter = entityListSrc.listIterator();
+            Iterator<ObservationStateError> iter = errlist.iterator();
             while (iter.hasNext()) {
-                SkippedWrapperURI<ObservationStateError> ow = iter.next();
-                ObservationStateError o = ow.entity;
+                ObservationStateError ose = iter.next();
                 iter.remove(); // allow garbage collection during loop
 
-                String skipMsg = null;
-
                 try {
-                    if (!dryrun) {
-                        if (o != null) {
-                            skipMsg = o.getError();
-                            try {
-                                log.debug("starting HarvestSkipURI transaction");
-                                boolean putSkip = true;
-                                HarvestSkipURI skip = harvestSkip.get(source, cname, o.getObs().getURI().getURI());
-                                Date tryAfter = o.getObs().maxLastModified;
-                                if (skip == null) {
-                                    skip = new HarvestSkipURI(source, cname, o.getObs().getURI().getURI(), tryAfter, skipMsg);
-                                    ret.added++;
-                                    if (tryAfter.before(lastHarvested)) {
-                                        ret.numMissedHarvest++;
-                                    }
-                                } else {
-                                    putSkip = false; // avoid lastModified update for no change
-                                    ret.known++;
-                                }
-
-                                if (destObservationDAO.getTransactionManager().isOpen()) {
-                                    throw new RuntimeException("BUG: found open transaction at start of next observation");
-                                }
-                                log.debug("starting transaction");
-                                destObservationDAO.getTransactionManager().startTransaction();
-
-                                // track the fail
-                                if (putSkip) {
-                                    log.info("put: " + skip);
-                                    harvestSkip.put(skip);
-                                } else {
-                                    log.info("known: " + skip);
-                                }
-                            } catch (Throwable oops) {
-                                log.warn("failed to insert HarvestSkipURI", oops);
-                                destObservationDAO.getTransactionManager().rollbackTransaction();
-                                log.warn("rollback HarvestSkipURI: OK");
-                            }
+                    String skipMsg = ose.getError();
+                    try {
+                        log.debug("starting HarvestSkipURI transaction");
+                        boolean knownSkip = false;
+                        boolean futureSkip = false;
+                        HarvestSkipURI skip = harvestSkip.get(source, cname, ose.getState().getURI().getURI());
+                        Date tryAfter = ose.getState().maxLastModified;
+                        if (skip == null) {
+                            skip = new HarvestSkipURI(source, cname, ose.getState().getURI().getURI(), tryAfter, skipMsg);
+                            ret.added++;
+                        } else {
+                            // avoid lastModified update for no change
+                            knownSkip = true;
+                            ret.known++;
+                        }
+                        if (lastHarvested != null && lastHarvested.after(tryAfter)) {
+                            ret.missed++;
+                        } else {
+                            // incremental harvest mode will fix this in the future
+                            futureSkip = true;
+                            ret.future++;
                         }
 
+                        if (destObservationDAO.getTransactionManager().isOpen()) {
+                            throw new RuntimeException("BUG: found open transaction at start of next observation");
+                        }
+                        
+                        if (!dryrun) {
+                            log.debug("starting transaction");
+                            destObservationDAO.getTransactionManager().startTransaction();
+                        }
+
+                        // track the fail
+                        String emsg = skip.errorMessage;
+                        if (emsg != null && emsg.length() > 32) {
+                            emsg = emsg.substring(0, 32);
+                        }
+                        if (knownSkip) {
+                            log.info("known: " + skip.getClass().getSimpleName() + "[" + skip.getSkipID() + " "
+                                    + df.format(skip.getTryAfter()) + " " + emsg + "]");
+                        } else if (futureSkip) {
+                            log.info("future: " + skip.getClass().getSimpleName() + "[" + skip.getSkipID() + " "
+                                    + df.format(skip.getTryAfter()) + " " + emsg + "]");
+                        } else {
+                            log.info("put: " + skip.getClass().getSimpleName() + "[" + skip.getSkipID() + " "
+                                    + df.format(skip.getTryAfter()) + " " + emsg + "]");
+                            if (!dryrun) {
+                                harvestSkip.put(skip);
+                            }
+                        }
+                    } catch (Throwable oops) {
+                        log.warn("failed to insert HarvestSkipURI", oops);
+                        if (!dryrun) {
+                            destObservationDAO.getTransactionManager().rollbackTransaction();
+                            log.warn("rollback HarvestSkipURI: OK");
+                        }
+                    }
+                    if (!dryrun) {
                         log.debug("committing transaction");
                         destObservationDAO.getTransactionManager().commitTransaction();
                         log.debug("commit: OK");
@@ -308,17 +328,17 @@ public class ObservationValidator extends Harvester {
                         log.error("SEVERE PROBLEM - probably out of space in database", oops);
                     } else if (oops instanceof DataIntegrityViolationException
                             && str.contains("duplicate key value violates unique constraint \"i_observationuri\"")) {
-                        log.error("CONTENT PROBLEM - duplicate observation: " + " " + o.getObs().getURI().getURI().toASCIIString());
+                        log.error("CONTENT PROBLEM - duplicate observation: " + " " + ose.getState().getURI().getURI().toASCIIString());
                     } else if (oops instanceof UncategorizedSQLException) {
                         if (str.contains("spherepoly_from_array")) {
-                            log.error("UNDETECTED illegal polygon: " + o.getObs().getURI().getURI());
+                            log.error("UNDETECTED illegal polygon: " + ose.getState().getURI().getURI());
                         } else {
                             log.error("unexpected exception", oops);
                         }
                     } else if (oops instanceof IllegalArgumentException
                             && str.contains("CaomValidator")
                             && str.contains("keywords")) {
-                        log.error("CONTENT PROBLEM - invalid keywords: " + " " + o.getObs().getURI().getURI().toASCIIString());
+                        log.error("CONTENT PROBLEM - invalid keywords: " + " " + ose.getState().getURI().getURI().toASCIIString());
                     } else {
                         log.error("unexpected exception", oops);
                     }
@@ -340,12 +360,12 @@ public class ObservationValidator extends Harvester {
         Iterator<ObservationState> iterDst = dstState.iterator();
         
         // TODO: implement a merge join of the two iterators and only accumulate the list of errors to return
-        
+
         while (iterSrc.hasNext()) {
             ObservationState os = iterSrc.next();
             if (!dstState.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "missed harvest");
-                log.debug("************************ adding missed harvest: " + ose.getObs().getURI());
+                log.debug("************************ adding missed harvest: " + ose.getState().getURI());
                 listErroneous.add(ose);
             } else {
                 listCorrect.add(os);
@@ -367,7 +387,7 @@ public class ObservationValidator extends Harvester {
                 }
             }
         }
-
+        
         return listErroneous;
     }
 
@@ -396,7 +416,7 @@ public class ObservationValidator extends Harvester {
     Comparator<ObservationStateError> compError = new Comparator<ObservationStateError>() {
         @Override
         public int compare(ObservationStateError o1, ObservationStateError o2) {
-            return o1.getObs().getURI().compareTo(o2.getObs().getURI());
+            return o1.getState().getURI().compareTo(o2.getState().getURI());
         }
 
     };
