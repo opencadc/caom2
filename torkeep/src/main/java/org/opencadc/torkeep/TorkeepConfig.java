@@ -159,16 +159,7 @@ public class TorkeepConfig {
         for (String collection : collections) {
             log.debug("reading collection: " + collection);
 
-            final String obsIdentifierPrefix = getProperty(properties, collection + OBS_IDENT_KEY, errors, true);
-            if (obsIdentifierPrefix != null) {
-                if (obsIdentifierPrefix.equals("caom:") 
-                    || (obsIdentifierPrefix.startsWith("ivo://") && obsIdentifierPrefix.endsWith("/"))) {
-                    log.debug("obsIdentifierPrefix: " + obsIdentifierPrefix);
-                } else {
-                    errors.append(String.format("%s: invalid obsIdentifierPrefix %s, expected caom: or ivo://{authority}/",
-                                collection + OBS_IDENT_KEY, obsIdentifierPrefix));
-                }
-            }
+            final String obsIdentifierPrefix = getObsIdentifierPrefix(properties, collection + OBS_IDENT_KEY, errors);
             final URI basePublisherID = getBasePublisherID(properties, collection + BASE_PUBLISHER_ID_KEY, errors);
 
             String computeMetadataValue = getProperty(properties, collection + COMPUTE_METADATA_KEY, errors, false);
@@ -248,16 +239,31 @@ public class TorkeepConfig {
         if (basePublisherIDValue != null) {
             try {
                 basePublisherID = new URI(basePublisherIDValue);
-                if (!"ivo".equals(basePublisherID.getScheme()) || basePublisherID.getAuthority() == null) {
-                    errors.append(String.format("%s: invalid basePublisherID %s, expected ivo://<authority>[/<path>]\n",
+                if ("ivo".equals(basePublisherID.getScheme()) && basePublisherID.getPath().endsWith("/")) {
+                    log.info(key + ": " + basePublisherID + " OK");
+                } else {
+                    errors.append(String.format("%s: invalid basePublisherID %s, expected ivo://<authority>/[<path>/]\n",
                             key, basePublisherIDValue));
                 }
             } catch (URISyntaxException e) {
-                errors.append(String.format("%s: invalid basePublisherID URI %s - %s\n",
+                errors.append(String.format("%s: invalid basePublisherID URI, expected ivo://<authority>/[<path>/] %s reason: %s\n",
                         key, basePublisherIDValue, e.getMessage()));
             }
         }
         return basePublisherID;
     }
 
+    private String getObsIdentifierPrefix(MultiValuedProperties properties, String key, StringBuilder errors) {
+        String obsIdentifierPrefix = getProperty(properties, key, errors, true);
+        if (obsIdentifierPrefix != null) {
+            if (obsIdentifierPrefix.equals("caom:") 
+                    || (obsIdentifierPrefix.startsWith("ivo://") && obsIdentifierPrefix.endsWith("/"))) {
+                log.info(key + ": " + obsIdentifierPrefix + " OK");
+            } else {
+                errors.append(String.format("%s: invalid obsIdentifierPrefix %s, expected caom: or ivo://{authority}/[<path>/]",
+                            key, obsIdentifierPrefix));
+            }
+        }
+        return obsIdentifierPrefix;
+    }
 }
