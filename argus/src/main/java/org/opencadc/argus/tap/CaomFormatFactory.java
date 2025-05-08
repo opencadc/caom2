@@ -106,9 +106,13 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     }
 
     @Override
-    public Format<Object> getFormat(TapSelectItem d) {
-        Format<Object> ret = super.getFormat(d);
-        log.debug("fomatter: " + d + " " + ret.getClass().getName());
+    public Format<Object> getFormat(TapSelectItem tsi) {
+        Format<Object> ret = super.getFormat(tsi);
+        if ("ivoa.ObsCore".equalsIgnoreCase(tsi.tableName)
+                && "access_url".equalsIgnoreCase(tsi.getColumnName())) {
+            ret = new DataLinkURLFormat("ivoaPublisherID");
+        }
+        log.debug("fomatter: " + tsi + " " + ret.getClass().getName());
         return ret;
     }
 
@@ -156,20 +160,5 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     @Override
     public Format<Object> getIntervalFormat(TapSelectItem columnDesc) {
         return new FlexIntervalFormat(columnDesc.getDatatype().isVarSize());
-    }
-
-    @Override
-    public Format<Object> getClobFormat(TapSelectItem columnDesc) {
-        // function with CLOB argument
-        if (columnDesc != null) {
-            // ivoa.ObsCore
-            if ("ivoa.ObsCore".equalsIgnoreCase(columnDesc.tableName)) {
-                if ("access_url".equalsIgnoreCase(columnDesc.getColumnName())) {
-                    return new DataLinkURLFormat();
-                }
-            }
-        }
-
-        return super.getClobFormat(columnDesc);
     }
 }

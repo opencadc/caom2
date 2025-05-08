@@ -149,7 +149,7 @@ public class DataLinkURLFormatterTest {
         }
 
         public String run() throws Exception {
-            DataLinkURLFormat formatter = new DataLinkURLFormat();
+            DataLinkURLFormat formatter = new DataLinkURLFormat("ivoaPublisherID");
             return formatter.format(val);
         }
     }

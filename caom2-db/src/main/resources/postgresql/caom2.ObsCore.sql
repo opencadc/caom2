@@ -95,18 +95,6 @@ AS SELECT
     p.position_resolutionBounds[2],
     p.position_dimension[1],
     p.position_dimension[2],
-    p._q_position_bounds,
-    p._q_position_bounds_area,
-    p._q_position_bounds_centroid,
-
--- temporal axis
-    p.time_bounds[1],
-    p.time_bounds[2],
-    p.time_exposure,
-    p.time_exposureBounds[1],
-    p.time_exposureBounds[2],
-    p.time_resolution,
-    p.time_dimension,
 
 -- spectral axis
     p.energy_bounds[1],
@@ -119,6 +107,15 @@ AS SELECT
 -- em_ucd currently not known in caom2
     CAST(NULL AS varchar),
 
+-- temporal axis
+    p.time_bounds[1],
+    p.time_bounds[2],
+    p.time_exposure,
+    p.time_exposureBounds[1],
+    p.time_exposureBounds[2],
+    p.time_resolution,
+    p.time_dimension,
+
 -- polarization axis
     p.polarization_states,
     p.polarization_dimension,
@@ -128,6 +125,11 @@ AS SELECT
 
 -- custom columns
     o.maxLastModified,
+
+-- query optimisation
+    p._q_position_bounds,
+    p._q_position_bounds_area,
+    p._q_position_bounds_centroid,
 
 -- hidden columns    
     p.dataRelease, p.dataReadGroups,

@@ -75,11 +75,15 @@ _obsIdentifierPrefix_ defines the mapping from the REST API (`/observations/{col
 the Observation.uri style used for the collection. Two styles are supported:
 * `{collection}.obsIdentifierPrefix = caom:` maps to URIs of the form `caom:{collection}/{obs identifier}`
 * `{collection}.obsIdentifierPrefix = ivo://{authority}/` maps to URIs of the form `ivo://{authority}/{collection}?{obs identifier}`
+An _obsIdentifierPrefix_ using the `ivo` scheme must end in a trailing `/`.
 
 _basePublisherID_ is the base for generating a local Plane publisherID value from the Plane.uri value. This would be
 ommitted if the Plane.uri values used for the collection are already `ivo` identifiers; in this case the Plane.uri 
 (nominally the creator id in IVOA use) is simply copied to the publisherID field. If the Plane.uri values use the traditional internal style (`caom:{collection}/{plane identifier}`) then the _basePublisherID_ is required to transform
-those internal values into `ivo` URIs of the form `{basePublisherID}/{collection}?{plane identifier}`. For example,
+those internal values into `ivo` URIs of the form `{basePublisherID}/{collection}?{plane identifier}`. The _basePublisherID_
+must end with a trailing `/`.
+
+For example,
 ```
 org.opencadc.torkeep.collection = CFHT
 {collection name}.obsIdentifierPrefix = ivo://opencadc.org/
