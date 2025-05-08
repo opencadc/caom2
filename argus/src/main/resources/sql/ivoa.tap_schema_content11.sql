@@ -145,15 +145,19 @@ insert into tap_schema.columns11
     'timestamp of last modification of the metadata', NULL, NULL, 'char','23*','timestamp', 0,1,0,90);
 
 insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std, column_index) values
-( 'ivoa.ObsCore_radio', 'obs_publisher_did', NULL, 'natural join key', NULL, NULL, 'char', '256*','uri', 1,1,1,1),
+( 'ivoa.ObsCore_radio', 'obs_publisher_did', NULL, 'natural join key', NULL, NULL, 'char', '256*','uri', 1,1,1,99),
+( 'ivoa.ObsCore_radio', 's_largest_angular_scale_min', '???',
+    'minimum largest angular scale that is recoverable in the data', 'stat.fourier;pos;stat.min', NULL, 'double',NULL,NULL, 1,0,1,2),
+( 'ivoa.ObsCore_radio', 's_largest_angular_scale_max', '???',
+    'maximum minimum largest angular scale that is recoverable in the data', 'stat.fourier;pos;stat.max', NULL, 'double',NULL,NULL, 1,0,1,3),
 ( 'ivoa.ObsCore_radio', 'uv_distance_min', '???',
-    'minimum distance in the UV plane', 'stat.fourier;pos;stat.min', NULL, 'double',NULL,NULL, 1,0,1,2),
+    'minimum distance in the UV plane', 'stat.fourier;pos;stat.min', NULL, 'double',NULL,NULL, 1,0,1,4),
 ( 'ivoa.ObsCore_radio', 'uv_distance_max', '???',
-    'maximum distance in the UV plane', 'stat.fourier;pos;stat.max', NULL, 'double',NULL,NULL, 1,0,1,3),
+    'maximum distance in the UV plane', 'stat.fourier;pos;stat.max', NULL, 'double',NULL,NULL, 1,0,1,5),
 ( 'ivoa.ObsCore_radio', 'uv_distribution_ecc', '???',
-    'eccentricity of the UV distribution', 'stat.fourier;pos', NULL, 'double',NULL,NULL, 1,0,1,4),
+    'eccentricity of the UV distribution', 'stat.fourier;pos', NULL, 'double',NULL,NULL, 1,0,1,6),
 ( 'ivoa.ObsCore_radio', 'uv_distribution_fill', '???',
-    'filling factor of UV distribution', 'stat.fourier;pos;arith.ratio', NULL, 'double',NULL,NULL, 1,0,1,5);
+    'filling factor of UV distribution', 'stat.fourier;pos;arith.ratio', NULL, 'double',NULL,NULL, 1,0,1,7);
 
 insert into tap_schema.keys11 (key_id,from_table,target_table,description) values
 ('ivoa-core-radio', 'ivoa.ObsCore_radio', 'ivoa.ObsCore','standard way to join ivoa.ObsCore and ivoa.ObsCore_radio');

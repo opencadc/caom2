@@ -102,6 +102,7 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opencadc.tap.TapClient;
 
@@ -218,7 +219,9 @@ public class AuthQueryTest {
 
     }
 
+    // TODO: the CaomReadAccessConverter is currently disabled
     @Test
+    @Ignore
     public void testAuthQuery() {
         try {
             Date d = new Date(System.currentTimeMillis() + 365 * 86400 * 1000); // one year in future

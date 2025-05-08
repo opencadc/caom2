@@ -85,7 +85,9 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Formatter to convert obs_publisher_did value into a ready-to-use DataLink#links
+ * URL for the ivoa.ObsCore.access_url column.
+ * 
  * @author pdowler
  */
 public class DataLinkURLFormat implements Format<Object> {
@@ -93,12 +95,13 @@ public class DataLinkURLFormat implements Format<Object> {
     private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
 
     // HACK: need this to try to lookup local datalink service from config
-    private static final String DATALINK_COL_ID = "ivoaPublisherID";
+    private final String publisherColumnRef;
     
     private transient URL baseLinksURL;
     private transient boolean baseLinksConfigChecked = false;
 
-    public DataLinkURLFormat() {
+    public DataLinkURLFormat(String publisherColumnRef) {
+        this.publisherColumnRef = publisherColumnRef;
     }
 
     @Override
@@ -121,11 +124,12 @@ public class DataLinkURLFormat implements Format<Object> {
             return linkURL.toExternalForm();
         }
         
+        // TODO: make this configurable? always enable? drop?
         // try data collection with aux capability
-        linkURL = resolvePublisherID(s);
-        if (linkURL != null) {
-            return linkURL.toExternalForm();
-        }
+        //linkURL = resolvePublisherID(s);
+        //if (linkURL != null) {
+        //    return linkURL.toExternalForm();
+        //}
         
         // fall through to unresolved
         return s;
@@ -167,11 +171,11 @@ public class DataLinkURLFormat implements Format<Object> {
 
     // get the locally configured datalink service from config
     private URL getLocalDataLink(String publisherID) {
-        log.debug("getLocalDataLink: " + publisherID + " columnID=" + DATALINK_COL_ID);
+        log.debug("getLocalDataLink: " + publisherID + " columnID=" + publisherColumnRef);
         try {
             
             if (baseLinksURL == null && !baseLinksConfigChecked) {
-                this.baseLinksURL = DefaultTableWriter.getAccessURL(DATALINK_COL_ID, Standards.DATALINK_LINKS_11);
+                this.baseLinksURL = DefaultTableWriter.getAccessURL(publisherColumnRef, Standards.DATALINK_LINKS_11);
                 baseLinksConfigChecked = true; // try config once only
             }
             URL baseURL = baseLinksURL;
@@ -185,7 +189,7 @@ public class DataLinkURLFormat implements Format<Object> {
         } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG: failed to generate datalink URL for " + publisherID, ex);
         } catch (IOException ex) {
-            throw new RuntimeException("CONFIG: failed to read config for " + DATALINK_COL_ID);
+            throw new RuntimeException("CONFIG: failed to read config for " + publisherColumnRef);
         } 
     }
 }
