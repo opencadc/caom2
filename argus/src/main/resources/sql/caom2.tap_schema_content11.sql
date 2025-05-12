@@ -151,11 +151,12 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_dimension', 'dimensions (number of pixels) along the spatial axes', 'caom2:Plane.position.dimension', NULL, NULL, 'long', '2', NULL, 0,0,0 , 53),
 ( 'caom2.Plane', 'position_maxRecoverableScale', 'TBD [new in 2.5]', 'caom2:Plane.position.maxRecoverableScale', NULL, 'arcsec', 'double', '2', 'interval', 0,0,0 , 54),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 55),
+( 'caom2.Plane', 'position_resolutionBounds', 'range of median spatial resolution (FWHM)', 'caom2:Plane.position.resolutionBounds', NULL, 'arcsec', 'double', '2', 'interval', 0,0,0 , 55),
 ( 'caom2.Plane', 'position_sampleSize', 'median sample (pixel) size on spatial axes', 'caom2:Plane.position.sampleSize', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 56),
 ( 'caom2.Plane', 'position_calibration', 'calibration of the position metadata (astrometry) [new in 2.5]', 'caom2:Plane.position.timeDependent', NULL, NULL, 'char', '64*', NULL, 0,0,0 , 56),
 
 ( 'caom2.Plane', 'energy_bounds', 'queryable energy coverage', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,1,0 , 61),
-( 'caom2.Plane', 'energy_samples', 'detailed energy coverage', 'caom2:Plane.energy.samples', NULL, 'm', 'double', '*', 'interval', 0,0,0 , 62),
+( 'caom2.Plane', 'energy_samples', 'detailed energy coverage', 'caom2:Plane.energy.samples', NULL, 'm', 'double', '*', 'multiinterval', 0,0,0 , 62),
 ( 'caom2.Plane', 'energy_dimension', 'dimension (number of pixels) along energy axis', 'caom2:Plane.energy.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 63),
 ( 'caom2.Plane', 'energy_resolvingPower', 'representative relative energy resolution aka resolving power (R)', 'caom2:Plane.energy.resolvingPower', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 66),
 ( 'caom2.Plane', 'energy_resolvingPowerBounds', 'range of relative energy resolution (R)', 'caom2:Plane.energy.resolvingPowerBounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 65),
@@ -170,7 +171,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'energy_transition_transition', 'specific energy transition of species', 'caom2:Plane.energy.transition.transition', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 74),
 
 ( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 0,1,0 , 80),
-( 'caom2.Plane', 'time_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '2x*', 'interval', 0,0,0 , 81),
+( 'caom2.Plane', 'time_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '*', 'multiinterval', 0,0,0 , 81),
 ( 'caom2.Plane', 'time_dimension', 'dimension (number of pixels) along time axis', 'caom2:Plane.time.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 84),
 ( 'caom2.Plane', 'time_resolution', 'median resolution on the time axis', 'caom2:Plane.time.resolution', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 85),
 ( 'caom2.Plane', 'time_resolutionBounds', 'range of resolution on the time axis [new in 2.4]', 'caom2:Plane.time.resolutionBounds', NULL, 'd', 'double', '2', 'interval', 0,0,0 , 86),
@@ -184,7 +185,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Plane', 'custom_ctype', 'coordinate type for custom axis', 'caom2:Plane.custom.ctype', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 100),
 ( 'caom2.Plane', 'custom_bounds', 'queryable custom axis coverage', 'caom2:Plane.custom.bounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 101),
-( 'caom2.Plane', 'custom_samples', 'detailed custom axis coverage', 'caom2:Plane.custom.samples', NULL, NULL, 'double', '*', 'interval', 0,0,0 , 102),
+( 'caom2.Plane', 'custom_samples', 'detailed custom axis coverage', 'caom2:Plane.custom.samples', NULL, NULL, 'double', '*', 'multiinterval', 0,0,0 , 102),
 ( 'caom2.Plane', 'custom_dimension', 'dimension (number of pixels) along custom axis', 'caom2:Plane.custom.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 106),
 
 ( 'caom2.Plane', 'uv_distance', 'UV plane coverage', 'caom2:Plane.uv.distance', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 110),
