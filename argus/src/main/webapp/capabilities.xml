@@ -88,12 +88,6 @@
         </languageFeatures>
     </language>
 
-    <language>
-        <name>PQL</name>
-        <version>0.1</version>
-        <description>non-standard experimental PQL</description>
-    </language>
-
     <outputFormat ivo-id="ivo://ivoa.net/std/TAPRegExt#output-votable-td">
         <mime>application/x-votable+xml</mime>
         <alias>votable</alias>
