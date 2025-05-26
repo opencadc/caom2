@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Prototype CAOM TAP service
+  version: '2.0-BETA'
+  description: |
+    This is a prototype WD-CAOM-2.5 TAP service with draft ivoa.ObsCore and
+    ivoa.ObsCore_radio views.
+    
+    For CAOM-2.5, only the caom2.Observation, caom2.Plane, and caom2.Artifact
+    tables are currently used; the caom2.Part and caom2.Chunk tables are not used,
+    deprecated, and will probably be removed.
+    
+    The caom2.ArtifactDescription table will get used once the DataLink service 
+    (bifrost) is updated for CAOM-2.5.
+servers:
+- url: /argus
+
+paths:
+    /sync:
+        $ref: ./openapi/tap/tap-sync.yaml
+    /async:
+        $ref: ./openapi/tap/tap-async.yaml
+    /async/{jobID}:
+        $ref: ./openapi/uws/uws-job.yaml
+    /async/{jobID}/phase:
+        $ref: ./openapi/uws/uws-job-phase.yaml
+    /capabilities:
+        $ref: ./openapi/vosi/vosi-capabilities.yaml
+    /tables:
+        $ref: ./openapi/vosi/vosi-tableset.yaml
+    /tables/{name}:
+        $ref: ./openapi/vosi/vosi-table.yaml
+
