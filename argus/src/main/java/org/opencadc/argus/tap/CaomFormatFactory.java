@@ -161,4 +161,11 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     public Format<Object> getIntervalFormat(TapSelectItem columnDesc) {
         return new FlexIntervalFormat(columnDesc.getDatatype().isVarSize());
     }
+
+    @Override
+    protected Format<Object> getMultiIntervalFormat(TapSelectItem columnDesc) {
+        return new FlexIntervalFormat(columnDesc.getDatatype().isVarSize());
+    }
+
+    
 }

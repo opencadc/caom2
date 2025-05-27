@@ -1,0 +1,37 @@
+# UWS create job response
+created:
+    description: standard UWS 1.1 redirect to the created job URL
+    headers:
+        location:
+            schema:
+                type: string
+                format: uri
+invalid-phase-change:
+    description: the requested phase change is invalid
+    content:
+        text/plain:
+            schema:
+                type: string
+job-listing:
+    description: list of jobs owned by the caller
+    content:
+        text/xml:
+            schema:
+                type: object
+                xml:
+                    name: jobs
+                    prefix: uws
+                    namespace: http://www.ivoa.net/xml/UWS/v1.0
+        
+components:
+    schemas:
+        jobDoc:
+            description: a single UWS Job
+            content:
+                text/xml:
+                    schema:
+                        type: object
+                        xml:
+                            name: job
+                            prefix: uws
+                            namespace: http://www.ivoa.net/xml/UWS/v1.0 

@@ -17,7 +17,7 @@ group = 'org.opencadc'
 war {
     // Include the swagger-ui so that /argus provides the argus API documentation
     from(System.getenv('RPS') + '/resources/') {
-        include 'swagger-ui/'
+        include 'swagger-openapi/'
     }
     from('.') { 
         include 'VERSION'

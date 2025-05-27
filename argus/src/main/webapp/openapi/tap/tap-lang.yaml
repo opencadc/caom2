@@ -1,0 +1,6 @@
+name: LANG
+in: query
+description: specify the query language used in the QUERY parameter
+required: true
+schema:
+    type: string
