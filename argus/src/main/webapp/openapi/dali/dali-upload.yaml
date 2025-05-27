@@ -1,0 +1,10 @@
+name: UPLOAD
+in: query
+description: |
+  specify comma-separated name,location pair for a temporary table to be 
+  uploaded and used in the request
+schema:
+    type: string
+    # {table name},{location}
+    # pattern is {1+ word characters},{1+ non-whitespace characters}
+    pattern: '^[a-zA-Z]\w*,\S+$' 

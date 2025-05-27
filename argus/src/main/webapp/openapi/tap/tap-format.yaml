@@ -1,0 +1,5 @@
+name: FORMAT
+in: query
+description: "supported for backwards compatibility to 1.0 (see: RESPONSEFORMAT)"
+schema:
+    type: string

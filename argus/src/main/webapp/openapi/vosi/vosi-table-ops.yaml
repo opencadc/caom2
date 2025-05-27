@@ -1,0 +1,48 @@
+get:
+    operationId: table-ops-job-list
+    tags:
+      - Table Operations
+    summary: list async table update jobs
+    description: async job listing
+    parameters:
+    responses:
+        200:
+            $ref: ../uws/uws-responses.yaml#/job-listing
+        401:
+            $ref: ./vosi-std-responses.yaml#/not-authenticated
+        403:
+            $ref: ./vosi-std-responses.yaml#/permission-denied
+post:
+    operationId: table-ops-job-create
+    tags:
+      - Table Operations
+    summary: create async table update job 
+    description: TAP asynchronous table update (create UWS Job)
+    parameters:
+        - name: TABLE
+          in: query
+          description: a single table name as provided in tap_schema
+          required: true
+          schema:
+              type: string
+        - name: INDEX
+          in: query
+          description: create index operation; value is a column name in the table
+          required: false
+          schema:
+              type: string
+        - name: UNIQUE
+          in: query
+          description: qualifier for INDEX to create a unique index
+          required: false
+          schema:
+              type: boolean
+    responses:
+        303:
+            $ref: ../uws/uws-responses.yaml#/created
+        401:
+            $ref: ./vosi-std-responses.yaml#/not-authenticated
+        403:
+            $ref: ./vosi-std-responses.yaml#/permission-denied
+        404:
+            $ref: ./vosi-std-responses.yaml#/not-found

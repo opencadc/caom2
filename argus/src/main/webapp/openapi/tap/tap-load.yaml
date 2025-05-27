@@ -1,0 +1,44 @@
+post:
+    operationId: tap-bulk-load
+    summary: bulk load or row data
+    description: TAP synchronous bulk load endpoint
+    parameters:
+    - name: name
+      in: path
+      description: a single table name as provided in tap_schema
+      required: true
+      schema:
+        type: string
+    requestBody:
+        required: true
+        $ref: '#/components/schemas/tableRows'
+            
+    responses:
+        200:
+          description: |
+            rows loaded; 
+            TBD: both partial or complete are possible
+        401:
+            $ref: ../vosi/vosi-std-responses.yaml#/not-authenticated
+        403:
+            $ref: ../vosi/vosi-std-responses.yaml#/permission-denied
+
+components:
+    schemas:
+        tableRows:
+            content:
+                text/tab-separated-values:
+                    schema:
+                        type: string
+                text/csv:
+                    schema:
+                        type: string
+                application/fits:
+                application/x-votable+xml:
+                    schema:
+                        type: object
+                        xml:
+                            name: VOTABLE
+                            namespace: http://www.ivoa.net/xml/VOTable/v1.3
+                
+                

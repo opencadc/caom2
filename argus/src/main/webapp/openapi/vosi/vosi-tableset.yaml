@@ -1,0 +1,37 @@
+get:
+    operationId: get-tableset
+    tags: 
+      - VOSI table metadata
+    summary: VOSI TableSet
+    description: Provides the table metadata in the form of a TableSet description
+    parameters:
+        - name: detail
+          in: query
+          description: level of detail requested
+          required: false
+          schema:
+            type: string
+            enum: [min, max]
+    responses:
+        200:
+            $ref: '#/components/schemas/tablesetDoc'
+        400:
+            $ref: ./vosi-std-responses.yaml#/bad-request
+        401:
+            $ref: ./vosi-std-responses.yaml#/not-authenticated
+        403:
+            $ref: ./vosi-std-responses.yaml#/permission-denied
+
+components:
+    schemas:
+        tablesetDoc:
+            description: metadata for schemas and tables
+            content:
+                text/xml:
+                    schema:
+                        type: object
+                        xml:
+                            name: tableset
+                            prefix: vosi
+                            namespace: http://www.ivoa.net/xml/VOSITables/v1.0
+

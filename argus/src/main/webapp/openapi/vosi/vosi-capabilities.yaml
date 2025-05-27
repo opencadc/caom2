@@ -1,0 +1,44 @@
+head:
+    operationId: probe-capabilities
+    tags: 
+      - VOSI Capabilities
+    summary: VOSI Capabilities with SSO-next prototype
+    description: |
+        Get standard headers for the service. The standard headers should include
+        AAI related headers (www-authenticate challenges or x-vo-authenticated
+        indicator) if applicable, server name and version info, and other
+        applicable header information. SSO-next: clients use this operation to probe
+        for available authentication methods.
+    responses:
+        '200':
+            $ref: ./vosi-std-responses.yaml#/authenticated
+        '401':
+            $ref: ./vosi-std-responses.yaml#/not-authenticated
+        '403':
+            $ref: ./vosi-std-responses.yaml#/permission-denied
+get:
+    operationId: read-capabilities
+    tags: 
+      - VOSI Capabilities
+    summary: VOSI Capabilities with SSO-next prototype
+    description: Get the set of VOResource capability descriptions for this service.
+    responses:
+        '200':
+          $ref: '#/components/schemas/capabilities'
+        '401':
+            $ref: ./vosi-std-responses.yaml#/not-authenticated
+        '403':
+            $ref: ./vosi-std-responses.yaml#/permission-denied
+
+components:
+    schemas:
+        capabilities:
+            description: A VOSI Capabilities document
+            content:
+                text/xml:
+                    schema:
+                        type: object
+                        xml:
+                            name: capabilities
+                            prefix: vosi
+                            namespace: http://www.ivoa.net/xml/VOSICapabilities/v1.0

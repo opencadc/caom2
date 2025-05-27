@@ -1,0 +1,7 @@
+# UWS create job response
+invalid-query:
+    description: the requested TAP query job is invalid; this is usually the ADQL query
+    content:
+        text/plain:
+            schema:
+                type: string

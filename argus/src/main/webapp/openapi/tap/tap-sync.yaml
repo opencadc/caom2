@@ -1,0 +1,49 @@
+get:
+    operationId: sync-query-job-get
+    tags:
+      - TAP Query
+    summary: execute sync query
+    description: TAP synchronous query endpoint
+    parameters:
+      - $ref: ./tap-lang.yaml
+      - $ref: ./tap-query.yaml
+      - $ref: ./tap-format.yaml
+      - $ref: ../dali/dali-maxrec.yaml
+      - $ref: ../dali/dali-responseformat.yaml
+      - $ref: ../dali/dali-upload.yaml
+    responses:
+        200:
+            description: successful response
+        303:
+            description: redirect to the job result (optional)
+        400:
+            $ref: ./tap-responses.yaml#/invalid-query
+        401:
+            $ref: ../vosi/vosi-std-responses.yaml#/not-authenticated
+        403:
+            $ref: ../vosi/vosi-std-responses.yaml#/permission-denied
+post:
+    operationId: sync-query-job-create
+    tags:
+      - TAP Query
+    summary: execute sync query
+    description: TAP synchronous query endpoint
+    parameters:
+      - $ref: ./tap-lang.yaml
+      - $ref: ./tap-query.yaml
+      - $ref: ./tap-format.yaml
+      - $ref: ../dali/dali-maxrec.yaml
+      - $ref: ../dali/dali-responseformat.yaml
+      - $ref: ../dali/dali-upload.yaml
+    responses:
+        200:
+            description: successful response
+        303:
+            description: redirect to the job result (optional)
+        400:
+            $ref: ./tap-responses.yaml#/invalid-query
+        401:
+            $ref: ../vosi/vosi-std-responses.yaml#/not-authenticated
+        403:
+            $ref: ../vosi/vosi-std-responses.yaml#/permission-denied
+
