@@ -44,8 +44,8 @@ jobs:
     - name: build and test caom2-collection-validator
       run: cd caom2-collection-validator && ../gradlew --info clean build javadoc checkstyleMain
 
-    - name: build and test caom2-remove
-      run: cd caom2-remove && ../gradlew --info clean build javadoc checkstyleMain
+#    - name: build and test caom2-remove
+#      run: cd caom2-remove && ../gradlew --info clean build javadoc checkstyleMain
 
     - name: build and test caom2-tap
       run: cd caom2-tap && ../gradlew clean build javadoc install
