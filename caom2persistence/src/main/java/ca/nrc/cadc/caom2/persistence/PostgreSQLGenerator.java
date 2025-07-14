@@ -357,7 +357,7 @@ public class PostgreSQLGenerator extends SQLGenerator {
         } else {
             log.debug("[safeSetSampledInterval] in: " + val);
             PgInterval pgi = new PgInterval();
-            PGpolygon poly = pgi.generatePolygon2D(new ca.nrc.cadc.dali.DoubleInterval(val.getLower(), val.getUpper()));
+            PGpolygon poly = pgi.generatePolygon2D(new ca.nrc.cadc.dali.Interval<Double>(val.getLower(), val.getUpper()));
             ps.setObject(col, poly);
             if (sb != null) {
                 sb.append(poly.getValue());
@@ -385,10 +385,10 @@ public class PostgreSQLGenerator extends SQLGenerator {
             }
         } else {
             log.debug("[safeSetSubIntervalList] in: " + subs.size() + " Intervals");
-            ca.nrc.cadc.dali.DoubleInterval[] dis = new ca.nrc.cadc.dali.DoubleInterval[subs.size()];
+            ca.nrc.cadc.dali.Interval<Double>[] dis = new ca.nrc.cadc.dali.Interval[subs.size()];
             int i = 0;
             for (Interval si : subs) {
-                dis[i++] = new ca.nrc.cadc.dali.DoubleInterval(si.getLower(), si.getUpper());
+                dis[i++] = new ca.nrc.cadc.dali.Interval<>(si.getLower(), si.getUpper());
             }
             PgInterval pgi = new PgInterval();
             PGpolygon poly = pgi.generatePolygon2D(dis);
@@ -480,25 +480,25 @@ public class PostgreSQLGenerator extends SQLGenerator {
 
     @Override
     protected SampledInterval getInterval(ResultSet rs, int col) throws SQLException {
-        String s = rs.getString(col);
-        if (s == null) {
+        Object o = rs.getObject(col);
+        if (o == null) {
             return null;
         }
         PgInterval pgi = new PgInterval();
-        ca.nrc.cadc.dali.DoubleInterval di = pgi.getInterval(s);
+        ca.nrc.cadc.dali.Interval<Double> di = pgi.getInterval(o);
         return new SampledInterval(di.getLower(), di.getUpper());
     }
 
     @Override
     protected List<Interval> getSubIntervalList(ResultSet rs, int col) throws SQLException {
-        String s = rs.getString(col);
-        if (s == null) {
+        Object o = rs.getObject(col);
+        if (o == null) {
             return null;
         }
         PgInterval pgi = new PgInterval();
-        ca.nrc.cadc.dali.DoubleInterval[] dis = pgi.getIntervalArray(s);
+        ca.nrc.cadc.dali.Interval<Double>[] dis = pgi.getIntervalArray(o);
         List<Interval> ret = new ArrayList<Interval>();
-        for (ca.nrc.cadc.dali.DoubleInterval di : dis) {
+        for (ca.nrc.cadc.dali.Interval<Double> di : dis) {
             ret.add(new Interval(di.getLower(), di.getUpper()));
         }
         return ret;
