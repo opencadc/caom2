@@ -48,9 +48,9 @@ dependencies {
 }
 
 configurations {
-  runtime.exclude group: 'javax.servlet'
-  runtime.exclude group: 'net.sourceforge.jtds'
-  runtime.exclude group: 'org.postgresql'
+  runtimeOnly.exclude group: 'javax.servlet'
+  runtimeOnly.exclude group: 'net.sourceforge.jtds'
+  runtimeOnly.exclude group: 'org.postgresql'
 }
 
 // for TorkeepIntTest.testPostByteLimitExceeded
