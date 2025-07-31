@@ -13,6 +13,8 @@ apply from: '../opencadc.gradle'
 
 sourceCompatibility = 11
 
+apply from: '../opencadc.gradle'
+
 group = 'org.opencadc'
 
 version = '2.5.0'
@@ -25,6 +27,7 @@ dependencies {
     
     api 'org.opencadc:cadc-util:[1.12.0,)'
     api 'org.opencadc:cadc-dali:[1.2.22,)'
+    api 'org.opencadc:cadc-util:[1.6,2.0)'
 
     testImplementation 'junit:junit:4.13'
 }

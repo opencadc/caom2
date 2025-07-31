@@ -27,9 +27,9 @@ dependencies {
     implementation 'net.sourceforge.javacsv:javacsv:2.0'
 
     implementation 'org.opencadc:cadc-permissions-client:[0.3,1.0)'
-    implementation 'org.opencadc:cadc-util:[1.12.0,2.0)'
-    implementation 'org.opencadc:cadc-rest:[1.4.5,)'
     implementation 'org.opencadc:caom2:[2.5.0,2.6)'
+    implementation 'org.opencadc:cadc-util:[1.6,2.0)'
+    implementation 'org.opencadc:cadc-rest:[1.4.7,)'
     implementation 'org.opencadc:cadc-access-control:[1.1,2.0)'
     implementation 'org.opencadc:caom2-compute:[2.5.0,2.6)'
     implementation 'org.opencadc:caom2-db:[2.5.0,2.6)'
