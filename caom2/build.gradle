@@ -13,8 +13,6 @@ apply from: '../opencadc.gradle'
 
 sourceCompatibility = 11
 
-apply from: '../opencadc.gradle'
-
 group = 'org.opencadc'
 
 version = '2.5.0'

@@ -2,8 +2,8 @@ configurations {
     checkstyleDep
     intTestImplementation.extendsFrom testImplementation
 
-    runtime.exclude module: 'slf4j-reload4j'
-    runtime.exclude module: 'reload4j'
+    runtimeOnly.exclude module: 'slf4j-reload4j'
+    runtimeOnly.exclude module: 'reload4j'
 }
 
 dependencies {
