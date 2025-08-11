@@ -69,7 +69,6 @@
 
 package org.opencadc.caom2.xml;
 
-import ca.nrc.cadc.xml.JsonOutputter;
 import java.io.IOException;
 import java.io.Writer;
 import org.apache.log4j.Logger;
@@ -96,6 +95,7 @@ public class JsonWriter extends ObservationWriter {
 
     public JsonWriter(boolean prettyPrint, String caom2Namespace) {
         super("caom2", caom2Namespace, false);
+        this.prettyPrint = prettyPrint;
     }
 
     /**
@@ -110,9 +110,10 @@ public class JsonWriter extends ObservationWriter {
      */
     @Override
     protected void write(Element root, Writer writer) throws IOException {
-        JsonOutputter outputter = new JsonOutputter();
+        JsonOutputter outputter = new JsonOutputter(super.caom2Namespace);
         outputter.getListElementNames().add("planes");
         outputter.getListElementNames().add("artifacts");
+        outputter.getListElementNames().add("energyBands");
         outputter.getListElementNames().add("parts");
         outputter.getListElementNames().add("vertices");
         outputter.getListElementNames().add("points");
@@ -121,13 +122,12 @@ public class JsonWriter extends ObservationWriter {
         outputter.getListElementNames().add("shapes");
         outputter.getListElementNames().add("samples");
         outputter.getListElementNames().add("members");
+        outputter.getListElementNames().add("dataReadGroups");
         outputter.getListElementNames().add("metaReadGroups");
-        if (docVersion >= 23) {
-            outputter.getListElementNames().add("keywords");
-        }
+        outputter.getListElementNames().add("contentReadGroups");
+        outputter.getListElementNames().add("keywords");
 
-        outputter.getStringElementNames().add("observationID");
-        outputter.getStringElementNames().add("productID");
+        outputter.getStringElementNames().add("uri");
         outputter.getStringElementNames().add("sequenceNumber");
         outputter.getStringElementNames().add("name"); // anything with a name
 
