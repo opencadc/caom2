@@ -51,10 +51,10 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ;
 
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
-( 'caom2.Observation', 'obsID', 'unique observation identifier', 'caom2:Observation.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 2),
+( 'caom2.Observation', 'uriBucket', 'short hex string', 'caom2:Observation.uriBucket', NULL, NULL, 'char','3',NULL, 0,1,0 , 2),
 ( 'caom2.Observation', 'collection', 'data collection this observation belongs to', 'caom2:Observation.collection', NULL, NULL, 'char','32*',NULL, 1,1,1 , 3),
-( 'caom2.Observation', 'algorithm_name', 'algorithm that defines the observation( exposure for simple, grouping algorithm for composites)', 'caom2:Observation.algorithm.name', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 5),
 
+( 'caom2.Observation', 'algorithm_name', 'algorithm that defines the observation( exposure for simple, grouping algorithm for composites)', 'caom2:Observation.algorithm.name', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 5),
 ( 'caom2.Observation', 'obstype', 'type of data collected (e.g. FITS OBSTYPE header)', 'caom2:Observation.type', NULL, NULL, 'char', '32*', NULL, 1,0,1 , 6),
 ( 'caom2.Observation', 'intent', 'intended purpose of data (one of: science, calibration)', 'caom2:Observation.intent', NULL, NULL, 'char', '32*', NULL, 0,0,1, 7),
 ( 'caom2.Observation', 'sequenceNumber', 'sequence number assigned by the observatory', 'caom2:Observation.sequenceNumber', NULL, NULL, 'int', NULL, NULL, 0,0,0, 8),
@@ -101,13 +101,14 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'environment_photometric', 'conditions were photometric (0=false, 1=true)', 'caom2:Observation.environment.photometric', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 76),
 
 ( 'caom2.Observation', 'members', 'members of a composite observation (space-separated list of Observation URIs)', 'caom2:Observation.members', NULL, NULL, 'char','*',NULL, 0,0,0 , 80),
-( 'caom2.Observation', 'typeCode', 'single character code to denote type: S(impleObservation) or C(ompositeOvservation)', 'caom2:Observation.typeCode', NULL, NULL, 'char',NULL,NULL, 0,0,0 , 81),
+( 'caom2.Observation', 'typeCode', 'single character code to denote type: S(impleObservation) or D(erivedOvservation)', 'caom2:Observation.typeCode', NULL, NULL, 'char',NULL,NULL, 0,0,0 , 81),
 
-( 'caom2.Observation', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Observation.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 120),
-( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 121),
-( 'caom2.Observation', 'maxLastModified', 'timestamp of last modification of this entity+children', 'caom2:Observation.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 122),
-( 'caom2.Observation', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Observation.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 123),
-( 'caom2.Observation', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Observation.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 124)
+( 'caom2.Observation', 'obsID', 'primary key', 'caom2:Observation.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 120),
+( 'caom2.Observation', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Observation.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 121),
+( 'caom2.Observation', 'lastModified', 'timestamp of last modification of this row', 'caom2:Observation.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 122),
+( 'caom2.Observation', 'maxLastModified', 'timestamp of last modification of this entity+children', 'caom2:Observation.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,0,0 , 123),
+( 'caom2.Observation', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Observation.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 124),
+( 'caom2.Observation', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Observation.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 125)
 ;
 
 -- Plane
@@ -116,8 +117,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
 ( 'caom2.Plane', 'obsID', 'foreign key', NULL, NULL, NULL,                              'char','36','uuid', 0,1,0 , 2),
-( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 0,1,0 , 3),
-( 'caom2.Plane', 'uri', 'unique internal URI for this product', 'caom2:Plane.uri', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 4),
+( 'caom2.Plane', 'uri', 'unique internal URI for this product', 'caom2:Plane.uri', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 3),
+
 ( 'caom2.Plane', 'metaRelease', 'date the metadata for a plane is public (UTC)', 'caom2:Plane.metaRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 7),
 ( 'caom2.Plane', 'metaReadGroups', 'GMS groups that are authorized to see metadata [new in 2.4]', 'caom2:Plane.metaReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 8),
 ( 'caom2.Plane', 'dataRelease', 'date the data for a plane is public (UTC)', 'caom2:Plane.dataRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 9),
@@ -192,11 +193,12 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'uv_distributionEccentricity', 'TBD [new in 2.5]', 'caom2:Plane.uv.distributionEccentricity', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 111),
 ( 'caom2.Plane', 'uv_distributionFill', 'TBD [new in 2.5]', 'caom2:Plane.uv.distributionFill', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 112),
 
-( 'caom2.Plane', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Plane.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 120),
-( 'caom2.Plane', 'lastModified', 'timestamp of last modification of this row', 'caom2:Plane.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 121),
-( 'caom2.Plane', 'maxLastModified', 'timestamp of last modification of this entity+children', 'caom2:Plane.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 122),
-( 'caom2.Plane', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Plane.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 123),
-( 'caom2.Plane', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Plane.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 124)
+( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 0,1,0 , 120),
+( 'caom2.Plane', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Plane.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 121),
+( 'caom2.Plane', 'lastModified', 'timestamp of last modification of this row', 'caom2:Plane.lastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 122),
+( 'caom2.Plane', 'maxLastModified', 'timestamp of last modification of this entity+children', 'caom2:Plane.maxLastModified', NULL, NULL, 'char', '23*','timestamp', 1,1,0 , 123),
+( 'caom2.Plane', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Plane.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 124),
+( 'caom2.Plane', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Plane.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 125)
 ;
 
 -- Artifact
@@ -205,8 +207,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Artifact', 'uri', 'external URI for the physical artifact', 'caom2:Artifact.uri', NULL, NULL, 'char', '*','uri', 1,1,0 , 1, 'caomArtifactURI')
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
+( 'caom2.Artifact', 'uriBucket', 'short hex string', 'caom2:Artifact.uriBucket', NULL, NULL, 'char','3',NULL, 0,1,0 , 2),
 ( 'caom2.Artifact', 'planeID',       'foreign key', NULL, NULL, NULL, 'char','36','uuid', 0,1,0 , 2),
-( 'caom2.Artifact', 'artifactID',    'unique artifact identifier', 'caom2:Artifact.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 3),
+
 ( 'caom2.Artifact', 'productType',   'product type (science, calibration, auxiliary, preview, info)', 'caom2:Artifact.productType', NULL, NULL, 'char', '64*', NULL, 1,0,0 , 4),
 ( 'caom2.Artifact', 'releaseType',   'release type (data, meta)', 'caom2:Artifact.releaseType', NULL, NULL, 'char', '16*', NULL, 1,0,0 , 5),
 ( 'caom2.Artifact', 'contentType',   'content-type of the representation at uri', 'caom2:Artifact.contentType', NULL, NULL, 'char', '128*', NULL, 1,0,0 , 6),
@@ -215,11 +218,12 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Artifact', 'contentRelease', 'date the data for an artifact is public (UTC) (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 20),
 ( 'caom2.Artifact', 'contentReadGroups', 'GMS groups that are authorized to retrieve the artifact (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 21),
 
-( 'caom2.Artifact', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Artifact.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 40),
-( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 41),
-( 'caom2.Artifact', 'maxLastModified',  'timestamp of last modification of this entity+children', 'caom2:Artifact.maxLastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 42),
-( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 43),
-( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 44)
+( 'caom2.Artifact', 'artifactID',   'primary key', 'caom2:Artifact.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 40),
+( 'caom2.Artifact', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Artifact.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 41),
+( 'caom2.Artifact', 'lastModified',  'timestamp of last modification of this row', 'caom2:Artifact.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 42),
+( 'caom2.Artifact', 'maxLastModified',  'timestamp of last modification of this entity+children', 'caom2:Artifact.maxLastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 43),
+( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 44),
+( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 45)
 ;
 
 -- Part
