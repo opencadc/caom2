@@ -141,6 +141,7 @@ public class JsonOutputter {
         pw.flush();
     }
     
+    // @prefix: namespace
     private void writeSchema(String uri, String pre, PrintWriter w) {
         w.print(QUOTE);
         w.print("@");
@@ -197,18 +198,10 @@ public class JsonOutputter {
             indent(w, i);
             w.print(QUOTE);
             w.print("@");
-            
-            // only show prefix for caom2
-            //if (a.getNamespace().equals(caom2namespace)) {
-            //    if (StringUtil.hasText(a.getNamespacePrefix())) {
-            //        w.print(a.getNamespacePrefix());
-            //       w.print(":");
-            //    }
-            //}
-            
             w.print(a.getName());
             w.print(QUOTE);
             w.print(" : ");
+            
             if (isBoolean(e.getName(), a.getValue()) || isNumeric(e.getName(), a.getValue())) {
                 w.print(a.getValue());
             } else {

@@ -69,32 +69,33 @@
 
 package org.opencadc.caom2.xml;
 
-import org.opencadc.caom2.DerivedObservation;
-import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.SimpleObservation;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
 import java.io.FileWriter;
+import java.net.URI;
+import java.security.MessageDigest;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
-import static org.junit.Assert.fail;
+import org.opencadc.caom2.DerivedObservation;
+import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.SimpleObservation;
 
 /**
  *
  * @author pdowler
  */
-public class JsonWriterTest {
+public class JsonReaderWriterTest {
 
-    private static final Logger log = Logger.getLogger(JsonWriterTest.class);
+    private static final Logger log = Logger.getLogger(JsonReaderWriterTest.class);
 
     static {
         Log4jInit.setLevel("org.opencadc.caom2.xml", Level.INFO);
     }
 
-    public JsonWriterTest() {
+    public JsonReaderWriterTest() {
     }
 
     //@Test
@@ -103,7 +104,7 @@ public class JsonWriterTest {
 
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
@@ -141,9 +142,6 @@ public class JsonWriterTest {
 
                         JSONObject obs = new JSONObject(str);
 
-                        //JSONObject obs = doc.getJSONObject("Observation");
-                        //Assert.assertNotNull(obs);
-
                         String xmlns = obs.getString("@caom2");
                         Assert.assertNotNull(xmlns);
                         Assert.assertEquals("http://www.opencadc.org/caom2/xml/v2.5", xmlns);
@@ -151,6 +149,15 @@ public class JsonWriterTest {
                         String otype = obs.getString("@type");
                         Assert.assertNotNull(otype);
                         Assert.assertEquals("caom2:SimpleObservation", otype);
+                        
+                        JsonReader r = new JsonReader();
+                        Observation actual = r.read(str);
+                        Assert.assertNotNull(actual);
+                        
+                        if (entityAttrs) {
+                            URI accMetaChecksum = actual.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
+                            log.info("\nexpected: " + o.getAccMetaChecksum() + "\nactual: " + accMetaChecksum);
+                        }
                     }
                 }
             }
@@ -158,12 +165,12 @@ public class JsonWriterTest {
             
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
     @Test
-    public void testComposite() {
+    public void testDerived() {
         try {
             for (int i = 1; i <= 3; i++) {
                 for (boolean complete : new boolean[] {false, true}) {
@@ -177,7 +184,7 @@ public class JsonWriterTest {
                         StringBuilder sb = new StringBuilder();
                         jw.write(o, sb);
 
-                        String filename = "build/tmp/testComposite";
+                        String filename = "build/tmp/testDerived";
                         if (entityAttrs) {
                             filename += "-entity";
                         }
@@ -211,7 +218,7 @@ public class JsonWriterTest {
             
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
+            Assert.fail("unexpected exception: " + unexpected);
         }
     }
 
