@@ -154,9 +154,21 @@ public class JsonReaderWriterTest {
                         Observation actual = r.read(str);
                         Assert.assertNotNull(actual);
                         
+                        Assert.assertEquals("observation class", o.getClass().getName(), actual.getClass().getName());
                         if (entityAttrs) {
                             URI accMetaChecksum = actual.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
                             log.info("\nexpected: " + o.getAccMetaChecksum() + "\nactual: " + accMetaChecksum);
+                            if (!o.getAccMetaChecksum().equals(accMetaChecksum)) {
+                                // write actual observation to tmpdir
+                                filename = filename.replace(".json", "-actual.json");
+                                dest = new File(filename);
+                                w = new FileWriter(dest);
+                                jw = new JsonWriter();
+                                jw.write(actual, w);
+                                w.close();
+                                log.info("json output mismatch: " + dest.getPath());
+                            }
+                            Assert.assertEquals("metadata mismatch", o.getAccMetaChecksum(), accMetaChecksum);
                         }
                     }
                 }
@@ -212,6 +224,16 @@ public class JsonReaderWriterTest {
                         String otype = obs.getString("@type");
                         Assert.assertNotNull(otype);
                         Assert.assertEquals("caom2:DerivedObservation", otype);
+                        
+                        JsonReader r = new JsonReader();
+                        Observation actual = r.read(str);
+                        Assert.assertNotNull(actual);
+                        Assert.assertEquals("observation class", o.getClass().getName(), actual.getClass().getName());
+                        if (entityAttrs) {
+                            URI accMetaChecksum = actual.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
+                            log.info("\nexpected: " + o.getAccMetaChecksum() + "\nactual: " + accMetaChecksum);
+                            Assert.assertEquals("metadata", o.getAccMetaChecksum(), accMetaChecksum);
+                        }
                     }
                 }
             }
