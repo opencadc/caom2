@@ -122,31 +122,12 @@ import org.opencadc.caom2.vocab.DataLinkSemantics;
 import org.opencadc.caom2.vocab.DataProductType;
 import org.opencadc.caom2.vocab.Tracking;
 import org.opencadc.caom2.vocab.UCD;
-import static org.opencadc.caom2.xml.JsonUtil.addEnergyBands;
-import static org.opencadc.caom2.xml.JsonUtil.addIntervals;
-import static org.opencadc.caom2.xml.JsonUtil.addPolStates;
-import static org.opencadc.caom2.xml.JsonUtil.addStrings;
-import static org.opencadc.caom2.xml.JsonUtil.addURIs;
-import static org.opencadc.caom2.xml.JsonUtil.getCalibrationStatus;
-import static org.opencadc.caom2.xml.JsonUtil.getChildBoolean;
-import static org.opencadc.caom2.xml.JsonUtil.getChildDate;
-import static org.opencadc.caom2.xml.JsonUtil.getChildDouble;
-import static org.opencadc.caom2.xml.JsonUtil.getChildInteger;
-import static org.opencadc.caom2.xml.JsonUtil.getChildLong;
-import static org.opencadc.caom2.xml.JsonUtil.getChildPoint;
-import static org.opencadc.caom2.xml.JsonUtil.getChildString;
-import static org.opencadc.caom2.xml.JsonUtil.getChildURI;
-import static org.opencadc.caom2.xml.JsonUtil.getChildUUID;
-import static org.opencadc.caom2.xml.JsonUtil.getDimension2D;
-import static org.opencadc.caom2.xml.JsonUtil.getInterval;
-import static org.opencadc.caom2.xml.JsonUtil.getMultiShape;
-import static org.opencadc.caom2.xml.JsonUtil.getShape;
 
 /**
  *
  * @author pdowler
  */
-public class JsonReader {
+public class JsonReader extends JsonUtil {
     private static final Logger log = Logger.getLogger(JsonReader.class);
 
     public JsonReader() { 
