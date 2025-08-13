@@ -158,8 +158,7 @@ public class ObservationReaderWriterTest {
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
         Log4jInit.setLevel("ca.nrc.cadc.xml", Level.INFO);
-        //Log4jInit.setLevel("org.opencadc.persist", Level.DEBUG);
-        //org.opencadc.persist.Entity.MCS_DEBUG = true;
+        //org.opencadc.persist.Entity.MCS_DEBUG = true; // enable for diagnosis only
     }
 
     public ObservationReaderWriterTest() {

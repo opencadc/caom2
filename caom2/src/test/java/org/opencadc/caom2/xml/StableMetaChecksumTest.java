@@ -97,8 +97,8 @@ public class StableMetaChecksumTest {
 
     static {
         Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-        Log4jInit.setLevel("org.opencadc.persist", Level.DEBUG);
-        org.opencadc.persist.Entity.MCS_DEBUG = true;
+        Log4jInit.setLevel("org.opencadc.persist", Level.INFO);
+        //org.opencadc.persist.Entity.MCS_DEBUG = true; // enable for diagnosis only
     }
 
     public StableMetaChecksumTest() {
