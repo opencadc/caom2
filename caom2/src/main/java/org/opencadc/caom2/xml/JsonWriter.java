@@ -193,6 +193,7 @@ public class JsonWriter extends ObservationWriter {
             throws IOException {
             PrintWriter pw = new PrintWriter(writer);
             writeRootElement(doc.getRootElement(), pw);
+            indent(pw, 0); // possible trailing newline
             pw.flush();
         }
 
