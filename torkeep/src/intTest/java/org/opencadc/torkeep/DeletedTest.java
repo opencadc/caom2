@@ -156,7 +156,7 @@ public class DeletedTest extends AbstractIntTest {
 
             putObservation(obs, subject1, 200, "OK");
             final Date clientInserted = new Date();
-            obs = getObservation(obs.getURI(), subject1, 200, null, null);
+            obs = getObservation(obs.getURI(), DEFAULT_CONTENT_TYPE, subject1, 200, null, null);
             Assert.assertNotNull("test setup", obs);
             final Date inserted = obs.getMaxLastModified();
             log.info("testListDeletedSuccess inserted: " + obs.getURI() + " " + df.format(obs.getMaxLastModified()));

@@ -94,6 +94,10 @@ import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.xml.JsonReader;
+import org.opencadc.caom2.xml.JsonWriter;
+import org.opencadc.caom2.xml.ObservationInput;
+import org.opencadc.caom2.xml.ObservationOutput;
 import org.opencadc.caom2.xml.ObservationReader;
 import org.opencadc.caom2.xml.ObservationWriter;
 import org.opencadc.caom2.xml.XmlConstants;
@@ -114,6 +118,8 @@ abstract class AbstractIntTest {
     
     static final String EXPECTED_CAOM_VERSION = XmlConstants.CAOM2_5_NAMESPACE;
     
+    static final String DEFAULT_CONTENT_TYPE = RepoAction.XML_MIMETYPE;
+
     static final String TEST_COLLECTION = "TEST";
 
     // subject1 has read/write privilege on the TEST collection
@@ -204,10 +210,10 @@ abstract class AbstractIntTest {
     protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage,
                                    String path)
         throws Exception {
-        sendObservation(method, observation, subject, expectedResponse, expectedMessage, path, null);
+        sendObservation(method, RepoAction.XML_MIMETYPE, observation, subject, expectedResponse, expectedMessage, path, null);
     }
     
-    protected void sendObservation(String method, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage,
+    protected void sendObservation(String method, String contentType, final Observation observation, final Subject subject, Integer expectedResponse, String expectedMessage,
                                    String path, String httpIfMatchHeaderValue)
         throws Exception {
         log.debug("start " + method.toLowerCase() + " on " + observation.toString());
@@ -221,7 +227,9 @@ abstract class AbstractIntTest {
         log.info(method + " " + url.toString());
         HttpURLConnection conn = openConnection(subject, url);
         conn.setRequestMethod(method);
-        conn.setRequestProperty("Content-Type", TEXT_XML);
+        if (contentType != null) {
+            conn.setRequestProperty("Content-Type", contentType);
+        }
         if (httpIfMatchHeaderValue != null) {
             conn.setRequestProperty("If-Match", httpIfMatchHeaderValue);
         }
@@ -229,9 +237,12 @@ abstract class AbstractIntTest {
         OutputStream out = conn.getOutputStream();
         log.debug("write: " + observation);
         ByteCountOutputStream bcos = new ByteCountOutputStream(out);
-        ObservationWriter writer = new ObservationWriter();
+        ObservationOutput writer = new ObservationWriter();
+        if (RepoAction.CAOM_JSON_MIMETYPE.equals(contentType) || RepoAction.JSON_MIMETYPE.equals(contentType)) {
+            writer = new JsonWriter();
+        }
         writer.write(observation, bcos);
-        log.debug(" wrote: " + bcos.getByteCount() + " bytes");
+        log.info(" wrote: " + bcos.getByteCount() + " bytes");
 
         int response = -1;
         try {
@@ -269,13 +280,13 @@ abstract class AbstractIntTest {
         conn.disconnect();
     }
 
-    protected Observation getObservation(URI uri, Subject subject, Integer expectedResponse, String expectedMessage, String expectedCaomVersion)
+    protected Observation getObservation(URI uri, String contentType, Subject subject, Integer expectedResponse, String expectedMessage, String expectedCaomVersion)
         throws Exception {
-        return getObservation(uri, subject, expectedResponse, expectedMessage, true, expectedCaomVersion);
+        return getObservation(uri, contentType, subject, expectedResponse, expectedMessage, true, expectedCaomVersion);
     }
 
-    protected Observation getObservation(URI uri, Subject subject, Integer expectedResponse, String expectedMessage, boolean exactMatch, String
-        expectedCaomVersion)
+    protected Observation getObservation(URI uri, String contentType, Subject subject, Integer expectedResponse, String expectedMessage, 
+            boolean exactMatch, String expectedCaomVersion)
         throws Exception {
         log.debug("start get on " + uri);
 
@@ -283,10 +294,16 @@ abstract class AbstractIntTest {
         String surl = baseObsURL + "/" + uriToPath(uri);
         log.info("GET " + surl);
         URL url = new URL(surl);
-        ObservationReader reader = new ObservationReader();
+        ObservationInput reader = new ObservationReader();
+        if (RepoAction.CAOM_JSON_MIMETYPE.equals(contentType) || RepoAction.JSON_MIMETYPE.equals(contentType)) {
+            reader = new JsonReader();
+        }
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpGet get = new HttpGet(url, bos);
+        if (contentType != null) {
+            get.setRequestProperty("accept", contentType);
+        }
 
         Subject.doAs(subject, new RunnableAction(get));
 
