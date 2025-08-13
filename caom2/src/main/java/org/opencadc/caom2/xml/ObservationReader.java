@@ -171,7 +171,7 @@ import org.opencadc.caom2.wcs.ValueCoord2D;
  *
  * @author jburke
  */
-public class ObservationReader {
+public class ObservationReader implements ObservationInput {
 
     //private static final String CAOM20_SCHEMA_RESOURCE = "CAOM-2.0.xsd";
     //private static final String CAOM21_SCHEMA_RESOURCE = "CAOM-2.1.xsd";
@@ -320,6 +320,7 @@ public class ObservationReader {
      * @return An Observation
      * @throws ObservationParsingException if content is invalid
      */
+    @Override
     public Observation read(String xml) throws ObservationParsingException {
         if (xml == null) {
             throw new IllegalArgumentException("XML must not be null");
@@ -340,6 +341,7 @@ public class ObservationReader {
      * @throws ObservationParsingException if content is invalid
      * @throws java.io.IOException if input cannot be read
      */
+    @Override
     public Observation read(InputStream in)
         throws ObservationParsingException, IOException {
         if (in == null) {

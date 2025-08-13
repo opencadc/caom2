@@ -127,7 +127,7 @@ import org.opencadc.caom2.vocab.UCD;
  *
  * @author pdowler
  */
-public class JsonReader extends JsonUtil {
+public class JsonReader extends JsonUtil implements ObservationInput {
     private static final Logger log = Logger.getLogger(JsonReader.class);
 
     public JsonReader() { 
@@ -137,6 +137,7 @@ public class JsonReader extends JsonUtil {
         
     }
 
+    @Override
     public Observation read(InputStream in)
         throws ObservationParsingException, IOException {
         if (in == null) {
@@ -149,8 +150,9 @@ public class JsonReader extends JsonUtil {
         }
     }
 
+    @Override
     public Observation read(String json)
-        throws ObservationParsingException, IOException {
+        throws ObservationParsingException {
         if (json == null) {
             throw new IllegalArgumentException("JSON must not be null");
         }

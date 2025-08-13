@@ -89,7 +89,7 @@ import org.jdom2.output.Format;
  * 
  * @author pdowler
  */
-public class JsonWriter extends ObservationWriter {
+public class JsonWriter extends ObservationWriter implements ObservationOutput {
     private static final Logger log = Logger.getLogger(JsonWriter.class);
 
     private boolean prettyPrint;
