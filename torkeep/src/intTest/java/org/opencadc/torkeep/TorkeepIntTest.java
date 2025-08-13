@@ -114,9 +114,20 @@ public class TorkeepIntTest extends AbstractIntTest {
     }
 
     @Test
-    public void testPutGetSuccessCAOM() throws Exception {
+    public void testPutGetUpdateXML() throws Exception {
+        doPutGetUpdateDelete("testPutGetUpdateXML", RepoAction.CAOM_XML_MIMETYPE);
+        doPutGetUpdateDelete("testPutGetUpdateXML", RepoAction.XML_MIMETYPE);
+    }
+    
+    @Test
+    public void testPutGetUpdateJSON() throws Exception {
+        doPutGetUpdateDelete("testPutGetUpdateJSON", RepoAction.CAOM_JSON_MIMETYPE);
+        doPutGetUpdateDelete("testPutGetUpdateJSON", RepoAction.JSON_MIMETYPE);
+    }
+
+    private void doPutGetUpdateDelete(String name, String contentType) throws Exception {
         // create an observation using subject1
-        URI ouri = URI.create("caom:" + TEST_COLLECTION + "/testCleanPutGetSuccessCAOM");
+        URI ouri = URI.create("caom:" + TEST_COLLECTION + "/" + name);
         Observation observation = new SimpleObservation(TEST_COLLECTION, ouri, SimpleObservation.EXPOSURE);
         Plane p = new Plane(URI.create(observation.getURI().toASCIIString() + "/bar"));
         observation.getPlanes().add(p);
@@ -127,9 +138,10 @@ public class TorkeepIntTest extends AbstractIntTest {
         deleteObservation(observation.getURI(), subject1, null, null);
         
         final URI accMetaChecksum1 = observation.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
-        putObservation(observation, subject1, 200, "OK");
+        log.info("PUT " + observation.getURI() + " as " + contentType);
+        sendObservation("PUT", contentType, observation, subject1, 200, "OK", null, null);
         
-        Observation ret = getObservation(observation.getURI(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        Observation ret = getObservation(observation.getURI(), contentType, subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertEquals("wrong URI", observation.getURI(), ret.getURI());
         Assert.assertEquals("wrong ID", observation.getID(), ret.getID());
         Assert.assertEquals("wrong checksum", accMetaChecksum1, ret.getAccMetaChecksum());
@@ -138,18 +150,21 @@ public class TorkeepIntTest extends AbstractIntTest {
         final URI accMetaChecksum2 = observation.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
         Assert.assertNotEquals(accMetaChecksum1, accMetaChecksum2);
         
-        updateObservation(observation, subject1, 200, "OK");
-        ret = getObservation(observation.getURI(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        log.info("POST " + observation.getURI() + " as " + contentType);
+        sendObservation("POST", contentType, observation, subject1, 200, "OK", null, null);
+        ret = getObservation(observation.getURI(), contentType, subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertEquals("wrong URI", observation.getURI(), ret.getURI());
         Assert.assertEquals("wrong ID", observation.getID(), ret.getID());
         Assert.assertEquals("wrong checksum", accMetaChecksum2, ret.getAccMetaChecksum());
         
         // cleanup (ok to fail)
-        //deleteObservation(observation.getURI(), subject1, null, null);
+        deleteObservation(observation.getURI(), subject1, null, null);
     }
     
     @Test
-    public void testPutGetSuccessIVO() throws Exception {
+    public void testPutGetUpdateIVO() throws Exception {
+        
+        
         // create an observation using subject1
         String ivoTestCollection = "IVOTEST";
         URI ouri = URI.create("ivo://opencadc.org/" + ivoTestCollection + "?testCleanPutGetSuccessIVO");
@@ -166,7 +181,7 @@ public class TorkeepIntTest extends AbstractIntTest {
 
         putObservation(observation, subject1, 200, "OK");
 
-        Observation ret = getObservation(observation.getURI(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        Observation ret = getObservation(observation.getURI(), DEFAULT_CONTENT_TYPE, subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertEquals("wrong observation", observation.getURI(), ret.getURI());
         Assert.assertEquals("wrong observation", observation.getID(), ret.getID());
         Assert.assertEquals("wrong checksum", accMetaChecksum1, ret.getAccMetaChecksum());
@@ -176,13 +191,13 @@ public class TorkeepIntTest extends AbstractIntTest {
         Assert.assertNotEquals(accMetaChecksum1, accMetaChecksum2);
         
         updateObservation(observation, subject1, 200, "OK");
-        ret = getObservation(observation.getURI(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        ret = getObservation(observation.getURI(), DEFAULT_CONTENT_TYPE, subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertEquals("wrong URI", observation.getURI(), ret.getURI());
         Assert.assertEquals("wrong ID", observation.getID(), ret.getID());
         Assert.assertEquals("wrong checksum", accMetaChecksum2, ret.getAccMetaChecksum());
 
         // cleanup (ok to fail)
-        //deleteObservation(observation.getURI(), subject1, null, null);
+        deleteObservation(observation.getURI(), subject1, null, null);
     }
     
     @Test
@@ -199,7 +214,7 @@ public class TorkeepIntTest extends AbstractIntTest {
 
         // get the observation using subject2
         log.info("get: o1");
-        Observation o1 = getObservation(orig.getURI(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        Observation o1 = getObservation(orig.getURI(), DEFAULT_CONTENT_TYPE, subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertNotNull(o1);
         final URI acc1 = o1.computeAccMetaChecksum(md5);
         
@@ -208,21 +223,24 @@ public class TorkeepIntTest extends AbstractIntTest {
         
         // update
         log.info("update: orig");
-        sendObservation("POST", orig, subject1, 200, "OK", null, acc1.toASCIIString());
+        sendObservation("POST", RepoAction.CAOM_XML_MIMETYPE, orig, subject1, 200, "OK", null, acc1.toASCIIString());
         
         // get and verify
         log.info("get: updated");
-        Observation o2 = getObservation(orig.getURI(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+        Observation o2 = getObservation(orig.getURI(), DEFAULT_CONTENT_TYPE, subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertNotNull(o2);
         final URI acc2 = o2.computeAccMetaChecksum(md5);
         
         // attempt second update from orig: rejected
         log.info("update: orig [race loser]");
-        sendObservation("POST", orig, subject1, 412, "update blocked", null, origAcc.toASCIIString());
+        sendObservation("POST", RepoAction.CAOM_XML_MIMETYPE, orig, subject1, 412, "update blocked", null, origAcc.toASCIIString());
         
         // attempt update from current: accepted
         log.info("update: o2");
-        sendObservation("POST", orig, subject1, 200, "OK", null, acc2.toASCIIString());
+        sendObservation("POST", RepoAction.CAOM_XML_MIMETYPE, orig, subject1, 200, "OK", null, acc2.toASCIIString());
+        
+        // cleanup (ok to fail)
+        deleteObservation(orig.getURI(), subject1, null, null);
     }
 
     @Test
@@ -235,7 +253,7 @@ public class TorkeepIntTest extends AbstractIntTest {
         putObservation(observation, subject1, 200, "OK");
 
         // get the observation using subject3
-        getObservation(observation.getURI(), subject3, 403, "permission denied", false, EXPECTED_CAOM_VERSION);
+        getObservation(observation.getURI(), DEFAULT_CONTENT_TYPE, subject3, 403, "permission denied", false, EXPECTED_CAOM_VERSION);
 
         // cleanup (ok to fail)
         deleteObservation(observation.getURI(), subject1, null, null);
@@ -245,13 +263,13 @@ public class TorkeepIntTest extends AbstractIntTest {
     public void testGetNotFound() throws Exception {
         URI uri = URI.create("caom:TEST/testGetNotFound");
 
-        getObservation(uri, subject1, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
+        getObservation(uri, DEFAULT_CONTENT_TYPE, subject1, 404, "not found: " + uri, EXPECTED_CAOM_VERSION);
     }
 
     @Test
     public void testCollectionNotFound() throws Exception {
         URI uri = URI.create("caom:testCollectionNotFound/testGetNotFound");
-        getObservation(uri, subject2, 404, "not found: testCollectionNotFound", EXPECTED_CAOM_VERSION);
+        getObservation(uri, DEFAULT_CONTENT_TYPE, subject2, 404, "not found: testCollectionNotFound", EXPECTED_CAOM_VERSION);
     }
 
     @Test
@@ -400,7 +418,7 @@ public class TorkeepIntTest extends AbstractIntTest {
         deleteObservation(observation.getURI(), subject1, 200, "OK");
 
         // ensure we can't find it on a get
-        getObservation(observation.getURI(), subject1, 404, "not found: " + observation.getURI(), EXPECTED_CAOM_VERSION);
+        getObservation(observation.getURI(), DEFAULT_CONTENT_TYPE, subject1, 404, "not found: " + observation.getURI(), EXPECTED_CAOM_VERSION);
     }
 
     @Test

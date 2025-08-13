@@ -107,6 +107,12 @@ import org.opencadc.permissions.client.PermissionsCheck;
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
+    static final String CAOM_XML_MIMETYPE = "text/x-caom+xml";
+    static final String XML_MIMETYPE = "text/xml";
+    
+    static final String CAOM_JSON_MIMETYPE = "application/x-caom+json";
+    static final String JSON_MIMETYPE = "application/json";
+    
     public static final int MAX_LIST_SIZE = 100000;
 
     protected URI observationURI;

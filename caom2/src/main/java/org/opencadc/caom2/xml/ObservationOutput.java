@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2024.                            (c) 2024.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,141 +62,19 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package org.opencadc.caom2.xml;
 
-
-import org.opencadc.caom2.DerivedObservation;
+import java.io.IOException;
+import java.io.OutputStream;
 import org.opencadc.caom2.Observation;
-import org.opencadc.caom2.Plane;
-import org.opencadc.caom2.SimpleObservation;
-import ca.nrc.cadc.util.Log4jInit;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.json.JSONObject;
-import org.junit.Assert;
-import static org.junit.Assert.fail;
-import org.junit.Test;
-import static org.junit.Assert.fail;
 
 /**
  *
  * @author pdowler
  */
-public class JsonWriterTest 
-{
-    private static final Logger log = Logger.getLogger(JsonWriterTest.class);
-
-    static
-    {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.xml", Level.INFO);
-    }
-    
-    public JsonWriterTest() { }
-    
-    //@Test
-    public void testTemplate()
-    {
-        try
-        {
-            
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testSimple()
-    {
-        try
-        {
-            int i = 1;
-            Observation o = getCompleteSimple(i, true);
-            
-            JsonWriter jw = new JsonWriter();
-            StringBuilder sb = new StringBuilder();
-            jw.write(o, sb);
-            String str = sb.toString();
-            log.info("\n" + str);
-            
-            JSONObject doc = new JSONObject(str);
-            
-            JSONObject obs = doc.getJSONObject("caom2:Observation");
-            Assert.assertNotNull(obs);
-            
-            String xmlns = obs.getString("@xmlns:caom2");
-            Assert.assertNotNull(xmlns);
-            Assert.assertEquals("http://www.opencadc.org/caom2/xml/v2.5", xmlns);
-            
-            String otype = obs.getString("@xsi:type");
-            Assert.assertNotNull(otype);
-            Assert.assertEquals("caom2:SimpleObservation", otype);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-    
-    @Test
-    public void testComposite()
-    {
-        try
-        {
-            int i = 1;
-            Observation o = getCompleteComposite(i, true);
-            
-            JsonWriter jw = new JsonWriter();
-            StringBuilder sb = new StringBuilder();
-            jw.write(o, sb);
-            String str = sb.toString();
-            log.info("\n" + str);
-            
-            JSONObject doc = new JSONObject(str);
-            
-            JSONObject obs = doc.getJSONObject("caom2:Observation");
-            Assert.assertNotNull(obs);
-            
-            String xmlns = obs.getString("@xmlns:caom2");
-            Assert.assertNotNull(xmlns);
-            Assert.assertEquals("http://www.opencadc.org/caom2/xml/v2.5", xmlns);
-            
-            String otype = obs.getString("@xsi:type");
-            Assert.assertNotNull(otype);
-            Assert.assertEquals("caom2:DerivedObservation", otype);
-        }
-        catch(Exception unexpected)
-        {
-            log.error("unexpected exception", unexpected);
-            fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    protected SimpleObservation getCompleteSimple(int depth, boolean boundsIsCircle)
-        throws Exception
-    {        
-        Caom2TestInstances instances = new Caom2TestInstances();
-        instances.setComplete(true);
-        instances.setDepth(depth);
-        instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getSimpleObservation();
-    }
-    
-    protected DerivedObservation getCompleteComposite(int depth, boolean boundsIsCircle)
-        throws Exception
-    {        
-        Caom2TestInstances instances = new Caom2TestInstances();
-        instances.setComplete(true);
-        instances.setDepth(depth);
-        instances.setBoundsIsCircle(boundsIsCircle);
-        return instances.getDerivedObservation();
-    }
+public interface ObservationOutput {
+    public void write(Observation obs, OutputStream out) throws IOException;
 }

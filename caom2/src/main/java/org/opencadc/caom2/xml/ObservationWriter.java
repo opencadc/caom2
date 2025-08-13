@@ -155,7 +155,7 @@ import org.opencadc.caom2.wcs.ValueCoord2D;
  *
  * @author jburke
  */
-public class ObservationWriter {
+public class ObservationWriter implements ObservationOutput {
     private static Logger log = Logger.getLogger(ObservationWriter.class);
 
     private String stylesheetURL;
@@ -279,6 +279,7 @@ public class ObservationWriter {
      * @throws IOException
      *             if the writer fails to write.
      */
+    @Override
     public void write(Observation obs, OutputStream out) throws IOException {
         OutputStreamWriter outWriter;
         try {

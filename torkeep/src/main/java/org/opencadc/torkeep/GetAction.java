@@ -96,9 +96,6 @@ public class GetAction extends RepoAction {
 
     private static final Logger log = Logger.getLogger(GetAction.class);
 
-    public static final String CAOM_MIMETYPE = "text/x-caom+xml";
-    private static final String JSON_FORMAT = "application/json";
-
     public GetAction() {
         super();
     }
@@ -136,7 +133,7 @@ public class GetAction extends RepoAction {
         
         Observation o = dao.get(state.getID());
         log.debug("loaded observation: " + o);
-        String mimeType = getMediaType();
+        String mimeType = syncInput.getHeader("accept");
         ObservationWriter ow = getObservationWriter(mimeType);
         
         syncOutput.setHeader("Content-Type", mimeType);
@@ -163,24 +160,17 @@ public class GetAction extends RepoAction {
         log.debug("DONE: " + getCollection());
     }
 
-    private String getMediaType() throws UnsupportedOperationException {
-        String accept = syncInput.getHeader("accept");
-        if (accept != null) {
-            if (JSON_FORMAT.equalsIgnoreCase(accept)) {
-                return JSON_FORMAT;
-            }
-        }
-        return CAOM_MIMETYPE;
-    }
-
     private ObservationWriter getObservationWriter(String mt) throws UnsupportedOperationException {
         ObservationWriter ret;
-        if (JSON_FORMAT.equals(mt)) {
-            ret = new JsonWriter(true);
-        } else {
-            ret = new ObservationWriter();
+        if (JSON_MIMETYPE.equals(mt) || CAOM_JSON_MIMETYPE.equals(mt)) {
+            return new JsonWriter(true);
         }
-        return ret;
+        if (XML_MIMETYPE.equals(mt) || CAOM_XML_MIMETYPE.equals(mt)) {
+            return new ObservationWriter();
+        }
+        // ignore unsupported format request
+        // default: XML
+        return new ObservationWriter();
     }
 
     protected long writeObservationList(ResourceIterator<ObservationState> iter) throws IOException {

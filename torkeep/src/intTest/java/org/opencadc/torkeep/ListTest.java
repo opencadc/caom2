@@ -289,7 +289,7 @@ public class ListTest extends AbstractIntTest {
             putObservation(observation, subject1, 200, "OK");
 
             // verify the observation using subject2
-            Observation ret = getObservation(observation.getURI(), subject1, 200, null, EXPECTED_CAOM_VERSION);
+            Observation ret = getObservation(observation.getURI(), DEFAULT_CONTENT_TYPE, subject1, 200, null, EXPECTED_CAOM_VERSION);
             Assert.assertEquals("wrong observation", observation, ret);
             retObs.add(ret);
 
