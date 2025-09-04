@@ -76,6 +76,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.xml.JsonReader;
+import org.opencadc.caom2.xml.ObservationInput;
 import org.opencadc.caom2.xml.ObservationParsingException;
 import org.opencadc.caom2.xml.ObservationReader;
 
@@ -87,7 +89,7 @@ public class ObservationInlineContentHandler implements InlineContentHandler {
 
     public static final String CONTENT_KEY = "observation";
     public static final String ERROR_KEY = "fail";
-
+    
     public ObservationInlineContentHandler() {
     }
 
@@ -101,9 +103,23 @@ public class ObservationInlineContentHandler implements InlineContentHandler {
         // wrap the input stream in a byte counter to limit bytes read
         ByteCountInputStream sizeLimitInputStream = new ByteCountInputStream(inputStream, DOCUMENT_SIZE_MAX);
 
-        ObservationReader obsReader = new ObservationReader();
+        if (contentType == null) {
+            log.debug("no content-type: assume " + GetAction.CAOM_XML_MIMETYPE);
+            contentType = GetAction.CAOM_XML_MIMETYPE;
+        } else {
+            log.debug("input content-type: " + contentType);
+        }
+        
+        ObservationInput input;
+        if (GetAction.CAOM_JSON_MIMETYPE.equals(contentType) || GetAction.JSON_MIMETYPE.equals(contentType)) {
+            input = new JsonReader();
+        } else if (GetAction.CAOM_XML_MIMETYPE.equals(contentType) || GetAction.XML_MIMETYPE.equals(contentType)) {
+            input = new ObservationReader();
+        } else {
+            throw new IllegalArgumentException("unexpected content-type: " + contentType);
+        }
         try {
-            Observation observation = obsReader.read(sizeLimitInputStream);
+            Observation observation = input.read(sizeLimitInputStream);
             InlineContentHandler.Content content = new InlineContentHandler.Content();
             content.name = CONTENT_KEY;
             content.value = observation;
