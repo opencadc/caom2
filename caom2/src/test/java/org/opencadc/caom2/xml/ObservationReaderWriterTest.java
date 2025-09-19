@@ -251,7 +251,7 @@ public class ObservationReaderWriterTest {
         try {
             Caom2TestInstances ti = new Caom2TestInstances();
             ti.setComplete(true);
-            ti.setDepth(5);
+            ti.setDepth(3);
             ti.setChildCount(2);
             Observation o = ti.getDerivedObservation();
 

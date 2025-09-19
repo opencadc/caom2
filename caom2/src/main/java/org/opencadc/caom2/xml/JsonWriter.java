@@ -137,6 +137,7 @@ public class JsonWriter extends ObservationWriter implements ObservationOutput {
         outputter.getListElementNames().add("keywords");
 
         outputter.getStringElementNames().add("uri");
+        outputter.getStringElementNames().add("uriBucket");
         outputter.getStringElementNames().add("sequenceNumber");
         outputter.getStringElementNames().add("name"); // anything with a name
 
@@ -372,6 +373,9 @@ public class JsonWriter extends ObservationWriter implements ObservationOutput {
         }
 
         private boolean isNumeric(String ename, String s) {
+            if (stringElementNames.contains(ename)) {
+                return false;
+            }
             try {
                 Double.parseDouble(s); // JSON only has double
                 return true;
