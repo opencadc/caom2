@@ -1,21 +1,21 @@
 { 
   "@caom2" : "http://www.opencadc.org/caom2/xml/v2.5",
   "@type" : "caom2:DerivedObservation",
-  "@id" : "ff46825e-7cd8-4bdf-8ab4-bbb343c740bb",
-  "@lastModified" : "2025-08-13T14:29:47.478",
-  "@maxLastModified" : "2025-08-13T14:29:49.478",
-  "@metaChecksum" : "md5:a8f33d588a852c1aa2537f91b16a316c",
-  "@accMetaChecksum" : "md5:be6cf0604caa84c1866d2c52cd700f71",
+  "@id" : "8d08dd9c-5498-4471-b855-1c3fecde163a",
+  "@lastModified" : "2025-09-19T16:04:43.100",
+  "@maxLastModified" : "2025-09-19T16:04:45.100",
+  "@metaChecksum" : "md5:fddcdc75ccda1f6dd341ccdfde8d4ff1",
+  "@accMetaChecksum" : "md5:c1283ede7a7e62718b98e47adbeea8e2",
   "@metaProducer" : "test:observation/rountrip-1.0",
   "collection" : "TEST",
   "uri" : "caom:TEST/observationID",
   "uriBucket" : "7c1",
-  "metaRelease" : "2025-08-13T14:29:47.434",
+  "metaRelease" : "2025-09-19T16:04:43.098",
   "metaReadGroups" : [
     "ivo://cadc.nrc.ca/gms?A",
     "ivo://cadc.nrc.ca/gms?B"
   ],
-  "sequenceNumber" : 123,
+  "sequenceNumber" : "123",
   "algorithm" : {
     "name" : "algorithmName"
   },
@@ -84,19 +84,19 @@
   },
   "planes" : [
     {
-      "@id" : "4106c791-cf67-4b7a-aea4-fe0d6da55f15",
-      "@lastModified" : "2025-08-13T14:29:47.478",
-      "@maxLastModified" : "2025-08-13T14:29:49.478",
-      "@metaChecksum" : "md5:d06a89479a34248ac631bb8c51a4829e",
-      "@accMetaChecksum" : "md5:61433781382d5b0c9f06a1995797560a",
+      "@id" : "0feff00b-d688-4c22-bd68-68e78b729fbe",
+      "@lastModified" : "2025-09-19T16:04:43.100",
+      "@maxLastModified" : "2025-09-19T16:04:45.100",
+      "@metaChecksum" : "md5:0719c4aea04a94755bc3ae31ad537d27",
+      "@accMetaChecksum" : "md5:1291241bd270d2b081cb61642087e0a8",
       "@metaProducer" : "test:plane/rountrip-1.0",
       "uri" : "caom:collection/observation/plane0",
-      "metaRelease" : "2025-08-13T14:29:47.434",
+      "metaRelease" : "2025-09-19T16:04:43.098",
       "metaReadGroups" : [
         "ivo://cadc.nrc.ca/gms?A",
         "ivo://cadc.nrc.ca/gms?B"
       ],
-      "dataRelease" : "2025-08-13T14:29:47.434",
+      "dataRelease" : "2025-09-19T16:04:43.098",
       "dataReadGroups" : [
         "ivo://cadc.nrc.ca/gms?C",
         "ivo://cadc.nrc.ca/gms?D"
@@ -110,7 +110,7 @@
         "producer" : "provenanceProducer",
         "runID" : "provenanceRunID",
         "reference" : "http://foo/bar",
-        "lastExecuted" : "2025-08-13T14:29:47.434",
+        "lastExecuted" : "2025-09-19T16:04:43.098",
         "keywords" : [
           "keyword1",
           "keyword2"
@@ -315,17 +315,286 @@
       },
       "artifacts" : [
         {
-          "@id" : "ff8f6fb0-8585-40a7-a5d0-f06c7f4d1460",
-          "@lastModified" : "2025-08-13T14:29:47.478",
-          "@maxLastModified" : "2025-08-13T14:29:49.478",
-          "@metaChecksum" : "md5:0982de6c8bb46c6c8eab6c17f38ad2b0",
-          "@accMetaChecksum" : "md5:717e930aa47bd049448f100c604064d8",
+          "@id" : "1959e177-ee6f-4e3c-afc4-812e9b465d05",
+          "@lastModified" : "2025-09-19T16:04:43.100",
+          "@maxLastModified" : "2025-09-19T16:04:45.100",
+          "@metaChecksum" : "md5:02f3a3149718f8d858c2785ed32b3967",
+          "@accMetaChecksum" : "md5:30ce15390db1ba58d3c26c89df95557d",
           "@metaProducer" : "test:artifact/rountrip-1.0",
           "uri" : "ad:foo/bar0",
-          "uriBucket" : 109,
+          "uriBucket" : "109",
           "productType" : "this",
           "releaseType" : "data",
-          "contentRelease" : "2025-08-13T14:29:47.434",
+          "contentRelease" : "2025-09-19T16:04:43.098",
+          "contentReadGroups" : [
+            "ivo://cadc.nrc.ca/gms?C",
+            "ivo://cadc.nrc.ca/gms?D"
+          ],
+          "contentType" : "application/fits",
+          "contentLength" : 12345,
+          "contentChecksum" : "md5:d41d8cd98f00b204e9800998ecf8427e",
+          "descriptionID" : "desc:TEST/science-ready-data"
+        },
+        {
+          "@id" : "c17f52bf-875e-46a6-8ee6-425c88b574d2",
+          "@lastModified" : "2025-09-19T16:04:43.100",
+          "@maxLastModified" : "2025-09-19T16:04:45.100",
+          "@metaChecksum" : "md5:34e0501c5e42b919c4ceb261241deac6",
+          "@accMetaChecksum" : "md5:5aeb98f585f1de446e3b577b861e3173",
+          "@metaProducer" : "test:artifact/rountrip-1.0",
+          "uri" : "ad:foo/bar1",
+          "uriBucket" : "6de",
+          "productType" : "this",
+          "releaseType" : "data",
+          "contentRelease" : "2025-09-19T16:04:43.098",
+          "contentReadGroups" : [
+            "ivo://cadc.nrc.ca/gms?C",
+            "ivo://cadc.nrc.ca/gms?D"
+          ],
+          "contentType" : "application/fits",
+          "contentLength" : 12345,
+          "contentChecksum" : "md5:d41d8cd98f00b204e9800998ecf8427e",
+          "descriptionID" : "desc:TEST/science-ready-data"
+        }
+      ]
+    },
+    {
+      "@id" : "d5f2256f-f3ec-4ac6-91d0-00e2ed67706a",
+      "@lastModified" : "2025-09-19T16:04:43.100",
+      "@maxLastModified" : "2025-09-19T16:04:45.100",
+      "@metaChecksum" : "md5:42ab691369d1ea4f3a2a2d6d439ac051",
+      "@accMetaChecksum" : "md5:0e19cecd573113046faccf55aaf79f10",
+      "@metaProducer" : "test:plane/rountrip-1.0",
+      "uri" : "caom:collection/observation/plane1",
+      "metaRelease" : "2025-09-19T16:04:43.098",
+      "metaReadGroups" : [
+        "ivo://cadc.nrc.ca/gms?A",
+        "ivo://cadc.nrc.ca/gms?B"
+      ],
+      "dataRelease" : "2025-09-19T16:04:43.098",
+      "dataReadGroups" : [
+        "ivo://cadc.nrc.ca/gms?C",
+        "ivo://cadc.nrc.ca/gms?D"
+      ],
+      "dataProductType" : "image",
+      "calibrationLevel" : 3,
+      "provenance" : {
+        "name" : "provenanceName",
+        "version" : "provenanceVersion",
+        "project" : "provenanceProject",
+        "producer" : "provenanceProducer",
+        "runID" : "provenanceRunID",
+        "reference" : "http://foo/bar",
+        "lastExecuted" : "2025-09-19T16:04:43.098",
+        "keywords" : [
+          "keyword1",
+          "keyword2"
+        ],
+        "inputs" : [
+          "caom:foo/bar/plane1",
+          "caom:foo/bar/plane2"
+        ]
+      },
+      "observable" : {
+        "ucd" : "phot.count",
+        "calibration" : "relative"
+      },
+      "metrics" : {
+        "sourceNumberDensity" : 100.0,
+        "background" : 33.3,
+        "backgroundStddev" : 0.2,
+        "fluxDensityLimit" : 1.0E-8,
+        "magLimit" : 27.5,
+        "sampleSNR" : 2.7
+      },
+      "quality" : {
+        "flag" : "junk"
+      },
+      "position" : {
+        "bounds" : {
+          "@type" : "caom2:Circle",
+          "center" : {
+            "cval1" : 2.0,
+            "cval2" : 4.0
+          },
+          "radius" : 1.0
+        },
+        "samples" : [
+          {
+            "@type" : "caom2:Circle",
+            "center" : {
+              "cval1" : 2.0,
+              "cval2" : 4.0
+            },
+            "radius" : 1.0
+          }
+        ],
+        "minBounds" : {
+          "@type" : "caom2:Circle",
+          "center" : {
+            "cval1" : 2.0,
+            "cval2" : 4.0
+          },
+          "radius" : 0.6
+        },
+        "dimension" : {
+          "naxis1" : 1024,
+          "naxis2" : 2048
+        },
+        "maxRecoverableScale" : {
+          "lower" : 0.2,
+          "upper" : 0.4
+        },
+        "resolution" : 0.05,
+        "resolutionBounds" : {
+          "lower" : 0.04,
+          "upper" : 0.06
+        },
+        "sampleSize" : 0.025,
+        "calibration" : "absolute"
+      },
+      "energy" : {
+        "bounds" : {
+          "lower" : 4.0E-4,
+          "upper" : 9.0E-4
+        },
+        "samples" : [
+          {
+            "lower" : 4.0E-4,
+            "upper" : 5.0E-4
+          },
+          {
+            "lower" : 8.0E-4,
+            "upper" : 9.0E-4
+          }
+        ],
+        "dimension" : 2,
+        "resolvingPower" : 2.0,
+        "resolvingPowerBounds" : {
+          "lower" : 1.0,
+          "upper" : 8.0
+        },
+        "resolution" : 1.0E-4,
+        "resolutionBounds" : {
+          "lower" : 1.0E-4,
+          "upper" : 1.0E-4
+        },
+        "sampleSize" : 1.0E-4,
+        "bandpassName" : "V",
+        "energyBands" : [
+          "Radio",
+          "Millimeter",
+          "Infrared",
+          "Optical",
+          "UV",
+          "EUV",
+          "X-ray",
+          "Gamma-ray"
+        ],
+        "rest" : 6.0E-7,
+        "transition" : {
+          "species" : "H",
+          "transition" : "alpha"
+        },
+        "calibration" : "normalized"
+      },
+      "time" : {
+        "bounds" : {
+          "lower" : 50000.25,
+          "upper" : 50000.75
+        },
+        "samples" : [
+          {
+            "lower" : 50000.25,
+            "upper" : 50000.4
+          },
+          {
+            "lower" : 50000.5,
+            "upper" : 50000.75
+          }
+        ],
+        "dimension" : 2,
+        "resolution" : 0.5,
+        "resolutionBounds" : {
+          "lower" : 0.5,
+          "upper" : 1.1
+        },
+        "sampleSize" : 0.15,
+        "exposure" : 600.0,
+        "exposureBounds" : {
+          "lower" : 500.0,
+          "upper" : 700.0
+        },
+        "calibration" : "absolute"
+      },
+      "polarization" : {
+        "states" : [
+          "I",
+          "Q",
+          "U"
+        ],
+        "dimension" : 3
+      },
+      "custom" : {
+        "ctype" : "FARADAY",
+        "bounds" : {
+          "lower" : 10.0,
+          "upper" : 20.0
+        },
+        "samples" : [
+          {
+            "lower" : 10.0,
+            "upper" : 13.0
+          },
+          {
+            "lower" : 17.0,
+            "upper" : 20.0
+          }
+        ],
+        "dimension" : 10
+      },
+      "visibility" : {
+        "distance" : {
+          "lower" : 20.0,
+          "upper" : 120.0
+        },
+        "distributionEccentricity" : 0.5,
+        "distributionFill" : 0.85
+      },
+      "artifacts" : [
+        {
+          "@id" : "f01f4438-67b9-45d3-a7fa-7b54af4a86ac",
+          "@lastModified" : "2025-09-19T16:04:43.100",
+          "@maxLastModified" : "2025-09-19T16:04:45.100",
+          "@metaChecksum" : "md5:1f0f622ca0cddc412b53359d3fe72c6c",
+          "@accMetaChecksum" : "md5:3c003a8802d36d2c505250b541b2ce3c",
+          "@metaProducer" : "test:artifact/rountrip-1.0",
+          "uri" : "ad:foo/bar0",
+          "uriBucket" : "109",
+          "productType" : "this",
+          "releaseType" : "data",
+          "contentRelease" : "2025-09-19T16:04:43.098",
+          "contentReadGroups" : [
+            "ivo://cadc.nrc.ca/gms?C",
+            "ivo://cadc.nrc.ca/gms?D"
+          ],
+          "contentType" : "application/fits",
+          "contentLength" : 12345,
+          "contentChecksum" : "md5:d41d8cd98f00b204e9800998ecf8427e",
+          "descriptionID" : "desc:TEST/science-ready-data"
+        },
+        {
+          "@id" : "86928495-42d1-498a-aec0-ea6e6ef0167c",
+          "@lastModified" : "2025-09-19T16:04:43.100",
+          "@maxLastModified" : "2025-09-19T16:04:45.100",
+          "@metaChecksum" : "md5:b61abc7ccb71bf99413f712c56d55a2e",
+          "@accMetaChecksum" : "md5:e5d64ad4042ce8e87b5187084ee8ab71",
+          "@metaProducer" : "test:artifact/rountrip-1.0",
+          "uri" : "ad:foo/bar1",
+          "uriBucket" : "6de",
+          "productType" : "this",
+          "releaseType" : "data",
+          "contentRelease" : "2025-09-19T16:04:43.098",
           "contentReadGroups" : [
             "ivo://cadc.nrc.ca/gms?C",
             "ivo://cadc.nrc.ca/gms?D"

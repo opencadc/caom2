@@ -71,6 +71,7 @@ package org.opencadc.caom2.xml;
 
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -98,10 +99,22 @@ public class JsonReaderWriterTest {
     public JsonReaderWriterTest() {
     }
 
-    //@Test
-    public void testTemplate() {
+    @Test
+    public void doWriteComplete() {
         try {
+            Caom2TestInstances ti = new Caom2TestInstances();
+            ti.setComplete(true);
+            ti.setDepth(3);
+            ti.setChildCount(2);
+            Observation o = ti.getDerivedObservation();
 
+            ObservationReaderWriterTest.assignEntityAttrs(o);
+
+            File f = new File("sample-derived-caom25.json");
+            FileOutputStream fos = new FileOutputStream(f);
+            JsonWriter w = new JsonWriter();
+            w.write(o, fos);
+            fos.close();
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

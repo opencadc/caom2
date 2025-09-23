@@ -164,14 +164,13 @@ public class JsonReader extends JsonUtil implements ObservationInput {
 
         String collection = root.getString("collection");
         String suri = root.getString("uri");
-        String sub = root.getString("uriBucket");
 
         URI obsURI = null;
         if (suri != null) {
             try {
                 obsURI = new URI(suri);
-            } catch (URISyntaxException e) {
-                String error = "Unable to parse " + suri + " because " + e.getMessage();
+            } catch (URISyntaxException ex) {
+                throw new ObservationParsingException("invalid Observation.uri: " + suri, ex);
             }
         }
 
@@ -192,7 +191,8 @@ public class JsonReader extends JsonUtil implements ObservationInput {
         }
         
         // verify inline vs computed uriBucket
-        if (sub != null && !obs.getUriBucket().equals(sub)) {
+        String sub = getChildString(root, "uriBucket", true);
+        if (!obs.getUriBucket().equals(sub)) {
             throw new ObservationParsingException("Observation.uriBucket: " + sub + " != " + obs.getUriBucket() + " (computed)");
         }
 
@@ -301,6 +301,13 @@ public class JsonReader extends JsonUtil implements ObservationInput {
                 String rts = getChildString(po, "releaseType", true);
                 ReleaseType rt = ReleaseType.toValue(rts);
                 Artifact a = new Artifact(uri, sem, rt);
+
+                // verify inline vs computed uriBucket
+                String ub = getChildString(po, "uriBucket", true);
+                if (!a.getUriBucket().equals(ub)) {
+                    throw new ObservationParsingException("Artifact.uriBucket: " + ub + " != " + a.getUriBucket() + " (computed)");
+                }
+
                 // optional fields
                 a.contentChecksum = getChildURI(po, "contentChecksum", false);
                 a.contentLength = getChildLong(po, "contentLength", false);
