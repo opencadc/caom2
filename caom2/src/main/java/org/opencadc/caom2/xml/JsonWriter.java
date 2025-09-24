@@ -138,7 +138,6 @@ public class JsonWriter extends ObservationWriter implements ObservationOutput {
 
         outputter.getStringElementNames().add("uri");
         outputter.getStringElementNames().add("uriBucket");
-        outputter.getStringElementNames().add("sequenceNumber");
         outputter.getStringElementNames().add("name"); // anything with a name
 
         Format fmt = null;
