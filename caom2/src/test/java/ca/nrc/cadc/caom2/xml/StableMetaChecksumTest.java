@@ -107,18 +107,17 @@ public class StableMetaChecksumTest
     
     @Test
     public void testStableChecksums24() {
-        doit("sample-composite-caom24.xml");
+        doit("sample-derived-caom24.xml");
     }
     
     private void doit(String filename) {
-        try
+        try 
         {
             // read stored file with computed checksums and verify
             File f = FileUtil.getFileFromResource(filename, StableMetaChecksumTest.class);
             if (!f.exists())
             {
-                log.warn("testStableChecksums: not found: " + f.getName() + " -- SKIPPING TEST");
-                return;
+                throw new RuntimeException("TEST SETUP: not found: " + f.getName() + " -- SKIPPING TEST");
             }
             
             Reader r = new FileReader(f);
@@ -180,10 +179,6 @@ public class StableMetaChecksumTest
             }
             
             log.info("verify metaChecksum: true verify accMetaChecksum: " + verifyAcc + " [OK]");
-        }
-        catch(MissingResourceException oops)
-        {
-            log.warn("SKIPPING TEST: " + oops);
         }
         catch(Exception unexpected)
         {
