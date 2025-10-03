@@ -343,6 +343,11 @@ public class ObservationDAO extends AbstractCaomEntityDAO<Observation> {
         return get(null, id, SQLGenerator.MAX_DEPTH);
     }
 
+    // use case: caom2-artifact-discover only needs to see artifacts
+    public Observation get(UUID id, int depth) {
+        return get(null, id, depth);
+    }
+
     private Observation get(ObservationURI uri, UUID id, int depth) {
         checkInit();
         if (uri == null && id == null) {

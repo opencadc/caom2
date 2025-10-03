@@ -223,7 +223,8 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
             for (ObservationState observationState : observationStates) {
 
                 try {
-                    Observation observation = this.observationDAO.get(observationState.getID());
+                    // get(id, 3) only queries for and returns Observation-Plane-Artifact
+                    Observation observation = this.observationDAO.get(observationState.getID(), 3);
                     
                     if (observation != null) {
                         this.observationDAO.getTransactionManager().startTransaction();
@@ -300,6 +301,7 @@ public class ArtifactHarvester implements PrivilegedExceptionAction<NullType>, S
                     }
                     
                 } catch (Throwable t) {
+                    log.error("unexpected fail", t);
                     this.observationDAO.getTransactionManager().rollbackTransaction();
                     throw t;
                 }
