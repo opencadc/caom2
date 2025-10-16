@@ -57,7 +57,8 @@ org.opencadc.torkeep.collection = {collection}
 {collection}.obsIdentifierPrefix = {URI prefix}
 # optional: define an alternate base URI for Plane.publisherID values
 {collection}.basePublisherID = {URI}
-
+# optional: define collection-specific extendced validation
+{collection}.validationPolicy = {policy config file}
 ## TODO:
 # optional (default: false)
 {collection}.proposalGroup = true|false
@@ -89,6 +90,9 @@ org.opencadc.torkeep.collection = CFHT
 {collection name}.obsIdentifierPrefix = ivo://opencadc.org/
 ```
 would transform a Plane.uri `caom:CFHT/123456p` into publisherID `ivo://opencadc.org/CFHT?123456p`.
+
+The _validationPolicy_ specifies a secondary configuration file to configure the validation of observations in the
+collection. See [ValidationPolicy](ValidationPolicy.md) for details.
 
 Not implemented yet: _proposalGroup_ (optional, default: false) is a boolean flag which indicates whether CAOM 
 read access grant(s) are generated to allow the proposal group to access CAOM metadata and/or data (if needed 
