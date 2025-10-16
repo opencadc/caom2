@@ -16,7 +16,7 @@ The CAOM data model requires that the following fields are not null:
 Observation.collection
 Observation.uri
 Observation.algorithm
-Observation.algorithm.name
+Algorithm.name
 
 Plane.uri
 
@@ -48,13 +48,13 @@ enumeration in the model.
 Optional fields in any class can be made required by including the `vodml-id`, but as described above that
 requirement is only relative to the containing class. For example,
 ```
-Observation.telescope.trackingMode
+Telescope.trackingMode
 ```
 would require that all instances of Telescope include a value for `trackingMode`, but to require that all
 observations have a telescope **and** a trackingMode would be configured explicitly as:
 ```
 Observation.telescope
-Observation.telescope.trackingMode
+Telescope.trackingMode
 ```
 
 ## Extended Not-Empty Constraints
