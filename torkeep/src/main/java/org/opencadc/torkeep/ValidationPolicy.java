@@ -101,7 +101,7 @@ public class ValidationPolicy {
 
         @Override
         public void visitCollection(String vodmlID, Collection set) {
-            log.warn("visitCollection: " + vodmlID);
+            log.debug("visitCollection: " + vodmlID);
             if (vmap.contains(vodmlID)) {
                 if (set == null) {
                     errors.append(vodmlID).append(" null\n");
@@ -113,7 +113,7 @@ public class ValidationPolicy {
 
         @Override
         public void visitLeaf(String vodmlID, Object o) {
-            log.warn("visitLeaf: " + vodmlID);
+            log.debug("visitLeaf: " + vodmlID);
             if (vmap.contains(vodmlID)) {
                 // validate value??
             }
@@ -121,7 +121,7 @@ public class ValidationPolicy {
 
         @Override
         public void visitNode(String vodmlID, Object o) {
-            log.warn("visitNode: " + vodmlID);
+            log.debug("visitNode: " + vodmlID);
             if (vmap.contains(vodmlID)) {
                 // validate value??
             }
@@ -129,7 +129,7 @@ public class ValidationPolicy {
 
         @Override
         public void visitNull(String vodmlID) {
-            log.warn("visitNull: " + vodmlID);
+            log.debug("visitNull: " + vodmlID);
             if (vmap.contains(vodmlID)) {
                 errors.append(vodmlID).append(" null\n");
             }
@@ -137,6 +137,10 @@ public class ValidationPolicy {
     }
 
     public void validate(Observation obs) throws IllegalArgumentException {
+        if (vmap.isEmpty()) {
+            log.debug("validation policy: empty");
+            return;
+        }
         ValidationVisitor nnp = new ValidationVisitor();
         obs.visit(nnp);
         for (Plane p : obs.getPlanes()) {
@@ -146,10 +150,9 @@ public class ValidationPolicy {
             }
         }
         String errors = nnp.getValidationErrors();
-        log.warn("errors:" + errors);
+        log.debug("errors:" + errors);
         if (errors.length() > 0) {
-            throw new IllegalArgumentException("invalid observation: " + obs.getURI() + " reasons:\n"
-                + errors);
+            throw new IllegalArgumentException("missing required metadata:\n" + errors);
         }
     }
 }
