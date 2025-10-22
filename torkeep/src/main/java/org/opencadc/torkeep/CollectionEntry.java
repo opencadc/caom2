@@ -70,11 +70,15 @@
 package org.opencadc.torkeep;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CollectionEntry {
     private final String collection;
     private final String obsIdentifierPrefix;
     private final URI basePublisherID;
+    private final List<String> validationPolicy = new ArrayList<>();
+    
     public boolean computeMetadata;
     public boolean proposalGroup;
 
@@ -85,7 +89,7 @@ public class CollectionEntry {
     }
 
     public String getCollection() {
-        return this.collection;
+        return collection;
     }
 
     public String getObsIdentifierPrefix() {
@@ -93,20 +97,16 @@ public class CollectionEntry {
     }
 
     public URI getBasePublisherID() {
-        return this.basePublisherID;
+        return basePublisherID;
     }
 
-    public boolean isComputeMetadata() {
-        return this.computeMetadata;
-    }
-
-    public boolean isProposalGroup() {
-        return this.proposalGroup;
+    public List<String> getValidationPolicy() {
+        return validationPolicy;
     }
 
     @Override
     public String toString() {
-        return String.format("CollectionEntry=[%s, %s, basePublisherID=%s, computeMetadata=[%s], proposalGroup=[%s]]",
+        return String.format("CollectionEntry[%s, %s, basePublisherID=%s, computeMetadata=[%s], proposalGroup=[%s]]",
                 collection, obsIdentifierPrefix, basePublisherID, computeMetadata, proposalGroup);
     }
 

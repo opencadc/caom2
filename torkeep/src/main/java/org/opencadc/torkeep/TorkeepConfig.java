@@ -69,10 +69,13 @@
 
 package org.opencadc.torkeep;
 
+import ca.nrc.cadc.auth.X500PrincipalComparator;
+import ca.nrc.cadc.util.ConfigFileReader;
 import ca.nrc.cadc.util.InvalidConfigException;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.util.StringUtil;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -80,6 +83,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 
 public class TorkeepConfig {
@@ -90,11 +95,18 @@ public class TorkeepConfig {
 
     private static final String GRANT_PROVIDER_KEY = "org.opencadc.torkeep.grantProvider";
     private static final String COLLECTION_KEY = "org.opencadc.torkeep.collection";
+    private static final String ARCHIVE_OPS_KEY = "org.opencadc.torkeep.archiveOperator";
+    private static final String META_SYNC_OPS_KEY = "org.opencadc.torkeep.metaSyncOperator";
+    
     private static final String OBS_IDENT_KEY = ".obsIdentifierPrefix";
     private static final String BASE_PUBLISHER_ID_KEY = ".basePublisherID";
+    private static final String VALIDATION_POLICY_KEY = ".validationPolicy";
     private static final String COMPUTE_METADATA_KEY = ".computeMetadata";
     private static final String PROPOSAL_GROUP_KEY = ".proposalGroup";
     private final List<URI> grantProviders = new ArrayList<>();
+    final Set<X500Principal> archiveOperators = new TreeSet<>(new X500PrincipalComparator());
+    final Set<X500Principal> metaSyncOperators = new TreeSet<>(new X500PrincipalComparator());
+    
     private final List<CollectionEntry> configs = new ArrayList<>();
 
     public TorkeepConfig() {
@@ -153,14 +165,48 @@ public class TorkeepConfig {
 
         // grant providers
         this.grantProviders.addAll(getGrantProviders(properties, errors));
+        
+        List<String> archiveOps = properties.getProperty(ARCHIVE_OPS_KEY);
+        if (archiveOps != null) {
+            for (String s : archiveOps) {
+                try {
+                    X500Principal p = new X500Principal(s);
+                    archiveOperators.add(p);
+                } catch (Exception ex) {
+                    errors.append("invalid ").append(ARCHIVE_OPS_KEY).append("=").append(s).append(" reason: ").append(ex).append("\n");
+                }
+            }
+        }
+        
+        List<String> syncOps = properties.getProperty(META_SYNC_OPS_KEY);
+        if (syncOps != null) {
+            for (String s : syncOps) {
+                try {
+                    X500Principal p = new X500Principal(s);
+                    metaSyncOperators.add(p);
+                } catch (Exception ex) {
+                    errors.append("invalid ").append(META_SYNC_OPS_KEY).append("=").append(s).append(" reason: ").append(ex).append("\n");
+                }
+            }
+        }
 
         // get the collection keys
         List<String> collections = getCollections(properties, errors);
         for (String collection : collections) {
             log.debug("reading collection: " + collection);
-
             final String obsIdentifierPrefix = getObsIdentifierPrefix(properties, collection + OBS_IDENT_KEY, errors);
             final URI basePublisherID = getBasePublisherID(properties, collection + BASE_PUBLISHER_ID_KEY, errors);
+
+            String valPol = getProperty(properties, collection + VALIDATION_POLICY_KEY, errors, false);
+            List<String> vp = null;
+            if (valPol != null) {
+                ConfigFileReader vpReader = new ConfigFileReader(valPol);
+                try {
+                    vp = vpReader.getRawContent();
+                } catch (IOException ex) {
+                    errors.append("failed to read validation policy: ").append(valPol).append(" reason: ").append(ex);
+                }
+            }
 
             String computeMetadataValue = getProperty(properties, collection + COMPUTE_METADATA_KEY, errors, false);
             boolean computeMetadata = false;
@@ -182,6 +228,9 @@ public class TorkeepConfig {
             CollectionEntry cc = new CollectionEntry(collection, obsIdentifierPrefix, basePublisherID);
             cc.computeMetadata = computeMetadata;
             cc.proposalGroup = proposalGroup;
+            if (vp != null) {
+                cc.getValidationPolicy().addAll(vp);
+            }
             this.configs.add(cc);
             log.debug("added " + cc);
         }

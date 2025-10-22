@@ -51,15 +51,23 @@ Each collection in the properties file configures a collection name, followed by
 # permission services (one per line) that provide read and write grants
 org.opencadc.torkeep.grantProvider = {URI}
 
+# operations permissions (optional)
+org.opencadc.torkeep.archiveOperator = {X509 distinguished name}
+org.opencadc.torkeep.metaSyncOperator = {X509 distinguished name}
+
 # collection name and one or more collection properties
 org.opencadc.torkeep.collection = {collection}
+
 # required: define REST API path to Observation.uri mapping
 {collection}.obsIdentifierPrefix = {URI prefix}
-# optional: define an alternate base URI for Plane.publisherID values
+
+# define an alternate base URI for Plane.publisherID values (optional)
 {collection}.basePublisherID = {URI}
 
-## TODO:
-# optional (default: false)
+# define collection-specific extendced validation (optional)
+{collection}.validationPolicy = {policy config file}
+ 
+# TODO: generate read group grants fvrom Observation.proposal (optional, default: false)
 {collection}.proposalGroup = true|false
 ```
 _grantProvider_ is URI to a permissions service that provides grants to read and write CAOM collections.
@@ -68,6 +76,11 @@ one line per permissions service. `torkeep` will requerst grant information for 
 (observations) in the form `caom:{collection}/{observationID}` so for baldur rules that grant read-only and/or
 read-write access to identifier patterns that start with `caom:{collection}/` are necessary to match the
 requests that `torkeep` will make.
+
+The optional _archiveOperator_ and _metaSyncOperator_ grant permissions directly to operational accounts. An 
+_archiveOperator_ has read-write permisison to **ALL** collections and metadata and can be used to enable processes
+to put metadata into the archive. A _metaSyncOperator_ has read-only permission  to **ALL** collections and can be
+used to enable metadata-sync (`icewind` running at a different location). Both of these can be used with no additional AAI components, but they do require front-end proxy setup and an IdentityManager implementation to support X509 client certificate use. **TODO:** extend this to work with OpenID Client Credentials and the `StandardIdentityManager`.
 
 _collection_ specifies the CAOM collection name and defines a new set of config keys for that collection.
 
@@ -90,11 +103,15 @@ org.opencadc.torkeep.collection = CFHT
 ```
 would transform a Plane.uri `caom:CFHT/123456p` into publisherID `ivo://opencadc.org/CFHT?123456p`.
 
+The _validationPolicy_ specifies a secondary configuration file to configure the validation of observations in the
+collection. See [ValidationPolicy](ValidationPolicy.md) for details.
+
 Not implemented yet: _proposalGroup_ (optional, default: false) is a boolean flag which indicates whether CAOM 
 read access grant(s) are generated to allow the proposal group to access CAOM metadata and/or data (if needed 
 because it is not currently public). A proposal group is always of the form `{GMS service resourceID}?{Observation.collection}-{Observation.proposal.id}` where the GMS resourceID is the one configured as the local GMS service (see `cadc-registry` above) and the group name is generated from the CAOM collection and proposal ID as shown.
 NOTE: not yet enabled in this code pending code re-org. `torkeep` *does not* check if the group exists or attempt to
 create it.
+
 
 ## building it
 ```

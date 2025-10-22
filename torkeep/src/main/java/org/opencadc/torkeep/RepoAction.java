@@ -69,11 +69,11 @@
 
 package org.opencadc.torkeep;
 
+import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.rest.InlineContentHandler;
@@ -91,6 +91,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
+import javax.security.auth.Subject;
+import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Observation;
@@ -99,6 +101,8 @@ import org.opencadc.caom2.db.DeletedObservationEventDAO;
 import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.caom2.util.CaomValidator;
 import org.opencadc.caom2.xml.ObservationParsingException;
+import org.opencadc.permissions.ReadGrant;
+import org.opencadc.permissions.WriteGrant;
 import org.opencadc.permissions.client.PermissionsCheck;
 
 /**
@@ -275,8 +279,7 @@ public abstract class RepoAction extends RestAction {
         CollectionEntry collectionEntry = tc.getConfig(collection);
         if (collectionEntry != null) {
             // this.raGroupConfig.put(ReadAccessGenerator.PROPOSAL_GROUP_KEY, collectionEntry.isProposalGroup());
-            //daoConfig.put("basePublisherID", collectionEntry.getBasePublisherID().toASCIIString());
-            this.computeMetadata = collectionEntry.isComputeMetadata();
+            this.computeMetadata = collectionEntry.computeMetadata;
         }
         return daoConfig;
     }
@@ -356,6 +359,29 @@ public abstract class RepoAction extends RestAction {
             }
         }
         log.debug("authorizing: " + grantURI);
+        
+        Subject subject = AuthenticationUtil.getCurrentSubject();
+        X500Principal xp = AuthenticationUtil.getX500Principal(subject);
+        if (xp != null && !tc.archiveOperators.isEmpty()) {
+            // local configured read
+            for (X500Principal xa : tc.archiveOperators) {
+                if (AuthenticationUtil.equals(xp, xa)) {
+                    logInfo.setResource(grantURI);
+                    logInfo.setGrant("read: archiveOperator");
+                    // granted
+                    return;
+                }
+            }
+            for (X500Principal xa : tc.metaSyncOperators) {
+                if (AuthenticationUtil.equals(xp, xa)) {
+                    logInfo.setResource(grantURI);
+                    logInfo.setGrant("read: metaSyncOperator");
+                    // granted
+                    return;
+                }
+            }
+            // fall through to normal checks below
+        }
 
         try {
             PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
@@ -396,6 +422,21 @@ public abstract class RepoAction extends RestAction {
             grantURI = URI.create("caom:" + getCollection() + "/");
         }
         log.debug("authorizing: " + grantURI);
+
+        Subject subject = AuthenticationUtil.getCurrentSubject();
+        X500Principal xp = AuthenticationUtil.getX500Principal(subject);
+        if (xp != null && !tc.archiveOperators.isEmpty()) {
+            // local configured read-write
+            for (X500Principal xa : tc.archiveOperators) {
+                if (AuthenticationUtil.equals(xp, xa)) {
+                    logInfo.setResource(grantURI);
+                    logInfo.setGrant("write: archiveOperator");
+                    // granted
+                    return;
+                }
+            }
+            // fall through to normal checks below
+        }
 
         try {
             PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
@@ -439,6 +480,10 @@ public abstract class RepoAction extends RestAction {
     protected void validate(Observation obs) 
         throws AccessControlException, IOException, TransientException {
         try {
+            CollectionEntry ce = torkeepConfig.getConfig(collection);
+            ValidationPolicy validator = new ValidationPolicy(ce.getValidationPolicy());
+            validator.validate(obs);
+                
             if (this.computeMetadata) {
                 for (Plane p : obs.getPlanes()) {
                     ComputeUtil.clearTransientState(p);
