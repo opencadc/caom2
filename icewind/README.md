@@ -39,8 +39,8 @@ org.opencadc.icewind.batchSize={num}
 # optional: number of threads used to read observations from repoService (default: 1 + batchSize/10)
 org.opencadc.icewind.numThreads={num}
 
-# optional: limit harvesting to sufficiently old changes to avoid volatile head of sequence (default: 300)
-org.opencadc.icewind.lookbackTime={seconds}
+# TODO: limit harvesting to sufficiently old changes to avoid volatile head of sequence (default: 300)
+#org.opencadc.icewind.lookbackTime={seconds}
 
 # Destination caom2 database settings
 org.opencadc.icewind.caom.schema={CAOM schema name}
@@ -82,12 +82,13 @@ repository for new observations. The idle time defaults to 30 seconds and double
 when no new observations are found until maxIdle is reached. The idle time 
 resets to the default when new content is found.
 
-  The _lookbackTime_ is the amount of time (seconds) in the past to try to harvest metadata. This is
-used to set a maximum on the timestamp to harvest of _now_ - _lookbackTime. If the head of the sequence
-of updates is volatile (does not monotomically increase) incremental harvest can miss updates that are
-inserted slightly behind the most recent. This option limits (delays) harvesting to slightly older 
-and this a stable part of the sequence. The default (300 seconds) is normally sufficient, but a larger
-value may be necessary if the source is poorly behaved.
+TODO (not implemented): The _lookbackTime_ is the amount of time (seconds) in the past to try to 
+harvest metadata. This is used to set a maximum on the timestamp to harvest of _now - lookbackTime_.
+If the head of the sequence of updates is volatile (does not monotomically increase) incremental 
+harvest can miss updates that are inserted behind the most recent. This option limits (delays) 
+harvesting to slightly older and thus a stable part of the sequence. The default (300 seconds) is
+currently hard coded and normally sufficient, but a larger value may be necessary if the source is 
+poorly behaved.
 
 The _basePublisherID_ is used to generate Plane.publisherID values. The base 
 is a URI of the form `ivo://<authority>[/<path>]` and generated publisherID values
