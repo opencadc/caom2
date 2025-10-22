@@ -114,6 +114,9 @@ public class ObservationHarvester extends Harvester {
 
     private static final Logger log = Logger.getLogger(ObservationHarvester.class);
 
+    private static final long DEFAULT_VOLATILE_TIME = 300 * 1000L; // 5 min
+    
+    private long volatileTime = DEFAULT_VOLATILE_TIME;
     private final URI basePublisherID;
     private final boolean nochecksum;
     private RepoClient srcRepoClient;
@@ -143,6 +146,10 @@ public class ObservationHarvester extends Harvester {
         return this.ingested;
     }
 
+    public void setVolatileTimeSec(int volatileTime) {
+        this.volatileTime = 1000L * volatileTime;
+    }
+    
     private void init(int nthreads) {
         this.srcRepoClient = new RepoClient(src.getResourceID(), nthreads);
         // TODO: make these configurable
@@ -245,8 +252,8 @@ public class ObservationHarvester extends Harvester {
             if (!skipped) {
                 // harvest up to a little in the past because the head of
                 // the sequence may be volatile
-                long fiveMinAgo = System.currentTimeMillis() - 5 * 60000L;
-                endDate = new Date(fiveMinAgo);
+                long et = System.currentTimeMillis() - volatileTime;
+                endDate = new Date(et);
             }
 
             List<SkippedWrapperURI<ObservationResponse>> entityList;
@@ -312,14 +319,17 @@ public class ObservationHarvester extends Harvester {
                     String ts = "???";
                     if (obsState != null && obsState.maxLastModified != null) {
                         ts = format(obsState.maxLastModified);
+                        if (o != null && !o.getMaxLastModified().equals(obsState.maxLastModified)) {
+                            // saw obsState in list, but got later obervation from get: flag in logs
+                            ts += "**";
+                        }
                     }
                     if (o != null) {
-                        String treeSize = computeTreeSize(o);
-                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + ts + " " + treeSize);
+                        log.info("put: " + o.getClass().getSimpleName() + " " + o.getURI() + " " + ts + " " + o.getAccMetaChecksum());
                     } else if (hs != null) {
                         log.info("put (retry error): " + hs.getName() + " " + hs.getSkipID() + " " + format(hs.getLastModified()));
                     } else {
-                        log.info("put (error): Observation " + ow.entity.observationState.getURI() + " " + format(obsState.maxLastModified));
+                        log.info("put (error): Observation " + ow.entity.observationState.getURI() + " " + ts);
                     }
 
                     if (skipped) {
