@@ -206,7 +206,7 @@ public class ObservationValidator extends Harvester {
                 ObservationState s = siter.next();
                 boolean added = srcState.add(s);
                 if (!added) {
-                    log.debug("duplicate src entry: " + s.getURI().getURI());
+                    log.warn("duplicate src entry: " + s.getURI().getURI() + " " + df.format(s.maxLastModified));
                     srcState.remove(s); // remove older one and keep newer one
                     if (!srcState.add(s)) {
                         log.warn("failed to remove+add to keep latest duplicate: " + s.getURI().getURI());
@@ -260,12 +260,14 @@ public class ObservationValidator extends Harvester {
                             knownSkip = true;
                             ret.known++;
                         }
-                        if (lastHarvested != null && lastHarvested.after(tryAfter)) {
-                            ret.missed++;
-                        } else {
-                            // incremental harvest mode will fix this in the future
-                            futureSkip = true;
-                            ret.future++;
+                        if (!ose.missingFromSource) {
+                            if (lastHarvested != null && lastHarvested.after(tryAfter) && !knownSkip) {
+                                ret.missed++;
+                            } else {
+                                // incremental harvest mode will fix this in the future
+                                futureSkip = true;
+                                ret.future++;
+                            }
                         }
 
                         if (destObservationDAO.getTransactionManager().isOpen()) {
@@ -375,6 +377,7 @@ public class ObservationValidator extends Harvester {
             ObservationState os = iterDst.next();
             if (!srcState.contains(os)) {
                 ObservationStateError ose = new ObservationStateError(os, "missed deletion");
+                ose.missingFromSource = true;
                 log.debug("************************ adding missed deletion: " + os.getURI());
                 if (!listErroneous.contains(ose)) {
                     listErroneous.add(ose);

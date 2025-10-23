@@ -75,6 +75,8 @@ public class ObservationStateError implements Comparable<ObservationStateError> 
 
     private ObservationState state = null;
     private String error = null;
+    
+    public boolean missingFromSource = false;
 
     public ObservationStateError(ObservationState o, String e) {
         state = o;
