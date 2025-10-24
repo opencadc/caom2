@@ -69,7 +69,8 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.auth.X500PrincipalComparator;
+import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.IdentityManager;
 import ca.nrc.cadc.util.ConfigFileReader;
 import ca.nrc.cadc.util.InvalidConfigException;
 import ca.nrc.cadc.util.MultiValuedProperties;
@@ -83,7 +84,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 
@@ -104,8 +105,8 @@ public class TorkeepConfig {
     private static final String COMPUTE_METADATA_KEY = ".computeMetadata";
     private static final String PROPOSAL_GROUP_KEY = ".proposalGroup";
     private final List<URI> grantProviders = new ArrayList<>();
-    final Set<X500Principal> archiveOperators = new TreeSet<>(new X500PrincipalComparator());
-    final Set<X500Principal> metaSyncOperators = new TreeSet<>(new X500PrincipalComparator());
+    final List<Subject> archiveOperators = new ArrayList<>();
+    final List<Subject> metaSyncOperators = new ArrayList<>();
     
     private final List<CollectionEntry> configs = new ArrayList<>();
 
@@ -118,11 +119,12 @@ public class TorkeepConfig {
     }
 
     private List<URI> getGrantProviders(MultiValuedProperties properties, StringBuilder errors) {
-        List<String> values = properties.getProperty(GRANT_PROVIDER_KEY);
-        if (values.isEmpty()) {
-            throw new InvalidConfigException(String.format("CONFIG: configured %s not found", GRANT_PROVIDER_KEY));
-        }
         List<URI> providers = new ArrayList<>();
+        
+        List<String> values = properties.getProperty(GRANT_PROVIDER_KEY);
+        //if (values.isEmpty()) {
+        //    throw new InvalidConfigException(String.format("CONFIG: configured %s not found", GRANT_PROVIDER_KEY));
+        //}
         for (String value : values) {
             try {
                 providers.add(new URI(value));
@@ -166,12 +168,13 @@ public class TorkeepConfig {
         // grant providers
         this.grantProviders.addAll(getGrantProviders(properties, errors));
         
+        IdentityManager im = AuthenticationUtil.getIdentityManager();
         List<String> archiveOps = properties.getProperty(ARCHIVE_OPS_KEY);
         if (archiveOps != null) {
             for (String s : archiveOps) {
                 try {
-                    X500Principal p = new X500Principal(s);
-                    archiveOperators.add(p);
+                    Subject subject = im.toSubject(s);
+                    archiveOperators.add(subject);
                 } catch (Exception ex) {
                     errors.append("invalid ").append(ARCHIVE_OPS_KEY).append("=").append(s).append(" reason: ").append(ex).append("\n");
                 }
@@ -182,8 +185,8 @@ public class TorkeepConfig {
         if (syncOps != null) {
             for (String s : syncOps) {
                 try {
-                    X500Principal p = new X500Principal(s);
-                    metaSyncOperators.add(p);
+                    Subject subject = im.toSubject(s);
+                    metaSyncOperators.add(subject);
                 } catch (Exception ex) {
                     errors.append("invalid ").append(META_SYNC_OPS_KEY).append("=").append(s).append(" reason: ").append(ex).append("\n");
                 }

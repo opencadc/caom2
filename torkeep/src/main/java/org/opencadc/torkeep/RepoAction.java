@@ -86,6 +86,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.AccessControlException;
+import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -101,8 +102,6 @@ import org.opencadc.caom2.db.DeletedObservationEventDAO;
 import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.caom2.util.CaomValidator;
 import org.opencadc.caom2.xml.ObservationParsingException;
-import org.opencadc.permissions.ReadGrant;
-import org.opencadc.permissions.WriteGrant;
 import org.opencadc.permissions.client.PermissionsCheck;
 
 /**
@@ -361,23 +360,30 @@ public abstract class RepoAction extends RestAction {
         log.debug("authorizing: " + grantURI);
         
         Subject subject = AuthenticationUtil.getCurrentSubject();
-        X500Principal xp = AuthenticationUtil.getX500Principal(subject);
-        if (xp != null && !tc.archiveOperators.isEmpty()) {
+        boolean operators = !tc.archiveOperators.isEmpty() || !tc.metaSyncOperators.isEmpty();
+        if (operators && !subject.getPrincipals().isEmpty()) {
             // local configured read
-            for (X500Principal xa : tc.archiveOperators) {
-                if (AuthenticationUtil.equals(xp, xa)) {
-                    logInfo.setResource(grantURI);
-                    logInfo.setGrant("read: archiveOperator");
-                    // granted
-                    return;
+            
+            for (Principal cp : subject.getPrincipals()) {
+                for (Subject xa : tc.archiveOperators) {
+                    for (Principal p : xa.getPrincipals()) {
+                        if (AuthenticationUtil.equals(cp, p)) {
+                            logInfo.setResource(grantURI);
+                            logInfo.setGrant("read: archiveOperator");
+                            // granted
+                            return;
+                        }
+                    }
                 }
-            }
-            for (X500Principal xa : tc.metaSyncOperators) {
-                if (AuthenticationUtil.equals(xp, xa)) {
-                    logInfo.setResource(grantURI);
-                    logInfo.setGrant("read: metaSyncOperator");
-                    // granted
-                    return;
+                for (Subject xa : tc.metaSyncOperators) {
+                    for (Principal p : xa.getPrincipals()) {
+                        if (AuthenticationUtil.equals(cp, p)) {
+                            logInfo.setResource(grantURI);
+                            logInfo.setGrant("read: metaSyncOperator");
+                            // granted
+                            return;
+                        }
+                    }
                 }
             }
             // fall through to normal checks below
@@ -424,15 +430,20 @@ public abstract class RepoAction extends RestAction {
         log.debug("authorizing: " + grantURI);
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
-        X500Principal xp = AuthenticationUtil.getX500Principal(subject);
-        if (xp != null && !tc.archiveOperators.isEmpty()) {
-            // local configured read-write
-            for (X500Principal xa : tc.archiveOperators) {
-                if (AuthenticationUtil.equals(xp, xa)) {
-                    logInfo.setResource(grantURI);
-                    logInfo.setGrant("write: archiveOperator");
-                    // granted
-                    return;
+        boolean operators = !tc.archiveOperators.isEmpty();
+        if (operators && !subject.getPrincipals().isEmpty()) {
+            // local configured read
+            
+            for (Principal cp : subject.getPrincipals()) {
+                for (Subject xa : tc.archiveOperators) {
+                    for (Principal p : xa.getPrincipals()) {
+                        if (AuthenticationUtil.equals(cp, p)) {
+                            logInfo.setResource(grantURI);
+                            logInfo.setGrant("read: archiveOperator");
+                            // granted
+                            return;
+                        }
+                    }
                 }
             }
             // fall through to normal checks below

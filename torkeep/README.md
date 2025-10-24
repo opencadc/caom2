@@ -48,12 +48,12 @@ The torkeep.properties configures the services that provide grants to access col
 Each collection in the properties file configures a collection name, followed by collection-specific properties.
 
 ```
-# permission services (one per line) that provide read and write grants
+# optional: permission services (one per line) that provide read and write grants
 org.opencadc.torkeep.grantProvider = {URI}
 
-# operations permissions (optional)
-org.opencadc.torkeep.archiveOperator = {X509 distinguished name}
-org.opencadc.torkeep.metaSyncOperator = {X509 distinguished name}
+# optional: operations permissions
+org.opencadc.torkeep.archiveOperator = {identity}
+org.opencadc.torkeep.metaSyncOperator = {identity}
 
 # collection name and one or more collection properties
 org.opencadc.torkeep.collection = {collection}
@@ -80,7 +80,9 @@ requests that `torkeep` will make.
 The optional _archiveOperator_ and _metaSyncOperator_ grant permissions directly to operational accounts. An 
 _archiveOperator_ has read-write permisison to **ALL** collections and metadata and can be used to enable processes
 to put metadata into the archive. A _metaSyncOperator_ has read-only permission  to **ALL** collections and can be
-used to enable metadata-sync (`icewind` running at a different location). Both of these can be used with no additional AAI components, but they do require front-end proxy setup and an IdentityManager implementation to support X509 client certificate use. **TODO:** extend this to work with OpenID Client Credentials and the `StandardIdentityManager`.
+used to enable metadata-sync (`icewind` running at a different location). If the identities are X509 distinguished 
+names, these can be used with no additional AAI components, but they do require front-end proxy setup and an 
+IdentityManager implementation to support X509 client certificate use. **TODO:** additional docs for use with OpenID.
 
 _collection_ specifies the CAOM collection name and defines a new set of config keys for that collection.
 
