@@ -28,9 +28,8 @@ dependencies {
 
     implementation 'org.opencadc:cadc-permissions-client:[0.3,1.0)'
     implementation 'org.opencadc:caom2:[2.5.0,2.6)'
-    implementation 'org.opencadc:cadc-util:[1.6,2.0)'
+    implementation 'org.opencadc:cadc-util:[1.12.11,2.0)'
     implementation 'org.opencadc:cadc-rest:[1.4.7,)'
-    implementation 'org.opencadc:cadc-access-control:[1.1,2.0)'
     implementation 'org.opencadc:caom2-compute:[2.5.0,2.6)'
     implementation 'org.opencadc:caom2-db:[2.5.0,2.6)'
     implementation 'org.opencadc:cadc-vosi:[1.4.1,2.0)'
@@ -40,7 +39,7 @@ dependencies {
 
     implementation 'org.opencadc:cadc-log:[1.0,)'
     implementation 'org.opencadc:cadc-gms:[1.0.4,)'
-    implementation 'org.opencadc:cadc-access-control-identity:[1.2,)'
+    runtimeOnly 'org.opencadc:cadc-access-control-identity:[1.2,)'
 
     testImplementation 'junit:junit:[4.0,)'
 
