@@ -143,13 +143,12 @@ public class GetAction extends RepoAction {
         }
         
         String mimeType = syncInput.getHeader("accept");
-        ObservationWriter ow = getObservationWriter(mimeType);
-        
         syncOutput.setHeader("Content-Type", mimeType);
         syncOutput.setHeader("ETag", o.getAccMetaChecksum());
         syncOutput.setLastModified(o.getMaxLastModified());
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
+        ObservationWriter ow = getObservationWriter(mimeType);
         ow.write(o, bc);
         logInfo.setBytes(bc.getByteCount());
 
