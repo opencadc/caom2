@@ -62,64 +62,41 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
-*  $Revision: 5 $
-*
 ************************************************************************
 */
 
 package org.opencadc.torkeep;
 
 import ca.nrc.cadc.date.DateUtil;
-import ca.nrc.cadc.io.ByteCountOutputStream;
-import ca.nrc.cadc.io.ResourceIterator;
 import ca.nrc.cadc.net.ResourceNotFoundException;
-import com.csvreader.CsvWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.Date;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.caom2.util.ObservationState;
-import org.opencadc.caom2.xml.JsonWriter;
 import org.opencadc.caom2.xml.ObservationWriter;
 
 /**
  *
  * @author pdowler
  */
-public class GetAction extends RepoAction {
+public class HeadAction extends RepoAction {
+    private static final Logger log = Logger.getLogger(HeadAction.class);
 
-    private static final Logger log = Logger.getLogger(GetAction.class);
-
-    public GetAction() {
+    public HeadAction() { 
         super();
     }
 
     @Override
     public void doAction() throws Exception {
-        log.debug("GET ACTION");
         URI uri = getObservationURI();
-        if (uri != null) {
-            doGetObservation(uri);
-            return;
-        } else if (getCollection() != null) {
-            InputParams ip = getInputParams();
-            doList(ip.maxrec, ip.start, ip.end, ip.ascending);
-        } else {
-            // Responds to requests where no collection is provided.
-            // Returns list of all collections.
-            doGetCollectionList();
-        }
-    }
-
-    protected void doGetObservation(URI uri) throws Exception {
         log.debug("START: " + uri);
-
+        if (uri == null) {
+            // TODO: method not supported on base endpoint
+            throw new IllegalArgumentException("HEAD requires a URI in the path");
+        }
         ObservationDAO dao = getDAO();
         log.debug("getState: " + uri);
         ObservationState state = dao.getState(uri);
@@ -127,7 +104,6 @@ public class GetAction extends RepoAction {
         if (state == null) {
             throw new ResourceNotFoundException("not found: " + uri);
         }
-
         
         Observation o = dao.get(state.getID());
         log.debug("loaded observation: " + o);
@@ -142,63 +118,9 @@ public class GetAction extends RepoAction {
             checkReadPermission();
         }
         
-        String mimeType = syncInput.getHeader("accept");
-        syncOutput.setHeader("Content-Type", mimeType);
-        syncOutput.setHeader("ETag", o.getAccMetaChecksum());
+        syncOutput.setHeader("x-entity-id", o.getID().toString());
+        syncOutput.setHeader("etag", o.getAccMetaChecksum());
         syncOutput.setLastModified(o.getMaxLastModified());
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ObservationWriter ow = getObservationWriter(mimeType);
-        ow.write(o, bc);
-        logInfo.setBytes(bc.getByteCount());
-
-        log.debug("DONE: " + uri);
-    }
-
-    protected void doList(int maxRec, Date start, Date end, boolean isAscending) throws Exception {
-        log.debug("START: " + getCollection());
-
-        checkReadPermission();
-
-        ObservationDAO dao = getDAO();
-
-        try (ResourceIterator<ObservationState> iter = dao.iterator(getCollection(), start, end, maxRec)) {
-            long byteCount = writeObservationList(iter);
-            logInfo.setBytes(byteCount);
-        }
-        log.debug("DONE: " + getCollection());
-    }
-
-    private ObservationWriter getObservationWriter(String mt) throws UnsupportedOperationException {
-        ObservationWriter ret;
-        if (JSON_MIMETYPE.equals(mt) || CAOM_JSON_MIMETYPE.equals(mt)) {
-            return new JsonWriter(true);
-        }
-        if (XML_MIMETYPE.equals(mt) || CAOM_XML_MIMETYPE.equals(mt)) {
-            return new ObservationWriter();
-        }
-        // ignore unsupported format request
-        // default: XML
-        return new ObservationWriter();
-    }
-
-    protected long writeObservationList(ResourceIterator<ObservationState> iter) throws IOException {
-        DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-        syncOutput.setHeader("Content-Type", "text/tab-separated-values");
-        
-        OutputStream os = syncOutput.getOutputStream();
-        ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        OutputStreamWriter out = new OutputStreamWriter(bc, StandardCharsets.US_ASCII);
-        CsvWriter writer = new CsvWriter(out, '\t');
-        while (iter.hasNext()) {
-            ObservationState state = iter.next();
-            writer.write(state.getID().toString());
-            writer.write(state.getURI().toASCIIString());
-            writer.write(df.format(state.getMaxLastModified()));
-            writer.write(state.getAccMetaChecksum().toASCIIString());
-            writer.endRecord();
-        }
-        writer.flush();
-        return bc.getByteCount();
+        syncOutput.setCode(200);
     }
 }

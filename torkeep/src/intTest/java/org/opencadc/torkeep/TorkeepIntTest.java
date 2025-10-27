@@ -69,6 +69,8 @@
 
 package org.opencadc.torkeep;
 
+import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.BufferedWriter;
@@ -80,6 +82,8 @@ import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.PrivilegedExceptionAction;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import javax.security.auth.Subject;
@@ -141,11 +145,33 @@ public class TorkeepIntTest extends AbstractIntTest {
         log.info("PUT " + observation.getURI() + " as " + contentType);
         sendObservation("PUT", contentType, observation, subject1, 200, "OK", null, null);
         
+        // GET
         Observation ret = getObservation(observation.getURI(), contentType, subject1, 200, null, EXPECTED_CAOM_VERSION);
         Assert.assertEquals("wrong URI", observation.getURI(), ret.getURI());
         Assert.assertEquals("wrong ID", observation.getID(), ret.getID());
         Assert.assertEquals("wrong checksum", accMetaChecksum1, ret.getAccMetaChecksum());
 
+        // HEAD done after so we have the server side checksum and timestamp
+        String surl = baseObsURL + "/" + uriToPath(ret.getURI());
+        URL url = new URL(surl);
+        log.info("HEAD: " + surl);
+        final HttpGet head = new HttpGet(url, false);
+        head.setHeadOnly(true);
+        Subject.doAs(subject1, new PrivilegedExceptionAction<Object>() {
+            @Override
+            public Object run() throws Exception {
+                head.prepare();
+                return null;
+            }
+        });
+        Assert.assertEquals(200, head.getResponseCode());
+        Assert.assertEquals(ret.getID().toString(), head.getResponseHeader("x-entity-id"));
+        Assert.assertEquals(ret.getAccMetaChecksum().toString(), head.getResponseHeader("etag"));
+        // HTTP date format has no milliseconds so we need to compare strings
+        DateFormat df = DateUtil.getDateFormat(DateUtil.HTTP_DATE_FORMAT, DateUtil.GMT);
+        String maxLastMod = df.format(ret.getMaxLastModified());
+        Assert.assertEquals(maxLastMod, head.getResponseHeader("last-modified"));
+        
         observation.telescope = new Telescope("FOOSCOPE");
         final URI accMetaChecksum2 = observation.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
         Assert.assertNotEquals(accMetaChecksum1, accMetaChecksum2);
@@ -254,6 +280,23 @@ public class TorkeepIntTest extends AbstractIntTest {
 
         // get the observation using subject3
         getObservation(observation.getURI(), DEFAULT_CONTENT_TYPE, subject3, 403, "permission denied", false, EXPECTED_CAOM_VERSION);
+
+        // cleanup (ok to fail)
+        deleteObservation(observation.getURI(), subject1, null, null);
+    }
+    
+    @Test
+    public void testGetAnonPublic() throws Exception {
+        Observation observation = new SimpleObservation(TEST_COLLECTION, 
+                URI.create("caom:" + TEST_COLLECTION + "/testGetAnonPublic"), SimpleObservation.EXPOSURE);
+        observation.metaRelease = new Date(System.currentTimeMillis() - 10000L); // 10 sec ago
+
+        deleteObservation(observation.getURI(), subject1, null, null);
+        
+        putObservation(observation, subject1, 200, "OK");
+
+        Subject anon = null; // clear intent
+        getObservation(observation.getURI(), DEFAULT_CONTENT_TYPE, anon, 200, null, EXPECTED_CAOM_VERSION);
 
         // cleanup (ok to fail)
         deleteObservation(observation.getURI(), subject1, null, null);

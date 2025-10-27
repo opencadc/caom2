@@ -102,11 +102,14 @@ public final class Main {
             CaomEntity.MCS_DEBUG = true;
             if (am.isSet("d") || am.isSet("debug")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.DEBUG);
+                Log4jInit.setLevel("org.opencadc.caom2", Level.DEBUG);
                 Log4jInit.setLevel("org.opencadc.persist", Level.DEBUG);
             } else if (am.isSet("v") || am.isSet("verbose")) {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
+                Log4jInit.setLevel("org.opencadc.caom2", Level.INFO);
             } else {
                 Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.WARN);
+                Log4jInit.setLevel("org.opencadc.caom2", Level.WARN);
             }
 
             if (am.getPositionalArgs().isEmpty()) {

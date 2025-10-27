@@ -42,6 +42,10 @@
         <servlet-name>ObservationsServlet</servlet-name>
         <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
         <init-param>
+            <param-name>head</param-name>
+            <param-value>org.opencadc.torkeep.HeadAction</param-value>
+        </init-param>
+        <init-param>
             <param-name>get</param-name>
             <param-value>org.opencadc.torkeep.GetAction</param-value>
         </init-param>
