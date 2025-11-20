@@ -62,24 +62,24 @@ dependencies {
 
 configurations {
   // this are provided by tomcat
-  runtime.exclude group: 'javax.servlet'
-  runtime.exclude group: 'org.postgresql'
+  runtimeOnly.exclude group: 'javax.servlet'
+  runtimeOnly.exclude group: 'org.postgresql'
 
   // pulled by stil,unused, critical CVEs:
-  runtime.exclude group: 'org.yaml', module: 'snakeyaml'
+  runtimeOnly.exclude group: 'org.yaml', module: 'snakeyaml'
 
   // pull by parquet-avro
-  runtime.exclude group: 'com.sun.jersey'
-  runtime.exclude group: 'com.sun.jersey.contribs'
-  runtime.exclude group: 'com.google.inject'
-  runtime.exclude group: 'com.google.inject.extensions'
-  runtime.exclude group: 'com.github.pjfanning'
-  runtime.exclude group: 'javax.servlet'
-  runtime.exclude group: 'javax.servlet.jsp'
-  runtime.exclude group: 'org.apache.httpcomponents'
-  runtime.exclude group: 'org.apache.kerby'
-  runtime.exclude group: 'org.eclipse.jetty'
-  runtime.exclude group: 'org.eclipse.jetty'
-  runtime.exclude group: 'io.netty'
+  runtimeOnly.exclude group: 'com.sun.jersey'
+  runtimeOnly.exclude group: 'com.sun.jersey.contribs'
+  runtimeOnly.exclude group: 'com.google.inject'
+  runtimeOnly.exclude group: 'com.google.inject.extensions'
+  runtimeOnly.exclude group: 'com.github.pjfanning'
+  runtimeOnly.exclude group: 'javax.servlet'
+  runtimeOnly.exclude group: 'javax.servlet.jsp'
+  runtimeOnly.exclude group: 'org.apache.httpcomponents'
+  runtimeOnly.exclude group: 'org.apache.kerby'
+  runtimeOnly.exclude group: 'org.eclipse.jetty'
+  runtimeOnly.exclude group: 'org.eclipse.jetty'
+  runtimeOnly.exclude group: 'io.netty'
 }
 
