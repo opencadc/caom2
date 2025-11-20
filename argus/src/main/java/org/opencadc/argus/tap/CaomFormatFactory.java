@@ -79,6 +79,7 @@ import org.apache.log4j.Logger;
 import org.opencadc.argus.tap.format.DataLinkURLFormat;
 import org.opencadc.argus.tap.format.FlexIntervalFormat;
 import org.opencadc.argus.tap.format.FlexPointFormat;
+import org.opencadc.argus.tap.format.PositionBoundsSamplesFormat;
 import org.opencadc.argus.tap.format.PositionBoundsShapeFormat;
 import org.opencadc.argus.tap.format.URISetFormat;
 
@@ -112,7 +113,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
                 && "access_url".equalsIgnoreCase(tsi.getColumnName())) {
             ret = new DataLinkURLFormat("ivoaPublisherID");
         }
-        log.debug("fomatter: " + tsi + " " + ret.getClass().getName());
+        log.debug("formatter: " + tsi + " " + ret.getClass().getName());
         return ret;
     }
 
@@ -134,12 +135,12 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     protected Format<Object> getShapeFormat(TapSelectItem columnDesc) {
         // actual output format controlled by the tap_schema: utype and xtype
         if (columnDesc.utype != null) {
-            if (columnDesc.utype.equals("caom2:Plane.position.bounds")
-                    || columnDesc.utype.equals("caom2:Plane.position.minBounds")
+            if (columnDesc.utype.equals("caom2:Position.bounds")
+                    || columnDesc.utype.equals("caom2:Position.minBounds")
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
                 return new PositionBoundsShapeFormat();
-            } else if (columnDesc.utype.equals("caom2:Plane.position.samples")) {
-                return new DefaultFormat(); // currently text in db
+            } else if (columnDesc.utype.equals("caom2:Position.samples")) {
+                return new PositionBoundsSamplesFormat(); // currently text in db
             }
         }
         // default to pgsphere formatters
@@ -147,10 +148,20 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     }
 
     @Override
+    protected Format<Object> getMultiShapeFormat(TapSelectItem columnDesc) {
+        if (columnDesc.utype != null) {
+            if (columnDesc.utype.equals("caom2:Position.samples")) {
+                return new PositionBoundsSamplesFormat(); // currently text in db
+            }
+        }
+        return super.getMultiShapeFormat(columnDesc);
+    }
+
+    @Override
     public Format<Object> getRegionFormat(TapSelectItem columnDesc) {
         // actual output format controlled by the tap_schema: utype and xtype
         if (columnDesc.utype != null
-                && (columnDesc.utype.equals("caom2:Plane.position.bounds")
+                && (columnDesc.utype.equals("caom2:Position.bounds")
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
             return new PositionBoundsShapeFormat();
         }
