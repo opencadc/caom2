@@ -98,7 +98,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
         URI_SET_UTYPES.add("caom2:Observation.members");
         URI_SET_UTYPES.add("caom2:Plane.dataReadGroups");
         URI_SET_UTYPES.add("caom2:Plane.metaReadGroups");
-        URI_SET_UTYPES.add("caom2:Plane.provenance.inputs");
+        URI_SET_UTYPES.add("caom2:Provenance.inputs");
         URI_SET_UTYPES.add("caom2:Artifact.contentReadGroups");
     }
     
@@ -139,8 +139,6 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
                     || columnDesc.utype.equals("caom2:Position.minBounds")
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
                 return new PositionBoundsShapeFormat();
-            } else if (columnDesc.utype.equals("caom2:Position.samples")) {
-                return new PositionBoundsSamplesFormat(); // currently text in db
             }
         }
         // default to pgsphere formatters
@@ -151,7 +149,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
     protected Format<Object> getMultiShapeFormat(TapSelectItem columnDesc) {
         if (columnDesc.utype != null) {
             if (columnDesc.utype.equals("caom2:Position.samples")) {
-                return new PositionBoundsSamplesFormat(); // currently text in db
+                return new PositionBoundsSamplesFormat();
             }
         }
         return super.getMultiShapeFormat(columnDesc);
@@ -159,10 +157,8 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
 
     @Override
     public Format<Object> getRegionFormat(TapSelectItem columnDesc) {
-        // actual output format controlled by the tap_schema: utype and xtype
-        if (columnDesc.utype != null
-                && (columnDesc.utype.equals("caom2:Position.bounds")
-                    || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
+        // ivoa.ObsCore.s_region column while it still has xtype="adql:REGION"
+        if (columnDesc.utype != null && columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area")) {
             return new PositionBoundsShapeFormat();
         }
         return super.getRegionFormat(columnDesc);
