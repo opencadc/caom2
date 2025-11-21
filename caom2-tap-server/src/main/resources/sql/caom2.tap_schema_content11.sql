@@ -188,7 +188,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'time_exposure', 'median exposure time per pixel', 'caom2:Plane.time.exposure', NULL, 's', 'double', NULL, NULL, 0,0,0 , 88),
 
 ( 'caom2.Plane', 'polarization_states', 'polarization letter codes in canonical order, separated by /', 'caom2:Plane.polarization.states', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 90),
-( 'caom2.Plane', 'polarization_dimension', 'number of samples (pixels) along polarization axis', 'caom2:Plane.polarization.dimension', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 91),
+( 'caom2.Plane', 'polarization_dimension', 'number of samples (pixels) along polarization axis', 'caom2:Plane.polarization.dimension', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 91),
 
 ( 'caom2.Plane', 'custom_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Plane.custom.ctype', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 100),
 ( 'caom2.Plane', 'custom_bounds', 'custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 101),
