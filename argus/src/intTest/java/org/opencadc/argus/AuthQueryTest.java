@@ -76,6 +76,7 @@ import ca.nrc.cadc.dali.tables.votable.VOTableReader;
 import ca.nrc.cadc.dali.tables.votable.VOTableResource;
 import ca.nrc.cadc.dali.tables.votable.VOTableTable;
 import ca.nrc.cadc.date.DateUtil;
+import ca.nrc.cadc.net.ContentType;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.HttpPost;
 import ca.nrc.cadc.reg.Standards;
@@ -161,7 +162,8 @@ public class AuthQueryTest {
 
             String contentType = doit.getContentType();
             log.info("result contentType: " + contentType);
-            Assert.assertEquals("application/x-votable+xml", contentType);
+            ContentType ct = new ContentType(contentType);
+            Assert.assertEquals("application/x-votable+xml", ct.getBaseType());
 
             VOTableReader r = new VOTableReader();
             VOTableDocument doc = r.read(doit.getInputStream());
