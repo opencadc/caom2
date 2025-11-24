@@ -73,6 +73,7 @@ import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.tap.TapSelectItem;
 import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
 import ca.nrc.cadc.tap.caom2.IntervalFormat;
+import ca.nrc.cadc.tap.caom2.PositionBoundsRegionFormat;
 import ca.nrc.cadc.tap.caom2.PositionBoundsSamplesFormat;
 import ca.nrc.cadc.tap.caom2.PositionBoundsShapeFormat;
 import ca.nrc.cadc.tap.writer.format.PostgreSQLFormatFactory;
@@ -123,7 +124,7 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
         if (columnDesc.utype != null
                 && (columnDesc.utype.equals("caom2:Plane.position.bounds")
                     || columnDesc.utype.equals("obscore:Char.SpatialAxis.Coverage.Support.Area"))) {
-            return new PositionBoundsShapeFormat();
+            return new PositionBoundsRegionFormat();
         }
         return super.getRegionFormat(columnDesc);
     }

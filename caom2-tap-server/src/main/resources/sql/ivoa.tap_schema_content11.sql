@@ -104,7 +104,7 @@ insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,u
 ( 'ivoa.ObsCore', 'pol_states', 'obscore:Char.PolarizationAxis.stateList',
     'polarization states present in the data', 'meta.code;phys.polarization', NULL, 'char','32*',NULL, 1,0,1,27 ),
 ( 'ivoa.ObsCore', 'pol_xel', 'obscore:Char.PolarizationAxis.numBins', 
-    'dimensions (number of pixels) along the polarization axis', 'meta.number', NULL, 'long',NULL,NULL, 1,0,1,28 ),
+    'dimensions (number of pixels) along the polarization axis', 'meta.number', NULL, 'int',NULL,NULL, 1,0,1,28 ),
 
 ( 'ivoa.ObsCore', 'o_ucd', 'obscore:Char.ObservableAxis.ucd',
     'UCD describing the observable axis (pixel values)', 'meta.ucd', NULL, 'char','32*',NULL, 1,0,1,29 ),
