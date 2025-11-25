@@ -15,5 +15,5 @@ group by o.collection, o.telescope_name, o.instrument_name, o.type, o.intent,
     p.dataProductType, p.calibrationLevel, p.energy_energyBands, p.energy_bandpassName
 ;
 
-grant select on caom2.EnumField to CVOPUB;
+grant select on caom2.EnumField to public;
 
