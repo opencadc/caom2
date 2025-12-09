@@ -100,6 +100,7 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
         if (o == null) {
             return "";
         }
+        log.warn("casting " + o.getClass().getName() + " to MultiShape");
         MultiShape v = (MultiShape) o;
         return fmt.format(v);
     }

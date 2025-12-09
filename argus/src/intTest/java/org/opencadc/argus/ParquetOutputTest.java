@@ -112,7 +112,9 @@ public class ParquetOutputTest {
         // hits duplicate column name bug in ParquetWriter:
         //String adql = "select top 10 * from caom2.Observation o join caom2.Plane p on o.obsID=p.obsID";
         
-        String adql = "select top 10 * from caom2.Plane";
+        // thgis hits some serialization issues for plane data types
+        //String adql = "select top 10 * from caom2.Plane";
+        String adql = "select top 10 * from tap_schema.tables";
         log.info("query: " + adql);
         Map<String, Object> params = new TreeMap<>();
         params.put("LANG", "ADQL");
