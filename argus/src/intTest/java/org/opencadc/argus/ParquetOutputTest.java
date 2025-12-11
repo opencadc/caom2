@@ -137,11 +137,17 @@ public class ParquetOutputTest {
         String contentType = httpPost.getContentType();
         Assert.assertEquals("application/vnd.apache.parquet", contentType);
         
+        extractVOTableFromOutputStream(out, adql);
+    }
+    
+    private void extractVOTableFromOutputStream(ByteArrayOutputStream out, String adql) throws IOException {
         ParquetReader reader = new ParquetReader();
         InputStream inputStream = new ByteArrayInputStream(out.toByteArray());
-        VOTableDocument vot = reader.read(inputStream);
-        Assert.assertNotNull(vot);
-        VOTableResource results = vot.getResourceByType("results");
+        VOTableDocument voTableDocument = reader.read(inputStream);
+
+        Assert.assertNotNull(voTableDocument.getResources());
+
+        VOTableResource results = voTableDocument.getResourceByType("results");
         Assert.assertNotNull(results);
 
         boolean queryFound = false;
