@@ -336,7 +336,7 @@ public class PlaneMapper implements PartialRowMapper<Plane> {
             String emStr = rs.getString(col++);
             CaomUtil.decodeBands(emStr, nrg.getEnergyBands());
             log.debug("energy.energyBands: " + nrg.getEnergyBands().size());
-            nrg.dimension = rs.getLong(col++);
+            nrg.dimension = Util.getLong(rs, col++);
             log.debug("energy.dimension: " + nrg.dimension);
 
             nrg.resolvingPower = Util.getDouble(rs, col++);
@@ -430,9 +430,9 @@ public class PlaneMapper implements PartialRowMapper<Plane> {
         Interval<Double> uvd = dbDialect.getInterval(rs, col++);
         if (uvd != null) {
             log.debug("visibility.distance: " + uvd);
-            Double ecc = rs.getDouble(col++);
+            Double ecc = Util.getDouble(rs, col++);
             log.debug("visibility.ecc: " + ecc);
-            Double fill = rs.getDouble(col++);
+            Double fill = Util.getDouble(rs, col++);
             log.debug("visibility.fill: " + fill);
             p.visibility = new Visibility(uvd, ecc, fill);
         } else {

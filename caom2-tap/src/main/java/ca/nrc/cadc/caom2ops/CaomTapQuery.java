@@ -168,6 +168,8 @@ public class CaomTapQuery {
             return buildObservation(doc);
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException("got invalid observation " + uri, ex);
+        } finally {
+            doc.close();
         }
     }
     
@@ -193,8 +195,11 @@ public class CaomTapQuery {
         log.debug("link query: " + adql);
 
         VOTableDocument doc = execQuery(uri.getURI().toASCIIString(), adql);
-        ArtifactQueryResult ret = buildArtifacts(doc);
-        return ret;
+        try {
+            return buildArtifacts(doc);
+        } finally {
+            doc.close();
+        }
     }
     
     /**
@@ -287,7 +292,7 @@ public class CaomTapQuery {
         log.debug("votable row: " + sb.toString());
     }
     
-    private Observation buildObservation(final VOTableDocument vot) {
+    private Observation buildObservation(final VOTableDocument vot) throws IOException {
         log.debug("building observation from VOTable");
         VOTableResource vr = vot.getResourceByType("results");
         // TODO: check QUERY_STATUS to be careful and avoid about NPEs below
@@ -416,7 +421,7 @@ public class CaomTapQuery {
         return obs.get(0);
     }
     
-    private ArtifactQueryResult buildArtifacts(final VOTableDocument vot) {
+    private ArtifactQueryResult buildArtifacts(final VOTableDocument vot) throws IOException {
         log.debug("building artifacts from VOTable");
         //logHeader(votable);
 

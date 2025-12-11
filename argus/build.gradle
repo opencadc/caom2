@@ -29,20 +29,20 @@ sourceSets.test {
 }
 
 dependencies {
-    implementation 'org.opencadc:cadc-util:[1.12.1,2.0)'
+    implementation 'org.opencadc:cadc-util:[1.12.13,2.0)'
     implementation 'org.opencadc:cadc-rest:[1.4.5,)'
-    implementation 'org.opencadc:cadc-registry:[1.5.0,)'
+    implementation 'org.opencadc:cadc-registry:[1.9.0,)'
     implementation 'org.opencadc:cadc-uws-server:[1.2.22,)'
-    implementation 'org.opencadc:cadc-tap-schema:[1.1.22,)'
-    implementation 'org.opencadc:cadc-tap-server:[1.1.31,)'
-    implementation 'org.opencadc:cadc-tap-server-pg:[1.1.3,)'
+    implementation 'org.opencadc:cadc-tap-schema:[1.2.13,)'
+    implementation 'org.opencadc:cadc-tap-server:[1.1.37,)'
+    implementation 'org.opencadc:cadc-tap-server-pg:[1.1.5,)'
     implementation 'org.opencadc:cadc-adql:[1.1.5,)'
     implementation 'org.opencadc:cadc-uws:[1.0.2,2.0)'
     implementation 'org.opencadc:cadc-uws-server:[1.2.7,)'
     implementation 'org.opencadc:cadc-vosi:[1.4.3,2.0)'
-    implementation 'org.opencadc:cadc-dali:[1.2.23,)'
+    implementation 'org.opencadc:cadc-dali:[1.2.28,)'
     implementation 'org.opencadc:cadc-dali-pg:[0.4.0,)'
-    implementation 'org.opencadc:cadc-dali-parquet:[0.5.1,)'
+    implementation 'org.opencadc:cadc-dali-parquet:[0.5.3,)'
     implementation 'org.opencadc:cadc-cdp:[1.4.0,)'
     implementation 'org.opencadc:cadc-gms:[1.0.0,)'
     runtimeOnly 'org.opencadc:cadc-access-control-identity:[1.1.0,2.0)'
@@ -50,7 +50,13 @@ dependencies {
     runtimeOnly 'org.opencadc:cadc-tap-tmp:[1.2,2.0)'
     runtimeOnly 'org.opencadc:cadc-rest:[1.3.10,2.0)'
     runtimeOnly 'org.opencadc:cadc-log:[1.1.0,2.0)'
-    
+   
+    // force min versions for CVEs
+    runtimeOnly 'org.apache.commons:commons-lang3:[3.18.0,)'
+    runtimeOnly 'com.nimbusds:nimbus-jose-jwt:[9.37.4,)'
+    // this breaks CI build on gradle 6 because of library variants 
+    //runtimeOnly 'com.google.guava:guava:33.5.0-jre'
+ 
     testImplementation 'org.opencadc:cadc-tap:[1.0,)'
     testImplementation 'junit:junit:[4.1,5.0)'
     testImplementation 'org.postgresql:postgresql:[42.0,)'
@@ -62,24 +68,24 @@ dependencies {
 
 configurations {
   // this are provided by tomcat
-  runtime.exclude group: 'javax.servlet'
-  runtime.exclude group: 'org.postgresql'
+  runtimeOnly.exclude group: 'javax.servlet'
+  runtimeOnly.exclude group: 'org.postgresql'
 
   // pulled by stil,unused, critical CVEs:
-  runtime.exclude group: 'org.yaml', module: 'snakeyaml'
+  runtimeOnly.exclude group: 'org.yaml', module: 'snakeyaml'
 
   // pull by parquet-avro
-  runtime.exclude group: 'com.sun.jersey'
-  runtime.exclude group: 'com.sun.jersey.contribs'
-  runtime.exclude group: 'com.google.inject'
-  runtime.exclude group: 'com.google.inject.extensions'
-  runtime.exclude group: 'com.github.pjfanning'
-  runtime.exclude group: 'javax.servlet'
-  runtime.exclude group: 'javax.servlet.jsp'
-  runtime.exclude group: 'org.apache.httpcomponents'
-  runtime.exclude group: 'org.apache.kerby'
-  runtime.exclude group: 'org.eclipse.jetty'
-  runtime.exclude group: 'org.eclipse.jetty'
-  runtime.exclude group: 'io.netty'
+  runtimeOnly.exclude group: 'com.sun.jersey'
+  runtimeOnly.exclude group: 'com.sun.jersey.contribs'
+  runtimeOnly.exclude group: 'com.google.inject'
+  runtimeOnly.exclude group: 'com.google.inject.extensions'
+  runtimeOnly.exclude group: 'com.github.pjfanning'
+  runtimeOnly.exclude group: 'javax.servlet'
+  runtimeOnly.exclude group: 'javax.servlet.jsp'
+  runtimeOnly.exclude group: 'org.apache.httpcomponents'
+  runtimeOnly.exclude group: 'org.apache.kerby'
+  runtimeOnly.exclude group: 'org.eclipse.jetty'
+  runtimeOnly.exclude group: 'org.eclipse.jetty'
+  runtimeOnly.exclude group: 'io.netty'
 }
 

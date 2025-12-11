@@ -85,7 +85,7 @@ insert into tap_schema.columns11
 ( 'ivoa.ObsCore', 's_fov_min', 'obscore:Char.SpatialAxis.Coverage.Bounds.Extent.LoLim',
     'min size of the region covered (e.g. at all energies)', 'phys.angSize;instr.fov;stat.min', 'deg', 'double',NULL,NULL, 1,0,1,43),
 ( 'ivoa.ObsCore', 's_region', 'obscore:Char.SpatialAxis.Coverage.Support.Area',
-    'region bounded by observation', 'pos.outline;obs.field', NULL, 'char','*','adql:REGION', 1,1,1,44),
+    'region bounded by observation', 'pos.outline;obs.field', NULL, 'char','*','shape', 1,1,1,44),
 ( 'ivoa.ObsCore', 's_resolution', 'obscore:Char.SpatialAxis.Resolution.refval.value',
     'typical spatial resolution', 'pos.angResolution', 'arcsec', 'double',NULL,NULL, 1,0,1,45),
 ( 'ivoa.ObsCore', 's_resolution_min', '???',
