@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2026.                            (c) 2026.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,69 +69,57 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-import java.net.URI;
-import java.net.URL;
-
-import org.apache.log4j.Logger;
-
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.caom2.artifact.resolvers.CadcResolver;
 import ca.nrc.cadc.caom2.artifact.resolvers.CaomArtifactResolver;
+import ca.nrc.cadc.caom2.artifact.resolvers.DelegatingArtifactResolver;
 import ca.nrc.cadc.dali.util.Format;
-import ca.nrc.cadc.reg.Standards;
-import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.tap.writer.format.ResultSetFormat;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.apache.log4j.Logger;
 
 /**
  * Formatter to handle converting a caom2.Artifact.uri to an accessURL.
  *
  * @author pdowler
  */
-public class ArtifactURI2URLFormat implements Format<Object> {
+public class ArtifactURI2URLFormat implements Format, ResultSetFormat {
 
     private static final Logger log = Logger.getLogger(ArtifactURI2URLFormat.class);
 
     private String jobID;
     private CaomArtifactResolver caomArtifactResolver;
 
-    private ArtifactURI2URLFormat() {
-    }
-
-    public ArtifactURI2URLFormat(String jobID) {
-        if (jobID == null) {
-            throw new IllegalArgumentException("null jobID");
-        }
-        this.jobID = jobID;
-        this.caomArtifactResolver = new CaomArtifactResolver();
-        caomArtifactResolver.setRunID(jobID);
+    public ArtifactURI2URLFormat() {
+        this.caomArtifactResolver = new DelegatingArtifactResolver();
     }
 
     @Override
+    public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
+        String suri = resultSet.getString(columnIndex);
+        if (suri == null) {
+            return null;
+        }
+        try {
+            URI uri = new URI(suri);
+            return caomArtifactResolver.getURL(uri).toExternalForm();
+        } catch (URISyntaxException ex) {
+            throw new RuntimeException("invalid content: " + ArtifactURI2URLFormat.class.getCanonicalName()
+                    + " expects a storage URI ", ex);
+        } catch (Exception ex) {
+            throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
+                    + " expects a storage URI ", ex);
+        }
+    }
+    
+    @Override
     public Object parse(String s) {
-        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String format(Object object) {
-        log.debug("format: " + object + "," + jobID);
-        if (object == null) {
-            return "";
-        }
-        if (object instanceof String) {
-            try {
-                URI uri = new URI((String) object);
-                return caomArtifactResolver.getURL(uri).toExternalForm();
-            } catch (URISyntaxException ex) {
-                throw new RuntimeException("invalid content: " + ArtifactURI2URLFormat.class.getCanonicalName()
-                        + " expects a storage URI ", ex);
-            } catch (Exception ex) {
-                throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
-                        + " expects a storage URI ", ex);
-            }
-        } else {
-            throw new RuntimeException("BUG: " + ArtifactURI2URLFormat.class.getCanonicalName()
-                    + " expects a (String) storage URI, got: " + object.getClass().getName());
-        }
-
+        throw new UnsupportedOperationException();
     }
 }

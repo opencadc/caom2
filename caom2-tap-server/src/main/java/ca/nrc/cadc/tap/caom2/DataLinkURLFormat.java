@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2016.                            (c) 2016.
+*  (c) 2026.                            (c) 2026.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -76,11 +76,14 @@ import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.tap.DefaultTableWriter;
+import ca.nrc.cadc.tap.writer.format.ResultSetFormat;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -88,12 +91,12 @@ import org.apache.log4j.Logger;
  *
  * @author pdowler
  */
-public class DataLinkURLFormat implements Format<Object> {
+public class DataLinkURLFormat implements Format, ResultSetFormat {
 
     private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
 
     // HACK: need this to try to lookup local datalink service from config
-    private static final String DATALINK_COL_ID = "caomPublisherID";
+    private static final String DATALINK_COL_ID = "ivoaPublisherID";
     
     private transient URL baseLinksURL;
     private transient boolean baseLinksConfigChecked = false;
@@ -102,33 +105,35 @@ public class DataLinkURLFormat implements Format<Object> {
     }
 
     @Override
+    public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
+        String suri = resultSet.getString(columnIndex);
+        if (suri == null) {
+            return null;
+        }
+        
+        
+        URL linkURL = getLocalDataLink(suri);
+        if (linkURL != null) {
+            return linkURL.toExternalForm();
+        }
+        linkURL = resolvePublisherID(suri);
+        if (linkURL != null) {
+            return linkURL.toExternalForm();
+        }
+
+        // fall through to unresolved
+        return suri;
+    }
+
+    
+    @Override
     public Object parse(String s) {
-        throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
+        throw new UnsupportedOperationException("TAP Formats cannot parse");
     }
 
     @Override
     public String format(Object o) {
-        if (o == null) {
-            return "";
-        }
-
-        String s = (String) o;
-        URL linkURL;
-        
-        // try local config
-        linkURL = getLocalDataLink(s);
-        if (linkURL != null) {
-            return linkURL.toExternalForm();
-        }
-        
-        // try data collection with aux capability
-        linkURL = resolvePublisherID(s);
-        if (linkURL != null) {
-            return linkURL.toExternalForm();
-        }
-        
-        // fall through to unresolved
-        return s;
+        throw new UnsupportedOperationException("TAP Formats cannot format");
     }
 
     // try to resolve the publisherID by looking up the data collection in the registry

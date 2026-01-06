@@ -150,10 +150,9 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
         // function with CLOB argument
         if (columnDesc != null) {
             // caom2.Artifact, caom2.SIAv1
-            if ("caom2.Artifact".equalsIgnoreCase(columnDesc.tableName)
-                    || "caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName)) {
+            if ("caom2.SIAv1".equalsIgnoreCase(columnDesc.tableName)) {
                 if ("accessURL".equalsIgnoreCase(columnDesc.getColumnName())) {
-                    return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat(job.getID());
+                    return new ca.nrc.cadc.tap.caom2.ArtifactURI2URLFormat();
                 }
             }
 
