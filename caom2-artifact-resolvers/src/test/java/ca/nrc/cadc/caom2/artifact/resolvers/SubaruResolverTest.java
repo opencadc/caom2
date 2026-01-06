@@ -243,7 +243,7 @@ public class SubaruResolverTest {
     @Test
     public void testInvalidUriType() throws Exception {
         try {
-            String uriStr = GeminiResolver.SCHEME + ":badURIType/" + VALID_SUP_FRAMEID;
+            String uriStr = "other:badURIType/" + VALID_SUP_FRAMEID;
             URI uri = new URI(uriStr);
             URL url = subaruResolver.toURL(uri);
             Assert.fail("expected IllegalArgumentException, got " + url);

@@ -69,13 +69,16 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 
 import ca.nrc.cadc.net.StorageResolver;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.PropertiesReader;
 import com.google.common.io.Files;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -92,6 +95,16 @@ public class DelegatingArtifactResolverTest {
     public DelegatingArtifactResolverTest() { 
     }
     
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
+    }
+
     @Test
     public void testConfigNotFound() {
         String home = System.getProperty("user.home");
