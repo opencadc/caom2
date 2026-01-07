@@ -39,10 +39,11 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,u
 ( 'caom2', 'caom2.Observation', 'table', 'the main CAOM Observation table', 'caom2:Observation' , 20),
 ( 'caom2', 'caom2.Plane', 'table', 'the products of the observation', 'caom2:Plane' , 21),
 ( 'caom2', 'caom2.Artifact', 'table', 'physical data artifacts (e.g. files)', 'caom2:Artifact' , 22),
-( 'caom2', 'caom2.Part', 'table', 'parts of artifacts (e.g. FITS extensions)', 'caom2:Part' , 23),
-( 'caom2', 'caom2.Chunk', 'table', 'description of the data array in a part', 'caom2:Chunk' , 24),
 ( 'caom2', 'caom2.ObservationMember', 'table', 'composite to simple observation join table', NULL, 25),
-( 'caom2', 'caom2.ProvenanceInput', 'table', 'plane.provenance to input plane join table', NULL, 26)
+( 'caom2', 'caom2.ProvenanceInput', 'table', 'plane.provenance to input plane join table', NULL, 26),
+( 'caom2', 'caom2.ArtifactDescription', 'table', 'artifact description lookup table', 'caom2:ArtifactDescription', 27),
+( 'caom2', 'caom2.DeletedObservationEvent', 'table', 'record indicating an Observation was deleted', 'caom2:DeletedObservationEvent', 28),
+( 'caom2', 'caom2.DeletedArtifactDescriptionEvent', 'table', 'record indicating an ArtifactDescription was deleted', 'caom2:DeletedObservationEvent', 29)
 ;
 
 -- Observation
@@ -217,6 +218,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Artifact', 'contentChecksum', 'checksum of the content (URI of the form {algorithm}:{hex value})', 'caom2:Artifact.contentChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 8),
 ( 'caom2.Artifact', 'contentRelease', 'date the data for an artifact is public (UTC) (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentRelease', NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 , 20),
 ( 'caom2.Artifact', 'contentReadGroups', 'GMS groups that are authorized to retrieve the artifact (default: inherit from Plane) [new in 2.4]', 'caom2:Artifact.contentReadGroups', NULL, NULL, 'char', '*',NULL, 0,0,0, 21),
+( 'caom2.Artifact', 'descriptionID', 'reference to an ArtifactDescription [new in 2.5]', 'caom2:Artifact.descriptionID', NULL, NULL, 'char', '*','uri', 0,0,0, 22),
 
 ( 'caom2.Artifact', 'artifactID',   'primary key', 'caom2:Entity.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 40),
 ( 'caom2.Artifact', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Entity.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 41),
@@ -224,6 +226,31 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Artifact', 'maxLastModified',  'timestamp of last modification of this entity+children', 'caom2:CaomEntity.maxLastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 43),
 ( 'caom2.Artifact', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Entity.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 44),
 ( 'caom2.Artifact', 'accMetaChecksum', 'checksum of the metadata in this entity+children (URI of the form {algorithm}:{hex value})', 'caom2:CaomEntity.accMetaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 45)
+;
+
+insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
+( 'caom2.ArtifactDescription', 'uri', 'logical identifier', 'caom2:ArtifactDescription.uri', NULL, NULL, 'char','*','uri', 0,1,0 , 1),
+( 'caom2.ArtifactDescription', 'description', 'human-readable description of a class of artifacts', 'caom2:ArtifactDescription.description', NULL, NULL, 'char','*',NULL, 0,1,0 , 2),
+( 'caom2.ArtifactDescription', 'id',   'primary key', 'caom2:Entity.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 3),
+( 'caom2.ArtifactDescription', 'metaProducer', 'identifier for the producer of this entity metadata (URI of the form {organisation}:{software}-{version}) [new in 2.4]', 'caom2:Entity.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 4),
+( 'caom2.ArtifactDescription', 'lastModified',  'timestamp of last modification of this row', 'caom2:Entity.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 5),
+( 'caom2.ArtifactDescription', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Entity.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 6)
+;
+
+insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
+( 'caom2.DeletedObservationEvent', 'uri', 'URI of the deleted Observation', 'caom2:DeletedObservationEvent.uri', NULL, NULL, 'char','*','uri', 0,1,0 , 1),
+( 'caom2.DeletedObservationEvent', 'id', 'primary key == the uuid of the deleted entity', 'caom2:Entity.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 2),
+( 'caom2.DeletedObservationEvent', 'metaProducer', 'identifier for the producer of this entity; usually null in practice', 'caom2:Entity.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 3),
+( 'caom2.DeletedObservationEvent', 'lastModified',  'timestamp of last modification of this row', 'caom2:Entity.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 4),
+( 'caom2.DeletedObservationEvent', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Entity.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 5)
+;
+
+insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
+( 'caom2.DeletedArtifactDescriptionEvent', 'uri', 'URI of the deleted ArtifactDescription', 'caom2:DeletedObservationEvent.uri', NULL, NULL, 'char','*','uri', 0,1,0 , 1),
+( 'caom2.DeletedArtifactDescriptionEvent', 'id', 'primary key == the uuid of the deleted entity', 'caom2:Entity.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 2),
+( 'caom2.DeletedArtifactDescriptionEvent', 'metaProducer', 'identifier for the producer of this entity; usually null in practice', 'caom2:Entity.metaProducer', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 3),
+( 'caom2.DeletedArtifactDescriptionEvent', 'lastModified',  'timestamp of last modification of this row', 'caom2:Entity.lastModified', NULL, NULL, 'char', '23*', 'timestamp', 1,1,0, 4),
+( 'caom2.DeletedArtifactDescriptionEvent', 'metaChecksum', 'checksum of the metadata in this entity (URI of the form {algorithm}:{hex value})', 'caom2:Entity.metaChecksum', NULL, NULL, 'char', '*', 'uri', 1,0,0 , 5)
 ;
 
 -- join tables
@@ -236,8 +263,9 @@ insert into tap_schema.columns11 (table_name,column_name,description,datatype,ar
 ;
 
 insert into tap_schema.keys11 (key_id,from_table,target_table,description) values
-('caom2-p-o', 'caom2.Plane', 'caom2.Observation','standard way to join the caom2.Observation and caom2.Plane tables'),
-('caom2-a-p', 'caom2.Artifact', 'caom2.Plane', 'standard way to join the caom2.Plane and caom2.Artifact tables'),
+('caom2-p-o', 'caom2.Plane', 'caom2.Observation','standard way to join caom2.Observation and caom2.Plane'),
+('caom2-a-p', 'caom2.Artifact', 'caom2.Plane', 'standard way to join caom2.Plane and caom2.Artifact'),
+('caom2-a-ad', 'caom2.Artifact', 'caom2.ArtifactDescription', 'standard way to join caom2.Artifact and caom2.ArtifactDescription'),
 
 ('caom2-composite-member', 'caom2.Observation', 'caom2.ObservationMember', 
     'standard way to join caom2.Observation (as parent aka DerivedObservation) and caom2.ObservationMember [join table]'),
@@ -253,6 +281,7 @@ insert into tap_schema.keys11 (key_id,from_table,target_table,description) value
 insert into tap_schema.key_columns11 (key_id,from_column,target_column) values
 ('caom2-p-o', 'obsID', 'obsID'),
 ('caom2-a-p', 'planeID', 'planeID'),
+('caom2-a-ad', 'descriptionID', 'uri'),
 
 ('caom2-composite-member', 'obsID', 'parentID' ),
 ('caom2-member-obs', 'memberID', 'uri'),

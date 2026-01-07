@@ -76,11 +76,14 @@ import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.tap.DefaultTableWriter;
+import ca.nrc.cadc.tap.writer.format.ResultSetFormat;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
 
@@ -90,7 +93,7 @@ import org.apache.log4j.Logger;
  * 
  * @author pdowler
  */
-public class DataLinkURLFormat implements Format<Object> {
+public class DataLinkURLFormat implements Format<Object>, ResultSetFormat {
 
     private static final Logger log = Logger.getLogger(DataLinkURLFormat.class);
 
@@ -105,34 +108,38 @@ public class DataLinkURLFormat implements Format<Object> {
     }
 
     @Override
+    public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
+        return toValue(resultSet.getString(columnIndex));
+    }
+
+    // unit testable
+    String toValue(String suri) {
+        if (suri == null) {
+            return null;
+        }
+        
+        
+        URL linkURL = getLocalDataLink(suri);
+        if (linkURL != null) {
+            return linkURL.toExternalForm();
+        }
+        //linkURL = resolvePublisherID(suri);
+        //if (linkURL != null) {
+        //    return linkURL.toExternalForm();
+        //}
+
+        // fall through to unresolved
+        return suri;
+    }
+
+    @Override
     public Object parse(String s) {
         throw new UnsupportedOperationException("TAP Formats cannot parse strings.");
     }
 
     @Override
     public String format(Object o) {
-        if (o == null) {
-            return "";
-        }
-
-        String s = (String) o;
-        URL linkURL;
-        
-        // try local config
-        linkURL = getLocalDataLink(s);
-        if (linkURL != null) {
-            return linkURL.toExternalForm();
-        }
-        
-        // TODO: make this configurable? always enable? drop?
-        // try data collection with aux capability
-        //linkURL = resolvePublisherID(s);
-        //if (linkURL != null) {
-        //    return linkURL.toExternalForm();
-        //}
-        
-        // fall through to unresolved
-        return s;
+        throw new UnsupportedOperationException("TAP Formats cannot format");
     }
 
     // try to resolve the publisherID by looking up the data collection in the registry
@@ -171,7 +178,7 @@ public class DataLinkURLFormat implements Format<Object> {
 
     // get the locally configured datalink service from config
     private URL getLocalDataLink(String publisherID) {
-        log.debug("getLocalDataLink: " + publisherID + " columnID=" + publisherColumnRef);
+        log.warn("getLocalDataLink: " + publisherID + " columnID=" + publisherColumnRef);
         try {
             
             if (baseLinksURL == null && !baseLinksConfigChecked) {
@@ -179,6 +186,7 @@ public class DataLinkURLFormat implements Format<Object> {
                 baseLinksConfigChecked = true; // try config once only
             }
             URL baseURL = baseLinksURL;
+            log.warn("getLocalDataLink: " + publisherID + " columnID=" + publisherColumnRef + " links: " + baseLinksURL);
             if (baseURL == null) {
                 return null;
             }
