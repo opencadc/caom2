@@ -67,7 +67,7 @@
 ************************************************************************
  */
 
-package org.opencadc.argus.tap.caom2;
+package org.opencadc.argus.tap.format;
 
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.util.Log4jInit;
@@ -109,8 +109,7 @@ public class DataLinkURLFormatterTest {
             s.getPublicCredentials().add(AuthMethod.ANON);
             String surl = Subject.doAs(s, new FormatAction(null));
             log.info("datalink URL: " + surl);
-            Assert.assertNotNull(surl);
-            Assert.assertEquals("", surl);
+            Assert.assertNull(surl);
         } catch (Exception unexpected) {
             log.error("unexpected exception: ", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -150,7 +149,7 @@ public class DataLinkURLFormatterTest {
 
         public String run() throws Exception {
             DataLinkURLFormat formatter = new DataLinkURLFormat("ivoaPublisherID");
-            return formatter.format(val);
+            return formatter.toValue(val);
         }
     }
 }
