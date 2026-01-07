@@ -101,7 +101,7 @@ public class ArtifactProcessorTest {
     }
 
     static PublisherID PUB_ID = new PublisherID(URI.create("ivo://cadc.nrc.ca/IRIS?bar/baz"));
-    static String BASE_ARTIFACT_URI = "ad:IRIS/bar_baz_";
+    static String BASE_ARTIFACT_URI = "cadc:IRIS/bar_baz_";
 
     static URI SODA_ID = URI.create("ivo://cadc.nrc.ca/caom2ops");
 
