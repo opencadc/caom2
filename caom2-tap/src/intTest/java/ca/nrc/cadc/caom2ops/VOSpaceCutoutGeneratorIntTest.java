@@ -70,6 +70,7 @@
 package ca.nrc.cadc.caom2ops;
 
 import ca.nrc.cadc.net.HttpDownload;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -152,7 +153,7 @@ public class VOSpaceCutoutGeneratorIntTest {
                 String msg = "url should contain fo parameter without compression extension: " + urlString;
                 Assert.assertTrue(msg, urlString.contains("fo=" + expected_filename));
                 OutputStream out = new ByteArrayOutputStream();
-                HttpDownload download = new HttpDownload(u, out);
+                HttpGet download = new HttpGet(u, out);
                 download.setHeadOnly(false); // head requests don't work with vospace ws
                 download.run();
                 Assert.assertEquals(200, download.getResponseCode());

@@ -15,7 +15,7 @@ sourceCompatibility = 11
 
 group = 'org.opencadc'
 
-version = '1.8.4'
+version = '1.8.5'
 
 description = 'OpenCADC CAOM2 TAP client library'
 def git_url = 'https://github.com/opencadc/caom2'
@@ -25,10 +25,10 @@ dependencies {
     implementation 'org.opencadc:cadc-log:[1.0,)'
     implementation 'org.opencadc:cadc-cdp:[1.0.1,2.0)'
     implementation 'org.opencadc:cadc-registry:[1.5.0,)'
-    implementation 'org.opencadc:cadc-tap:[1.1.15,)'
-    implementation 'org.opencadc:cadc-dali:[1.1,)'
-    implementation 'org.opencadc:caom2:[2.4.3,2.5)'
-    implementation 'org.opencadc:caom2-artifact-resolvers:[1.2.5,)'
+    api 'org.opencadc:cadc-tap:[1.1.15,)'
+    api 'org.opencadc:cadc-dali:[1.1,)'
+    api 'org.opencadc:caom2:[2.4.3,2.5)'
+    api 'org.opencadc:caom2-artifact-resolvers:[1.2.12,)'
  
     testImplementation 'junit:junit:[4.0,5.0)'
 }
