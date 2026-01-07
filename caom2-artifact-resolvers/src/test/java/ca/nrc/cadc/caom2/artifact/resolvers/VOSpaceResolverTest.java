@@ -93,7 +93,7 @@ public class VOSpaceResolverTest {
     }
 
     private static final String FILE_URI = "vos://cadc.nrc.ca!vault/FOO/bar";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vault/FOO/bar";
+    private static final String INVALID_SCHEME_URI1 = "foo://auth!vault/FOO/bar";
     private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
     VOSpaceResolver vosResolver = new VOSpaceResolver();
@@ -123,23 +123,6 @@ public class VOSpaceResolverTest {
     }
 
     @Test
-    public void testFileHTTP() {
-        try {
-            vosResolver.setAuthMethod(AuthMethod.ANON);
-            URI uri = new URI(FILE_URI);
-            URL url = vosResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            String query = url.getQuery();
-            Assert.assertNotNull(query);
-            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
     public void testFileHTTPS() {
         try {
             vosResolver.setAuthMethod(AuthMethod.CERT);
@@ -147,9 +130,10 @@ public class VOSpaceResolverTest {
             URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
+            String path = url.getPath();
+            Assert.assertEquals("/vault/files/FOO/bar", path);
             String query = url.getQuery();
-            Assert.assertNotNull(query);
-            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
+            Assert.assertNull(query);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

@@ -141,7 +141,7 @@ public class VOSpaceResolver implements StorageResolver, Traceable {
             
             URI vuri = getVOSURI(uri);
             RegistryClient registryClient = new RegistryClient();
-            URL baseURL = registryClient.getServiceURL(getServiceURI(vuri), Standards.VOSPACE_SYNC_21, am);
+            URL baseURL = registryClient.getServiceURL(getServiceURI(vuri), Standards.VOSPACE_FILES, am);
 
             String scheme = baseURL.getProtocol();
             String protocol = null;
@@ -151,17 +151,11 @@ public class VOSpaceResolver implements StorageResolver, Traceable {
                 protocol = PROTOCOL_HTTPS_GET;
             }
 
-            StringBuilder query = new StringBuilder();
-            query.append(baseURL);
+            StringBuilder sb = new StringBuilder();
+            sb.append(baseURL);
+            sb.append(vuri.getPath()); // VOSURI includes preceeding /
 
-            query.append("?");
-            query.append("TARGET=").append(NetUtil.encode(vuri.toString()));
-            query.append("&");
-            query.append("DIRECTION=").append(NetUtil.encode(pullFromVoSpaceValue));
-            query.append("&");
-            query.append("PROTOCOL=").append(NetUtil.encode(protocol));
-
-            return query.toString();
+            return sb.toString();
         } catch (Throwable t) {
             throw new RuntimeException("failed to convert " + uri, t);
         }
