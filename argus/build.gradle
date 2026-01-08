@@ -42,7 +42,7 @@ dependencies {
     implementation 'org.opencadc:cadc-adql:[1.1.5,)'
     implementation 'org.opencadc:cadc-uws:[1.0.2,2.0)'
     implementation 'org.opencadc:cadc-uws-server:[1.2.7,)'
-    implementation 'org.opencadc:caom2-tap-server:[1.2.19,)'
+    implementation 'org.opencadc:caom2-tap-server:[1.2.20,)'
     
     implementation 'org.opencadc:cadc-access-control:[1.0,2.0)'
     implementation 'org.opencadc:cadc-access-control-identity:[1.1.0,2.0)'

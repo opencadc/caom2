@@ -318,7 +318,7 @@ public class DynamicTableDataTest
                 for (int i=0; i<num; i++)
                 {
                     Artifact a = new Artifact(
-                        URI.create("ad:IRIS/bar_baz_" + i),
+                        URI.create("cadc:IRIS/bar_baz_" + i),
                         ProductType.SCIENCE, ReleaseType.DATA);
                     a.contentLength = 123L;
                     a.contentType = "text/plain";

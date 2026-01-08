@@ -74,13 +74,16 @@ import ca.nrc.cadc.caom2.artifact.resolvers.util.ResolverUtil;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
 
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 
@@ -101,22 +104,18 @@ public class CadcResolverTest {
     private final CadcResolver cadcResolver;
 
     public CadcResolverTest() {
-        cadcResolver = getCadcResolver();
+        cadcResolver = new CadcResolver();
 
     }
 
-    private CadcResolver getCadcResolver() {
-        // override the capabilities method
-        return new CadcResolver() {
-            @Override
-            public URL getServiceURL(AuthMethod am) throws URISyntaxException {
-                try {
-                    return new URL(SI_URL);
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
     }
 
     @Test
@@ -130,8 +129,10 @@ public class CadcResolverTest {
             URI uri = new URI(FILE_URI);
             URL url = cadcResolver.toURL(uri);
             Assert.assertNotNull(url);
-            Assert.assertEquals(SI_URL + "/" + uri.toASCIIString(), url.toString());
             log.info("testFile: " + uri + " -> " + url);
+            Assert.assertEquals("https", url.getProtocol());
+            Assert.assertTrue(url.getPath().startsWith("/raven/files/"));
+            Assert.assertTrue(url.getPath().endsWith(FILE_URI));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -145,8 +146,10 @@ public class CadcResolverTest {
             URI uri = new URI(FILE_URI);
             URL url = cadcResolver.toURL(uri);
             Assert.assertNotNull(url);
-            Assert.assertEquals(SI_URL + "/" + uri.toASCIIString(), url.toString());
             log.info("testFile: " + uri + " -> " + url);
+            Assert.assertEquals("https", url.getProtocol());
+            Assert.assertTrue(url.getPath().startsWith("/raven/files/"));
+            Assert.assertTrue(url.getPath().endsWith(FILE_URI));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -160,8 +163,10 @@ public class CadcResolverTest {
             URI uri = new URI(FILE_URI);
             URL url = cadcResolver.toURL(uri);
             Assert.assertNotNull(url);
-            Assert.assertEquals(SI_URL + "/" + uri.toASCIIString(), url.toString());
             log.info("testFile: " + uri + " -> " + url);
+            Assert.assertEquals("https", url.getProtocol());
+            Assert.assertTrue(url.getPath().startsWith("/raven/files/"));
+            Assert.assertTrue(url.getPath().endsWith(FILE_URI));
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);

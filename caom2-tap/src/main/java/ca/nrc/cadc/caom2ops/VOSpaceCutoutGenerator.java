@@ -101,14 +101,7 @@ public class VOSpaceCutoutGenerator extends VOSpaceResolver implements CutoutGen
 
         StringBuilder sb = new StringBuilder();
         sb.append(base.toExternalForm());
-        if (sb.indexOf("?") > 0) {
-            sb.append("&");
-        } else {
-            sb.append("?");
-        }
-        sb.append("view=cutout");
-        String filename = AdCutoutGenerator.generateFilename(uri, label, cutouts);
-        AdCutoutGenerator.appendCutoutQueryString(sb, cutouts, filename);
+        CadcCutoutGenerator.appendCutoutQueryString(sb, cutouts, null);
         
         try {
             return new URL(sb.toString());

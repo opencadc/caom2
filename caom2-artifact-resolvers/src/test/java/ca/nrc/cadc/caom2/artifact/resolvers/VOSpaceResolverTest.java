@@ -71,11 +71,14 @@ package ca.nrc.cadc.caom2.artifact.resolvers;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.net.Traceable;
 import ca.nrc.cadc.util.Log4jInit;
+import ca.nrc.cadc.util.PropertiesReader;
 import java.net.URI;
 import java.net.URL;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -90,13 +93,23 @@ public class VOSpaceResolverTest {
     }
 
     private static final String FILE_URI = "vos://cadc.nrc.ca!vault/FOO/bar";
-    private static final String INVALID_SCHEME_URI1 = "ad://cadc.nrc.ca!vault/FOO/bar";
+    private static final String INVALID_SCHEME_URI1 = "foo://auth!vault/FOO/bar";
     private static final String INVALID_NO_AUTHORITY_URI1 = "vos:/FOO";
 
     VOSpaceResolver vosResolver = new VOSpaceResolver();
 
     public VOSpaceResolverTest() {
 
+    }
+
+    @Before
+    public void setup() {
+        System.setProperty(PropertiesReader.class.getName() + ".dir", "src/test/resources");
+    }
+
+    @After
+    public void unsetup() {
+        System.clearProperty(PropertiesReader.class.getName() + ".dir");
     }
 
     @Test
@@ -110,23 +123,6 @@ public class VOSpaceResolverTest {
     }
 
     @Test
-    public void testFileHTTP() {
-        try {
-            vosResolver.setAuthMethod(AuthMethod.ANON);
-            URI uri = new URI(FILE_URI);
-            URL url = vosResolver.toURL(uri);
-            Assert.assertNotNull(url);
-            log.info("testFile: " + uri + " -> " + url);
-            String query = url.getQuery();
-            Assert.assertNotNull(query);
-            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
-        } catch (Exception unexpected) {
-            log.error("unexpected exception", unexpected);
-            Assert.fail("unexpected exception: " + unexpected);
-        }
-    }
-
-    @Test
     public void testFileHTTPS() {
         try {
             vosResolver.setAuthMethod(AuthMethod.CERT);
@@ -134,9 +130,10 @@ public class VOSpaceResolverTest {
             URL url = vosResolver.toURL(uri);
             Assert.assertNotNull(url);
             log.info("testFile: " + uri + " -> " + url);
+            String path = url.getPath();
+            Assert.assertEquals("/vault/files/FOO/bar", path);
             String query = url.getQuery();
-            Assert.assertNotNull(query);
-            Assert.assertTrue(query.contains("DIRECTION=" + VOSpaceResolver.pullFromVoSpaceValue));
+            Assert.assertNull(query);
         } catch (Exception unexpected) {
             log.error("unexpected exception", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
