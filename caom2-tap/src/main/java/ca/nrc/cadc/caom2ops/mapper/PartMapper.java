@@ -126,7 +126,7 @@ public class PartMapper implements VOTableRowMapper<Part> {
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Part.accMetaChecksum"));
             Util.assignMetaChecksum(part, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(part, accMetaChecksum, "accMetaChecksum");
-
+            part.metaProducer = Util.getURI(data, map.get("caom2:Part.metaProducer"));
             Util.assignID(part, id);
 
             return part;

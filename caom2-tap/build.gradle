@@ -15,7 +15,7 @@ sourceCompatibility = 11
 
 group = 'org.opencadc'
 
-version = '1.8.5'
+version = '1.8.6'
 
 description = 'OpenCADC CAOM2 TAP client library'
 def git_url = 'https://github.com/opencadc/caom2'
