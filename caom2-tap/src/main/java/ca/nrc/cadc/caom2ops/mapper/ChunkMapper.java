@@ -403,7 +403,7 @@ public class ChunkMapper implements VOTableRowMapper<Chunk> {
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Chunk.accMetaChecksum"));
             Util.assignMetaChecksum(c, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(c, accMetaChecksum, "accMetaChecksum");
-
+            c.metaProducer = Util.getURI(data, map.get("caom2:Chunk.metaProducer"));
             Util.assignID(c, id);
 
             return c;

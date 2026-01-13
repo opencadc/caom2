@@ -210,7 +210,7 @@ public class ObservationMapper implements VOTableRowMapper<Observation> {
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Observation.accMetaChecksum"));
             Util.assignMetaChecksum(obs, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(obs, accMetaChecksum, "accMetaChecksum");
-
+            obs.metaProducer = Util.getURI(data, map.get("caom2:Observation.metaProducer"));
             Util.assignID(obs, id);
 
             return obs;

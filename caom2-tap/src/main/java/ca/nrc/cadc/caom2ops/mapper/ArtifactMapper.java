@@ -149,7 +149,7 @@ public class ArtifactMapper implements VOTableRowMapper<Artifact> {
             URI accMetaChecksum = Util.getURI(data, map.get("caom2:Artifact.accMetaChecksum"));
             Util.assignMetaChecksum(artifact, metaChecksum, "metaChecksum");
             Util.assignMetaChecksum(artifact, accMetaChecksum, "accMetaChecksum");
-
+            artifact.metaProducer = Util.getURI(data, map.get("caom2:Artifact.metaProducer"));
             Util.assignID(artifact, id);
 
             return artifact;

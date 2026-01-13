@@ -133,7 +133,8 @@ public class VOSpaceCutoutGeneratorIntTest {
         }
     }
 
-    @Test
+    // storage-inventory does not support labels
+    //@Test
     public void testValidCutoutUrlWithLabel() throws Exception {
         log.info("starting testValidCutoutUrl");
         try {

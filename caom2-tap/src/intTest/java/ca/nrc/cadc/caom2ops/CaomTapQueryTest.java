@@ -96,7 +96,7 @@ public class CaomTapQueryTest
 {
     private static final Logger log = Logger.getLogger(CaomTapQueryTest.class);
     
-    private static final URI OBS_URI = URI.create("caom:IRIS/f212h000");
+    private static final URI OBS_URI = URI.create("caom:VLASS/VLASS3.1.T08t07.J043420-083000"); //URI.create("caom:IRIS/f212h000");
     private static final URI PLANE_URI = URI.create("caom:IRIS/f212h000/IRAS-60um");
     private static final URI PUB_ID = URI.create("ivo://cadc.nrc.ca/IRIS?f212h000/IRAS-60um");
     
@@ -166,15 +166,18 @@ public class CaomTapQueryTest
             ObservationWriter w = new ObservationWriter();
             w.write(o, new FileWriter("CaomTapQueryTest.xml"));
             
+            URI oMetaChecksum = o.computeMetaChecksum(MessageDigest.getInstance("MD5"));
+            Assert.assertEquals("Observation.metaChecksum", o.getMetaChecksum(), oMetaChecksum);
+            
             // this is needed to diagnose which plane has checksum mismatch
-            //for (Plane p : o.getPlanes())
-            //{
-            //    URI metaChecksum = p.computeMetaChecksum(MessageDigest.getInstance("MD5"));
-            //    Assert.assertEquals("Plane.metaChecksum", p.getMetaChecksum(), metaChecksum);
-            //    
-            //    URI accMetaChecksum = p.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
-            //    Assert.assertEquals("Plane.accMetaChecksum", p.getAccMetaChecksum(), accMetaChecksum);
-            //}
+            for (Plane p : o.getPlanes())
+            {
+                URI metaChecksum = p.computeMetaChecksum(MessageDigest.getInstance("MD5"));
+                Assert.assertEquals("Plane.metaChecksum", p.getMetaChecksum(), metaChecksum);
+                
+                URI accMetaChecksum = p.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
+                Assert.assertEquals("Plane.accMetaChecksum", p.getAccMetaChecksum(), accMetaChecksum);
+            }
             URI accMetaChecksum = o.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
             Assert.assertEquals("Observation.accMetaChecksum", o.getAccMetaChecksum(), accMetaChecksum);
         }
