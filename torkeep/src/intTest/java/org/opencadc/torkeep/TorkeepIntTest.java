@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2011.                            (c) 2011.
+*  (c) 2026.                            (c) 2026.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -72,6 +72,7 @@ package org.opencadc.torkeep;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.HttpPost;
+import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.util.Log4jInit;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -81,6 +82,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.security.MessageDigest;
+import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.text.DateFormat;
 import java.util.Date;
@@ -142,7 +144,7 @@ public class TorkeepIntTest extends AbstractIntTest {
         deleteObservation(observation.getURI(), subject1, null, null);
         
         final URI accMetaChecksum1 = observation.computeAccMetaChecksum(MessageDigest.getInstance("MD5"));
-        log.info("PUT " + observation.getURI() + " as " + contentType);
+        log.info("PUT " + observation.getURI() + " aka " + observation.getID() + " as " + contentType);
         sendObservation("PUT", contentType, observation, subject1, 200, "OK", null, null);
         
         // GET
@@ -183,8 +185,28 @@ public class TorkeepIntTest extends AbstractIntTest {
         Assert.assertEquals("wrong ID", observation.getID(), ret.getID());
         Assert.assertEquals("wrong checksum", accMetaChecksum2, ret.getAccMetaChecksum());
         
-        // cleanup (ok to fail)
-        deleteObservation(observation.getURI(), subject1, null, null);
+        // DELETE
+        deleteObservation(observation.getURI(), subject1, 200, null);
+        final HttpGet headNotFound = new HttpGet(url, false);
+        headNotFound.setHeadOnly(true);
+        try {
+            Subject.doAs(subject1, new PrivilegedExceptionAction<Object>() {
+                @Override
+                public Object run() throws Exception {
+                    headNotFound.prepare();
+                    return null;
+                }
+            });
+        } catch (PrivilegedActionException pev) {
+            Exception cause = pev.getException();
+            Assert.assertTrue(cause instanceof ResourceNotFoundException);
+            log.info("caught expected: " + cause);
+        }
+        
+        // TEMPORARY HACK: repeat the PUT with the same Entity.id to make sure the
+        // DeletedObservationEvent was removed and doesn't block subsequent PUT
+        log.info("PUT " + observation.getURI() + " aka " + observation.getID() + " as " + contentType);
+        sendObservation("PUT", contentType, observation, subject1, 200, "OK", null, null);
     }
     
     @Test
