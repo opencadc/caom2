@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2025.                            (c) 2025.
+*  (c) 2026.                            (c) 2026.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -69,11 +69,14 @@
 
 package org.opencadc.torkeep;
 
+import ca.nrc.cadc.db.TransactionManager;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import java.net.URI;
 import org.apache.log4j.Logger;
+import org.opencadc.caom2.DeletedObservationEvent;
 import org.opencadc.caom2.Observation;
+import org.opencadc.caom2.db.DeletedObservationEventDAO;
 import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.caom2.util.ObservationState;
 
@@ -110,6 +113,7 @@ public class PutAction extends RepoAction {
         // TODO: allow PUT to overwrite?
         ObservationState s = dao.getState(obs.getID());
         if (s == null) {
+            // check for different instance with same Observation.uri
             s = dao.getState(obs.getURI());
         }
         
@@ -118,7 +122,7 @@ public class PutAction extends RepoAction {
         }
 
         assignPublisherID(obs);
-
+        
         dao.put(obs);
 
         log.debug("DONE: " + uri);

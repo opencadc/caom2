@@ -70,6 +70,7 @@
 package org.opencadc.torkeep;
 
 import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -128,7 +129,7 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
                 return new Availability(false, RestAction.STATE_READ_ONLY_MSG);
             }
 
-            TorkeepConfig torkeepConfig = new TorkeepConfig();
+            TorkeepConfig torkeepConfig = TorkeepInitAction.getTorkeepConfig();
             if (torkeepConfig.getConfigs().isEmpty()) {
                 throw new IllegalStateException("CONFIG: no configured collections found in - "
                         + TorkeepConfig.TORKEEP_PROPERTIES);
@@ -156,49 +157,28 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
             // check other services we depend on
             RegistryClient reg = new RegistryClient();
             LocalAuthority localAuthority = new LocalAuthority();
-
-            URI credURI = null;
-            try {
-                credURI = localAuthority.getServiceURI(Standards.CRED_PROXY_10.toString());
-                URL url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                if (url != null) {
-                    CheckResource checkResource = new CheckWebService(url);
-                    checkResource.check();
-                } else {
-                    log.debug("check skipped: " + credURI + " does not provide " + Standards.VOSI_AVAILABILITY);
-                }
-            } catch (NoSuchElementException ex) {
-                log.debug("not configured: " + Standards.CRED_PROXY_10);
+            
+            URI openidURI = localAuthority.getResourceID(Standards.SECURITY_METHOD_OPENID);
+            if (openidURI != null) {
+                // TODO: cadc-vosi CheckOpenIDProvider(URI)
             }
 
-            URI usersURI = null;
-            try {
-                usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_10.toString());
-                URL url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                if (url != null) {
-                    CheckResource checkResource = new CheckWebService(url);
-                    checkResource.check();
-                } else {
-                    log.debug("check skipped: " + usersURI + " does not provide " + Standards.VOSI_AVAILABILITY);
-                }
-            } catch (NoSuchElementException ex) {
-                log.debug("not configured: " + Standards.UMS_USERS_10);
+            URI credURI = localAuthority.getResourceID(Standards.CRED_PROXY_10);
+            if (credURI != null) {
+                CheckResource cws = new CheckWebService(credURI);
+                cws.check();
             }
 
-            URI groupsURI = null;
-            try {
-                groupsURI = localAuthority.getServiceURI(Standards.GMS_SEARCH_10.toString());
-                if (!groupsURI.equals(usersURI)) {
-                    URL url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                    if (url != null) {
-                        CheckResource checkResource = new CheckWebService(url);
-                        checkResource.check();
-                    } else {
-                        log.debug("check skipped: " + groupsURI + " does not provide " + Standards.VOSI_AVAILABILITY);
-                    }
-                }
-            } catch (NoSuchElementException ex) {
-                log.debug("not configured: " + Standards.GMS_SEARCH_10);
+            URI usersURI = localAuthority.getResourceID(Standards.UMS_USERS_01);
+            if (usersURI != null) {
+                CheckResource cws = new CheckWebService(usersURI);
+                cws.check();
+            }
+
+            URI groupsURI = localAuthority.getResourceID(Standards.GMS_SEARCH_10);
+            if (groupsURI != null && !groupsURI.equals(usersURI)) {
+                CheckResource cws = new CheckWebService(groupsURI);
+                cws.check();
             }
 
             if (credURI != null || usersURI != null) {

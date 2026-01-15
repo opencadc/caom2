@@ -146,7 +146,7 @@ public abstract class AbstractDeletedEntityDAOTest {
     }
 
     @Test
-    public void testPutGetDeleteDOE() {
+    public void testPutGetUpdateDeleteDOE() {
         try {
             UUID id1 = UUID.randomUUID();
 
@@ -163,7 +163,21 @@ public abstract class AbstractDeletedEntityDAOTest {
             DeletedObservationEvent per = doeDAO.get(id1);
             Assert.assertNotNull("found DeletedObservationEvent " + id1, per);
             Assert.assertNotNull("DeletedObservationEvent.lastModified", per.getLastModified());
+            Assert.assertEquals("DeletedObservationEvent.lastModified", o1.getLastModified(), per.getLastModified());
 
+            final Date t1 = per.getLastModified();
+            Thread.sleep(200L);
+            doeDAO.put(o1);
+            Assert.assertEquals(t1, o1.getLastModified());
+            
+            Thread.sleep(200L);
+            doeDAO.put(o1, true); // force timestamp update
+            Assert.assertTrue(t1.before(o1.getLastModified()));
+            
+            per = doeDAO.get(id1);
+            Assert.assertNotNull("found DeletedObservationEvent " + id1, per);
+            Assert.assertEquals("DeletedObservationEvent.lastModified", o1.getLastModified(), per.getLastModified());
+            
             doeDAO.delete(per.getID());
 
             DeletedObservationEvent gone = doeDAO.get(id1);

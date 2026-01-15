@@ -128,7 +128,7 @@ public class DeleteAction extends RepoAction {
             log.debug("delete: " + existing);
             dao.delete(existing.getID());
             log.debug("put: " + doe);
-            doeDAO.put(doe);
+            doeDAO.put(doe, true); // force timestamp update if doe exists
 
             log.debug("committing transaction");
             txnMgr.commitTransaction();

@@ -111,9 +111,9 @@ public class ObservationInlineContentHandler implements InlineContentHandler {
         }
         
         ObservationInput input;
-        if (GetAction.CAOM_JSON_MIMETYPE.equals(contentType) || GetAction.JSON_MIMETYPE.equals(contentType)) {
+        if (RepoAction.CAOM_JSON_MIMETYPE.equals(contentType) || RepoAction.JSON_MIMETYPE.equals(contentType)) {
             input = new JsonReader();
-        } else if (GetAction.CAOM_XML_MIMETYPE.equals(contentType) || GetAction.XML_MIMETYPE.equals(contentType)) {
+        } else if (RepoAction.CAOM_XML_MIMETYPE.equals(contentType) || RepoAction.XML_MIMETYPE.equals(contentType)) {
             input = new ObservationReader();
         } else {
             throw new IllegalArgumentException("unexpected content-type: " + contentType);

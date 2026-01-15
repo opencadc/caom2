@@ -1,7 +1,7 @@
 ## deployable containers have a semantic and build tag
 # semantic version tag: major.minor
 # build version tag: timestamp
-VER=2.0-BETA-02
+VER=2.0-BETA-03
 TAGS="${VER} ${VER}-$(date --utc +"%Y%m%dT%H%M%S")"
 unset VER
 

@@ -70,10 +70,12 @@
 package org.opencadc.caom2.db;
 
 import ca.nrc.cadc.io.ResourceIterator;
+import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import java.util.Date;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.DeletedObservationEvent;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.BadSqlGrammarException;
 
 /**
@@ -126,6 +128,10 @@ public class DeletedObservationEventDAO extends AbstractEntityDAO<DeletedObserva
         super.put(val);
     }
 
+    public void put(DeletedObservationEvent val, boolean timestampUpdate) {
+        super.put(val, false, true, false);
+    }
+    
     public void delete(UUID id) {
         super.delete(DeletedObservationEvent.class, id);
     }

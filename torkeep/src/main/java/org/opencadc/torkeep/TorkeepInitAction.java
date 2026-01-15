@@ -156,4 +156,32 @@ public class TorkeepInitAction extends InitAction {
         log.info("initJNDI: OK");
     }
 
+    //    /**
+    //     * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured.
+    //     * Returns null otherwise.
+    //     *
+    //     * @param collection
+    //     * @param raGroupConfig read access group data from configuration file
+    //     * @return read access generator plugin or null if not configured
+    //     */
+    //    protected ReadAccessGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
+    //        ReadAccessGenerator ratGenerator = null;
+    //
+    //        if (raGroupConfig.get(ReadAccessGenerator.STAFF_GROUP_KEY) != null
+    //                || raGroupConfig.get(ReadAccessGenerator.OPERATOR_GROUP_KEY) != null) {
+    //            ratGenerator = new ReadAccessGenerator(collection, raGroupConfig);
+    //        }
+    //
+    //        return ratGenerator;
+    //    }
+    static TorkeepConfig getTorkeepConfig() {
+        try {
+            log.debug("retrieving config via JNDI: " + JNDI_CONFIG_KEY);
+            Context initContext = new InitialContext();
+            return (TorkeepConfig) initContext.lookup(JNDI_CONFIG_KEY);
+        } catch (Exception ex) {
+            throw new IllegalStateException("failed to find config via JNDI: lookup failed", ex);
+        }
+    }
+
 }

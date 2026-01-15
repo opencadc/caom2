@@ -125,7 +125,7 @@ public class CadcCutoutGenerator extends CadcResolver implements CutoutGenerator
         if (cutouts != null && !cutouts.isEmpty()) {
             if (label != null) {
                 try {
-                    CaomValidator.assertValidPathComponent(AdCutoutGenerator.class, "filename", label);
+                    CaomValidator.assertValidPathComponent(CadcCutoutGenerator.class, "filename", label);
                 } catch (IllegalArgumentException ex) {
                     throw new UsageFault(ex.getMessage());
                 }

@@ -133,9 +133,9 @@ public abstract class AbstractEntityDAO<T extends Entity> extends AbstractDAO {
 
         try {
             JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            String sql = gen.getSelectSQL(val.getClass(), val.getID());
-            Entity cur = null;
-            // TODO
+            EntityGet<T> get = (EntityGet<T>) gen.getEntityGet(val.getClass(), true);
+            get.setID(val.getID());
+            T cur = get.execute(jdbc);
             
             Date now = getCurrentTime(jdbc);
             boolean update = cur != null;

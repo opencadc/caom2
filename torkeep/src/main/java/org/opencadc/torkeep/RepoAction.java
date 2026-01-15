@@ -110,7 +110,7 @@ import org.opencadc.permissions.client.PermissionsCheck;
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
-    static final String CAOM_XML_MIMETYPE = "text/x-caom+xml";
+    static final String CAOM_XML_MIMETYPE = "application/x-caom+xml";
     static final String XML_MIMETYPE = "text/xml";
     
     static final String CAOM_JSON_MIMETYPE = "application/x-caom+json";
@@ -270,6 +270,13 @@ public abstract class RepoAction extends RestAction {
 
     public String getNamespace() {
         return namespace;
+    }
+
+    private TorkeepConfig getTorkeepConfig() {
+        if (torkeepConfig == null) {
+            this.torkeepConfig = TorkeepInitAction.getTorkeepConfig();
+        }
+        return torkeepConfig;
     }
 
     private Map<String, Object> getDAOConfig(String collection) throws IOException {
@@ -547,39 +554,4 @@ public abstract class RepoAction extends RestAction {
     protected InlineContentHandler getInlineContentHandler() {
         return null;
     }
-
-    //    /**
-    //     * Returns an instance of ReadAccessTuplesGenerator if the read access group are configured.
-    //     * Returns null otherwise.
-    //     *
-    //     * @param collection
-    //     * @param raGroupConfig read access group data from configuration file
-    //     * @return read access generator plugin or null if not configured
-    //     */
-    //    protected ReadAccessGenerator getReadAccessTuplesGenerator(String collection, Map<String, Object> raGroupConfig) {
-    //        ReadAccessGenerator ratGenerator = null;
-    //
-    //        if (raGroupConfig.get(ReadAccessGenerator.STAFF_GROUP_KEY) != null
-    //                || raGroupConfig.get(ReadAccessGenerator.OPERATOR_GROUP_KEY) != null) {
-    //            ratGenerator = new ReadAccessGenerator(collection, raGroupConfig);
-    //        }
-    //
-    //        return ratGenerator;
-    //    }
-
-    protected TorkeepConfig getTorkeepConfig() {
-        if (this.torkeepConfig == null) {
-            String jndiKey = TorkeepInitAction.JNDI_CONFIG_KEY;
-            log.debug("jndiKey: " + jndiKey);
-            try {
-                log.debug("retrieving config via JNDI: " + jndiKey);
-                javax.naming.Context initContext = new javax.naming.InitialContext();
-                this.torkeepConfig =  (TorkeepConfig) initContext.lookup(jndiKey);
-            } catch (Exception ex) {
-                throw new IllegalStateException("failed to find config via JNDI: lookup failed", ex);
-            }
-        }
-        return this.torkeepConfig;
-    }
-    
 }
