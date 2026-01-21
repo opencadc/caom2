@@ -32,7 +32,7 @@ dependencies {
     implementation 'org.opencadc:cadc-rest:[1.4.7,)'
     implementation 'org.opencadc:caom2-compute:[2.5.0,2.6)'
     implementation 'org.opencadc:caom2-db:[2.5.0,2.6)'
-    implementation 'org.opencadc:cadc-vosi:[1.4.1,2.0)'
+    implementation 'org.opencadc:cadc-vosi:[1.4.12,2.0)'
     implementation 'org.opencadc:cadc-wcs:[2.0,3.0)'
     implementation 'org.opencadc:jsky:[1.0,2.0)'
     implementation 'org.opencadc:cadc-erfa:[1.0,2.0)'

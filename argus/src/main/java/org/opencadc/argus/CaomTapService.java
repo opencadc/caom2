@@ -76,10 +76,13 @@ import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.uws.server.RandomStringGenerator;
 import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
+import ca.nrc.cadc.vosi.avail.CheckCertificate;
 import ca.nrc.cadc.vosi.avail.CheckDataSource;
 import ca.nrc.cadc.vosi.avail.CheckException;
+import ca.nrc.cadc.vosi.avail.CheckOpenIDProvider;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
+import java.io.File;
 import java.net.URI;
 import java.net.URL;
 import java.util.NoSuchElementException;
@@ -93,6 +96,8 @@ public class CaomTapService implements AvailabilityPlugin {
 
     private static final Logger log = Logger.getLogger(CaomTapService.class);
 
+    private static final File AAI_PEM_FILE = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
+    
     private static final String TAP_SCHEMA_TEST = "select schema_name from tap_schema.schemas11 where schema_name='caom2'";
     private static final String CAOM2_TEST = "select obsID from caom2.Observation limit 1";
     private static final String UWSDS_TEST = "select jobID from uws.Job limit 1";
@@ -143,57 +148,40 @@ public class CaomTapService implements AvailabilityPlugin {
 
             // check other services we depend on
             RegistryClient reg = new RegistryClient();
-            URL url;
-            CheckResource checkResource;
-
             LocalAuthority localAuthority = new LocalAuthority();
-
-            String stdID = Standards.CRED_PROXY_10.toString();
-            try {
-
-                URI credURI = localAuthority.getServiceURI(stdID);
-                url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                if (url != null) {
-                    checkResource = new CheckWebService(url);
-                    checkResource.check();
-                } else {
-                    log.debug("check skipped: " + credURI + " does not provide " + Standards.VOSI_AVAILABILITY);
-                }
-            } catch (NoSuchElementException ex) {
-                log.debug("not found: " + stdID);
+            
+            URI openidURI = localAuthority.getResourceID(Standards.SECURITY_METHOD_OPENID);
+            if (openidURI != null) {
+                CheckOpenIDProvider ch = new CheckOpenIDProvider(openidURI);
+                ch.check();
             }
 
-            stdID = Standards.GMS_SEARCH_10.toString();
-            URI groupsURI = null;
-            try {
-                groupsURI = localAuthority.getServiceURI(stdID);
-                url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                if (url != null) {
-                    checkResource = new CheckWebService(url);
-                    checkResource.check();
-                } else {
-                    log.debug("check skipped: " + groupsURI + " does not provide " + Standards.VOSI_AVAILABILITY);
-                }
-            } catch (NoSuchElementException ex) {
-                log.debug("not found: " + stdID);
+            URI credURI = localAuthority.getResourceID(Standards.CRED_PROXY_10);
+            if (credURI != null) {
+                CheckResource cws = new CheckWebService(credURI);
+                cws.check();
             }
 
-            stdID = Standards.UMS_USERS_01.toString();
-            try {
-                URI usersURI = localAuthority.getServiceURI(stdID);
-                if (!usersURI.equals(groupsURI)) {
-                    url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
-                    if (url != null) {
-                        checkResource = new CheckWebService(url);
-                        checkResource.check();
-                    } else {
-                        log.debug("check skipped: " + usersURI + " does not provide " + Standards.VOSI_AVAILABILITY);
-                    }
+            URI usersURI = localAuthority.getResourceID(Standards.UMS_USERS_01);
+            if (usersURI != null) {
+                CheckResource cws = new CheckWebService(usersURI);
+                cws.check();
+            }
+
+            URI groupsURI = localAuthority.getResourceID(Standards.GMS_SEARCH_10);
+            if (groupsURI != null && !groupsURI.equals(usersURI)) {
+                CheckResource cws = new CheckWebService(groupsURI);
+                cws.check();
+            }
+            
+            if (credURI != null || usersURI != null) {
+                if (AAI_PEM_FILE.exists() && AAI_PEM_FILE.canRead()) {
+                    // check for a certificate needed to perform network A&A ops
+                    CheckCertificate checkCert = new CheckCertificate(AAI_PEM_FILE);
+                    checkCert.check();
                 } else {
-                    log.debug("already checked: " + stdID + " = " + usersURI);
+                    log.debug("AAI cert not found or unreadable");
                 }
-            } catch (NoSuchElementException ex) {
-                log.debug("not found: " + stdID);
             }
 
             // TODO: check that cadc-tap-tmp is working
