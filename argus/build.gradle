@@ -39,7 +39,7 @@ dependencies {
     implementation 'org.opencadc:cadc-adql:[1.1.5,)'
     implementation 'org.opencadc:cadc-uws:[1.0.2,2.0)'
     implementation 'org.opencadc:cadc-uws-server:[1.2.7,)'
-    implementation 'org.opencadc:cadc-vosi:[1.4.3,2.0)'
+    implementation 'org.opencadc:cadc-vosi:[1.4.12,2.0)'
     implementation 'org.opencadc:cadc-dali:[1.2.28,)'
     implementation 'org.opencadc:cadc-dali-pg:[0.4.0,)'
     implementation 'org.opencadc:cadc-dali-parquet:[0.5.3,)'

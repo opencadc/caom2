@@ -69,8 +69,6 @@
 
 package org.opencadc.torkeep;
 
-import ca.nrc.cadc.auth.AuthMethod;
-import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -79,14 +77,13 @@ import ca.nrc.cadc.vosi.Availability;
 import ca.nrc.cadc.vosi.AvailabilityPlugin;
 import ca.nrc.cadc.vosi.avail.CheckCertificate;
 import ca.nrc.cadc.vosi.avail.CheckException;
+import ca.nrc.cadc.vosi.avail.CheckOpenIDProvider;
 import ca.nrc.cadc.vosi.avail.CheckResource;
 import ca.nrc.cadc.vosi.avail.CheckWebService;
 import ca.nrc.cadc.wcs.VerifyWCS;
 import java.io.File;
 import java.net.URI;
-import java.net.URL;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.erfa.ERFALib;
@@ -160,7 +157,8 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin {
             
             URI openidURI = localAuthority.getResourceID(Standards.SECURITY_METHOD_OPENID);
             if (openidURI != null) {
-                // TODO: cadc-vosi CheckOpenIDProvider(URI)
+                CheckOpenIDProvider ch = new CheckOpenIDProvider(openidURI);
+                ch.check();
             }
 
             URI credURI = localAuthority.getResourceID(Standards.CRED_PROXY_10);
