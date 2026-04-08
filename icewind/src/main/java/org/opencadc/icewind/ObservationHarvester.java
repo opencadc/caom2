@@ -140,6 +140,7 @@ public class ObservationHarvester extends Harvester {
     public void setSkipped(boolean skipped, String errorMessagePattern) {
         this.skipped = skipped;
         this.harvestSkipDAO.errorMessagePattern = errorMessagePattern;
+        this.endDate = new Date(); // avoid reprocessing skip records that are updated
     }
 
     public int getIngested() {
@@ -258,7 +259,7 @@ public class ObservationHarvester extends Harvester {
 
             List<SkippedWrapperURI<ObservationResponse>> entityList;
             if (skipped) {
-                entityList = getSkipped(startDate);
+                entityList = getSkipped(startDate, endDate);
             } else {
                 log.info("harvest window: " + format(startDate) + " :: " + format(endDate) + " [" + batchSize + "]");
                 List<ObservationResponse> obsList = srcRepoClient.getList(collection, startDate, endDate, batchSize + 1);
@@ -768,9 +769,10 @@ public class ObservationHarvester extends Harvester {
         return ret;
     }
 
-    private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start) throws ExecutionException, InterruptedException {
-        log.info("harvest window (skip): " + format(start) + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
-        List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, null, batchSize);
+    private List<SkippedWrapperURI<ObservationResponse>> getSkipped(Date start, Date end) throws ExecutionException, InterruptedException {
+        log.info("harvest window (skip): " + format(start) + " :: " + format(end)
+                + " [" + batchSize + "]" + " source = " + source + " cname = " + cname);
+        List<HarvestSkipURI> skip = harvestSkipDAO.get(source, cname, start, end, batchSize);
 
         List<SkippedWrapperURI<ObservationResponse>> ret = new ArrayList<SkippedWrapperURI<ObservationResponse>>(skip.size());
 

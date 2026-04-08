@@ -111,6 +111,7 @@ public class ProductType extends VocabularyTerm
     // progenitor
     
     // CAOM specific terms
+    @Deprecated
     public static ProductType SCIENCE = new ProductType("science"); // this
     
     @Deprecated
@@ -123,9 +124,13 @@ public class ProductType extends VocabularyTerm
     public static ProductType CATALOG = new ProductType("catalog");
 
     public static final ProductType[] values() {
-        return new ProductType[] { SCIENCE, CALIBRATION, AUXILIARY, INFO,
-                                   PREVIEW, CATALOG, NOISE, WEIGHT, 
-                                   THUMBNAIL, BIAS, DARK, FLAT };
+        return new ProductType[] { THIS, 
+            AUXILIARY, BIAS, CALIBRATION, CODERIVED, DARK, DOCUMENTATION,
+            ERROR, FLAT, NOISE,
+            PREVIEW, PREVIEW_IMAGE, PREVIEW_PLOT, THUMBNAIL,
+            WEIGHT,
+            SCIENCE, INFO
+        };
     }
 
     private ProductType(String term) {
