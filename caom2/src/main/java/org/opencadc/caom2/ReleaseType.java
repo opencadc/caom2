@@ -75,31 +75,32 @@ package org.opencadc.caom2;
 public enum ReleaseType implements CaomEnum<String> {
     DATA("data"), META("meta");
 
-    private String value;
+    private String term;
 
     private ReleaseType(String value) {
-        this.value = value;
+        this.term = value;
     }
 
     public static ReleaseType toValue(String s) {
         for (ReleaseType d : values()) {
-            if (d.value.equals(s)) {
+            if (d.term.equals(s)) {
                 return d;
             }
         }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
+    @Override
     public String getValue() {
-        return value;
+        return term;
     }
 
     public int checksum() {
-        return value.hashCode();
+        return term.hashCode();
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return this.getClass().getSimpleName() + "[" + term + "]";
     }
 }

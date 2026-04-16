@@ -87,21 +87,22 @@ public enum PolarizationState implements CaomEnum<String>, Comparable<Polarizati
     POLA("POLA"),   // linear polarization angle 1/2 arctan(U,Q), code used in AIPS
     EPOLI("EPOLI"), // elliptical polarization intensity sqrt(Q^2 + U^2 + V^2)
     CPOLI("CPOLI"), // circular polarization intensity |V|
-    NPOLI("NPOLI"); // unpolarized intensity I - EPOLI
+    NPOLI("NPOLI"); // unpolarized intensity I - EPOLI// unpolarized intensity I - EPOLI
 
-    private final String value;
+    private final String term;
 
     private PolarizationState(String value) {
-        this.value = value;
+        this.term = value;
     }
 
+    @Override
     public String getValue() {
-        return value;
+        return term;
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return this.getClass().getSimpleName() + "[" + term + "]";
     }
 
     /**
@@ -156,7 +157,7 @@ public enum PolarizationState implements CaomEnum<String>, Comparable<Polarizati
     
     public static PolarizationState toValue(String s) {
         for (PolarizationState ps : values()) {
-            if (ps.value.equals(s)) {
+            if (ps.term.equals(s)) {
                 return ps;
             }
         }

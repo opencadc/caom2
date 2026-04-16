@@ -75,7 +75,7 @@ import java.net.URI;
  *
  * @author pdowler
  */
-public class Quality extends VocabularyTerm implements CaomEnum<String> {
+public class Quality extends VocabularyTerm {
     
     private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/Status");
     
@@ -91,7 +91,7 @@ public class Quality extends VocabularyTerm implements CaomEnum<String> {
 
     public static Quality toValue(String s) {
         for (Quality d : values()) {
-            if (d.getValue().equals(s)) {
+            if (d.getTerm().equals(s)) {
                 return d;
             }
         }
@@ -100,6 +100,6 @@ public class Quality extends VocabularyTerm implements CaomEnum<String> {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + getValue() + "]";
+        return this.getClass().getSimpleName() + "[" + getWrappedValue() + "]";
     }
 }

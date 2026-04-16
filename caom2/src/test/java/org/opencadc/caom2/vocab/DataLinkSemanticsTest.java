@@ -95,7 +95,7 @@ public class DataLinkSemanticsTest {
         try {
             for (DataLinkSemantics c : DataLinkSemantics.values()) {
                 
-                String s = c.getValue();
+                String s = c.getWrappedValue();
                 DataLinkSemantics c2 = DataLinkSemantics.toValue(s);
                 log.info(c + " -> " + s + " -> " + c2);
                 Assert.assertEquals(c, c2);
@@ -112,7 +112,7 @@ public class DataLinkSemanticsTest {
             // a datalink core extension we have not included yet
             String s1 = "flibble";
             DataLinkSemantics c2 = DataLinkSemantics.toValue(s1);
-            String s2 = c2.getValue();
+            String s2 = c2.getWrappedValue();
             log.info(s1 + " == " + s2);
             Assert.assertEquals(s1, s2);
         } catch (Exception unexpected) {

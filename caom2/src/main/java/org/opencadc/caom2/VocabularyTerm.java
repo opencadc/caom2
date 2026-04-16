@@ -72,7 +72,9 @@ import org.opencadc.caom2.util.CaomValidator;
 import org.opencadc.persist.PrimitiveWrapper;
 
 /**
- *
+ * This is a base class for vocabulary terms so that org.opencadc.persist.Entity
+ * can extract the term via the PrimitiveWrapper interface.
+ * 
  * @author pdowler
  */
 public abstract class VocabularyTerm implements PrimitiveWrapper {
@@ -107,7 +109,12 @@ public abstract class VocabularyTerm implements PrimitiveWrapper {
         return namespace;
     }
 
-    public String getValue() {
+    public String getTerm() {
+        return term;
+    }
+
+    // org.opencadc.entity.PrimitiveWrapper
+    public String getWrappedValue() {
         return term;
     }
 
