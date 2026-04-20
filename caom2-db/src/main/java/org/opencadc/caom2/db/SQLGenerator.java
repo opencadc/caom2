@@ -1155,7 +1155,7 @@ public class SQLGenerator {
                 dbDialect.safeSetString(sb, ps, col++, obs.target.getName());
                 dbDialect.safeSetURI(sb, ps, col++, obs.target.targetID);
                 if (obs.target.type != null) {
-                    dbDialect.safeSetString(sb, ps, col++, obs.target.type.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, obs.target.type.getTerm());
                 } else {
                     dbDialect.safeSetString(sb, ps, col++, null);
                 }
@@ -1189,7 +1189,7 @@ public class SQLGenerator {
                 dbDialect.safeSetDouble(sb, ps, col++, obs.telescope.geoLocationZ);
                 dbDialect.safeSetKeywords(sb, ps, col++, obs.telescope.getKeywords());
                 if (obs.telescope.trackingMode != null) {
-                    dbDialect.safeSetString(sb, ps, col++, obs.telescope.trackingMode.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, obs.telescope.trackingMode.getTerm());
                 } else {
                     dbDialect.safeSetString(sb, ps, col++, null);
                 }
@@ -1229,7 +1229,7 @@ public class SQLGenerator {
             }
 
             if (obs.requirements != null) {
-                dbDialect.safeSetString(sb, ps, col++, obs.requirements.getFlag().getValue());
+                dbDialect.safeSetString(sb, ps, col++, obs.requirements.getFlag().getTerm());
             } else {
                 dbDialect.safeSetString(sb, ps, col++, null);
             }
@@ -1389,7 +1389,7 @@ public class SQLGenerator {
             dbDialect.safeSetDate(sb, ps, col++, plane.dataRelease, utcCalendar);
             dbDialect.safeSetArray(sb, ps, col++, plane.getDataReadGroups());
             if (plane.dataProductType != null) {
-                dbDialect.safeSetString(sb, ps, col++, plane.dataProductType.getValue());
+                dbDialect.safeSetString(sb, ps, col++, plane.dataProductType.getTerm());
             } else {
                 dbDialect.safeSetString(sb, ps, col++, null);
             }
@@ -1442,16 +1442,16 @@ public class SQLGenerator {
             }
 
             if (plane.quality != null) {
-                dbDialect.safeSetString(sb, ps, col++, plane.quality.getFlag().getValue());
+                dbDialect.safeSetString(sb, ps, col++, plane.quality.getFlag().getTerm());
             } else {
                 dbDialect.safeSetString(sb, ps, col++, null);
             }
             
             // observable
             if (plane.observable != null) {
-                dbDialect.safeSetString(sb, ps, col++, plane.observable.getUCD().getValue());
+                dbDialect.safeSetString(sb, ps, col++, plane.observable.getUCD().getTerm());
                 if (plane.observable.calibration != null) {
-                    dbDialect.safeSetString(sb, ps, col++, plane.observable.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, plane.observable.calibration.getTerm());
                 } else {
                     dbDialect.safeSetString(sb, ps, col++, null);
                 }
@@ -1476,7 +1476,7 @@ public class SQLGenerator {
                 dbDialect.safeSetInterval(sb, ps, col++, pos.resolutionBounds);
                 dbDialect.safeSetDouble(sb, ps, col++, pos.sampleSize);
                 if (pos.calibration != null) {
-                    dbDialect.safeSetString(sb, ps, col++, pos.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, pos.calibration.getTerm());
                 } else {
                     dbDialect.safeSetString(sb, ps, col++, null);
                 }
@@ -1514,7 +1514,7 @@ public class SQLGenerator {
                 }
                 dbDialect.safeSetDouble(sb, ps, col++, nrg.rest);
                 if (nrg.calibration != null) {
-                    dbDialect.safeSetString(sb, ps, col++, nrg.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, nrg.calibration.getTerm());
                 } else {
                     dbDialect.safeSetString(sb, ps, col++, null);
                 }
@@ -1547,7 +1547,7 @@ public class SQLGenerator {
                 dbDialect.safeSetInterval(sb, ps, col++, tim.resolutionBounds);
                 dbDialect.safeSetDouble(sb, ps, col++, tim.sampleSize);
                 if (tim.calibration != null) {
-                    dbDialect.safeSetString(sb, ps, col++, tim.calibration.getValue());
+                    dbDialect.safeSetString(sb, ps, col++, tim.calibration.getTerm());
                 } else {
                     dbDialect.safeSetString(sb, ps, col++, null);
                 }
@@ -1770,7 +1770,7 @@ public class SQLGenerator {
 
             dbDialect.safeSetString(sb, ps, col++, artifact.getURI().toASCIIString());
             dbDialect.safeSetString(sb, ps, col++, artifact.getUriBucket());
-            dbDialect.safeSetString(sb, ps, col++, artifact.getProductType().getValue());
+            dbDialect.safeSetString(sb, ps, col++, artifact.getProductType().getTerm());
             dbDialect.safeSetString(sb, ps, col++, artifact.getReleaseType().getValue());
             dbDialect.safeSetString(sb, ps, col++, artifact.contentType);
             dbDialect.safeSetLong(sb, ps, col++, artifact.contentLength);
@@ -1841,7 +1841,7 @@ public class SQLGenerator {
             dbDialect.safeSetString(sb, ps, col++, part.getName());
 
             if (part.productType != null) {
-                dbDialect.safeSetString(sb, ps, col++, part.productType.getValue());
+                dbDialect.safeSetString(sb, ps, col++, part.productType.getTerm());
             } else {
                 dbDialect.safeSetString(sb, ps, col++, null);
             }
@@ -1911,7 +1911,7 @@ public class SQLGenerator {
             dbDialect.safeSetUUID(sb, ps, col++, parent);
 
             if (chunk.productType != null) {
-                dbDialect.safeSetString(sb, ps, col++, chunk.productType.getValue());
+                dbDialect.safeSetString(sb, ps, col++, chunk.productType.getTerm());
             } else {
                 dbDialect.safeSetString(sb, ps, col++, null);
             }
