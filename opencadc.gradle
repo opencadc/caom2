@@ -2,13 +2,13 @@ configurations {
     checkstyleDep
     intTestImplementation.extendsFrom testImplementation
 
-    runtime.exclude module: 'slf4j-reload4j'
-    runtime.exclude module: 'reload4j'
+    runtimeOnly.exclude module: 'slf4j-reload4j'
+    runtimeOnly.exclude module: 'reload4j'
 }
 
 dependencies {
     testImplementation 'com.puppycrawl.tools:checkstyle:8.2'
-    checkstyleDep 'org.opencadc:cadc-quality:[1.0,)'
+    checkstyleDep 'org.opencadc:cadc-quality:[1.0,1.1)'
 }
 
 checkstyle {
@@ -34,7 +34,7 @@ sourceSets {
 tasks.withType(Checkstyle).each { checkstyleTask ->
     checkstyleTask.doLast {
         reports.all { report ->
-            def outputFile = report.destination
+            def outputFile = report.outputLocation.get().asFile
             if (outputFile.exists() && outputFile.text.contains("<error ")) {
                 throw new GradleException("There were checkstyle warnings! For more info check $outputFile")
             }
