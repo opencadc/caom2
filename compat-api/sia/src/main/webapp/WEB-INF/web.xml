@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:web="http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+
+    <display-name>sia</display-name>
+
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+    <servlet>
+        <load-on-startup>1</load-on-startup>
+        <servlet-name>logControl</servlet-name>
+        <servlet-class>ca.nrc.cadc.log.LogControlServlet</servlet-class>
+        <init-param>
+            <param-name>logLevel</param-name>
+            <param-value>info</param-value>
+        </init-param>
+        <init-param>
+            <param-name>logLevelPackages</param-name>
+            <param-value>
+                ca.nrc.cadc.uws
+                ca.nrc.cadc.rest
+                ca.nrc.cadc.sia
+                ca.nrc.cadc.sia2
+                ca.nrc.cadc.vosi
+            </param-value>
+        </init-param>
+    </servlet>
+
+    <servlet>
+        <load-on-startup>2</load-on-startup>
+        <servlet-name>Sia1Servlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.uws.server.JobServlet</servlet-class>
+        <init-param>
+            <param-name>get</param-name>
+            <param-value>ca.nrc.cadc.uws.web.SyncGetAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>post</param-name>
+            <param-value>ca.nrc.cadc.uws.web.SyncPostAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>ca.nrc.cadc.uws.server.JobManager</param-name>
+            <param-value>ca.nrc.cadc.sia.QueryJobManager</param-value>
+        </init-param>
+    </servlet>
+
+    <servlet>
+        <load-on-startup>2</load-on-startup>
+        <servlet-name>Sia2Servlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.uws.server.JobServlet</servlet-class>
+        <init-param>
+            <param-name>get</param-name>
+            <param-value>ca.nrc.cadc.uws.web.SyncGetAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>post</param-name>
+            <param-value>ca.nrc.cadc.uws.web.SyncPostAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>ca.nrc.cadc.uws.server.JobManager</param-name>
+            <param-value>ca.nrc.cadc.sia2.impl.SiaJobManager</param-value>
+        </init-param>
+    </servlet>
+    
+    <servlet>
+        <load-on-startup>3</load-on-startup>
+        <servlet-name>AvailabilityServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.vosi.AvailabilityServlet</servlet-class>
+        <init-param>
+            <description>
+            </description>
+            <param-name>ca.nrc.cadc.vosi.AvailabilityPlugin</param-name>
+            <param-value>ca.nrc.cadc.sia.ServiceAvailability</param-value>
+        </init-param>
+    </servlet>
+
+    <servlet>
+        <load-on-startup>3</load-on-startup>
+        <servlet-name>CapabilitiesServlet</servlet-name>
+        <servlet-class>ca.nrc.cadc.rest.RestServlet</servlet-class>
+        <init-param>
+            <param-name>init</param-name>
+            <param-value>ca.nrc.cadc.vosi.CapInitAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>get</param-name>
+            <param-value>ca.nrc.cadc.vosi.CapGetAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>head</param-name>
+            <param-value>ca.nrc.cadc.vosi.CapHeadAction</param-value>
+        </init-param>
+        <init-param>
+            <param-name>input</param-name>
+            <param-value>/capabilities.xml</param-value>
+        </init-param>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>Sia1Servlet</servlet-name>
+        <url-pattern>/query/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>Sia2Servlet</servlet-name>
+        <url-pattern>/v2query/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>logControl</servlet-name>
+        <url-pattern>/logControl/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>AvailabilityServlet</servlet-name>
+        <url-pattern>/availability</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CapabilitiesServlet</servlet-name>
+        <url-pattern>/capabilities</url-pattern>
+    </servlet-mapping>
+    
+</web-app>

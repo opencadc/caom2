@@ -1,0 +1,616 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "2",
+        "title": "SIA (Simple Image Access) web service",
+        "description": "The SIA (Simple Image Access) web service.\n\n\nSIA services for the Common Archive Observation Model (CAOM).\n\n\n<a href=\"http://www.ivoa.net/Documents/SIA/20091116/\">IVOA SIA v1</a>\n\n\n<a href=\"http://www.ivoa.net/Documents/SIA/\">IVOA SIA v2</a>\n\n\n\n\nThe SIA-2.0 query endpoint implements all the query parameters described in the latest SIA-2.0 specification: POS, BAND, TIME, POL, FOV, SPATRES, EXPTIME, ID, COLLECTION, FACILITY, INSTRUMENT, DPTYPE, CALIB, TARGET, TIMERES, SPECRP, FORMAT.\n"
+    },
+    "schemes": [
+        "https"
+    ],
+    "basePath": "/sia", 
+    "paths": {
+        "/query": {
+            "get": {
+                "description": "SIA-1.0 query of all collections. |\nParameter names are not case sensitive; parameter values are case sensitive.\nThe SIA-1.0 service enforces a maximum SIZE of 10 degrees.\n",
+                "tags": [
+                    "Simple Image Access 1.0"
+                ],
+                "produces": [
+                    "text/xml"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/VOTable"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - User not authenticated"
+                    },
+                    "404": {
+                        "description": "Not Found - User not found"
+                    },
+                    "500": {
+                        "description": "Internal error"
+                    },
+                    "503": {
+                        "description": "Service busy"
+                    },
+                    "default": {
+                        "description": "Unexpeced error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "POS",
+                        "in": "query",
+                        "description": "The POS parameter specifies the target coodinates (RA,DEC in degrees, ICRS) to search.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "SIZE",
+                        "in": "query",
+                        "description": "The SIZE parameter specifies the size (angle in degrees) of the region to search. The value can be a single number or a pair of numbers separated by comma; in either case, this service takes the larger of the two values and searches using a circle.",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "COLLECTION",
+                        "in": "query",
+                        "description": "The collection parameter may be used to constrain the results to a specific data collection. If the collection parameter is not included in the query, images from all collections may be found. Values that could return content: BLAST, CFHT, HST, JCMT. The special value ALL may be used to search all CADC images; this is the default behaviour when no collection parameter is included in the request.",
+                        "required": false,
+                        "type": "string"
+                    }
+                ]
+            },
+            "post": {
+                "description": "SIA-1.0 query of all collections. |\nParameter names are not case sensitive; parameter values are case sensitive.\nThe SIA-1.0 service enforces a maximum SIZE of 10 degrees.\n",
+                "tags": [
+                    "Simple Image Access 1.0"
+                ],
+                "produces": [
+                    "text/xml"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/VOTable"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - User not authenticated"
+                    },
+                    "404": {
+                        "description": "Not Found - User not found"
+                    },
+                    "500": {
+                        "description": "Internal error"
+                    },
+                    "503": {
+                        "description": "Service busy"
+                    },
+                    "default": {
+                        "description": "Unexpeced error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "POS",
+                        "in": "query",
+                        "description": "The POS parameter specifies the target coodinates (RA,DEC in degrees, ICRS) to search.",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "SIZE",
+                        "in": "query",
+                        "description": "The SIZE parameter specifies the size (angle in degrees) of the region to search. The value can be a single number or a pair of numbers separated by comma; in either case, this service takes the larger of the two values and searches using a circle.",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "COLLECTION",
+                        "in": "query",
+                        "description": "The collection parameter may be used to constrain the results to a specific data collection. If the collection parameter is not included in the query, images from all collections may be found. Values that could return content: BLAST, CFHT, HST, JCMT. The special value ALL may be used to search all CADC images; this is the default behaviour when no collection parameter is included in the request.",
+                        "required": false,
+                        "type": "string"
+                    }
+                ]
+            }
+        },
+        "/v2query": {
+            "get": {
+                "description": "SIA-2.0 query of all collections. |\nThe SIA-2.0 implements all the query parameters described in the latest SIA-2.0 specification: POS, BAND, TIME, POL, FOV, SPATRES, EXPTIME, ID, COLLECTION, FACILITY, INSTRUMENT, DPTYPE, CALIB, TARGET, TIMERES, SPECRP, FORMAT.\n",
+                "tags": [
+                    "Simple Image Access 2.0"
+                ],
+                "produces": [
+                    "text/xml"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/VOTable"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - User not authenticated"
+                    },
+                    "404": {
+                        "description": "Not Found - User not found"
+                    },
+                    "500": {
+                        "description": "Internal error"
+                    },
+                    "503": {
+                        "description": "Service busy"
+                    },
+                    "default": {
+                        "description": "Unexpeced error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "POS",
+                        "in": "query",
+                        "description": "The POS parameter specifies the target coodinates (RA,DEC in degrees, ICRS) to search.",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "MAXREC",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "BAND",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "TIME",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "POL",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "FOV",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "SPATRES",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "EXPTIME",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "ID",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "COLLECTION",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "FACILITY",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "INSTRUMENT",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "DPTYPE",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "CALIB",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "TARGET",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "TIMERES",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "SPECRP",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "FORMAT",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    }
+                ]
+            },
+            "post": {
+                "description": "SIA-2.0 query of all collections. |\nThe SIA-2.0 implements all the query parameters described in the latest SIA-2.0 specification: POS, BAND, TIME, POL, FOV, SPATRES, EXPTIME, ID, COLLECTION, FACILITY, INSTRUMENT, DPTYPE, CALIB, TARGET, TIMERES, SPECRP, FORMAT.\n",
+                "tags": [
+                    "Simple Image Access 2.0"
+                ],
+                "produces": [
+                    "text/xml"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/VOTable"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - User not authenticated"
+                    },
+                    "404": {
+                        "description": "Not Found - User not found"
+                    },
+                    "500": {
+                        "description": "Internal error"
+                    },
+                    "503": {
+                        "description": "Service busy"
+                    },
+                    "default": {
+                        "description": "Unexpeced error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "POS",
+                        "in": "query",
+                        "description": "The POS parameter specifies the target coodinates (RA,DEC in degrees, ICRS) to search.",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "BAND",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "TIME",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "POL",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "FOV",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "SPATRES",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "EXPTIME",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "ID",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "COLLECTION",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "FACILITY",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "INSTRUMENT",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "DPTYPE",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "CALIB",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "TARGET",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "TIMERES",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "SPECRP",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "FORMAT",
+                        "in": "query",
+                        "description": "",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "MAXREC",
+                        "in": "query",
+                        "description": "maximum number of records to return (default: 1000 maximum: no limit)",
+                        "required": false,
+                        "type": "string"
+                    }
+                ]
+            }
+        },
+        "/availability": {
+            "get": {
+                "tags": [
+                    "Support Interfaces"
+                ],
+                "summary": "VOSI Availability",
+                "description": "Indicates whether the service is operable and shows the reliability of the service for extended and scheduled requests. If the query parameter 'detail=min' is used, a light weight heart beat test will be performed. The heart beat test returns status 200 if the service is available.",
+                "parameters": [
+                  {
+                    "name": "detail",
+                    "in": "query",
+                    "description": "specifies heart beat to be used to check for availability of this service, the value 'min' must be used, otherwise the full availability test will be performed",
+                    "required": false,
+                    "type": "string"
+                  }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A VOSI availability document in XML.",
+                        "schema": {
+                            "$ref": "#/definitions/availability"
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/capabilities": {
+            "get": {
+                "summary": "VOSI Capabilities",
+                "tags": [
+                    "Support Interfaces"
+                ],
+                "description": "Provides the service metadata in the form of a list of Capability descriptions.  Each of these descriptions is an \nXML element that:\n<ul>\n<li>states that the service provides a particular, IVOA-standard function;</li>\n<li>lists the interfaces for invoking that function;</li>\n<li>records any details of the implementation of the function that are not defined as default or constant in the standard for that function.</li>\n</ul>\n",
+                "responses": {
+                    "200": {
+                        "description": "A VOSI Capabilities document in XML.",
+                        "schema": {
+                            "$ref": "#/definitions/capabilities"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    },
+                    "503": {
+                        "description": "Service too busy"
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "VOTable": {
+            "type": "string"
+        },
+        "availability": {
+            "type": "object",
+            "xml": {
+                "name": "availability",
+                "namespace": "http://www.ivoa.net/xml/VOSIAvailability/v1.0",
+                "prefix": "vosi"
+            },
+            "properties": {
+                "available": {
+                    "type": "boolean",
+                    "xml": {
+                        "attribute": true,
+                        "prefix": "vosi"
+                    }
+                },
+                "note": {
+                    "type": "string",
+                    "xml": {
+                        "attribute": true,
+                        "prefix": "vosi"
+                    }
+                }
+            }
+        },
+        "capabilities": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/capability"
+            },
+            "xml": {
+                "namespace": "http://www.ivoa.net/xml/VOSICapabilities/v1.0",
+                "prefix": "vosi",
+                "wrapped": true
+            }
+        },
+        "capability": {
+            "type": "object",
+            "properties": {
+                "standardID": {
+                    "type": "string",
+                    "format": "uri",
+                    "xml": {
+                        "attribute": true
+                    }
+                },
+                "interface": {
+                    "type": "object",
+                    "properties": {
+                        "accessURL": {
+                            "type": "string",
+                            "properties": {
+                                "use": {
+                                    "type": "string",
+                                    "xml": {
+                                        "attribute": true
+                                    }
+                                }
+                            }
+                        },
+                        "securityMethod": {
+                            "type": "string",
+                            "properties": {
+                                "standardID": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "xml": {
+                                        "attribute": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "Error": {
+            "required": [
+                "code",
+                "message"
+            ],
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

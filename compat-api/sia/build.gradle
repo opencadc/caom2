@@ -1,0 +1,50 @@
+plugins {
+    id 'checkstyle'
+    id 'maven-publish'
+    id 'war'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+apply from: '../../opencadc.gradle'
+
+sourceCompatibility = 11
+
+war {
+    // Include the swagger-ui so that /sia provides the Sia API documentation
+    from(System.getenv('RPS') + '/resources/') {
+        include 'swagger-ui/'
+    }
+    from('.') {
+        include 'VERSION'
+    }
+}
+
+dependencies {
+    implementation 'org.opencadc:cadc-util:[1.12.15,)'
+    implementation 'org.opencadc:cadc-registry:[1.9.1,)'
+    implementation 'org.opencadc:cadc-access-control-identity:[1.1.0,)'
+    implementation 'org.opencadc:cadc-cdp:[1.4.1,)'
+    implementation 'org.opencadc:cadc-sia:[1.1.15,)'
+    implementation 'org.opencadc:cadc-uws:[1.0.5,)'
+    implementation 'org.opencadc:cadc-uws-server:[1.2.4,)'
+    implementation 'org.opencadc:cadc-tap:[1.0,2.0)'
+    implementation 'org.opencadc:cadc-vosi:[1.4.3,2.0)'
+    runtimeOnly 'org.opencadc:cadc-rest:[1.3.10,)'
+    runtimeOnly 'org.opencadc:cadc-registry:[1.4.6,)'
+    runtimeOnly 'org.opencadc:cadc-log:[1.0,)'
+
+    testImplementation 'junit:junit:[4.0,)'
+
+    intTestImplementation 'org.opencadc:cadc-test-vosi:[1.0.11,)'
+    intTestImplementation'org.opencadc:cadc-test-uws:[1.1,)'
+}
+
+configurations {
+  runtimeOnly.exclude group: 'javax.servlet'
+  runtimeOnly.exclude group: 'org.postgresql'
+}
+

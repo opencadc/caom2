@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vosi:capabilities
+    xmlns:vosi="http://www.ivoa.net/xml/VOSICapabilities/v1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:vs="http://www.ivoa.net/xml/VODataService/v1.1">
+
+  <capability standardID="ivo://ivoa.net/std/VOSI#capabilities">
+    <interface xsi:type="vs:ParamHTTP">
+      <accessURL use="full">https://replace.me.com/sia/capabilities</accessURL>
+    </interface>
+  </capability>
+
+  <capability standardID="ivo://ivoa.net/std/VOSI#availability">
+    <interface xsi:type="vs:ParamHTTP">
+      <accessURL use="full">https://replace.me.com/sia/availability</accessURL>
+    </interface>
+  </capability>
+
+  <capability standardID="vos://cadc.nrc.ca~vospace/CADC/std/LOGGING#logControl-1.0">
+    <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
+      <accessURL use="full">https://replace.me.com/sia/logControl</accessURL>
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+    </interface>
+  </capability> 
+
+  <capability standardID="ivo://ivoa.net/std/SIA">
+    <interface xsi:type="vs:ParamHTTP" role="std" version="1.0">
+      <accessURL use="base">https://replace.me.com/sia/query</accessURL>
+      <securityMethod/>
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+      <!-- site-specific params -->
+      <param use="optional" std="false">
+        <name>collection</name>
+        <description>Specify the name of a single data collection to search: actual values that can
+          be used are dependent on the presence of calibrated images in the entire archive;
+          the values are given in the output as a field with name="collection".
+          The default is to search all collections (equivalent to collection="ALL").
+        </description>
+        <dataType>string</dataType>
+      </param>
+      <param use="optional" std="false">
+        <name>mode</name>
+        <description>Specify the type of accessURL to include in the output. Recognised
+          values are archive (retrieve the full image) and cutout (retrieve approximately
+          the region-of-interest). The default mode is archive mode.
+        </description>
+        <dataType>string</dataType>
+      </param>
+    </interface>
+  </capability>
+  
+  <!-- SIA-2.0 query capability -->
+  <capability standardID="ivo://ivoa.net/std/SIA#query-2.0">
+    <interface xsi:type="vs:ParamHTTP" role="std" version="2.0">
+      <accessURL use="base"> https://replace.me.com/sia/v2query</accessURL>
+      <securityMethod/>
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+    </interface>
+  </capability>
+
+</vosi:capabilities>

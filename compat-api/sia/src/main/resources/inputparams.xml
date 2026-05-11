@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VOTABLE xmlns="http://www.ivoa.net/xml/VOTable/v1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2">
+  <RESOURCE type="meta">
+    <TABLE>
+        <PARAM name="INPUT:POS" datatype="double" arraysize="2" value=""/>
+        <PARAM name="INPUT:SIZE" datatype="double" arraysize="2*" value="0" />
+        <PARAM name="INPUT:FORMAT" datatype="char" arraysize="*" value="ALL">
+          <VALUES>
+              <OPTION value="application/fits" />
+              <OPTION value="METADATA" />
+          </VALUES>
+        </PARAM>
+        <PARAM name="INPUT:INTERSECTS" datatype="char" arraysize="*" value="OVERLAPS"/>
+        <PARAM name="INPUT:MAXREC" datatype="int" value="1000000000"/>
+
+        <PARAM name="INPUT:COLLECTION" datatype="char" arraysize="*" value="ALL">
+          <VALUES>
+              <!-- ALL means the same as not specifying this but might be convenient for a UI -->
+              <OPTION value="ALL" />
+              <OPTION value="CFHT" />
+              <OPTION value="CFHTMEGAPIPE" />
+              <OPTION value="CFHTWIRWOLF" />
+              <OPTION value="CFHTTERAPIX" />
+              <OPTION value="CGPS" />
+              <OPTION value="HST" />
+              <OPTION value="IRIS" />
+              <OPTION value="JCMT" />
+              <OPTION value="OMM" />
+              <OPTION value="VGPS" />
+          </VALUES>
+        </PARAM>
+      </TABLE>
+  </RESOURCE>
+</VOTABLE>
