@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,78 +62,74 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus;
+package ca.nrc.cadc.sia.integration;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.impl.InitCaomTapSchemaContent;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.tap.schema.validator.ValidatorConfig;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import ca.nrc.cadc.vosi.actions.TablesAction;
-import javax.sql.DataSource;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.dali.tables.votable.VOTableInfo;
+import ca.nrc.cadc.dali.tables.votable.VOTableReader;
+import ca.nrc.cadc.dali.tables.votable.VOTableResource;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.URL;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
  *
  * @author pdowler
  */
-public class ArgusInitAction extends InitAction {
+public abstract class VOTableHandler 
+{
+    private static final Logger log = Logger.getLogger(VOTableHandler.class);
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
+    private VOTableHandler() { }
     
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
-        }
-        this.enableMaterialisedViews = enableMV;
+    static VOTableDocument getVOTable(Reader in)
+        throws IOException
+    {
+        VOTableReader vrdr = new VOTableReader();
+        return vrdr.read(in);
     }
-
-    @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
-
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-
-            // strict mode for action=validate tests
-            TablesAction.setValidatorConfig(ValidatorConfig.strict());
-
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
+    
+    static VOTableDocument getVOTable(Throwable ex)
+        throws IOException
+    {
+        Reader in = new StringReader(ex.getMessage());
+        return getVOTable(in);
+    }
+    
+    static VOTableDocument getVOTable(URL url)
+        throws IOException
+    {
+        Reader in = new InputStreamReader(url.openStream());
+        return getVOTable(in);
+    }
+    
+    static VOTableDocument getVOTable(byte[] ba)
+        throws IOException
+    {
+        Reader in = new InputStreamReader(new ByteArrayInputStream(ba));
+        return getVOTable(in);
+    }
+    
+    static String getQueryStatus(VOTableDocument vot)
+    {
+        VOTableResource vr = vot.getResourceByType("results");
+        Assert.assertNotNull(vr);
+        log.debug("found resource: " + vr.getName() + " " + vr.getType());
+        for (VOTableInfo vi : vr.getInfos())
+        {
+            if ("QUERY_STATUS".equals(vi.getName()))
+                return vi.getValue();
         }
+        return null;
     }
 }

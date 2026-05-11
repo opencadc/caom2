@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2011.                            (c) 2011.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -62,78 +62,74 @@
 *  <http://www.gnu.org/licenses/>.      pas le cas, consultez :
 *                                       <http://www.gnu.org/licenses/>.
 *
+*  $Revision: 5 $
+*
 ************************************************************************
- */
+*/
 
-package org.opencadc.argus;
+package ca.nrc.cadc.sia.integration;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.impl.InitCaomTapSchemaContent;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.tap.schema.validator.ValidatorConfig;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import ca.nrc.cadc.vosi.actions.TablesAction;
-import javax.sql.DataSource;
+
+import ca.nrc.cadc.conformance.uws2.JobResultWrapper;
+import ca.nrc.cadc.conformance.uws2.SyncUWSTest;
+import ca.nrc.cadc.dali.tables.votable.VOTableDocument;
+import ca.nrc.cadc.net.ContentType;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.util.FileUtil;
+import ca.nrc.cadc.util.Log4jInit;
+import java.io.File;
+import java.net.URI;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.junit.Assert;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
  *
  * @author pdowler
  */
-public class ArgusInitAction extends InitAction {
+public class Sia2QueryTest extends SyncUWSTest
+{
+    private static final Logger log = Logger.getLogger(Sia2QueryTest.class);
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
-    
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
-        try {
-            MultiValuedProperties mvp = pr.getAllProperties();
-            
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
-        }
-        this.enableMaterialisedViews = enableMV;
+    static
+    {
+        Log4jInit.setLevel("ca.nrc.cadc.sia", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.conformance.uws2", Level.INFO);
     }
-
+    
+    public Sia2QueryTest() 
+    { 
+        super(URI.create("ivo://cadc.nrc.ca/sia"), Standards.SIA_QUERY_20);
+        
+        File testFile = FileUtil.getFileFromResource("SyncTest-OK-BAND.properties", Sia2QueryTest.class);
+        if (testFile.exists())
+        {
+            File testDir = testFile.getParentFile();
+            super.setPropertiesDir(testDir, "SyncTest-OK");
+        }
+    }
+    
     @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
+    protected void validateResponse(JobResultWrapper result)
+    {
+        Assert.assertEquals(200, result.responseCode);
+        ContentType act = new ContentType(result.contentType);
+        Assert.assertEquals("application/x-votable+xml", act.getBaseType());
+        
+        try
+        {
+            Assert.assertNotNull(result.syncOutput);
+            VOTableDocument vot = VOTableHandler.getVOTable(result.syncOutput);
+            log.info(result.name + ": found valid VOTable");
             
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
-
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
-
-            // strict mode for action=validate tests
-            TablesAction.setValidatorConfig(ValidatorConfig.strict());
-
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
+            String queryStatus = VOTableHandler.getQueryStatus(vot);
+            Assert.assertNotNull("QUERY_STATUS", queryStatus);
+            Assert.assertEquals("OK", queryStatus);
+        }
+        catch(Exception ex)
+        {
+            log.error("unexpected exception", ex);
+            Assert.fail("unexpected exception: " + ex);
         }
     }
 }

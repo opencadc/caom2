@@ -137,7 +137,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'provenance_keywords', 'provenance keywords (separated by |)', 'caom2:Plane.provenance.keywords', NULL, NULL, 'char', '*', NULL, 0,0,0 , 27),
 ( 'caom2.Plane', 'provenance_inputs', 'inputs of the process that created this plane (space-separated list of Plane URIs)', 'caom2:Plane.provenance.inputs', NULL, NULL, 'char','*','clob', 0,0,0 , 28),
 
-( 'caom2.Plane', 'metrics_sourceNumberDensity', 'number density of sources', 'caom2:Plane.metrics.sourceNumberDensity', NULL, 'deg-2', 'double', NULL, NULL, 0,0,0 , 30),
+( 'caom2.Plane', 'metrics_sourceNumberDensity', 'number density of sources', 'caom2:Plane.metrics.sourceNumberDensity', NULL, 'deg**-2', 'double', NULL, NULL, 0,0,0 , 30),
 ( 'caom2.Plane', 'metrics_background', 'background intensity', 'caom2:Plane.metrics.background', NULL, 'Jy/pix', 'double', NULL,NULL, 0,0,0 , 31),
 ( 'caom2.Plane', 'metrics_backgroundStddev', 'standard deviation in background', 'caom2:Plane.metrics.backgroundStddev', NULL, 'Jy/pix', 'double', NULL, NULL, 0,0,0 , 32),
 ( 'caom2.Plane', 'metrics_fluxDensityLimit', 'flux density limit where S:N=5 for point source', 'caom2:Plane.metrics.fluxDensityLimit', NULL, 'Jy', 'double', NULL, NULL, 0,0,0 , 33),
@@ -458,8 +458,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 ( 'caom2.SIAv1', 'position_center_ra', 	'RA of central coordinates', 				'POS_EQ_RA_MAIN', NULL, 'deg', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'position_center_dec', 'DEC of central coordinates', 				'POS_EQ_DEC_MAIN', NULL, 'deg', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'position_naxes', 	'number of axes', 					'VOX:Image_Naxes', NULL, NULL, 	'int', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'position_naxis',	'dimensions (number of pixels) along spatial axes', 	'VOX:Image_Naxis', NULL, NULL, 	'long', 2, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'position_scale', 	'pixel size along spatial axes', 			'VOX:Image_Scale', NULL, NULL, 	'double', 2, NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'position_naxis',	'dimensions (number of pixels) along spatial axes', 	'VOX:Image_Naxis', NULL, NULL, 	'int', '*', NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'position_scale', 	'pixel size along spatial axes', 			'VOX:Image_Scale', NULL, NULL, 	'double', '*', NULL, 1,1,1 ),
 
 ( 'caom2.SIAv1', 'energy_bounds_center', 'medianvalue on  energy axis (barycentric wavelength)',  'VOX:BandPass_RefValue', NULL, 'm', 'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'energy_bounds_cval1', 'lower bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_LoLimit', NULL, 'm', 	'double', NULL, NULL, 1,1,1 ),
@@ -472,7 +472,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 ( 'caom2.SIAv1', 'time_bounds_cval2', 	'upper bound on time axis (Modified Julian Day)', 	'time.end;obs.exposure', NULL, 'd', 	'double', NULL, NULL, 1,1,0 ),
 ( 'caom2.SIAv1', 'time_exposure', 	'actual exposure time', 				'time.duration;obs.exposure', NULL, 'sec', 'double', NULL, NULL, 1,1,0 ),
 
-( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, NULL, 'char', '128*', NULL, 1,0,1 ),
+( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, NULL, 'char', '*', NULL, 1,0,1 ),
 ( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, NULL, 'char', '*', 'clob', 1,0,1 ),
 
 ( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 ),

@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2024.                            (c) 2024.
+*  (c) 2019.                            (c) 2019.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -65,75 +65,104 @@
 ************************************************************************
  */
 
-package org.opencadc.argus;
+package ca.nrc.cadc.sia;
 
-import ca.nrc.cadc.db.DBUtil;
-import ca.nrc.cadc.rest.InitAction;
-import ca.nrc.cadc.tap.impl.InitCaomTapSchemaContent;
-import ca.nrc.cadc.tap.schema.InitDatabaseTS;
-import ca.nrc.cadc.tap.schema.validator.ValidatorConfig;
-import ca.nrc.cadc.util.MultiValuedProperties;
-import ca.nrc.cadc.util.PropertiesReader;
-import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
-import ca.nrc.cadc.vosi.actions.TablesAction;
-import javax.sql.DataSource;
-import org.apache.log4j.Logger;
+import ca.nrc.cadc.auth.AuthMethod;
+import ca.nrc.cadc.reg.Standards;
+import ca.nrc.cadc.reg.client.LocalAuthority;
+import ca.nrc.cadc.reg.client.RegistryClient;
+import ca.nrc.cadc.vosi.Availability;
+import ca.nrc.cadc.vosi.AvailabilityPlugin;
+import ca.nrc.cadc.vosi.avail.CheckCertificate;
+import ca.nrc.cadc.vosi.avail.CheckDataSource;
+import ca.nrc.cadc.vosi.avail.CheckException;
+import ca.nrc.cadc.vosi.avail.CheckResource;
+import ca.nrc.cadc.vosi.avail.CheckWebService;
+import java.io.File;
+import java.net.URI;
+import java.net.URL;
 
 /**
- * Init uws schema, tap_schema schema, and tap_schema content.
  *
- * @author pdowler
+ * @author Sailor Zhang
  */
-public class ArgusInitAction extends InitAction {
+public class ServiceAvailability implements AvailabilityPlugin {
 
-    private static final Logger log = Logger.getLogger(ArgusInitAction.class);
+    private static final String UWSDS_TEST = "select jobID from uws.Job limit 1";
+    private static final String UWSDS_WRITE_SQL = "insert into uws.JobAvailability (value) values ('T')";
+    public static final String UWS_POOL_NAME = "jdbc/uws";
     
-    private static final String CONFIG_ENABLE_MV = "org.opencadc.argus.enableMaterializedViews";
-    
-    private final boolean enableMaterialisedViews;
-    
-    public ArgusInitAction() {
-        PropertiesReader pr = new PropertiesReader("argus.properties");
-        boolean enableMV = false;
+    private static File SERVOPS_CERT = new File(System.getProperty("user.home") + "/.ssl/cadcproxy.pem");
+
+    public ServiceAvailability() {
+    }
+
+    public Availability getStatus() {
+        boolean isGood = true;
+        String note = "service is accepting queries";
+
         try {
-            MultiValuedProperties mvp = pr.getAllProperties();
+            CheckResource cr;
+            cr = new CheckDataSource(UWS_POOL_NAME, UWSDS_TEST);
+            cr.check();
+
+            cr = new CheckDataSource(UWS_POOL_NAME, UWSDS_WRITE_SQL, true, true);
+            cr.check();
+
+            CheckCertificate cc = new CheckCertificate(SERVOPS_CERT);
+            cc.check();
             
-            String str = mvp.getFirstPropertyValue(CONFIG_ENABLE_MV);
-            enableMV = "true".equals(str);
-        } catch (Exception ex) {
-            log.warn("failed to read otional config: " + ex);
+            // check other services we depend on
+            RegistryClient reg = new RegistryClient();
+            URL url;
+            CheckResource checkResource;
+
+            LocalAuthority localAuthority = new LocalAuthority();
+
+            URI credURI = localAuthority.getServiceURI(Standards.CRED_PROXY_10.toString());
+            url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            checkResource = new CheckWebService(url);
+            checkResource.check();
+
+            URI usersURI = localAuthority.getServiceURI(Standards.UMS_USERS_01.toString());
+            url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            checkResource = new CheckWebService(url);
+            checkResource.check();
+
+            URI groupsURI = localAuthority.getServiceURI(Standards.GMS_SEARCH_10.toString());
+            if (!groupsURI.equals(usersURI)) {
+                url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                checkResource = new CheckWebService(url);
+                checkResource.check();
+            }
+
+            url = reg.getServiceURL(URI.create(SiaRunner.TAP_URI), Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+            checkResource = new CheckWebService(url);
+            checkResource.check();
+        } catch (CheckException ce) {
+            // tests determined that the resource is not working
+            isGood = false;
+            note = ce.getMessage();
+        } catch (Throwable t) {
+            t.printStackTrace();
+            // the test itself failed
+            isGood = false;
+            note = "test failed, reason: " + t;
         }
-        this.enableMaterialisedViews = enableMV;
+        return new Availability(isGood, note);
     }
 
     @Override
-    public void doInit() {
-        try {
-            // tap_schema
-            log.info("InitDatabaseTS: START");
-            DataSource tapadm = DBUtil.findJNDIDataSource("jdbc/tapadm");
-            InitDatabaseTS tsi = new InitDatabaseTS(tapadm, null, "tap_schema");
-            tsi.doInit();
-            log.info("InitDatabaseTS: OK");
-            
-            // uws schema
-            log.info("InitDatabaseUWS: START");
-            DataSource uws = DBUtil.findJNDIDataSource("jdbc/uws");
-            InitDatabaseUWS uwsi = new InitDatabaseUWS(uws, null, "uws");
-            uwsi.doInit();
-            log.info("InitDatabaseUWS: OK");
+    public void setAppName(String appName) {
+        // no op
+    }
 
-            // caom2 tap_schema content
-            log.info("InitCaomTapSchemaContent: START");
-            InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
-            lsc.doInit();
-            log.info("InitCaomTapSchemaContent: OK");
+    @Override
+    public boolean heartbeat() {
+        return true;
+    }
 
-            // strict mode for action=validate tests
-            TablesAction.setValidatorConfig(ValidatorConfig.strict());
-
-        } catch (Exception ex) {
-            throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
-        }
+    public void setState(String string) {
+        //no-op
     }
 }
