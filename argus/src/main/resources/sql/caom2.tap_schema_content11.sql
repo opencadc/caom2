@@ -137,7 +137,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'provenance_keywords', 'provenance keywords (separated by |)', 'caom2:Provenance.keywords', NULL, NULL, 'char', '*', NULL, 0,0,0 , 27),
 ( 'caom2.Plane', 'provenance_inputs', 'inputs of the process that created this plane (space-separated list of Plane URIs)', 'caom2:Provenance.inputs', NULL, NULL, 'char','*',NULL, 0,0,0 , 28),
 
-( 'caom2.Plane', 'metrics_sourceNumberDensity', 'number density of sources', 'caom2:Metrics.sourceNumberDensity', NULL, 'deg-2', 'double', NULL, NULL, 0,0,0 , 30),
+( 'caom2.Plane', 'metrics_sourceNumberDensity', 'number density of sources', 'caom2:Metrics.sourceNumberDensity', NULL, 'deg**-2', 'double', NULL, NULL, 0,0,0 , 30),
 ( 'caom2.Plane', 'metrics_background', 'background intensity', 'caom2:Metrics.background', NULL, 'Jy/pix', 'double', NULL,NULL, 0,0,0 , 31),
 ( 'caom2.Plane', 'metrics_backgroundStddev', 'standard deviation in background', 'caom2:Metrics.backgroundStddev', NULL, 'Jy/pix', 'double', NULL, NULL, 0,0,0 , 32),
 ( 'caom2.Plane', 'metrics_fluxDensityLimit', 'flux density limit where S:N=5 for point source', 'caom2:Metrics.fluxDensityLimit', NULL, 'Jy', 'double', NULL, NULL, 0,0,0 , 33),
