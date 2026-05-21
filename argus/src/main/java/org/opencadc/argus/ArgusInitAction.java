@@ -70,9 +70,11 @@ package org.opencadc.argus;
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.rest.InitAction;
 import ca.nrc.cadc.tap.schema.InitDatabaseTS;
+import ca.nrc.cadc.tap.schema.validator.ValidatorConfig;
 import ca.nrc.cadc.util.MultiValuedProperties;
 import ca.nrc.cadc.util.PropertiesReader;
 import ca.nrc.cadc.uws.server.impl.InitDatabaseUWS;
+import ca.nrc.cadc.vosi.actions.TablesAction;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.opencadc.argus.tap.InitCaomTapSchemaContent;
@@ -126,6 +128,8 @@ public class ArgusInitAction extends InitAction {
             InitCaomTapSchemaContent lsc = new InitCaomTapSchemaContent(tapadm, null, "tap_schema", enableMaterialisedViews);
             lsc.doInit();
             log.info("InitCaomTapSchemaContent: OK");
+            
+            TablesAction.setValidatorConfig(ValidatorConfig.strict());
         } catch (Exception ex) {
             throw new RuntimeException("INIT FAIL: " + ex.getMessage(), ex);
         }
