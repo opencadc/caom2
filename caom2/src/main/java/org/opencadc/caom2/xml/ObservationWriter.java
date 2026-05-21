@@ -538,7 +538,7 @@ public class ObservationWriter implements ObservationOutput {
             addElement("targetID", target.targetID.toASCIIString(), element);
         }
         if (target.type != null) {
-            addElement("type", target.type.getValue(), element);
+            addElement("type", target.type.getWrappedValue(), element);
         }
         addBooleanElement("standard", target.standard, element);
         addNumberElement("redshift", target.redshift, element);
@@ -599,7 +599,7 @@ public class ObservationWriter implements ObservationOutput {
         }
         Element element = getCaom2Element("requirements");
         Element flag = getCaom2Element("flag");
-        flag.addContent(req.getFlag().getValue());
+        flag.addContent(req.getFlag().getWrappedValue());
         element.addContent(flag);
         parent.addContent(element);
     }
@@ -627,7 +627,7 @@ public class ObservationWriter implements ObservationOutput {
         addNumberElement("geoLocationY", telescope.geoLocationY, element);
         addNumberElement("geoLocationZ", telescope.geoLocationZ, element);
         if (telescope.trackingMode != null) {
-            addElement("trackingMode", telescope.trackingMode.getValue(), element);
+            addElement("trackingMode", telescope.trackingMode.getWrappedValue(), element);
         }
         if (docVersion < 23) {
             addStringListElement("keywords", telescope.getKeywords(), element);
@@ -781,9 +781,9 @@ public class ObservationWriter implements ObservationOutput {
             }
             if (plane.dataProductType != null) {
                 if (docVersion < 23 && DataProductType.CATALOG.equals(plane.dataProductType)) {
-                    addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
+                    addElement("dataProductType", plane.dataProductType.getWrappedValue(), planeElement);
                 } else {
-                    addElement("dataProductType", plane.dataProductType.getValue(), planeElement);
+                    addElement("dataProductType", plane.dataProductType.getWrappedValue(), planeElement);
                 }
             }
             if (plane.calibrationLevel != null) {
@@ -858,7 +858,7 @@ public class ObservationWriter implements ObservationOutput {
 
         if (comp.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(comp.calibration.getValue());
+            ce.setText(comp.calibration.getWrappedValue());
             posE.addContent(ce);
         }
     }
@@ -980,7 +980,7 @@ public class ObservationWriter implements ObservationOutput {
 
         if (comp.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(comp.calibration.getValue());
+            ce.setText(comp.calibration.getWrappedValue());
             nrgE.addContent(ce);
         }
     }
@@ -1030,7 +1030,7 @@ public class ObservationWriter implements ObservationOutput {
         }
         if (comp.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(comp.calibration.getValue());
+            ce.setText(comp.calibration.getWrappedValue());
             e.addContent(ce);
         }
     }
@@ -1143,12 +1143,12 @@ public class ObservationWriter implements ObservationOutput {
         parent.addContent(obsE);
         
         Element ucdE = getCaom2Element("ucd");
-        ucdE.setText(observable.getUCD().getValue());
+        ucdE.setText(observable.getUCD().getWrappedValue());
         obsE.addContent(ucdE);
         
         if (observable.calibration != null) {
             Element ce = getCaom2Element("calibration");
-            ce.setText(observable.calibration.getValue());
+            ce.setText(observable.calibration.getWrappedValue());
             obsE.addContent(ce);
         }
     }
@@ -1184,7 +1184,7 @@ public class ObservationWriter implements ObservationOutput {
         }
         Element element = getCaom2Element("quality");
         Element flag = getCaom2Element("flag");
-        flag.addContent(dq.getFlag().getValue());
+        flag.addContent(dq.getFlag().getWrappedValue());
         element.addContent(flag);
         parent.addContent(element);
     }
@@ -1264,7 +1264,7 @@ public class ObservationWriter implements ObservationOutput {
             addElement("uriBucket", artifact.getUriBucket(), artifactElement);
             
             if (docVersion >= 22) {
-                addElement("productType", artifact.getProductType().getValue(),
+                addElement("productType", artifact.getProductType().getWrappedValue(),
                         artifactElement);
                 addElement("releaseType", artifact.getReleaseType().getValue(),
                         artifactElement);
@@ -1279,7 +1279,7 @@ public class ObservationWriter implements ObservationOutput {
             addNumberElement("contentLength", artifact.contentLength, artifactElement);
 
             if (docVersion < 22) {
-                addElement("productType", artifact.getProductType().getValue(), artifactElement);
+                addElement("productType", artifact.getProductType().getWrappedValue(), artifactElement);
             }
 
             if (docVersion > 22) {
@@ -1317,7 +1317,7 @@ public class ObservationWriter implements ObservationOutput {
             addEntityAttributes(part, partElement, dateFormat);
             addElement("name", part.getName(), partElement);
             if (part.productType != null) {
-                addElement("productType", part.productType.getValue(),
+                addElement("productType", part.productType.getWrappedValue(),
                         partElement);
             }
             addChunksElement(part.getChunks(), partElement, dateFormat);
@@ -1348,7 +1348,7 @@ public class ObservationWriter implements ObservationOutput {
             Element chunkElement = getCaom2Element("chunk");
             addEntityAttributes(chunk, chunkElement, dateFormat);
             if (chunk.productType != null) {
-                addElement("productType", chunk.productType.getValue(),
+                addElement("productType", chunk.productType.getWrappedValue(),
                         chunkElement);
             }
             addNumberElement("naxis", chunk.naxis, chunkElement);

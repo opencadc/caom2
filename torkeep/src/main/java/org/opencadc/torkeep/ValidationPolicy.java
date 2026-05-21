@@ -75,6 +75,7 @@ import org.apache.log4j.Logger;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.Plane;
+import org.opencadc.persist.Entity;
 import org.opencadc.persist.EntityVisitor;
 
 /**
@@ -134,6 +135,30 @@ public class ValidationPolicy {
                 errors.append(vodmlID).append(" null\n");
             }
         }
+
+        @Override
+        public void visitChildCollection(String vodmlID, Collection set) {
+            log.debug("visitChildCollection: " + vodmlID);
+            if (vmap.contains(vodmlID)) {
+                if (set == null) {
+                    errors.append(vodmlID).append(" null\n");
+                } else if (set.isEmpty()) {
+                    errors.append(vodmlID).append(" empty\n");
+                }
+            }
+        }
+
+        @Override
+        public void visitChildNull(String vodmlID) {
+            // not used in CAOM
+        }
+
+        @Override
+        public void visitChildEntity(String vodmlID, Entity val) {
+            // not used in CAOM
+        }
+        
+        
     }
 
     public void validate(Observation obs) throws IllegalArgumentException {

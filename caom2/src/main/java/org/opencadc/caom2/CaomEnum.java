@@ -70,7 +70,9 @@
 package org.opencadc.caom2;
 
 /**
- *
+ * This is an interface for all enum(s) so that they have a consistent getValue()
+ * method for org,opencadc.persist.Entity to use to extract the primtive value.
+ * 
  * @author pdowler
  */
 public interface CaomEnum<T> {

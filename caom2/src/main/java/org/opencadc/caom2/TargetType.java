@@ -74,7 +74,7 @@ import java.net.URI;
 /**
  * @author pdowler
  */
-public class TargetType extends VocabularyTerm implements CaomEnum<String> {
+public class TargetType extends VocabularyTerm {
     
     private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/TargetType");
     
@@ -91,7 +91,7 @@ public class TargetType extends VocabularyTerm implements CaomEnum<String> {
 
     public static TargetType toValue(String s) {
         for (TargetType d : values()) {
-            if (d.getValue().equals(s)) {
+            if (d.getWrappedValue().equals(s)) {
                 return d;
             }
         }
@@ -100,6 +100,6 @@ public class TargetType extends VocabularyTerm implements CaomEnum<String> {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + getValue() + "]";
+        return this.getClass().getSimpleName() + "[" + getWrappedValue() + "]";
     }
 }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<caom2:Observation xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="caom2:DerivedObservation" caom2:id="df8997ac-38c8-4778-b5fe-d65b36893a1a" caom2:lastModified="2025-09-19T16:04:43.175" caom2:maxLastModified="2025-09-19T16:04:45.175" caom2:metaChecksum="md5:9da86ae6214096a8e818af2b3c560e03" caom2:accMetaChecksum="md5:8479953a7ebe84af72a311942815f9b8" caom2:metaProducer="test:observation/rountrip-1.0">
+<caom2:Observation xmlns:caom2="http://www.opencadc.org/caom2/xml/v2.5" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="caom2:DerivedObservation" caom2:id="de6e9cd9-f228-4331-b9ad-7976cfb0baab" caom2:lastModified="2026-04-15T17:59:55.918" caom2:maxLastModified="2026-04-15T17:59:57.918" caom2:metaChecksum="md5:cc2b4d7f84d60109d1bbf6f736ee1333" caom2:accMetaChecksum="md5:dd1cd25c24d2ef79b8b26f4152b6907a" caom2:metaProducer="test:observation/rountrip-1.0">
   <caom2:collection>TEST</caom2:collection>
   <caom2:uri>caom:TEST/observationID</caom2:uri>
   <caom2:uriBucket>7c1</caom2:uriBucket>
-  <caom2:metaRelease>2025-09-19T16:04:43.098</caom2:metaRelease>
+  <caom2:metaRelease>2026-04-15T17:59:55.836</caom2:metaRelease>
   <caom2:metaReadGroups>
     <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
     <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
@@ -76,14 +76,14 @@
     <caom2:photometric>true</caom2:photometric>
   </caom2:environment>
   <caom2:planes>
-    <caom2:plane caom2:id="0d93097c-48b9-4c07-ab7c-931e37a8bada" caom2:lastModified="2025-09-19T16:04:43.175" caom2:maxLastModified="2025-09-19T16:04:45.175" caom2:metaChecksum="md5:8088b473c210b6c21ac9dfbb05b40e37" caom2:accMetaChecksum="md5:5ff1f351ec096d6fd90454af7eeaf0d8" caom2:metaProducer="test:plane/rountrip-1.0">
+    <caom2:plane caom2:id="2410ac39-efec-4326-92e8-6e21b28b8546" caom2:lastModified="2026-04-15T17:59:55.918" caom2:maxLastModified="2026-04-15T17:59:57.918" caom2:metaChecksum="md5:d837eccb4f3cf30a0d7a0ca6082c2d87" caom2:accMetaChecksum="md5:736ea0deffe339444eacd201941e6795" caom2:metaProducer="test:plane/rountrip-1.0">
       <caom2:uri>caom:collection/observation/plane0</caom2:uri>
-      <caom2:metaRelease>2025-09-19T16:04:43.098</caom2:metaRelease>
+      <caom2:metaRelease>2026-04-15T17:59:55.836</caom2:metaRelease>
       <caom2:metaReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
       </caom2:metaReadGroups>
-      <caom2:dataRelease>2025-09-19T16:04:43.098</caom2:dataRelease>
+      <caom2:dataRelease>2026-04-15T17:59:55.836</caom2:dataRelease>
       <caom2:dataReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -97,7 +97,7 @@
         <caom2:producer>provenanceProducer</caom2:producer>
         <caom2:runID>provenanceRunID</caom2:runID>
         <caom2:reference>http://foo/bar</caom2:reference>
-        <caom2:lastExecuted>2025-09-19T16:04:43.098</caom2:lastExecuted>
+        <caom2:lastExecuted>2026-04-15T17:59:55.836</caom2:lastExecuted>
         <caom2:keywords>
           <caom2:keyword>keyword1</caom2:keyword>
           <caom2:keyword>keyword2</caom2:keyword>
@@ -298,12 +298,12 @@
         <caom2:distributionFill>0.85</caom2:distributionFill>
       </caom2:visibility>
       <caom2:artifacts>
-        <caom2:artifact caom2:id="68e741c1-838b-4651-bae5-333c339b6b6a" caom2:lastModified="2025-09-19T16:04:43.175" caom2:maxLastModified="2025-09-19T16:04:45.175" caom2:metaChecksum="md5:e92b78861254d1b702db293a5d107bb0" caom2:accMetaChecksum="md5:d7cf7aa55a757135f6a6cfe97e7c9403" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="cf079fac-7c44-48b2-80a3-c7645c463643" caom2:lastModified="2026-04-15T17:59:55.918" caom2:maxLastModified="2026-04-15T17:59:57.918" caom2:metaChecksum="md5:9e9476ff5449d6464457e391f47189e0" caom2:accMetaChecksum="md5:5a4469becca15f961cb7597d5f48c3f5" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar0</caom2:uri>
           <caom2:uriBucket>109</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-09-19T16:04:43.098</caom2:contentRelease>
+          <caom2:contentRelease>2026-04-15T17:59:55.836</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -313,12 +313,12 @@
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:descriptionID>desc:TEST/science-ready-data</caom2:descriptionID>
         </caom2:artifact>
-        <caom2:artifact caom2:id="3ab46030-dcd3-46ff-b2c3-2f95f15ede9c" caom2:lastModified="2025-09-19T16:04:43.175" caom2:maxLastModified="2025-09-19T16:04:45.175" caom2:metaChecksum="md5:125febfaff54ba16ef0f91e0442effcb" caom2:accMetaChecksum="md5:93a281380d9c4861115aa7422894bf6b" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="547f614a-f63e-4137-8b94-edbfaea5ddf0" caom2:lastModified="2026-04-15T17:59:55.918" caom2:maxLastModified="2026-04-15T17:59:57.918" caom2:metaChecksum="md5:ffd122d71ed9076fb27b355717113aaf" caom2:accMetaChecksum="md5:e75a458a80ae5cd714918ed5b7812793" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar1</caom2:uri>
           <caom2:uriBucket>6de</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-09-19T16:04:43.098</caom2:contentRelease>
+          <caom2:contentRelease>2026-04-15T17:59:55.836</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -330,14 +330,14 @@
         </caom2:artifact>
       </caom2:artifacts>
     </caom2:plane>
-    <caom2:plane caom2:id="60d6d0ab-fa92-4296-99a1-27faac657885" caom2:lastModified="2025-09-19T16:04:43.175" caom2:maxLastModified="2025-09-19T16:04:45.175" caom2:metaChecksum="md5:924edd80fc261bcb3b3113deda024bb2" caom2:accMetaChecksum="md5:8145a0e5b1716d14ad705b4ec68284b3" caom2:metaProducer="test:plane/rountrip-1.0">
+    <caom2:plane caom2:id="17846952-cd05-4698-b5c7-9cf1ac88dd1d" caom2:lastModified="2026-04-15T17:59:55.918" caom2:maxLastModified="2026-04-15T17:59:57.918" caom2:metaChecksum="md5:b20502e9a32b599feb241a27561e44b3" caom2:accMetaChecksum="md5:c2c900a406487af21d1fe3c277de2946" caom2:metaProducer="test:plane/rountrip-1.0">
       <caom2:uri>caom:collection/observation/plane1</caom2:uri>
-      <caom2:metaRelease>2025-09-19T16:04:43.098</caom2:metaRelease>
+      <caom2:metaRelease>2026-04-15T17:59:55.836</caom2:metaRelease>
       <caom2:metaReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?A</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?B</caom2:groupURI>
       </caom2:metaReadGroups>
-      <caom2:dataRelease>2025-09-19T16:04:43.098</caom2:dataRelease>
+      <caom2:dataRelease>2026-04-15T17:59:55.836</caom2:dataRelease>
       <caom2:dataReadGroups>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
         <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -351,7 +351,7 @@
         <caom2:producer>provenanceProducer</caom2:producer>
         <caom2:runID>provenanceRunID</caom2:runID>
         <caom2:reference>http://foo/bar</caom2:reference>
-        <caom2:lastExecuted>2025-09-19T16:04:43.098</caom2:lastExecuted>
+        <caom2:lastExecuted>2026-04-15T17:59:55.836</caom2:lastExecuted>
         <caom2:keywords>
           <caom2:keyword>keyword1</caom2:keyword>
           <caom2:keyword>keyword2</caom2:keyword>
@@ -525,12 +525,12 @@
         <caom2:distributionFill>0.85</caom2:distributionFill>
       </caom2:visibility>
       <caom2:artifacts>
-        <caom2:artifact caom2:id="2eb54dbb-2a25-4f0f-b4dc-e69de170d04a" caom2:lastModified="2025-09-19T16:04:43.175" caom2:maxLastModified="2025-09-19T16:04:45.175" caom2:metaChecksum="md5:12ac0bf20a77d75aced41c54f31d4074" caom2:accMetaChecksum="md5:72a48ceefd59a6bfd09cb6094aa3d3db" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="b0c94e90-453e-49c1-aa89-6b7aecaabe36" caom2:lastModified="2026-04-15T17:59:55.918" caom2:maxLastModified="2026-04-15T17:59:57.918" caom2:metaChecksum="md5:06d0fe4c8453c51317b340991b0e0ec3" caom2:accMetaChecksum="md5:46f99314b3a032cdb4330a2a3bbc9987" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar0</caom2:uri>
           <caom2:uriBucket>109</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-09-19T16:04:43.098</caom2:contentRelease>
+          <caom2:contentRelease>2026-04-15T17:59:55.836</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>
@@ -540,12 +540,12 @@
           <caom2:contentChecksum>md5:d41d8cd98f00b204e9800998ecf8427e</caom2:contentChecksum>
           <caom2:descriptionID>desc:TEST/science-ready-data</caom2:descriptionID>
         </caom2:artifact>
-        <caom2:artifact caom2:id="80db888f-dfb4-4ae5-a28a-b054f533e062" caom2:lastModified="2025-09-19T16:04:43.175" caom2:maxLastModified="2025-09-19T16:04:45.175" caom2:metaChecksum="md5:f56aaf4ed8e8b966aef6c3bd561b8f6e" caom2:accMetaChecksum="md5:03e880e9427429d081cec43733c00563" caom2:metaProducer="test:artifact/rountrip-1.0">
+        <caom2:artifact caom2:id="eb00de10-366c-462a-8b0d-9171afc2bbd6" caom2:lastModified="2026-04-15T17:59:55.918" caom2:maxLastModified="2026-04-15T17:59:57.918" caom2:metaChecksum="md5:62ba592bd36ac96a2e2cc59b8f4da72d" caom2:accMetaChecksum="md5:2b59e99dd479cfcccaac24c7df769f0a" caom2:metaProducer="test:artifact/rountrip-1.0">
           <caom2:uri>ad:foo/bar1</caom2:uri>
           <caom2:uriBucket>6de</caom2:uriBucket>
           <caom2:productType>this</caom2:productType>
           <caom2:releaseType>data</caom2:releaseType>
-          <caom2:contentRelease>2025-09-19T16:04:43.098</caom2:contentRelease>
+          <caom2:contentRelease>2026-04-15T17:59:55.836</caom2:contentRelease>
           <caom2:contentReadGroups>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?C</caom2:groupURI>
             <caom2:groupURI>ivo://cadc.nrc.ca/gms?D</caom2:groupURI>

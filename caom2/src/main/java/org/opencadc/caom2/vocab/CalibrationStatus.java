@@ -98,7 +98,7 @@ public class CalibrationStatus extends VocabularyTerm {
     
     public static CalibrationStatus toValue(String s) {
         for (CalibrationStatus d : VALUES) {
-            if (d.getValue().equals(s)) {
+            if (d.getWrappedValue().equals(s)) {
                 return d;
             }
         }

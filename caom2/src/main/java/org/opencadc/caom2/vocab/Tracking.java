@@ -87,7 +87,7 @@ public class Tracking extends VocabularyTerm {
     }
 
     public static final Tracking toValue(String s) {
-        if (SIDEREAL.getValue().equals(s)) {
+        if (SIDEREAL.getWrappedValue().equals(s)) {
             return SIDEREAL;
         }
         return new Tracking(s);

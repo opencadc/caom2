@@ -76,31 +76,32 @@ package org.opencadc.caom2;
 public enum ObservationIntentType implements CaomEnum<String> {
     CALIBRATION("calibration"), SCIENCE("science"), OUTREACH("outreach");
 
-    private String value;
+    private String term;
 
     private ObservationIntentType(String value) {
-        this.value = value;
+        this.term = value;
     }
 
     public static ObservationIntentType toValue(String s) {
         for (ObservationIntentType d : values()) {
-            if (d.value.equals(s)) {
+            if (d.term.equals(s)) {
                 return d;
             }
         }
         throw new IllegalArgumentException("invalid value: " + s);
     }
 
+    @Override
     public String getValue() {
-        return value;
+        return term;
     }
 
     public int checksum() {
-        return value.hashCode();
+        return term.hashCode();
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + value + "]";
+        return this.getClass().getSimpleName() + "[" + term + "]";
     }
 }

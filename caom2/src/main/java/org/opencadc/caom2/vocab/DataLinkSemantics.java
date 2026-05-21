@@ -126,7 +126,7 @@ public class DataLinkSemantics extends VocabularyTerm {
 
     public static final DataLinkSemantics toValue(String s) {
         for (DataLinkSemantics d : VALUES) {
-            if (d.getValue().equals(s)) {
+            if (d.getWrappedValue().equals(s)) {
                 return d;
             }
         }
