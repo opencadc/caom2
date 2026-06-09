@@ -110,7 +110,7 @@ public class ArtifactAccessWriter {
         root.addContent(ae);
         
         addChild(ae, ArtifactAccessReader.ENAMES.uri.name(), aa.getArtifact().getURI().toASCIIString());
-        addChild(ae, ArtifactAccessReader.ENAMES.productType.name(), aa.getArtifact().getProductType().getValue());
+        addChild(ae, ArtifactAccessReader.ENAMES.productType.name(), aa.getArtifact().getProductType().getWrappedValue());
         addChild(ae, ArtifactAccessReader.ENAMES.releaseType.name(), aa.getArtifact().getReleaseType().getValue());
         if (aa.getArtifact().contentChecksum != null) {
             addChild(ae, ArtifactAccessReader.ENAMES.contentChecksum.name(), aa.getArtifact().contentChecksum.toASCIIString());

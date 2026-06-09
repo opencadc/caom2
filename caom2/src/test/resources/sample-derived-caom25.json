@@ -1,16 +1,16 @@
 { 
   "@caom2" : "http://www.opencadc.org/caom2/xml/v2.5",
   "@type" : "caom2:DerivedObservation",
-  "@id" : "b911abab-94ef-4765-a393-ed3af18ee375",
-  "@lastModified" : "2025-09-24T15:16:56.065",
-  "@maxLastModified" : "2025-09-24T15:16:58.065",
-  "@metaChecksum" : "md5:9c44ef37f5eb44a76c47f41cc185aaaa",
-  "@accMetaChecksum" : "md5:7860a2f86f477bf5a1a62ed325594019",
+  "@id" : "1c9257e7-4c7f-4e6d-b620-f088c4afd354",
+  "@lastModified" : "2026-04-15T17:59:55.838",
+  "@maxLastModified" : "2026-04-15T17:59:57.838",
+  "@metaChecksum" : "md5:6a34b0d418ed037dc0fce3f70dbaeaee",
+  "@accMetaChecksum" : "md5:ecb8cdbfb1a7aed19d76b27dd8f95bc4",
   "@metaProducer" : "test:observation/rountrip-1.0",
   "collection" : "TEST",
   "uri" : "caom:TEST/observationID",
   "uriBucket" : "7c1",
-  "metaRelease" : "2025-09-24T15:16:56.063",
+  "metaRelease" : "2026-04-15T17:59:55.836",
   "metaReadGroups" : [
     "ivo://cadc.nrc.ca/gms?A",
     "ivo://cadc.nrc.ca/gms?B"
@@ -84,19 +84,19 @@
   },
   "planes" : [
     {
-      "@id" : "636b50c8-9da0-4116-b75f-04816e83f763",
-      "@lastModified" : "2025-09-24T15:16:56.065",
-      "@maxLastModified" : "2025-09-24T15:16:58.065",
-      "@metaChecksum" : "md5:f95acc84dcde466248614669059fc877",
-      "@accMetaChecksum" : "md5:c55235b71d8ba3ad508f947103302d9b",
+      "@id" : "c2d1f711-9bfb-46e1-9671-ebb414ba9c3b",
+      "@lastModified" : "2026-04-15T17:59:55.838",
+      "@maxLastModified" : "2026-04-15T17:59:57.838",
+      "@metaChecksum" : "md5:6310ee459030125046d07a4328d4c882",
+      "@accMetaChecksum" : "md5:1c665c5a0b0e980d88235f3d9016cef6",
       "@metaProducer" : "test:plane/rountrip-1.0",
       "uri" : "caom:collection/observation/plane0",
-      "metaRelease" : "2025-09-24T15:16:56.063",
+      "metaRelease" : "2026-04-15T17:59:55.836",
       "metaReadGroups" : [
         "ivo://cadc.nrc.ca/gms?A",
         "ivo://cadc.nrc.ca/gms?B"
       ],
-      "dataRelease" : "2025-09-24T15:16:56.063",
+      "dataRelease" : "2026-04-15T17:59:55.836",
       "dataReadGroups" : [
         "ivo://cadc.nrc.ca/gms?C",
         "ivo://cadc.nrc.ca/gms?D"
@@ -110,7 +110,7 @@
         "producer" : "provenanceProducer",
         "runID" : "provenanceRunID",
         "reference" : "http://foo/bar",
-        "lastExecuted" : "2025-09-24T15:16:56.063",
+        "lastExecuted" : "2026-04-15T17:59:55.836",
         "keywords" : [
           "keyword1",
           "keyword2"
@@ -315,17 +315,17 @@
       },
       "artifacts" : [
         {
-          "@id" : "43c1c5be-b008-4a3e-8f3d-ed3a6bc8946f",
-          "@lastModified" : "2025-09-24T15:16:56.065",
-          "@maxLastModified" : "2025-09-24T15:16:58.065",
-          "@metaChecksum" : "md5:ac7ba1a7aa3b054e06ccb56a787be537",
-          "@accMetaChecksum" : "md5:ae32b6590a9c8922c92b64f69a9c4c41",
+          "@id" : "2ebf1bd8-5516-4bc4-8ede-262fb987ee0b",
+          "@lastModified" : "2026-04-15T17:59:55.838",
+          "@maxLastModified" : "2026-04-15T17:59:57.838",
+          "@metaChecksum" : "md5:b5abbb67b7993609115e532fe3730f69",
+          "@accMetaChecksum" : "md5:f66b91b39bb4c875b787c4b20f4077ea",
           "@metaProducer" : "test:artifact/rountrip-1.0",
           "uri" : "ad:foo/bar0",
           "uriBucket" : "109",
           "productType" : "this",
           "releaseType" : "data",
-          "contentRelease" : "2025-09-24T15:16:56.063",
+          "contentRelease" : "2026-04-15T17:59:55.836",
           "contentReadGroups" : [
             "ivo://cadc.nrc.ca/gms?C",
             "ivo://cadc.nrc.ca/gms?D"
@@ -336,17 +336,17 @@
           "descriptionID" : "desc:TEST/science-ready-data"
         },
         {
-          "@id" : "5fd69250-a197-48d8-b52c-b7cb339132d5",
-          "@lastModified" : "2025-09-24T15:16:56.065",
-          "@maxLastModified" : "2025-09-24T15:16:58.065",
-          "@metaChecksum" : "md5:932e7e610a18a6dde34e48c3c2571b4d",
-          "@accMetaChecksum" : "md5:0f5c71c5eb41335f73f2d9e044a41a9d",
+          "@id" : "78ac904d-fee9-4204-af17-6f57c47884ce",
+          "@lastModified" : "2026-04-15T17:59:55.838",
+          "@maxLastModified" : "2026-04-15T17:59:57.838",
+          "@metaChecksum" : "md5:c3e874f071c8d7ddc8cacf81406a88b6",
+          "@accMetaChecksum" : "md5:d4ec468564152b7d5dd016506ed58aa4",
           "@metaProducer" : "test:artifact/rountrip-1.0",
           "uri" : "ad:foo/bar1",
           "uriBucket" : "6de",
           "productType" : "this",
           "releaseType" : "data",
-          "contentRelease" : "2025-09-24T15:16:56.063",
+          "contentRelease" : "2026-04-15T17:59:55.836",
           "contentReadGroups" : [
             "ivo://cadc.nrc.ca/gms?C",
             "ivo://cadc.nrc.ca/gms?D"
@@ -359,19 +359,19 @@
       ]
     },
     {
-      "@id" : "bb8add7a-90de-4753-82f0-d822184d1493",
-      "@lastModified" : "2025-09-24T15:16:56.065",
-      "@maxLastModified" : "2025-09-24T15:16:58.065",
-      "@metaChecksum" : "md5:e10471d153386417bcb75b90e53e34d7",
-      "@accMetaChecksum" : "md5:5e4eac962c2fe38fca0ae08b78dc616a",
+      "@id" : "868b9287-b86e-42d8-a7b6-faac34d8d0f7",
+      "@lastModified" : "2026-04-15T17:59:55.838",
+      "@maxLastModified" : "2026-04-15T17:59:57.838",
+      "@metaChecksum" : "md5:e9f9ea1280630b8ea9653c536c10bde2",
+      "@accMetaChecksum" : "md5:f6abb4b7a7e5a95f2c3553c6bccf5de8",
       "@metaProducer" : "test:plane/rountrip-1.0",
       "uri" : "caom:collection/observation/plane1",
-      "metaRelease" : "2025-09-24T15:16:56.063",
+      "metaRelease" : "2026-04-15T17:59:55.836",
       "metaReadGroups" : [
         "ivo://cadc.nrc.ca/gms?A",
         "ivo://cadc.nrc.ca/gms?B"
       ],
-      "dataRelease" : "2025-09-24T15:16:56.063",
+      "dataRelease" : "2026-04-15T17:59:55.836",
       "dataReadGroups" : [
         "ivo://cadc.nrc.ca/gms?C",
         "ivo://cadc.nrc.ca/gms?D"
@@ -385,7 +385,7 @@
         "producer" : "provenanceProducer",
         "runID" : "provenanceRunID",
         "reference" : "http://foo/bar",
-        "lastExecuted" : "2025-09-24T15:16:56.063",
+        "lastExecuted" : "2026-04-15T17:59:55.836",
         "keywords" : [
           "keyword1",
           "keyword2"
@@ -563,17 +563,17 @@
       },
       "artifacts" : [
         {
-          "@id" : "002999bf-1b53-4d03-ac38-631d9eb206fb",
-          "@lastModified" : "2025-09-24T15:16:56.065",
-          "@maxLastModified" : "2025-09-24T15:16:58.065",
-          "@metaChecksum" : "md5:850bcce2a5142911ee26ed52c2a3dd90",
-          "@accMetaChecksum" : "md5:d4a34321b5612c5f15ba014c7c1b0140",
+          "@id" : "b4582275-896a-4a13-addd-d15e99966eba",
+          "@lastModified" : "2026-04-15T17:59:55.838",
+          "@maxLastModified" : "2026-04-15T17:59:57.838",
+          "@metaChecksum" : "md5:c2f84b7db44f85a74961f2301e1ff7f3",
+          "@accMetaChecksum" : "md5:2d57925312eb10c76ce3a5fff21030b4",
           "@metaProducer" : "test:artifact/rountrip-1.0",
           "uri" : "ad:foo/bar0",
           "uriBucket" : "109",
           "productType" : "this",
           "releaseType" : "data",
-          "contentRelease" : "2025-09-24T15:16:56.063",
+          "contentRelease" : "2026-04-15T17:59:55.836",
           "contentReadGroups" : [
             "ivo://cadc.nrc.ca/gms?C",
             "ivo://cadc.nrc.ca/gms?D"
@@ -584,17 +584,17 @@
           "descriptionID" : "desc:TEST/science-ready-data"
         },
         {
-          "@id" : "78071603-22a5-4bdd-a9cb-5b0603a31f15",
-          "@lastModified" : "2025-09-24T15:16:56.065",
-          "@maxLastModified" : "2025-09-24T15:16:58.065",
-          "@metaChecksum" : "md5:e8a8f1d8fefb7bdcf67cde8757f231e9",
-          "@accMetaChecksum" : "md5:0feb8234f34925b11af63b5645caba54",
+          "@id" : "124bcdef-66dc-4b13-9cac-8bb26f9cf3c8",
+          "@lastModified" : "2026-04-15T17:59:55.838",
+          "@maxLastModified" : "2026-04-15T17:59:57.838",
+          "@metaChecksum" : "md5:7350116c3d59c524e129c9adae925374",
+          "@accMetaChecksum" : "md5:f15ce306f120aa89dfc40f3cee7186ce",
           "@metaProducer" : "test:artifact/rountrip-1.0",
           "uri" : "ad:foo/bar1",
           "uriBucket" : "6de",
           "productType" : "this",
           "releaseType" : "data",
-          "contentRelease" : "2025-09-24T15:16:56.063",
+          "contentRelease" : "2026-04-15T17:59:55.836",
           "contentReadGroups" : [
             "ivo://cadc.nrc.ca/gms?C",
             "ivo://cadc.nrc.ca/gms?D"

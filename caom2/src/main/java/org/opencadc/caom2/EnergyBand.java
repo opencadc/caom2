@@ -83,23 +83,24 @@ public enum EnergyBand implements CaomEnum<String> {
     OPTICAL("Optical"), UV("UV"), EUV("EUV"), 
     XRAY("X-ray"), GAMMARAY("Gamma-ray");
 
-    private String value;
+    private String term;
 
     private EnergyBand(String value) {
-        this.value = value;
+        this.term = value;
     }
 
+    @Override
     public String getValue() {
-        return value;
+        return term;
     }
 
     public int checksum() {
-        return value.hashCode();
+        return term.hashCode();
     }
 
     public static EnergyBand toValue(String s) {
         for (EnergyBand eb : values()) {
-            if (eb.value.equals(s)) {
+            if (eb.term.equals(s)) {
                 return eb;
             }
         }
@@ -108,7 +109,7 @@ public enum EnergyBand implements CaomEnum<String> {
 
     @Override
     public String toString() {
-        return "EnergyBand[" + value + "]";
+        return "EnergyBand[" + term + "]";
     }
 
     private static final List<EnergyBandWrapper> energyBands = new ArrayList<EnergyBandWrapper>();

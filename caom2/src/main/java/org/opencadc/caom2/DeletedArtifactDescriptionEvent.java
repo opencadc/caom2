@@ -86,7 +86,7 @@ public class DeletedArtifactDescriptionEvent extends Entity {
      */
     public DeletedArtifactDescriptionEvent(UUID id, URI uri) {
         super(id, CaomEntity.ENTITY_TRUNCATE_DATES, CaomEntity.ENTITY_DIGEST_FIELD_NAMES,
-                CaomEntity.ENTITY_DIGEST_FIELD_NAMES_LOWER);
+                CaomEntity.ENTITY_DIGEST_FIELD_NAMES_LOWER, CaomEntity.ENTITY_DIGEST_ZERO_AFETR_LIST_ITEM);
         this.uri = uri;
     }
 

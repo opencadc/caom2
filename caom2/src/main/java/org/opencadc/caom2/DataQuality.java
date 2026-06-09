@@ -90,6 +90,6 @@ public class DataQuality {
 
     @Override
     public String toString() {
-        return "DataQuality[" + flag.getValue() + "]";
+        return "DataQuality[" + flag.getWrappedValue() + "]";
     }
 }

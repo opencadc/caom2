@@ -76,7 +76,7 @@ import java.net.URISyntaxException;
  *
  * @author pdowler
  */
-public class Status extends VocabularyTerm implements CaomEnum<String> {
+public class Status extends VocabularyTerm {
     
     private static final URI CAOM = URI.create("http://www.opencadc.org/caom2/Status");
 
@@ -96,7 +96,7 @@ public class Status extends VocabularyTerm implements CaomEnum<String> {
 
     public static Status toValue(String s) {
         for (Status d : values()) {
-            if (d.getValue().equals(s)) {
+            if (d.getWrappedValue().equals(s)) {
                 return d;
             }
         }
@@ -118,6 +118,6 @@ public class Status extends VocabularyTerm implements CaomEnum<String> {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + getValue() + "]";
+        return this.getClass().getSimpleName() + "[" + getWrappedValue() + "]";
     }
 }

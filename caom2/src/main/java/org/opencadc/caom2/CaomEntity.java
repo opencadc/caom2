@@ -69,12 +69,6 @@
 
 package org.opencadc.caom2;
 
-import ca.nrc.cadc.dali.Circle;
-import ca.nrc.cadc.dali.Interval;
-import ca.nrc.cadc.dali.MultiShape;
-import ca.nrc.cadc.dali.Point;
-import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.Shape;
 import ca.nrc.cadc.util.HexUtil;
 import ca.nrc.cadc.util.UUIDComparator;
 import java.io.UnsupportedEncodingException;
@@ -108,6 +102,7 @@ public abstract class CaomEntity extends Entity {
     static final boolean ENTITY_TRUNCATE_DATES = false; // was true but trying false for 2.5
     static final boolean ENTITY_DIGEST_FIELD_NAMES = true;
     static final boolean ENTITY_DIGEST_FIELD_NAMES_LOWER = true;
+    static final boolean ENTITY_DIGEST_ZERO_AFETR_LIST_ITEM = true;
     
     private static final String CAOM2 = CaomEntity.class.getPackage().getName();
     
@@ -120,34 +115,20 @@ public abstract class CaomEntity extends Entity {
     private transient URI accMetaChecksum;
     
     protected CaomEntity() {
-        super(ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES, ENTITY_DIGEST_FIELD_NAMES_LOWER);
+        super(ENTITY_TRUNCATE_DATES, 
+                ENTITY_DIGEST_FIELD_NAMES, ENTITY_DIGEST_FIELD_NAMES_LOWER,
+                ENTITY_DIGEST_ZERO_AFETR_LIST_ITEM);
     }
 
     protected CaomEntity(UUID id) {
-        super(id, ENTITY_TRUNCATE_DATES, ENTITY_DIGEST_FIELD_NAMES, ENTITY_DIGEST_FIELD_NAMES_LOWER);
+        super(id, ENTITY_TRUNCATE_DATES, 
+                ENTITY_DIGEST_FIELD_NAMES, ENTITY_DIGEST_FIELD_NAMES_LOWER,
+                ENTITY_DIGEST_ZERO_AFETR_LIST_ITEM);
     }
 
     @Override
     protected boolean isDataModelClass(Class c) {
-        // imported data model components
-        if (Interval.class.equals(c)) {
-            return true;
-        }
-        if (Point.class.equals(c)) {
-            return true;
-        }
-        if (Circle.class.equals(c)) {
-            return true;
-        }
-        if (Polygon.class.equals(c)) {
-            return true;
-        }
-        if (Shape.class.equals(c)) {
-            return true;
-        }
-        if (MultiShape.class.equals(c)) {
-            return true;
-        }
+        // DataType handling now using PrimitiveWrapper to unwrap arrays
         return super.isDataModelClass(c);
     }
 

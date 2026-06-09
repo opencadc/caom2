@@ -90,6 +90,6 @@ public class Requirements {
 
     @Override
     public String toString() {
-        return "Requirements[" + flag.getValue() + "]";
+        return "Requirements[" + flag.getWrappedValue() + "]";
     }
 }

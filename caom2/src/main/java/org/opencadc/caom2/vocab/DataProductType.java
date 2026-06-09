@@ -145,7 +145,7 @@ public class DataProductType extends VocabularyTerm {
 
     public static DataProductType toValue(String s) {
         for (DataProductType d : values()) {
-            if (d.getValue().equals(s)) {
+            if (d.getWrappedValue().equals(s)) {
                 return d;
             }
         }

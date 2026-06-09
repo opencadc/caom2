@@ -113,7 +113,7 @@ public class TargetTypeTest
             for (TargetType c : TargetType.values())
             {
                 log.debug("testing: " + c);
-                String s = c.getValue();
+                String s = c.getWrappedValue();
                 TargetType c2 = TargetType.toValue(s);
                 Assert.assertEquals(c, c2);
             }

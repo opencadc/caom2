@@ -114,7 +114,7 @@ public class DataProductTypeTest
             for (DataProductType c : DataProductType.values())
             {
                 log.debug("roundtrip: " + c);
-                String s = c.getValue();
+                String s = c.getWrappedValue();
                 DataProductType c2 = DataProductType.toValue(s);
                 log.info(c + " -> " + s + " -> " + c2);
                 Assert.assertEquals(c, c2);
@@ -134,7 +134,7 @@ public class DataProductTypeTest
         {
             DataProductType c = DataProductType.toValue("eventlist");
             log.debug("roundtrip: " + c);
-            String s = c.getValue();
+            String s = c.getWrappedValue();
             DataProductType c2 = DataProductType.toValue(s);
             log.info(c + " -> " + s + " -> " + c2);
             Assert.assertEquals(DataProductType.EVENT, c2);
@@ -153,7 +153,7 @@ public class DataProductTypeTest
         {
             String s1 = "bar";
             DataProductType c2 = DataProductType.toValue(s1);
-            String s2 = c2.getValue();
+            String s2 = c2.getWrappedValue();
             log.info(s1 + " == " + s2);
             Assert.assertEquals(s1, s2);
         }
