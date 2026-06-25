@@ -128,9 +128,7 @@ public class Main {
 
             // setup optional authentication for harvesting from a web service
             Subject subject = AuthenticationUtil.getAnonSubject();
-            if (am.isSet("netrc")) {
-                subject = AuthenticationUtil.getSubject(new NetrcAuthenticator(true));
-            } else if (am.isSet("cert")) {
+            if (am.isSet("cert")) {
                 subject = CertCmdArgUtil.initSubject(am);
             }
             AuthMethod meth = AuthenticationUtil.getAuthMethodFromCredentials(subject);
@@ -325,7 +323,6 @@ public class Main {
         sb.append("\n         [--threads=<num threads>] : number  of threads used to read observation documents (service only, default: 1)");
 
         sb.append("\n\nOptional authentication: [--netrc|--cert=<pem file>] (default: anonymous)");
-        sb.append("\n         --netrc : read username and password(s) from ~/.netrc file");
         sb.append("\n         --cert=<pem file> : read client certificate from PEM file");
 
         sb.append("\n\nOptional modifiers:");
