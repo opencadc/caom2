@@ -338,10 +338,13 @@ public class ObservationHarvester extends Harvester {
                     }
 
                     if (o != null) {
-                        if (state != null && obsState != null && obsState.maxLastModified != null) {
-                            // only update HarvestState if we have an event timestamp
-                            state.curLastModified = obsState.maxLastModified;
-                            state.curID = obsState.getID();
+                        if (state != null) {
+                            if (obsState != null && obsState.maxLastModified != null) {
+                                // only update HarvestState if we have an event timestamp from the query
+                                // to maintain the incremental tiemstamp sequence
+                                state.curLastModified = obsState.maxLastModified;
+                                state.curID = o.getID();
+                            }
                         }
 
                         // try to avoid DataIntegrityViolationException due
