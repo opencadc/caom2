@@ -84,6 +84,7 @@ import ca.nrc.cadc.net.HttpGet;
 import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.net.PreconditionFailedException;
 import ca.nrc.cadc.net.RangeNotSatisfiableException;
+import ca.nrc.cadc.net.RemoteServiceException;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
@@ -212,7 +213,6 @@ public class FileSyncJob implements Runnable  {
                         fileMetadata.setMd5Sum(curArtifact.contentChecksum.getSchemeSpecificPart());
                     }
 
-                    boolean postPrepare = false;
                     try {
                         downloadAttempts++;
 
@@ -224,7 +224,6 @@ public class FileSyncJob implements Runnable  {
                         head.setMaxRetries(1);
                         head.setHeadOnly(true);
                         head.prepare();
-                        postPrepare = true;
                         
                         // compare artifact metadata
                         URI hdrContentChecksum = head.getDigest();
@@ -269,6 +268,10 @@ public class FileSyncJob implements Runnable  {
                         fails.add(ex);
                         msg = ex.getMessage();
                         return; // fatal
+                    } catch (RemoteServiceException ex) {
+                        // remote 500
+                        log.debug("FileSyncJob.ERROR", ex);
+                        log.warn(String.format("FileSyncJob.ERROR remote HEAD %s %s", artifactURI, ex));
                     } catch (MalformedURLException | ResourceNotFoundException | ResourceAlreadyExistsException
                              | PreconditionFailedException | RangeNotSatisfiableException
                              | AccessControlException | NotAuthenticatedException ex) {
@@ -285,15 +288,9 @@ public class FileSyncJob implements Runnable  {
                         fails.add(ex);
                         msg = ex.getMessage();
                     } catch (Exception ex) {
-                        if (!postPrepare) {
-                            // remote server 5xx response: discard
-                            log.debug("FileSyncJob.ERROR", ex);
-                            log.warn(String.format("FileSyncJob.ERROR remote HEAD %s %s", artifactURI, ex));
-                        } else {
-                            // stream or ArtifactStore.store fail
-                            log.debug("FileSyncJob.FAIL", ex);
-                            log.warn(String.format("FileSyncJob.FAIL %s %s", artifactURI, ex));
-                        }
+                        // stream or ArtifactStore.store fail
+                        log.debug("FileSyncJob.FAIL", ex);
+                        log.warn(String.format("FileSyncJob.FAIL %s %s", artifactURI, ex));
                         fails.add(ex);
                         msg = ex.getMessage();
                     }
