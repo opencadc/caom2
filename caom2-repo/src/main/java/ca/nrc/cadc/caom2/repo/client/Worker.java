@@ -72,6 +72,7 @@ package ca.nrc.cadc.caom2.repo.client;
 import ca.nrc.cadc.auth.RunnableAction;
 import ca.nrc.cadc.caom2.ObservationResponse;
 import ca.nrc.cadc.caom2.ObservationState;
+import ca.nrc.cadc.caom2.xml.ObservationParsingException;
 import ca.nrc.cadc.caom2.xml.ObservationReader;
 import ca.nrc.cadc.net.HttpGet;
 import java.io.ByteArrayInputStream;
@@ -143,6 +144,8 @@ public class Worker implements Callable<ObservationResponse> {
                 ObservationReader obsReader = new ObservationReader();
                 ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
                 wr.observation = obsReader.read(bis);
+            } catch (IllegalArgumentException | ObservationParsingException ex) {
+                wr.error = ex;
             } catch (Exception e) {
                 wr.error = new IllegalArgumentException("failed to read observation document: " + e.getMessage(), e);
             }
