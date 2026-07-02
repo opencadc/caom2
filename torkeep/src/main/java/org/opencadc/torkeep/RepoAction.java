@@ -70,12 +70,15 @@
 package org.opencadc.torkeep;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
+import ca.nrc.cadc.auth.AuthorizationToken;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.date.DateUtil;
 import ca.nrc.cadc.io.ByteCountOutputStream;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
 import com.csvreader.CsvWriter;
@@ -85,7 +88,6 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.security.AccessControlException;
 import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.text.DateFormat;
@@ -93,7 +95,6 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 import javax.security.auth.Subject;
-import javax.security.auth.x500.X500Principal;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Observation;
@@ -103,6 +104,8 @@ import org.opencadc.caom2.db.ObservationDAO;
 import org.opencadc.caom2.util.CaomValidator;
 import org.opencadc.caom2.xml.ObservationParsingException;
 import org.opencadc.permissions.client.PermissionsCheck;
+import org.opencadc.permissions.client.srcnet.AuthorisationResult;
+import org.opencadc.permissions.client.srcnet.PermissionsAPIClient;
 
 /**
  * @author pdowler
@@ -110,6 +113,10 @@ import org.opencadc.permissions.client.PermissionsCheck;
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
+    // copied from cavern and hard coded for now
+    private static final URI STD_AUTH_API = URI.create("ivo://skao.int/std/AuthAPI");
+    private static final URI STD_PERM_API = URI.create("ivo://skao.int/std/PermissionsAPI");
+    
     static final String CAOM_XML_MIMETYPE = "application/x-caom+xml";
     static final String XML_MIMETYPE = "text/xml";
     
@@ -331,12 +338,12 @@ public abstract class RepoAction extends RestAction {
     /**
      * Check if the caller can read the resource.
      *
-     * @throws AccessControlException
+     * @throws ca.nrc.cadc.net.PermissionDeniedException
      * @throws java.security.cert.CertificateException
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkReadPermission() throws AccessControlException,
+    protected void checkReadPermission() throws PermissionDeniedException,
         CertificateException, ResourceNotFoundException, IOException {
         log.debug("check READ permission for collection: " + getCollection());
         if (!readable) {
@@ -397,22 +404,44 @@ public abstract class RepoAction extends RestAction {
         }
 
         try {
-            PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
-            cp.checkReadPermission(tc.getGrantProviders());
+            if (!tc.getGrantProviders().isEmpty()) {
+                PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
+                cp.checkReadPermission(tc.getGrantProviders());
+                // PermissionsCheck either returns (if authorised) or throws
+                return;
+            }
         } catch (InterruptedException ex) {
             throw new RuntimeException("interrupted", ex);
         }
+
+        LocalAuthority loc = new LocalAuthority();
+        URI authAPI = loc.getResourceID(STD_AUTH_API);
+        URI permAPI = loc.getResourceID(STD_PERM_API);
+        if (authAPI != null && permAPI != null) {
+            PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
+            AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
+                    "torkeep", getAuthorizationToken(subject).getCredentials(),
+                    grantURI.getPath(), "GET", null, "1");
+            log.debug("papi: authorised=" + authorisationResult.isAuthorised);
+            if (authorisationResult.isAuthorised) {
+                logInfo.setResource(grantURI);
+                logInfo.setGrant("read: " + permAPI.toASCIIString());
+                return;
+            }
+        }
+        
+        throw new PermissionDeniedException("permission denied");
     }
 
     /**
      * Check if the caller can create or modify the resource.
      *
-     * @throws AccessControlException
+     * @throws ca.nrc.cadc.net.PermissionDeniedException
      * @throws java.security.cert.CertificateException
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkWritePermission() throws AccessControlException,
+    protected void checkWritePermission() throws PermissionDeniedException,
         CertificateException, ResourceNotFoundException, IOException {
         log.debug("check WRITE permission for collection: " + getCollection());
         if (!writable) {
@@ -446,7 +475,7 @@ public abstract class RepoAction extends RestAction {
                     for (Principal p : xa.getPrincipals()) {
                         if (AuthenticationUtil.equals(cp, p)) {
                             logInfo.setResource(grantURI);
-                            logInfo.setGrant("read: archiveOperator");
+                            logInfo.setGrant("write: archiveOperator");
                             // granted
                             return;
                         }
@@ -457,11 +486,33 @@ public abstract class RepoAction extends RestAction {
         }
 
         try {
-            PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
-            cp.checkWritePermission(tc.getGrantProviders());
+            if (!tc.getGrantProviders().isEmpty()) {
+                PermissionsCheck cp = new PermissionsCheck(grantURI, false, logInfo);
+                cp.checkWritePermission(tc.getGrantProviders());
+                // PermissionsCheck either returns (if authorised) or throws
+                return;
+            }
         } catch (InterruptedException ex) {
             throw new RuntimeException("interrupted", ex);
         }
+
+        LocalAuthority loc = new LocalAuthority();
+        URI authAPI = loc.getResourceID(STD_AUTH_API);
+        URI permAPI = loc.getResourceID(STD_PERM_API);
+        if (authAPI != null && permAPI != null) {
+            PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
+            AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
+                    "torkeep", getAuthorizationToken(subject).getCredentials(),
+                    grantURI.getPath(), "PUT", null, "1");
+            log.debug("papi: authorised=" + authorisationResult.isAuthorised);
+            if (authorisationResult.isAuthorised) {
+                logInfo.setResource(grantURI);
+                logInfo.setGrant("write: " + permAPI.toASCIIString());
+                return;
+            }
+        }
+        
+        throw new PermissionDeniedException("permission denied");
     }
 
     protected void assignPublisherID(Observation obs) throws URISyntaxException {
@@ -496,7 +547,7 @@ public abstract class RepoAction extends RestAction {
     }
 
     protected void validate(Observation obs) 
-        throws AccessControlException, IOException, TransientException {
+        throws IOException, TransientException {
         try {
             CollectionEntry ce = torkeepConfig.getConfig(collection);
             ValidationPolicy validator = new ValidationPolicy(ce.getValidationPolicy());
@@ -553,5 +604,12 @@ public abstract class RepoAction extends RestAction {
     @Override
     protected InlineContentHandler getInlineContentHandler() {
         return null;
+    }
+    
+    static AuthorizationToken getAuthorizationToken(final Subject subject) {
+        return subject.getPublicCredentials(AuthorizationToken.class).stream()
+                .filter(token -> AuthenticationUtil.CHALLENGE_TYPE_BEARER.equalsIgnoreCase(token.getType()))
+                .findFirst()
+                .orElse(null);
     }
 }
