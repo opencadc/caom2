@@ -90,8 +90,8 @@ public class InitDatabaseTest {
     static String schema = "caom2";
 
     static {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2.version", Level.INFO);
-        Log4jInit.setLevel("ca.nrc.cadc.db.version", Level.INFO);
+        Log4jInit.setLevel("org.opencadc.caom2", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc.db", Level.INFO);
     }
 
     private DataSource dataSource;

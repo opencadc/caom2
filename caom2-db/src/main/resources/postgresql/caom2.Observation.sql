@@ -71,7 +71,7 @@ create table <schema>.Observation
 )
 ;
 
-create unique index i_observationURI on <schema>.Observation (uri)
+create unique index i_observation_uri on <schema>.Observation (uri)
 ;
 
 -- harvesting index

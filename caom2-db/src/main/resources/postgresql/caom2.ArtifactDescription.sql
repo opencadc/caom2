@@ -13,7 +13,7 @@ create table <schema>.ArtifactDescription
 ;
 
 -- logical primary key
-create unique index ArtifactDescription_i_uri
+create unique index i_ArtifactDescription_uri
     on <schema>.ArtifactDescription (uri)
 ;
 

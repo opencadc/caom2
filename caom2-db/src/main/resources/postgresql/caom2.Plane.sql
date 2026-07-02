@@ -131,18 +131,18 @@ create table <schema>.Plane
 )
 ;
 
--- this is for Observation join Plane
-create index i_obsID on <schema>.Plane (obsID)
+-- this is for Observation join Plane; naming style same as pkey
+create index plane_fkey on <schema>.Plane (obsID)
 ;
 
 -- tag the clustering index
-cluster i_obsID on <schema>.Plane
+cluster plane_fkey on <schema>.Plane
 ;
 
-create unique index i_uri on <schema>.Plane(uri)
+create unique index i_plane_uri on <schema>.Plane(uri)
 ;
 
-create unique index i_publisherID on <schema>.Plane(publisherID)
+create unique index i_plane_publisherID on <schema>.Plane(publisherID)
 ;
 
 -- join table
