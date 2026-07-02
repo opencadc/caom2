@@ -51,7 +51,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ;
 
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
-( 'caom2.Observation', 'obsID', 'unique observation identifier', 'caom2:Observation.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 2),
+( 'caom2.Observation', 'obsID', 'unique observation identifier', 'caom2:Observation.id', NULL, NULL, 'char','36','uuid', 1,1,1 , 2),
 ( 'caom2.Observation', 'collection', 'data collection this observation belongs to', 'caom2:Observation.collection', NULL, NULL, 'char','32*',NULL, 1,1,1 , 3),
 ( 'caom2.Observation', 'observationID', 'collection-specific unique observation identifier', 'caom2:Observation.observationID', NULL, NULL, 'char','128*',NULL, 1,1,1 , 4),
 ( 'caom2.Observation', 'algorithm_name', 'algorithm that defines the observation( exposure for simple, grouping algorithm for composites)', 'caom2:Observation.algorithm.name', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 5),
@@ -81,7 +81,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Observation', 'targetPosition_coordinates_cval1', 'longitude of target position', 'caom2:Observation.targetPosition.coordinates.cval1', NULL, 'deg', 'double', NULL,NULL, 0,0,0 , 41),
 ( 'caom2.Observation', 'targetPosition_coordinates_cval2', 'latitude of target position', 'caom2:Observation.targetPosition.coordinates.cval2', NULL, 'deg', 'double', NULL,NULL, 0,0,0 , 43),
 
-( 'caom2.Observation', 'telescope_name', 'name of telescope used to acquire observation', 'caom2:Observation.telescope.name', NULL, NULL, 'char', '32*',NULL, 1,0,0 , 45),
+( 'caom2.Observation', 'telescope_name', 'name of telescope used to acquire observation', 'caom2:Observation.telescope.name', NULL, NULL, 'char', '32*',NULL, 1,1,1 , 45),
 ( 'caom2.Observation', 'telescope_geoLocationX', 'x component of geocentric location of telescope', 'caom2:Observation.telescope.geoLocationX', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 46),
 ( 'caom2.Observation', 'telescope_geoLocationY', 'y component of geocentric location of telescope', 'caom2:Observation.telescope.geoLocationY', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 47),
 ( 'caom2.Observation', 'telescope_geoLocationZ', 'z component of geocentric location of telescope', 'caom2:Observation.telescope.geoLocationZ', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 48),
@@ -89,7 +89,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Observation', 'requirements_flag', 'flag describing satisfied proposal requirements (possible values: fail)', 'caom2:Observation.requirements.flag', NULL, NULL, 'char', '16',NULL, 1,0,0 , 50),
 
-( 'caom2.Observation', 'instrument_name', 'name of instrument used to acquire observation', 'caom2:Observation.instrument.name', NULL, NULL, 'char', '32*',NULL, 1,0,0 , 60),
+( 'caom2.Observation', 'instrument_name', 'name of instrument used to acquire observation', 'caom2:Observation.instrument.name', NULL, NULL, 'char', '32*',NULL, 1,1,1 , 60),
 ( 'caom2.Observation', 'instrument_keywords', 'instrument keywords (separated by |)', 'caom2:Observation.instrument.keywords', NULL, NULL, 'char', '*',NULL, 0,0,0 , 61),
 
 ( 'caom2.Observation', 'environment_seeing', 'atmospheric seeing (FWHM)', 'caom2:Observation.environment.seeing', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 70),
@@ -115,8 +115,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'publisherID', 'unique publisher identifier for this product', 'caom2:Plane.publisherID', NULL, NULL, 'char', '*', 'uri', 1,1,1,1, 'caomPublisherID')
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
-( 'caom2.Plane', 'obsID', 'foreign key', NULL, NULL, NULL,                              'char','36','uuid', 0,1,0 , 2),
-( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 0,1,0 , 3),
+( 'caom2.Plane', 'obsID', 'foreign key', NULL, NULL, NULL,                              'char','36','uuid', 1,1,0 , 2),
+( 'caom2.Plane', 'planeID', 'unique plane identifier', 'caom2:Plane.id', NULL, NULL,    'char','36','uuid', 1,1,1 , 3),
 ( 'caom2.Plane', 'planeURI', 'unique internal URI for this product', 'caom2:Plane.uri', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 4),
 ( 'caom2.Plane', 'creatorID', 'unique creator identifier for this product', 'caom2:Plane.creatorID', NULL, NULL, 'char', '*', 'uri', 1,1,1 , 5),
 ( 'caom2.Plane', 'productID', 'name of this product', 'caom2:Plane.productID', NULL, NULL, 'char', '64*', NULL, 1,1,1 , 6),
@@ -146,7 +146,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'observable_ucd', 'UCD (Universal Content Descriptor) for the observed/measure quantity', 'caom2:Plane.observable.ucd', NULL, NULL, 'char', '64*', NULL, 0,0,0 , 40),
 ( 'caom2.Plane', 'quality_flag', 'flag describing the data quality (possible values: junk)', 'caom2:Plane.quality.flag', NULL, NULL, 'char', '16*', NULL, 0,0,0 , 41),
 
-( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'char', '*', 'shape', 0,0,0 , 50),
+( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'char', '*', 'shape', 1,1,1 , 50),
 ( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'double', '*', 'multipolygon', 0,0,0 , 50),
 ( 'caom2.Plane', 'position_bounds_size', 'size of the polygon bounds (diameter of minimum spanning circle)', 'caom2:Plane.position.bounds.size', NULL, 'deg', 'double', NULL, NULL, 0,0,0 , 51),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 52),
@@ -156,7 +156,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_dimension_naxis2', 'dimensions (number of pixels) along other spatial axis', 'caom2:Plane.position.dimension.naxis2', NULL, NULL, 'long', NULL, NULL, 0,0,0 , 55),
 ( 'caom2.Plane', 'position_timeDependent', 'flag indicating that the position is time-dependent (0=false, 1=true)', 'caom2:Plane.position.timeDependent', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 56),
 
-( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 0,1,0 , 61),
+( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 1,1,1 , 61),
 ( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '2x*', 'interval', 0,0,0 , 61),
 ( 'caom2.Plane', 'energy_bounds_lower', 'lower bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.lower', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 62),
 ( 'caom2.Plane', 'energy_bounds_upper', 'upper bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.upper', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 63),
@@ -176,7 +176,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'energy_freqSampleSize', 'median sample (pixel) size on energy axis (convenience: in frequency)', 'caom2:Plane.energy.freqSampleSize', NULL, 'Hz', 'double', NULL, NULL, 0,0,0 , 74),
 ( 'caom2.Plane', 'energy_restwav', 'rest wavelength of target spectral feature (barycentric)', 'caom2:Plane.energy.restwav', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 75),
 
-( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 0,1,0 , 80),
+( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 1,1,1 , 80),
 ( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '2x*', 'interval', 0,0,0 , 81),
 ( 'caom2.Plane', 'time_bounds_lower', 'lower bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.lower', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 81),
 ( 'caom2.Plane', 'time_bounds_upper', 'upper bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.upper', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 82),
@@ -187,7 +187,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'time_sampleSize', 'median sample (pixel) size on time axis', 'caom2:Plane.time.sampleSize', NULL, 'd', 'double', NULL, NULL, 0,0,0 , 87),
 ( 'caom2.Plane', 'time_exposure', 'median exposure time per pixel', 'caom2:Plane.time.exposure', NULL, 's', 'double', NULL, NULL, 0,0,0 , 88),
 
-( 'caom2.Plane', 'polarization_states', 'polarization letter codes in canonical order, separated by /', 'caom2:Plane.polarization.states', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 90),
+( 'caom2.Plane', 'polarization_states', 'polarization letter codes in canonical order, separated by /', 'caom2:Plane.polarization.states', NULL, NULL, 'char', '32*', NULL, 1,1,1 , 90),
 ( 'caom2.Plane', 'polarization_dimension', 'number of samples (pixels) along polarization axis', 'caom2:Plane.polarization.dimension', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 91),
 
 ( 'caom2.Plane', 'custom_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Plane.custom.ctype', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 100),
@@ -209,11 +209,11 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,
     principal,indexed,std,column_index,column_id) values
 ( 'caom2.Artifact', 'uri',           'external URI for the physical artifact', 'caom2:Artifact.uri', NULL, NULL, 'char', '*','uri', 
-    1,1,0 , 1, 'caomArtifactURI')
+    1,1,1 , 1, 'caomArtifactURI')
 ;
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
-( 'caom2.Artifact', 'planeID',       'foreign key', NULL, NULL, NULL, 'char','36','uuid', 0,1,0 , 2),
-( 'caom2.Artifact', 'artifactID',    'unique artifact identifier', 'caom2:Artifact.id', NULL, NULL, 'char','36','uuid', 0,1,0 , 3),
+( 'caom2.Artifact', 'planeID',       'foreign key', NULL, NULL, NULL, 'char','36','uuid', 1,1,0 , 2),
+( 'caom2.Artifact', 'artifactID',    'unique artifact identifier', 'caom2:Artifact.id', NULL, NULL, 'char','36','uuid', 1,1,1 , 3),
 ( 'caom2.Artifact', 'productType',   'product type (science, calibration, auxiliary, preview, info)', 'caom2:Artifact.productType', NULL, NULL, 'char', '32*', NULL, 1,0,0 , 4),
 ( 'caom2.Artifact', 'releaseType',   'release type (data, meta)', 'caom2:Artifact.releaseType', NULL, NULL, 'char', '16*', NULL, 1,0,0 , 5),
 ( 'caom2.Artifact', 'contentType',   'content-type of the representation at uri', 'caom2:Artifact.contentType', NULL, NULL, 'char', '128*', NULL, 1,0,0 , 6),
@@ -231,8 +231,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 -- Part
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
-( 'caom2.Part', 'artifactID',    'foreign key', NULL, NULL, NULL, 'char', '36','uuid', 0,1,0 , 1),
-( 'caom2.Part', 'partID',        'unique part identifier', 'caom2:Part.id', NULL, NULL, 'char', '36','uuid', 0,1,0 , 2),
+( 'caom2.Part', 'artifactID',    'foreign key', NULL, NULL, NULL, 'char', '36','uuid', 1,1,0 , 1),
+( 'caom2.Part', 'partID',        'unique part identifier', 'caom2:Part.id', NULL, NULL, 'char', '36','uuid', 1,1,1 , 2),
 
 ( 'caom2.Part', 'name',          'name of this part', 'caom2:Part.name', NULL, NULL, 'char', '128*', NULL, 1,0,0 , 3),
 ( 'caom2.Part', 'productType',   'product type (science, calibration, auxiliary, preview, info)', 'caom2:Part.productType', NULL, NULL, 'char', '32*', NULL, 1,0,0 , 4),
@@ -246,8 +246,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 -- Chunk
 insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index) values
-( 'caom2.Chunk', 'partID',       'parent identifier', NULL, NULL, NULL, 'char', '36','uuid', 0,1,0 , 1),
-( 'caom2.Chunk', 'chunkID',    'unique chunk identifier', 'caom2:Chunk.id', NULL, NULL, 'char', '36','uuid', 0,1,0 , 2),
+( 'caom2.Chunk', 'partID',       'parent identifier', NULL, NULL, NULL, 'char', '36','uuid', 1,1,0 , 1),
+( 'caom2.Chunk', 'chunkID',    'unique chunk identifier', 'caom2:Chunk.id', NULL, NULL, 'char', '36','uuid', 1,1,1 , 2),
 
 ( 'caom2.Chunk', 'productType',   'deprecated', 'caom2:Chunk.productType', NULL, NULL, 'char', '32*', NULL, 1,0,0 , 999),
 
@@ -470,7 +470,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 ( 'caom2.SIAv1', 'time_bounds_center', 	'central value on time axis (Modified Julian Day)', 	'VOX:Image_MJDateObs', NULL, 'd', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'time_bounds_cval1', 	'lower bound on time axis (Modified Julian Day)', 	'time.start;obs.exposure', NULL, 'd', 'double', NULL, NULL, 1,1,0 ),
 ( 'caom2.SIAv1', 'time_bounds_cval2', 	'upper bound on time axis (Modified Julian Day)', 	'time.end;obs.exposure', NULL, 'd', 	'double', NULL, NULL, 1,1,0 ),
-( 'caom2.SIAv1', 'time_exposure', 	'actual exposure time', 				'time.duration;obs.exposure', NULL, 'sec', 'double', NULL, NULL, 1,1,0 ),
+( 'caom2.SIAv1', 'time_exposure', 	'actual exposure time', 				'time.duration;obs.exposure', NULL, 's', 'double', NULL, NULL, 1,1,0 ),
 
 ( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, NULL, 'char', '*', NULL, 1,0,1 ),
 ( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, NULL, 'char', '*', 'clob', 1,0,1 ),
