@@ -1,7 +1,3 @@
--- cleanup unused tables from CAOM-2.4
-drop table if exists <schema>.Chunk;
-drop table if exists <schema>.Part;
-
 -- minor index naming tweaks for consistency
 alter index <schema>.i_observationURI rename to i_observation_uri;
 

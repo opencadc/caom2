@@ -92,6 +92,8 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
         "caom2.Observation.sql",
         "caom2.Plane.sql",
         "caom2.Artifact.sql",
+        "caom2.Part.sql",
+        "caom2.Chunk.sql",
         "caom2.ArtifactDescription.sql",
         "caom2.HarvestState.sql",
         "caom2.HarvestSkip.sql",
