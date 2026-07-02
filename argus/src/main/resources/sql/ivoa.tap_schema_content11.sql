@@ -42,16 +42,16 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,t
 insert into tap_schema.columns11 
     (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std,column_index,column_id) values
 ( 'ivoa.ObsCore', 'obs_publisher_did', 	'obscore:Curation.PublisherDID',
-    'publisher dataset identifier', 'meta.ref.uri;meta.curation', NULL, 'char', '256*','uri', 1,1,1,1, 'ivoaPublisherID');
+    'publisher dataset identifier', 'meta.ref.ivoid', NULL, 'char', '256*','uri', 1,1,1,1, 'ivoaPublisherID');
 
 insert into tap_schema.columns11 
     (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std, column_index) values
 ( 'ivoa.ObsCore', 'obs_collection', 	'obscore:DataID.Collection',
-    'short name for the data colection', 'meta.id', NULL, 'char','128*',NULL, 1,0,1,2),
+    'short name for the data colection', 'meta.id', NULL, 'char','128*',NULL, 1,1,1,2),
 ( 'ivoa.ObsCore', 'facility_name', 	'obscore:Provenance.ObsConfig.Facility.name',
-    'telescope name', 'meta.id;instr.tel', NULL, 'char','128*',NULL, 1,0,1,3),
+    'telescope name', 'meta.id;instr.tel', NULL, 'char','128*',NULL, 1,1,1,3),
 ( 'ivoa.ObsCore', 'instrument_name', 	'obscore:Provenance.ObsConfig.Instrument.name',
-    'instrument name', 'meta.id;instr', NULL, 'char','128*',NULL, 1,0,1,4),
+    'instrument name', 'meta.id;instr', NULL, 'char','128*',NULL, 1,1,1,4),
 ( 'ivoa.ObsCore', 'target_name', 'obscore:Target.Name',
     'name of intended target', 'meta.id;src', NULL, 'char', '32*',NULL, 1,0,1,5),
 ( 'ivoa.ObsCore', 'obs_id', 	'obscore:DataID.observationID',
@@ -88,9 +88,9 @@ insert into tap_schema.columns11
     'region bounded by observation', 'pos.outline;obs.field', NULL, 'char','*','shape', 1,1,1,44),
 ( 'ivoa.ObsCore', 's_resolution', 'obscore:Char.SpatialAxis.Resolution.refval.value',
     'typical spatial resolution', 'pos.angResolution', 'arcsec', 'double',NULL,NULL, 1,0,1,45),
-( 'ivoa.ObsCore', 's_resolution_min', '???',
+( 'ivoa.ObsCore', 's_resolution_min', 'obscore:Char.SpatialAxis.Resolution.Bounds.Limits.LoLimit',
     'smallest spatial resolution', 'pos.angResolution;stat.min', 'arcsec', 'double',NULL,NULL, 1,0,1,46),
-( 'ivoa.ObsCore', 's_resolution_max', '???',
+( 'ivoa.ObsCore', 's_resolution_max', 'obscore:Char.SpatialAxis.Resolution.Bounds.Limits.HiLimit',
     'largest spatial resolution', 'pos.angResolution;stat.max', 'arcsec', 'double',NULL,NULL, 1,0,1,47),
 ( 'ivoa.ObsCore', 's_xel1', 'obscore:Char.SpatialAxis.numBins1', 
     'dimensions (number of pixels) along one spatial axis', 'meta.number', NULL, 'long',NULL,NULL, 1,0,1,48),
@@ -100,13 +100,13 @@ insert into tap_schema.columns11
 insert into tap_schema.columns11 
     (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std, column_index) values
 ( 'ivoa.ObsCore', 'em_min', 'obscore:Char.SpectralAxis.Coverage.Bounds.Limits.LoLimit',
-    'start spectral coordinate value', 'em.wl;stat.min', 'm', 'double',NULL,NULL, 1,1,1,50),
+    'start spectral coordinate value', 'em.wl;stat.min', 'm', 'double',NULL,NULL, 1,0,1,50),
 ( 'ivoa.ObsCore', 'em_max', 'obscore:Char.SpectralAxis.Coverage.Bounds.Limits.HiLimit',
-    'stop spectral coordinate value', 'em.wl;stat.max', 'm', 'double',NULL,NULL, 1,1,1,51),
+    'stop spectral coordinate value', 'em.wl;stat.max', 'm', 'double',NULL,NULL, 1,0,1,51),
 ( 'ivoa.ObsCore', 'em_res_power', 'obscore:Char.SpectralAxis.Resolution.ResolPower.refval',
     'typical spectral resolution', 'spect.resolution', NULL, 'double',NULL,NULL, 1,0,1,52),
-( 'ivoa.ObsCore', 'em_resolution', '???',
-    'typical spectral resolution', 'spect.resolution', NULL, 'double',NULL,NULL, 1,0,1,53),
+( 'ivoa.ObsCore', 'em_resolution', 'obscore:Char.SpectralAxis.Resolution.refval.value',
+    'typical spectral resolution', 'spect.resolution;stat.mean', 'm', 'double',NULL,NULL, 1,0,1,53),
 ( 'ivoa.ObsCore', 'em_resolution_min', '???',
     'minimum spectral resolution', 'spect.resolution;stat.min', NULL, 'double',NULL,NULL, 1,0,1,54),
 ( 'ivoa.ObsCore', 'em_resolution_max', '???',
@@ -119,9 +119,9 @@ insert into tap_schema.columns11
 insert into tap_schema.columns11 
     (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std, column_index) values
 ( 'ivoa.ObsCore', 't_min', 'obscore:Char.TimeAxis.Coverage.Bounds.Limits.StartTime',
-    'start time of observation (MJD)', 'time.start;obs.exposure', 'd', 'double',NULL,NULL, 1,1,1,60),
+    'start time of observation (MJD)', 'time.start;obs.exposure', 'd', 'double',NULL,NULL, 1,0,1,60),
 ( 'ivoa.ObsCore', 't_max', 'obscore:Char.TimeAxis.Coverage.Bounds.Limits.StopTime',
-    'end time of observation (MJD)', 'time.end;obs.exposure', 'd', 'double',NULL,NULL, 1,1,1,61),
+    'end time of observation (MJD)', 'time.end;obs.exposure', 'd', 'double',NULL,NULL, 1,0,1,61),
 ( 'ivoa.ObsCore', 't_exptime', 'obscore:Char.TimeAxis.Coverage.Support.Extent',
     'typical exposure time', 'time.duration;obs.exposure', 's', 'double',NULL,NULL, 1,1,1,62),
 ( 'ivoa.ObsCore', 't_exptime_min', '???',
@@ -136,7 +136,7 @@ insert into tap_schema.columns11
 insert into tap_schema.columns11 
     (table_name,column_name,utype,description,ucd,unit,datatype,arraysize,xtype,principal,indexed,std, column_index) values
 ( 'ivoa.ObsCore', 'pol_states', 'obscore:Char.PolarizationAxis.stateList',
-    'polarization states present in the data', 'meta.code;phys.polarization', NULL, 'char','32*',NULL, 1,0,1,70),
+    'polarization states present in the data', 'meta.code;phys.polarization', NULL, 'char','32*',NULL, 1,1,1,70),
 ( 'ivoa.ObsCore', 'pol_xel', 'obscore:Char.PolarizationAxis.numBins', 
     'dimensions (number of pixels) along the polarization axis', 'meta.number', NULL, 'long',NULL,NULL, 1,0,1,71),
 ( 'ivoa.ObsCore', 'o_ucd', 'obscore:Char.ObservableAxis.ucd',
@@ -163,7 +163,7 @@ insert into tap_schema.keys11 (key_id,from_table,target_table,description) value
 ('ivoa-core-radio', 'ivoa.ObsCore_radio', 'ivoa.ObsCore','standard way to join ivoa.ObsCore and ivoa.ObsCore_radio');
 
 insert into tap_schema.key_columns11 (key_id,from_column,target_column) values
-('ivoa-core-radio', 'obs_publisher_id', 'obs_publisher_id');
+('ivoa-core-radio', 'obs_publisher_did', 'obs_publisher_did');
 
 -- backwards compatible: fill "size" column with values from arraysize set above
 -- where arraysize is a possibly variable-length 1-dimensional value

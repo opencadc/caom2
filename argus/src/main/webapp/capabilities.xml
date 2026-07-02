@@ -30,6 +30,12 @@
     </interface>
   </capability>
 
+  <capability standardID="ivo://ivoa.net/std/DALI#examples">
+    <interface xsi:type="vs:ParamHTTP" role="std">
+      <accessURL use="base">https://replace.me.com/argus/examples</accessURL>
+    </interface>
+  </capability>
+
   <!-- TAP-1.1 -->
   <capability standardID="ivo://ivoa.net/std/TAP" 
         xmlns:tr="http://www.ivoa.net/xml/TAPRegExt/v1.0" xsi:type="tr:TableAccess">
