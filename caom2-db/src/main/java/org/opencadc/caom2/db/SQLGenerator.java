@@ -428,6 +428,11 @@ public class SQLGenerator {
         return schema;
     }
 
+    public SQLDialect getDbDialect() {
+        return dbDialect;
+    }
+
+    
     /**
      * The default implementation uses the SQL standard CURRENT_TIMESTAMP symbol.
      * @return 
@@ -766,7 +771,7 @@ public class SQLGenerator {
         }
         
         public ObservationState execute(JdbcTemplate jdbc) {
-            return jdbc.query(this, new ObservationStateExtractor());
+            return jdbc.query(this, new ObservationStateExtractor(gen.getDbDialect()));
         }
         
         @Override
@@ -2524,11 +2529,11 @@ public class SQLGenerator {
     }
 
     public RowMapper getObservationStateMapper() {
-        return new ObservationStateMapper();
+        return new ObservationStateMapper(dbDialect);
     }
     
     public ResultSetExtractor<ObservationState> getObservationStateExtractor() {
-        return new ObservationStateExtractor();
+        return new ObservationStateExtractor(dbDialect);
     }
 
     public ResultSetExtractor getSkeletonExtractor(Class<? extends Skeleton> c) {

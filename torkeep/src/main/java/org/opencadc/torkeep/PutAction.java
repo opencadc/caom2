@@ -93,10 +93,12 @@ public class PutAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
+        checkWritable();
+
         URI uri = getObservationURI();
         log.debug("START: " + uri);
 
-        checkWritePermission();
+        checkWritePermission("PUT");
 
         Observation obs = getInputObservation();
         if (obs == null) {

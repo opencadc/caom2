@@ -102,7 +102,8 @@ public class GetAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
-        log.debug("GET ACTION");
+        checkReadable();
+
         URI uri = getObservationURI();
         if (uri != null) {
             doGetObservation(uri);
@@ -119,36 +120,38 @@ public class GetAction extends RepoAction {
 
     protected void doGetObservation(URI uri) throws Exception {
         log.debug("START: " + uri);
-
         ObservationDAO dao = getDAO();
         log.debug("getState: " + uri);
         ObservationState state = dao.getState(uri);
         log.debug("found state: " + state);
-        if (state == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-
-        
-        Observation o = dao.get(state.getID());
-        log.debug("loaded observation: " + o);
         
         // permission check: ignoring Observation.metaReadGroups for now
         Date now = new Date();
-        if (o.metaRelease != null && o.metaRelease.before(now)) {
+        if (state != null && state.metaRelease != null && state.metaRelease.before(now)) {
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-            logInfo.setGrant("metaRelease: " + df.format(o.metaRelease));
+            logInfo.setGrant("metaRelease: " + df.format(state.metaRelease));
         } else {
             // check configured permissions
             checkReadPermission();
         }
         
-        String mimeType = syncInput.getHeader("accept");
-        syncOutput.setHeader("Content-Type", mimeType);
-        syncOutput.setHeader("ETag", o.getAccMetaChecksum());
+        if (state == null) {
+            throw new ResourceNotFoundException("not found: " + uri);
+        }
+        
+        Observation o = dao.get(state.getID());
+        log.debug("loaded observation: " + o);
+        
+        syncOutput.setHeader("x-entity-id", o.getID().toString());
+        syncOutput.setHeader("etag", o.getAccMetaChecksum());
         syncOutput.setLastModified(o.getMaxLastModified());
+        String mimeType = syncInput.getHeader("accept");
+        Output op = getObservationWriter(mimeType);
+        syncOutput.setHeader("Content-Type", op.contentType);
+        ObservationWriter ow = op.ow;
+        
         OutputStream os = syncOutput.getOutputStream();
         ByteCountOutputStream bc = new ByteCountOutputStream(os);
-        ObservationWriter ow = getObservationWriter(mimeType);
         ow.write(o, bc);
         logInfo.setBytes(bc.getByteCount());
 
@@ -169,17 +172,27 @@ public class GetAction extends RepoAction {
         log.debug("DONE: " + getCollection());
     }
 
-    private ObservationWriter getObservationWriter(String mt) throws UnsupportedOperationException {
-        ObservationWriter ret;
+    private class Output {
+        ObservationWriter ow;
+        String contentType;
+    }
+
+    private Output getObservationWriter(String mt) throws UnsupportedOperationException {
+        Output ret = new Output();
         if (JSON_MIMETYPE.equals(mt) || CAOM_JSON_MIMETYPE.equals(mt)) {
-            return new JsonWriter(true);
+            ret.ow = new JsonWriter(true);
+            ret.contentType = mt;
         }
         if (XML_MIMETYPE.equals(mt) || CAOM_XML_MIMETYPE.equals(mt)) {
-            return new ObservationWriter();
+            ret.ow = new ObservationWriter();
+            ret.contentType = mt;
         }
         // ignore unsupported format request
         // default: XML
-        return new ObservationWriter();
+        ret.ow = new ObservationWriter();
+        ret.contentType = CAOM_XML_MIMETYPE;
+        
+        return ret;
     }
 
     protected long writeObservationList(ResourceIterator<ObservationState> iter) throws IOException {

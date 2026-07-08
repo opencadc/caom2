@@ -90,6 +90,7 @@ public class ObservationStateIteratorQuery  {
     private static final Logger log = Logger.getLogger(ObservationStateIteratorQuery.class);
 
     private final SQLGenerator gen;
+    private final SQLDialect dbDialect;
     
     private final String collection;
     private final String namespace;
@@ -103,6 +104,7 @@ public class ObservationStateIteratorQuery  {
         this.gen = gen;
         this.collection = collection;
         this.namespace = namespace;
+        this.dbDialect = gen.getDbDialect();
     }
 
     public void setUriBucket(String uriBucket) {
@@ -156,7 +158,7 @@ public class ObservationStateIteratorQuery  {
         }
         
         String sql = sb.toString();
-        log.warn("SQL: " + sb.toString());
+        log.debug("SQL: " + sb.toString());
         
         Calendar utc = Calendar.getInstance(DateUtil.UTC);
         try {
@@ -200,7 +202,7 @@ public class ObservationStateIteratorQuery  {
         private boolean hasRow;
         private int rowNum = 0;
         
-        private ObservationStateMapper mapper = new ObservationStateMapper();
+        private ObservationStateMapper mapper = new ObservationStateMapper(dbDialect);
 
         public ObservationStateIterator(Connection con, ResultSet rs) {
             this.con = con;

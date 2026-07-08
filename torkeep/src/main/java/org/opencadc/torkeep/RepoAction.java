@@ -105,6 +105,7 @@ import org.opencadc.caom2.util.CaomValidator;
 import org.opencadc.caom2.xml.ObservationParsingException;
 import org.opencadc.permissions.client.PermissionsCheck;
 import org.opencadc.permissions.client.srcnet.AuthorisationResult;
+import org.opencadc.permissions.client.srcnet.PAPI;
 import org.opencadc.permissions.client.srcnet.PermissionsAPIClient;
 
 /**
@@ -114,8 +115,7 @@ public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
     // copied from cavern and hard coded for now
-    private static final URI STD_AUTH_API = URI.create("ivo://skao.int/std/AuthAPI");
-    private static final URI STD_PERM_API = URI.create("ivo://skao.int/std/PermissionsAPI");
+    private static final String PAPI_SRV = "science-metadata";
     
     static final String CAOM_XML_MIMETYPE = "application/x-caom+xml";
     static final String XML_MIMETYPE = "text/xml";
@@ -346,12 +346,6 @@ public abstract class RepoAction extends RestAction {
     protected void checkReadPermission() throws PermissionDeniedException,
         CertificateException, ResourceNotFoundException, IOException {
         log.debug("check READ permission for collection: " + getCollection());
-        if (!readable) {
-            if (!writable) {
-                throw new IllegalStateException(STATE_OFFLINE_MSG);
-            }
-            throw new IllegalStateException(STATE_READ_ONLY_MSG);
-        }
 
         // config for the collection
         TorkeepConfig tc = getTorkeepConfig();
@@ -371,7 +365,7 @@ public abstract class RepoAction extends RestAction {
                 grantURI = URI.create(base + getCollection() + "?");
             }
         }
-        log.debug("authorizing: " + grantURI);
+        log.warn("authorizing: " + grantURI);
         
         Subject subject = AuthenticationUtil.getCurrentSubject();
         boolean operators = !tc.archiveOperators.isEmpty() || !tc.metaSyncOperators.isEmpty();
@@ -415,14 +409,20 @@ public abstract class RepoAction extends RestAction {
         }
 
         LocalAuthority loc = new LocalAuthority();
-        URI authAPI = loc.getResourceID(STD_AUTH_API);
-        URI permAPI = loc.getResourceID(STD_PERM_API);
-        if (authAPI != null && permAPI != null) {
+        URI authAPI = loc.getResourceID(PAPI.STD_AUTH_API);
+        URI permAPI = loc.getResourceID(PAPI.STD_PERM_API);
+        AuthorizationToken tok = getAuthorizationToken(subject);
+        if (tok != null && authAPI != null && permAPI != null) {
+            String srv = PAPI_SRV;
+            String route = "/observations/" + syncInput.getPath();
+            
+            log.warn("call papi: " + permAPI + " service=" + srv + " route=" + route + " method=GET");
             PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
-                    "torkeep", getAuthorizationToken(subject).getCredentials(),
-                    grantURI.getPath(), "GET", null, "1");
-            log.debug("papi: authorised=" + authorisationResult.isAuthorised);
+                    srv, route,
+                    tok.getCredentials(), // ignores token domains and scope
+                    "GET", null, "1");
+            log.warn("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
                 logInfo.setGrant("read: " + permAPI.toASCIIString());
@@ -441,15 +441,9 @@ public abstract class RepoAction extends RestAction {
      * @throws ca.nrc.cadc.net.ResourceNotFoundException
      * @throws java.io.IOException
      */
-    protected void checkWritePermission() throws PermissionDeniedException,
+    protected void checkWritePermission(String method) throws PermissionDeniedException,
         CertificateException, ResourceNotFoundException, IOException {
         log.debug("check WRITE permission for collection: " + getCollection());
-        if (!writable) {
-            if (readable) {
-                throw new IllegalStateException(STATE_READ_ONLY_MSG);
-            }
-            throw new IllegalStateException(STATE_OFFLINE_MSG);
-        }
 
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry entry = tc.getConfig(getCollection());
@@ -463,7 +457,7 @@ public abstract class RepoAction extends RestAction {
         } else {
             grantURI = URI.create("caom:" + getCollection() + "/");
         }
-        log.debug("authorizing: " + grantURI);
+        log.warn("authorizing: " + grantURI);
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
         boolean operators = !tc.archiveOperators.isEmpty();
@@ -497,14 +491,19 @@ public abstract class RepoAction extends RestAction {
         }
 
         LocalAuthority loc = new LocalAuthority();
-        URI authAPI = loc.getResourceID(STD_AUTH_API);
-        URI permAPI = loc.getResourceID(STD_PERM_API);
-        if (authAPI != null && permAPI != null) {
+        URI authAPI = loc.getResourceID(PAPI.STD_AUTH_API);
+        URI permAPI = loc.getResourceID(PAPI.STD_PERM_API);
+        AuthorizationToken tok = getAuthorizationToken(subject);
+        if (tok != null && authAPI != null && permAPI != null) {
+            String srv = PAPI_SRV;
+            String route = "/observations/" + syncInput.getPath();
+            log.warn("call papi: " + permAPI + " service=" + srv + " route=" + route + " method=" + method);
             PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
-                    "torkeep", getAuthorizationToken(subject).getCredentials(),
-                    grantURI.getPath(), "PUT", null, "1");
-            log.debug("papi: authorised=" + authorisationResult.isAuthorised);
+                    srv, route, 
+                    tok.getCredentials(), // ignores token domains and scope
+                    method, null, "1");
+            log.warn("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
                 logInfo.setGrant("write: " + permAPI.toASCIIString());

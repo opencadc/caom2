@@ -91,7 +91,10 @@ public class HeadAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
+        checkReadable();
+
         URI uri = getObservationURI();
+
         log.debug("START: " + uri);
         if (uri == null) {
             // TODO: method not supported on base endpoint
@@ -101,26 +104,24 @@ public class HeadAction extends RepoAction {
         log.debug("getState: " + uri);
         ObservationState state = dao.getState(uri);
         log.debug("found state: " + state);
-        if (state == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-        
-        Observation o = dao.get(state.getID());
-        log.debug("loaded observation: " + o);
         
         // permission check: ignoring Observation.metaReadGroups for now
         Date now = new Date();
-        if (o.metaRelease != null && o.metaRelease.before(now)) {
+        if (state != null && state.metaRelease != null && state.metaRelease.before(now)) {
             DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-            logInfo.setGrant("metaRelease: " + df.format(o.metaRelease));
+            logInfo.setGrant("metaRelease: " + df.format(state.metaRelease));
         } else {
             // check configured permissions
             checkReadPermission();
         }
         
-        syncOutput.setHeader("x-entity-id", o.getID().toString());
-        syncOutput.setHeader("etag", o.getAccMetaChecksum());
-        syncOutput.setLastModified(o.getMaxLastModified());
+        if (state == null) {
+            throw new ResourceNotFoundException("not found: " + uri);
+        }
+        
+        syncOutput.setHeader("x-entity-id", state.getID().toString());
+        syncOutput.setHeader("etag", state.getAccMetaChecksum());
+        syncOutput.setLastModified(state.getMaxLastModified());
         syncOutput.setCode(200);
     }
 }

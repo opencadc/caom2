@@ -69,6 +69,8 @@ package org.opencadc.caom2.util;
 
 import java.net.URI;
 import java.util.Date;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.opencadc.caom2.Observation;
@@ -86,6 +88,10 @@ public class ObservationState {
     private final URI uri;
     private final Date maxLastModified;
     private final URI accMetaChecksum;
+    
+    // permission checking optimisation in torkeep
+    public Date metaRelease;
+    private final Set<URI> metaReadGroups = new TreeSet<>();
     
     // optional complete observation OR error
     public Observation observation;
@@ -112,6 +118,10 @@ public class ObservationState {
 
     public Date getMaxLastModified() {
         return maxLastModified;
+    }
+
+    public Set<URI> getMetaReadGroups() {
+        return metaReadGroups;
     }
     
     @Override
