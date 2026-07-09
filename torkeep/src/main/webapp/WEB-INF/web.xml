@@ -14,9 +14,10 @@
             <param-name>logLevelPackages</param-name>
             <param-value>
                 org.opencadc.torkeep
+                org.opencadc.permissions
+                org.opencadc.caom2
                 ca.nrc.cadc.db.version
                 ca.nrc.cadc.rest
-                ca.nrc.cadc.caom2
                 ca.nrc.cadc.wcs
                 ca.nrc.cadc.vosi
             </param-value>

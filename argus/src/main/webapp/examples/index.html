@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CAOM Query Examples</title>
+    </head>
+    <body>
+        <div vocab="http://www.ivoa.net/rdf/examples#">
+            <div id="caom-spatial-query" resource="#caom-spatial-query" typeof="example">
+                <h2 property="name">Standard CAOM Discovery Query with Spatial Constraint</h2>
+                <p>
+                    standardID: <span property="capability">ivo://ivoa.net/std/TAP</span>
+                </p>
+                <!-- Table target configuration -->
+                <p>
+                    tables: 
+                    <span property="table">caom2.Observation</span>
+                    JOIN
+                    <span property="table">caom2.Plane</span>
+                </p>
+
+                <p>parameters:</p>
+                <div property="generic-parameter" typeof="keyval">
+                    <span property="key">LANG</span> = <span property="value">ADQL</span>
+                </div>
+
+                <div property="generic-parameter" typeof="keyval">
+                    <span property="key">MAXREC</span> = <span property="value">100</span>
+                </div>
+
+                <div property="generic-parameter" typeof="keyval">
+                    <span property="key">QUERY</span> =
+                    <pre property="value">
+                    SELECT p.publisherID, o.telescope_name, o.instrument_name, 
+                        p.calibrationLevel, p.dataProductType, 
+                        p.position_bounds, p.energy_bounds, p.time_bounds, p.polarization_states
+                    FROM caom2.Observation AS o JOIN caom2.Plane AS p ON o.obsID = p.obsID
+                    WHERE o.intent = 'science' AND INTERSECTS(p.position_bounds, CIRCLE('ICRS', 180.0, 0.0, 0.5)) = 1
+                    </pre>
+                </div>
+                <p>
+                    The Plane.publisherID column is the identifier that is needed to call the CAOM DataLink service and initiate
+                    data access; when this column is selected, the service will include a <em>service descriptor</em>
+                    with the necessary information.
+                </p>
+            </div>
+            
+            <div id="caom-artifact-join" resource="#caom-artifact-join" typeof="example">
+                <h2 property="name">Standard CAOM Query with Primary Artifact</h2>
+                <p>
+                    standardID: <span property="capability">ivo://ivoa.net/std/TAP</span>
+                </p>
+
+                <!-- Table target configuration -->
+                <p>
+                    tables:
+                    <span property="table">caom2.Observation</span>
+                    JOIN
+                    <span property="table">caom2.Plane</span>
+                    JOIN
+                    <span property="table">caom2.Artifact</span>
+                </p>
+
+                <p>parameters:</p>
+                <div property="generic-parameter" typeof="keyval">
+                    <span property="key">LANG</span> = <span property="value">ADQL</span>
+                </div>
+
+                <div property="generic-parameter" typeof="keyval">
+                    <span property="key">MAXREC</span> = <span property="value">100</span>
+                </div>
+                
+                <div property="generic-parameter" typeof="keyval">
+                    <span property="key">QUERY</span> = 
+                    <pre property="value">
+                    SELECT p.publisherID, o.telescope_name, o.instrument_name, 
+                        p.calibrationLevel, p.dataProductType, 
+                        p.position_bounds, p.energy_bounds, p.time_bounds, p.polarization_states,
+                        a.uri
+                    FROM caom2.Observation AS o
+                    JOIN caom2.Plane AS p ON o.obsID = p.obsID
+                    JOIN caom2.Artifact AS a ON p.planeID = a.planeID
+                    WHERE o.intent = 'science'
+                      AND a.productType IN ('science', 'this')
+                      AND INTERSECTS(p.position_bounds, CIRCLE('ICRS', 180.0, 0.0, 0.5)) = 1
+                    </pre>
+                </div>
+                
+                <p>
+                    The Plane.publisherID column is the identifier that is needed to call the CAOM DataLink service 
+                    and initiate data access; when this column is selected, the service will include a 
+                    <em>service descriptor</em> with the necessary information.
+                </p>
+                <p>
+                    Coming soon: The Artifact.uri column is the identifier that is needed to directly access 
+                    the file in the CADC Archive Storage system; when this column is selected, the service will 
+                    include a <em>service descriptor</em> with the necessary information.
+                </p>
+            </div>
+            
+        </div>
+    </body>
+</html>

@@ -69,6 +69,7 @@ package org.opencadc.caom2.db.mappers;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.opencadc.caom2.db.SQLDialect;
 import org.opencadc.caom2.util.ObservationState;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -79,14 +80,16 @@ import org.springframework.jdbc.core.ResultSetExtractor;
  */
 public class ObservationStateExtractor implements ResultSetExtractor<ObservationState> {
 
-    public ObservationStateExtractor() {
+    private ObservationStateMapper mapper;
+    
+    public ObservationStateExtractor(SQLDialect dbDialect) {
+        this.mapper = new ObservationStateMapper(dbDialect);
     }
 
     @Override
     public ObservationState extractData(ResultSet rs) throws SQLException, DataAccessException {
         if (rs.next()) {
-            ObservationStateMapper m = new ObservationStateMapper();
-            return m.mapRow(rs, 1);
+            return mapper.mapRow(rs, 1);
         }
         return null;
     }

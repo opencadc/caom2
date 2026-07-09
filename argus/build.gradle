@@ -51,6 +51,7 @@ dependencies {
     runtimeOnly 'org.opencadc:cadc-log:[1.1.0,2.0)'
    
     // force min versions for CVEs
+    runtimeOnly 'org.apache.commons:commons-configuration2:[2.15.0,)'
     runtimeOnly 'org.apache.commons:commons-lang3:[3.18.0,)'
     runtimeOnly 'com.nimbusds:nimbus-jose-jwt:[9.37.4,)'
     // this breaks CI build on gradle 6 because of library variants 
@@ -92,5 +93,6 @@ configurations {
   runtimeOnly.exclude group: 'org.eclipse.jetty'
   runtimeOnly.exclude group: 'org.eclipse.jetty'
   runtimeOnly.exclude group: 'io.netty'
+  runtimeOnly.exclude group: 'org.jline'
 }
 

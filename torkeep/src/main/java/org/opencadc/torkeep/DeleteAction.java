@@ -91,10 +91,12 @@ public class DeleteAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
+        checkWritable();
+
         URI uri = getObservationURI();
         log.debug("START: " + uri);
 
-        checkWritePermission();
+        checkWritePermission("DELETE");
 
         ObservationDAO dao = getDAO();
         ObservationState existing = dao.getState(uri);

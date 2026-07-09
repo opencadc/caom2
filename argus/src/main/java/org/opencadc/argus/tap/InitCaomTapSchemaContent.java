@@ -87,7 +87,7 @@ public class InitCaomTapSchemaContent extends InitDatabase {
     private static final Logger log = Logger.getLogger(InitCaomTapSchemaContent.class);
 
     public static final String MODEL_NAME = "caom2-schema";
-    public static final String MODEL_VERSION = "2.5.0-P";
+    public static final String MODEL_VERSION = "2.5.0-beta-2";
 
     // the SQL is tightly coupled to cadc-tap-schema table names (for TAP-1.1)
     static String[] BASE_SQL = new String[] {
@@ -114,7 +114,9 @@ public class InitCaomTapSchemaContent extends InitDatabase {
     public InitCaomTapSchemaContent(DataSource dataSource, String database, String schema, boolean extras) {
         // use MODELVERSION/extras so changing extras will cause a recreate
         // eg 1.2.13/false <-> 1.2.13/true
-        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION + "/" + extras);
+        //super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION + "/" + extras);
+        // TODO: currently no extras in 2.5 beta
+        super(dataSource, database, schema, MODEL_NAME, MODEL_VERSION);
         String[] src = BASE_SQL;
         if (extras) {
             src = BASE_EXTRA_SQL;

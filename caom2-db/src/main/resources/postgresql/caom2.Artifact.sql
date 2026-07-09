@@ -25,15 +25,15 @@ create table <schema>.Artifact
 )
 ;
 
--- this is for Plane join Artifact
-create index i_planeID on <schema>.Artifact (planeID)
+-- this is for Plane join Artifact; naming style same as pkey
+create index artifact_fkey on <schema>.Artifact (planeID)
 ;
 
 -- tag the clustering index
-cluster i_planeID on <schema>.Artifact
+cluster artifact_fkey on <schema>.Artifact
 ;
 
-create index Artifact_i_uri
+create index i_artifact_uri
     on <schema>.Artifact (uri)
 ;
 

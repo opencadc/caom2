@@ -74,33 +74,44 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
+import org.opencadc.caom2.db.SQLDialect;
 import org.opencadc.caom2.db.Util;
 import org.opencadc.caom2.util.CaomUtil;
 import org.opencadc.caom2.util.ObservationState;
 import org.springframework.jdbc.core.RowMapper;
 
 /**
- *
+ * Custom mapper to extract a subset of Observation fields.
+ * 
  * @author pdowler
  */
 public class ObservationStateMapper implements RowMapper<ObservationState> {
     private final Calendar utcCalendar = Calendar.getInstance(DateUtil.UTC);
 
+    private final SQLDialect dbDialect;
+    
     public static final String[] COLUMNS = new String[] {
-        "uri", "maxLastModified", "accMetaChecksum", 
-        "obsID" // PK
+        "obsID",
+        "uri", "maxLastModified", "accMetaChecksum",
+        "metaRelease", "metaReadGroups"
     };
 
-    public ObservationStateMapper() {
+    public ObservationStateMapper(SQLDialect dbDialect) {
+        this.dbDialect = dbDialect;
     }
 
     public ObservationState mapRow(ResultSet rs, int i)
             throws SQLException {
         int col = 1;
+        UUID id = Util.getUUID(rs, col++);
         URI uri = Util.getURI(rs, col++);
         Date maxLastModified = Util.getDate(rs, col++, utcCalendar);
         URI accMetaChecksum = Util.getURI(rs, col++);
-        UUID id = Util.getUUID(rs, col++);
-        return new ObservationState(id, uri, maxLastModified, accMetaChecksum);
+        ObservationState ret = new ObservationState(id, uri, maxLastModified, accMetaChecksum);
+        
+        ret.metaRelease = Util.getDate(rs, col++, utcCalendar);
+        dbDialect.extractMultiURI(rs, col++, ret.getMetaReadGroups());
+        
+        return ret;
     }
 }

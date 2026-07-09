@@ -84,8 +84,8 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
     public static final String MODEL_NAME = "CAOM";
     // alpha: just core columns needed to round-trip
     // beta: minimal query optimization columns to support argus (TAP) and ObsCore
-    public static final String MODEL_VERSION = "2.5.0-beta";
-    public static final String PREV_MODEL_VERSION = "2.5.0-alpha";
+    public static final String MODEL_VERSION = "2.5.0-beta-2";
+    public static final String PREV_MODEL_VERSION = "2.5.0-beta";
 
     static String[] CREATE_SQL = new String[]{
         "caom2.ModelVersion.sql",
@@ -99,18 +99,19 @@ public class InitDatabase extends ca.nrc.cadc.db.version.InitDatabase {
         "caom2.HarvestSkip.sql",
         "caom2.DeletedObservationEvent.sql",
         "caom2.DeletedArtifactDescriptionEvent.sql",
-        //"caom2.extra_indices.sql",
+        "caom2.extra_indices.sql",
         "caom2.ObsCore.sql",
         "caom2.ObsCore_radio.sql",
         //"caom2.SIAv1.sql",
         "caom2.permissions.sql"
     };
 
-    static String[] UPGRADE_SQL = new String[]{
-        "caom2.upgrade-2.5.0-beta.sql",
+    static String[] UPGRADE_SQL = new String[] {
+        "caom2.upgrade-2.5.0-beta-2.sql",
+        "caom2.extra_indices.sql", 
         "caom2.ObsCore.sql",
         "caom2.ObsCore_radio.sql",
-        "caom2.permissions.sql"
+        "caom2.permissions.sql",
     };
 
     public InitDatabase(DataSource dataSource, String database, String schema) {

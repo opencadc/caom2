@@ -138,7 +138,7 @@ public class DeletedObservationEventIteratorQuery {
         }
         
         String sql = sb.toString();
-        log.warn("SQL: " + sb.toString());
+        log.debug("SQL: " + sb.toString());
         
         Calendar utc = Calendar.getInstance(DateUtil.UTC);
         try {

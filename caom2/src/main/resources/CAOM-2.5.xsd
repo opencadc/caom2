@@ -709,6 +709,7 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="science"/>
             <xs:enumeration value="calibration"/>
+            <xs:enumeration value="outreach"/>
         </xs:restriction>
     </xs:simpleType>
 

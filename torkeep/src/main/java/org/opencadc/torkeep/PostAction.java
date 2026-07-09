@@ -92,10 +92,12 @@ public class PostAction extends RepoAction {
 
     @Override
     public void doAction() throws Exception {
+        checkWritable();
+
         URI uri = getObservationURI();
         log.debug("START: " + uri);
         
-        checkWritePermission();
+        checkWritePermission("POST");
 
         Observation obs = getInputObservation();
         if (obs == null) {

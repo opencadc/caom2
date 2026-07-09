@@ -42,6 +42,13 @@ In addition, the TAP service does not currently support a configurable schema na
 
 See <a href="https://github.com/opencadc/reg/tree/master/cadc-registry">cadc-registry</a>.
 
+In addition to the OpenCADC permissions API (see _grantProvider_ below) `torkeep` can also be 
+configured to call the SRCNet Permissions API. This is configured along with the OpenID provider in `cadc-registry.properties`:
+```
+ivo://skao.int/std/AuthAPI = https://....
+ivo://skao.int/std/PermissionsAPI = https://....
+```
+The keys here are like an IVOA standardID that identify an API feature; the value is the base URL of the service that provides the feature.
 
 ### torkeep.properties
 The torkeep.properties configures the services that provide grants to access collections, and collection specific properties.

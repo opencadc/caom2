@@ -180,7 +180,7 @@ public class AbstractDAO {
         }
         try {
             this.dataSource = DBUtil.findJNDIDataSource(jndiDataSourceName);
-            log.warn("found: " + jndiDataSourceName);
+            log.debug("found: " + jndiDataSourceName);
         } catch (NamingException ex) {
             throw new IllegalArgumentException("cannot find JNDI DataSource: " + jndiDataSourceName);
         }
