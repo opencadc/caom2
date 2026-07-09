@@ -85,6 +85,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.opencadc.argus.AuthQueryTest.syncURL;
 import org.opencadc.tap.TapClient;
@@ -104,9 +105,10 @@ public class ParquetOutputTest {
     }
     
     @Test
+    @Ignore // disabled: see build.gradle comment
     public void testParquetOutput() throws Exception {
         TapClient tap = new TapClient(Constants.RESOURCE_ID);
-        final URL tapURL = tap.getSyncURL(Standards.SECURITY_METHOD_CERT);
+        final URL tapURL = tap.getSyncURL(Standards.SECURITY_METHOD_ANON);
         log.info(" sync: " + syncURL);
         
         // hits duplicate column name bug in ParquetWriter:

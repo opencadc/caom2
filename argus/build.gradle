@@ -42,7 +42,6 @@ dependencies {
     implementation 'org.opencadc:cadc-vosi:[1.4.12,2.0)'
     implementation 'org.opencadc:cadc-dali:[1.2.28,)'
     implementation 'org.opencadc:cadc-dali-pg:[0.4.0,)'
-    implementation 'org.opencadc:cadc-dali-parquet:[0.5.3,)'
     implementation 'org.opencadc:cadc-cdp:[1.4.0,)'
     implementation 'org.opencadc:cadc-gms:[1.0.0,)'
     runtimeOnly 'org.opencadc:cadc-access-control-identity:[1.1.0,2.0)'
@@ -56,7 +55,11 @@ dependencies {
     runtimeOnly 'com.nimbusds:nimbus-jose-jwt:[9.37.4,)'
     // this breaks CI build on gradle 6 because of library variants 
     //runtimeOnly 'com.google.guava:guava:33.5.0-jre'
- 
+
+    // parquet support currently disabled because of CVEs but needed for test code compile
+    //implementation 'org.opencadc:cadc-dali-parquet:[0.5.3,)'
+    testImplementation 'org.opencadc:cadc-dali-parquet:[0.5.3,)'
+
     testImplementation 'org.opencadc:cadc-tap:[1.0,)'
     testImplementation 'junit:junit:[4.1,5.0)'
     testImplementation 'org.postgresql:postgresql:[42.0,)'
