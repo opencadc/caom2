@@ -115,9 +115,15 @@ public class FileSync implements Runnable {
     private final ArtifactStore artifactStore;
     private final BucketSelector buckets;
     private final int retryAfterHours;
-    private final ArtifactDAO artifactDAO;
+    
     private final HarvestSkipURIDAO harvestSkipURIDAO;
-    private final HarvestSkipURIDAO jobHarvestSkipURIDAO;
+    //private final ArtifactDAO artifactDAO;
+    //private final HarvestSkipURIDAO jobHarvestSkipURIDAO;
+    private final DataSource jobDataSource;
+    private final String database;
+    private final String schema;
+    private final Map<String, Object> daoConfig;
+    
     private final ThreadedRunnableExecutor threadPool;
     private final LinkedBlockingQueue<Runnable> jobQueue;
     private final String storageNamespace;
@@ -153,38 +159,28 @@ public class FileSync implements Runnable {
                                                              MAX_THREADS, threads));
         }
 
-        // For managing the artifact iterator FileSync loops over
         try {
-            // Make FileSync HarvestSkipURIDAO instance
+            // make single connection data source to query and create jobs
             final String fileSyncDS = "jdbc/fileSync";
-            daoConfig.put("jndiDataSourceName", fileSyncDS);
             DBUtil.createJNDIDataSource(fileSyncDS, connectionConfig);
             this.harvestSkipURIDAO = new HarvestSkipURIDAO(DBUtil.findJNDIDataSource(fileSyncDS),
                                                            (String) daoConfig.get("database"),
                                                            (String) daoConfig.get("schema"));
 
-            // Make FileSyncJob HarvestSkipURIDAO instance
+            // make shared connection pool for jobs
             final String jobDS = "jdbc/fileSyncJob";
             daoConfig.put("jndiDataSourceName", jobDS);
-            // 3-5 threads ~2 connection, 6-8 threads ~3 connections, ... 30-32 threads ~11 connections
-            int poolSize = 1 + threads / 3;
+            // 2-3 threads ~2 connection, 4-5 threads ~3 connections, ... 30-31 threads ~16 connections
+            int poolSize = 1 + threads / 2;
             DBUtil.PoolConfig pc = new DBUtil.PoolConfig(connectionConfig, poolSize, 20000L, "select 123");
             DBUtil.createJNDIDataSource(jobDS, pc);
-            this.jobHarvestSkipURIDAO = new HarvestSkipURIDAO(DBUtil.findJNDIDataSource(jobDS),
-                                                              (String) daoConfig.get("database"),
-                                                              (String) daoConfig.get("schema"));
-
-            // Make FileSyncJob ArtifactDAO instance
-            final String artifactJobDS = "jdbc/artifactFileSyncJob";
-            daoConfig.put("jndiDataSourceName", artifactJobDS);
-            DBUtil.createJNDIDataSource(artifactJobDS, pc);
-            this.artifactDAO = new ArtifactDAO();
-            this.artifactDAO.setConfig(daoConfig);
-
+            this.jobDataSource = DBUtil.findJNDIDataSource(jobDS);
+            this.database = null; // unused (String) daoConfig.get("database");
+            this.schema = (String) daoConfig.get("schema");
+            this.daoConfig = daoConfig;
+            
             try {
-                String database = null; // unused (String) daoConfig.get("database");
-                String schema = (String) daoConfig.get("schema");
-                DataSource ds = DBUtil.findJNDIDataSource(artifactJobDS);
+                DataSource ds = DBUtil.findJNDIDataSource(fileSyncDS);
                 InitDatabase init = new InitDatabase(ds, database, schema);
                 init.doInit();
                 log.info("initDatabase: " + schema + " OK");
@@ -257,11 +253,17 @@ public class FileSync implements Runnable {
                 try (final ResourceIterator<HarvestSkipURI> skipIterator =
                     harvestSkipURIDAO.iterator(Artifact.class.getSimpleName(), storageNamespace, minBucket, maxBucket, now)) {
                     while (skipIterator.hasNext()) {
-                        HarvestSkipURI harvestSkipURI = skipIterator.next();
-                        FileSyncJob fileSyncJob = new FileSyncJob(harvestSkipURI, 
-                                jobHarvestSkipURIDAO, artifactDAO, artifactStore, retryAfterHours, currentUser);
+                        HarvestSkipURI harvestSkip = skipIterator.next();
+                        // DAO classes may not be thread safe so we have to create for each job
+                        // but can use the shared connection pool
+                        ArtifactDAO ad = new ArtifactDAO();
+                        ad.setConfig(daoConfig);
+                        HarvestSkipURIDAO hsd = new HarvestSkipURIDAO(jobDataSource, database, schema);
+
+                        FileSyncJob fileSyncJob = new FileSyncJob(harvestSkip, 
+                                hsd, ad, artifactStore, retryAfterHours, currentUser);
                         jobQueue.put(fileSyncJob); // blocks when queue capacity is reached
-                        log.info("FileSync.CREATE: HarvestSkipURI.id=" + harvestSkipURI.getSkipID());
+                        log.info("FileSync.CREATE: " + harvestSkip.getSkipID() + " " + df.format(harvestSkip.getTryAfter()));
                         num++;
                     }
                 } catch (Exception e) {

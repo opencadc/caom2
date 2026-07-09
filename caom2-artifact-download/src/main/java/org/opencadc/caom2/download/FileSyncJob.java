@@ -81,8 +81,10 @@ import ca.nrc.cadc.caom2.util.CaomValidator;
 import ca.nrc.cadc.io.ByteLimitExceededException;
 import ca.nrc.cadc.io.WriteException;
 import ca.nrc.cadc.net.HttpGet;
+import ca.nrc.cadc.net.PermissionDeniedException;
 import ca.nrc.cadc.net.PreconditionFailedException;
 import ca.nrc.cadc.net.RangeNotSatisfiableException;
+import ca.nrc.cadc.net.RemoteServiceException;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
@@ -211,18 +213,18 @@ public class FileSyncJob implements Runnable  {
                         fileMetadata.setMd5Sum(curArtifact.contentChecksum.getSchemeSpecificPart());
                     }
 
-                    boolean postPrepare = false;
                     try {
                         downloadAttempts++;
 
-                        // get the artifact metadata
+                        // get the artifact metadata from the source
                         OutputStream out = new ByteArrayOutputStream();
                         HttpGet head = new HttpGet(url, out);
                         head.setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
                         head.setReadTimeout(DEFAULT_READ_TIMEOUT);
+                        head.setMaxRetries(1);
                         head.setHeadOnly(true);
                         head.prepare();
-
+                        
                         // compare artifact metadata
                         URI hdrContentChecksum = head.getDigest();
                         if (curArtifact.contentChecksum != null && hdrContentChecksum != null) {
@@ -260,6 +262,16 @@ public class FileSyncJob implements Runnable  {
                         log.debug("FileSyncJob.FAIL", ex);
                         log.error(String.format("FileSyncJob.FAIL %s %s", artifactURI, ex));
                         throw ex;
+                    } catch (PermissionDeniedException ex) {
+                        log.debug("FileSyncJob.ERROR", ex);
+                        log.debug(String.format("FileSyncJob.ERROR %s %s", artifactURI, ex));
+                        fails.add(ex);
+                        msg = ex.getMessage();
+                        return; // fatal
+                    } catch (RemoteServiceException ex) {
+                        // remote 500
+                        log.debug("FileSyncJob.ERROR", ex);
+                        log.warn(String.format("FileSyncJob.ERROR remote HEAD %s %s", artifactURI, ex));
                     } catch (MalformedURLException | ResourceNotFoundException | ResourceAlreadyExistsException
                              | PreconditionFailedException | RangeNotSatisfiableException
                              | AccessControlException | NotAuthenticatedException ex) {
@@ -276,18 +288,11 @@ public class FileSyncJob implements Runnable  {
                         fails.add(ex);
                         msg = ex.getMessage();
                     } catch (Exception ex) {
-                        if (!postPrepare) {
-                            // remote server 5xx response: discard
-                            log.debug("FileSyncJob.ERROR", ex);
-                            log.warn(String.format("FileSyncJob.ERROR %s %s", artifactURI, ex));
-                            fails.add(ex);
-                            msg = ex.getMessage();
-                        } else {
-                            // ArtifactStore.store internal fail: abort
-                            log.debug("FileSyncJob.FAIL", ex);
-                            log.warn(String.format("FileSyncJob.FAIL %s %s", artifactURI, ex));
-                            throw ex;
-                        }
+                        // stream or ArtifactStore.store fail
+                        log.debug("FileSyncJob.FAIL", ex);
+                        log.warn(String.format("FileSyncJob.FAIL %s %s", artifactURI, ex));
+                        fails.add(ex);
+                        msg = ex.getMessage();
                     }
 
                     if (!success) {
@@ -323,16 +328,14 @@ public class FileSyncJob implements Runnable  {
         } finally {
             // Update the skip table
             try {
-                synchronized (harvestSkipURIDAO) {
-                    if (success) {
-                        harvestSkipURIDAO.delete(harvestSkipURI);
-                    } else {
-                        harvestSkipURI.errorMessage = msg;
-                        Calendar c = Calendar.getInstance();
-                        c.add(Calendar.HOUR, retryAfter);
-                        harvestSkipURI.setTryAfter(c.getTime());
-                        harvestSkipURIDAO.put(harvestSkipURI);
-                    }
+                if (success) {
+                    harvestSkipURIDAO.delete(harvestSkipURI);
+                } else {
+                    harvestSkipURI.errorMessage = msg;
+                    Calendar c = Calendar.getInstance();
+                    c.add(Calendar.HOUR, retryAfter);
+                    harvestSkipURI.setTryAfter(c.getTime());
+                    harvestSkipURIDAO.put(harvestSkipURI);
                 }
             } catch (Throwable t) {
                 log.error("Failed to update or delete from skip table", t);

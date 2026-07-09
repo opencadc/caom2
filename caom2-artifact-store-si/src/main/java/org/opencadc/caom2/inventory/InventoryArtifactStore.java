@@ -123,19 +123,18 @@ public class InventoryArtifactStore implements ArtifactStore {
     private static final String QUERY_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".queryService";
     private static final String LOCATE_SERVICE_CONFIG_KEY = CONFIG_PREFIX + ".locateService";
 
-    public static final int DEFAULT_TIMEOUT = 600000;  // 10 minutes
-
+    static final int CONNECTION_TIMEOUT = 6000;
+    static final int READ_TIMEOUT = 12000;
+    
     // Used to verify configuration items.  See the README for descriptions.
     private static final String[] MANDATORY_PROPERTY_KEYS = {
         LOCATE_SERVICE_CONFIG_KEY,
         QUERY_SERVICE_CONFIG_KEY
     };
 
+    // technically, this can also be an SI files service
     private URI locatorService;
     private URI queryService;
-    private URL storageInventoryTapURL;
-    private URL locateServicesFilesURL;
-    private List<Protocol> storeProtocolList = new ArrayList<>();
 
     public InventoryArtifactStore() {
         initConfig();
@@ -157,8 +156,9 @@ public class InventoryArtifactStore implements ArtifactStore {
         URL url = getLocateFilesURL(artifactURI);
         HttpGet head = new HttpGet(url, true);
         head.setHeadOnly(true);
-        head.setConnectionTimeout(6000);
-        head.setReadTimeout(12000);
+        head.setConnectionTimeout(CONNECTION_TIMEOUT);
+        head.setReadTimeout(READ_TIMEOUT);
+        head.setMaxRetries(1);
 
         long start = System.currentTimeMillis();
         try {
@@ -216,21 +216,28 @@ public class InventoryArtifactStore implements ArtifactStore {
     @Override
     public void store(URI artifactURI, URL src, FileMetadata metadata) throws TransientException, InterruptedException,
             IOException, ResourceNotFoundException {
-
+        InventoryClient storageInventoryClient = new InventoryClient(locatorService);
+        
+        URL filesURL = storageInventoryClient.getBaseFilesURL();
+        if (filesURL != null) {
+            // direct minoc usage
+            URL dest = new URL(filesURL.toExternalForm() + "/" + artifactURI);
+            storageInventoryClient.upload(src, metadata, dest);
+            return;
+        }
+        
         // request all protocols that can be used
-        if (storeProtocolList.isEmpty()) {
-            Subject subject = AuthenticationUtil.getCurrentSubject();
-            AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            storeProtocolList.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
-            if (!AuthMethod.ANON.equals(authMethod)) {
-                Protocol httpsAuth = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
-                httpsAuth.setSecurityMethod(Standards.getSecurityMethod(authMethod));
-                storeProtocolList.add(httpsAuth);
-            }
+        List<Protocol> storeProtocolList = new ArrayList<>();
+        Subject subject = AuthenticationUtil.getCurrentSubject();
+        AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
+        storeProtocolList.add(new Protocol(VOS.PROTOCOL_HTTPS_PUT));
+        if (!AuthMethod.ANON.equals(authMethod)) {
+            Protocol httpsAuth = new Protocol(VOS.PROTOCOL_HTTPS_PUT);
+            httpsAuth.setSecurityMethod(Standards.getSecurityMethod(authMethod));
+            storeProtocolList.add(httpsAuth);
         }
 
         Direction direction = Direction.pushToVoSpace;
-        InventoryClient storageInventoryClient = new InventoryClient(locatorService);
         Transfer transfer = storageInventoryClient.createTransferSync(artifactURI, direction, storeProtocolList);
         if (transfer.getAllEndpoints().isEmpty()) {
             throw new RuntimeException("No transfer endpoint available.");

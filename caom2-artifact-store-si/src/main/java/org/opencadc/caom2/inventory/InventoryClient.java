@@ -69,7 +69,6 @@
 
 package org.opencadc.caom2.inventory;
 
-import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.net.FileContent;
 import ca.nrc.cadc.net.HttpGet;
@@ -79,9 +78,12 @@ import ca.nrc.cadc.net.HttpUpload;
 import ca.nrc.cadc.net.ResourceAlreadyExistsException;
 import ca.nrc.cadc.net.ResourceNotFoundException;
 import ca.nrc.cadc.net.TransientException;
+import ca.nrc.cadc.reg.Capabilities;
+import ca.nrc.cadc.reg.Capability;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
 import ca.nrc.cadc.util.FileMetadata;
+import ca.nrc.cadc.util.InvalidConfigException;
 import ca.nrc.cadc.vos.Direction;
 import ca.nrc.cadc.vos.Protocol;
 import ca.nrc.cadc.vos.Transfer;
@@ -122,25 +124,46 @@ public class InventoryClient {
     private long bytesTransferred = 0;
 
     private URL baseTransferURL;
+    private URL baseFilesURL;
+    
     // files larger that MIN_SEGMENT_FILE_SIZE require segments, the others don't
     static long MIN_SEGMENT_FILE_SIZE = 5 * 1024L * 1024L * 1024L; // 5 GiB
     // adjustable by test code
     static long SEGMENT_SIZE_PREF = 2 * 1024L * 1024L * 1024L; // 2 GiB
 
-    public InventoryClient(URI locateServiceResourceID) {
+    /**
+     * Constructor.
+     * @param resourceID the SI service to use to persist files
+     * @throws ResourceNotFoundException if the resourceID cvannot be found in the registry
+     * @throws InvalidConfigException  if the specified service does not implement a suitable API
+     */
+    public InventoryClient(URI resourceID) throws ResourceNotFoundException, InvalidConfigException {
+        RegistryClient rc = new RegistryClient();
         try {
-            RegistryClient rc = new RegistryClient();
-            Subject subject = AuthenticationUtil.getCurrentSubject();
-            AuthMethod authMethod = AuthenticationUtil.getAuthMethodFromCredentials(subject);
-            if (authMethod == null) {
-                authMethod = AuthMethod.ANON;
+            Capabilities caps = rc.getCapabilities(resourceID);
+            if (caps == null) {
+                throw new ResourceNotFoundException("not found: " + resourceID.toASCIIString());
             }
+            Capability locate = caps.findCapability(Standards.SI_LOCATE);
+            Capability files = caps.findCapability(Standards.SI_FILES);
 
-            baseTransferURL = rc.getServiceURL(locateServiceResourceID, Standards.SI_LOCATE, authMethod);
-        } catch (Throwable t) {
-            String message = "Failed to initialize storage inventory URLs";
-            throw new RuntimeException(message, t);
+            if (locate != null) {
+                baseTransferURL = locate.findInterfaceByType(Standards.INTERFACE_PARAM_HTTP).getAccessURL().getURL();
+                log.debug("found locator API: " + baseTransferURL);
+            } else if (files != null) {
+                baseFilesURL = files.findInterfaceByType(Standards.INTERFACE_PARAM_HTTP).getAccessURL().getURL();
+                log.debug("found files API: " + baseFilesURL);
+            } else {
+                throw new InvalidConfigException("resource " + resourceID + " does not implement suitable API"
+                    + " require: " + Standards.SI_LOCATE + " or " + Standards.SI_FILES);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException("failed to query registry for storage-inventory services", ex);
         }
+    }
+    
+    public URL getBaseFilesURL() {
+        return baseFilesURL;
     }
 
     public Transfer createTransferSync(URI target, Direction direction, List<Protocol> protocolList) throws TransientException {
@@ -160,8 +183,9 @@ public class InventoryClient {
 
         FileContent content = new FileContent(out.toByteArray(), "text/xml");
         HttpPost post = new HttpPost(baseTransferURL, content, false);
-        post.setConnectionTimeout(InventoryArtifactStore.DEFAULT_TIMEOUT);
-        post.setReadTimeout(InventoryArtifactStore.DEFAULT_TIMEOUT);
+        post.setConnectionTimeout(InventoryArtifactStore.CONNECTION_TIMEOUT);
+        post.setReadTimeout(InventoryArtifactStore.READ_TIMEOUT);
+        post.setMaxRetries(0);
         post.run();
         if (post.getThrowable() != null) {
             if (post.getThrowable() instanceof Exception) {
@@ -227,7 +251,7 @@ public class InventoryClient {
      * @throws IOException
      * @throws ResourceNotFoundException
      */
-    private static void upload(URL src, FileMetadata metadata, URL dest) throws TransientException,
+    public void upload(URL src, FileMetadata metadata, URL dest) throws TransientException,
             InterruptedException, IOException, ResourceNotFoundException {
         HttpGet srcInfo = new HttpGet(src, true);
         srcInfo.setHeadOnly(true);
@@ -239,6 +263,9 @@ public class InventoryClient {
             if (srcInfo.getContentMD5() != null) {
                 // no transaction required
                 HttpGet srcDownload = new HttpGet(src, true);
+                srcDownload.setConnectionTimeout(InventoryArtifactStore.CONNECTION_TIMEOUT);
+                srcDownload.setReadTimeout(InventoryArtifactStore.READ_TIMEOUT);
+                srcDownload.setMaxRetries(1);
                 doPrepare(srcDownload);
                 runTxnRequest(dest, null, srcDownload.getInputStream(), metadata);
                 return;
@@ -438,8 +465,8 @@ public class InventoryClient {
             }
         }
         httpOp.setLogIO(true);
-        httpOp.setConnectionTimeout(InventoryArtifactStore.DEFAULT_TIMEOUT);
-        httpOp.setReadTimeout(InventoryArtifactStore.DEFAULT_TIMEOUT);
+        httpOp.setConnectionTimeout(InventoryArtifactStore.CONNECTION_TIMEOUT);
+        httpOp.setReadTimeout(InventoryArtifactStore.READ_TIMEOUT);
 
         try {
             httpOp.prepare();

@@ -126,9 +126,8 @@ public class Main {
     };
 
     public static void main(final String[] args) {
-        Log4jInit.setLevel("ca.nrc.cadc.caom2", Level.INFO);
-        Log4jInit.setLevel("org.opencadc.caom2", Level.INFO);
-        Log4jInit.setLevel("org.opencadc.icewind", Level.INFO);
+        Log4jInit.setLevel("ca.nrc.cadc", Level.WARN);
+        Log4jInit.setLevel("org.opencadc", Level.WARN);
 
         try {
             final PropertiesReader propertiesReader = new PropertiesReader(CONFIG_FILE_NAME);
