@@ -41,11 +41,11 @@
         xmlns:tr="http://www.ivoa.net/xml/TAPRegExt/v1.0" xsi:type="tr:TableAccess">
 
     <interface xsi:type="vs:ParamHTTP" role="std" version="1.1">
-        <accessURL use="base">https://replace.me.com/argus</accessURL>
-        <securityMethod/>
-        <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
-        <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
-        <securityMethod standardID="ivo://ivoa.net/sso#token"/>
+      <accessURL use="base">https://replace.me.com/argus</accessURL>
+      <securityMethod/>
+      <securityMethod standardID="ivo://ivoa.net/sso#cookie"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#tls-with-certificate"/>
+      <securityMethod standardID="ivo://ivoa.net/sso#token"/>
     </interface>
 
     <dataModel ivo-id="ivo://ivoa.net/std/ObsCore#core-1.1">ObsCore-1.1</dataModel>
