@@ -3,7 +3,7 @@
 *******************  CANADIAN ASTRONOMY DATA CENTRE  *******************
 **************  CENTRE CANADIEN DE DONNÉES ASTRONOMIQUES  **************
 *
-*  (c) 2019.                            (c) 2019.
+*  (c) 2026.                            (c) 2026.
 *  Government of Canada                 Gouvernement du Canada
 *  National Research Council            Conseil national de recherches
 *  Ottawa, Canada, K1A 0R6              Ottawa, Canada, K1A 0R6
@@ -67,12 +67,11 @@
 
 package ca.nrc.cadc.tap.caom2;
 
-
 import ca.nrc.cadc.caom2.types.SegmentType;
-import ca.nrc.cadc.dali.MultiPolygon;
+import ca.nrc.cadc.dali.MultiShape;
 import ca.nrc.cadc.dali.Point;
 import ca.nrc.cadc.dali.Polygon;
-import ca.nrc.cadc.dali.util.MultiPolygonFormat;
+import ca.nrc.cadc.dali.util.MultiShapeFormat;
 import ca.nrc.cadc.tap.writer.format.AbstractResultSetFormat;
 import ca.nrc.cadc.tap.writer.format.DoubleArrayFormat;
 import java.sql.ResultSet;
@@ -80,18 +79,16 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 
 /**
- * Format position_bounds_samples as a xtype="multipolygon".
- * 
+ * Format position_bounds_samples as a xtype="multishape".
  * @author pdowler
  */
-@Deprecated
-public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
-    private static final Logger log = Logger.getLogger(PositionBoundsSamplesFormat.class);
+public class CaomMultiShapeFormat extends AbstractResultSetFormat {
+    private static final Logger log = Logger.getLogger(CaomMultiShapeFormat.class);
 
     private DoubleArrayFormat daf = new DoubleArrayFormat();
-    private MultiPolygonFormat mpf = new MultiPolygonFormat();
-     
-    public PositionBoundsSamplesFormat() { 
+    private static final MultiShapeFormat fmt = new MultiShapeFormat();
+
+    public CaomMultiShapeFormat() { 
     }
 
     @Override
@@ -101,21 +98,20 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
             return null;
         }
         
-        MultiPolygon mp = new MultiPolygon();
-        // caom2 MP has longitude,latitide,segmentType
+        MultiShape ret = new MultiShape();
         Polygon poly = new Polygon();
         for (int i = 0; i < arr.length; i += 3) {
             double cv1 = arr[i];
             double cv2 = arr[i + 1];
             SegmentType st = SegmentType.toValue((int) arr[i + 2]);
             if (SegmentType.CLOSE.equals(st)) {
-                mp.getPolygons().add(poly);
+                ret.getShapes().add(poly);
                 poly = new Polygon();
             } else {
                 poly.getVertices().add(new Point(cv1, cv2));
             }
         }
-        return mp;
+        return ret;
     }
 
     @Override
@@ -123,12 +119,11 @@ public class PositionBoundsSamplesFormat extends AbstractResultSetFormat {
         if (o == null) {
             return "";
         }
-        
-        if (o instanceof MultiPolygon) {
-            MultiPolygon mp = (MultiPolygon) o;
-            return mpf.format(mp);
+        if (o instanceof MultiShape) {
+            MultiShape v = (MultiShape) o;
+            return fmt.format(v);
         }
-        // might help debug
-        return o.toString();
+       
+        throw new RuntimeException("invalid type (expected: MultiShape): " + o.getClass().getName());
     }
 }
