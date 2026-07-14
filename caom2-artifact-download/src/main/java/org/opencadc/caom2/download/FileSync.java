@@ -103,7 +103,7 @@ import org.apache.log4j.Logger;
 public class FileSync implements Runnable {
     private static final Logger log = Logger.getLogger(FileSync.class);
 
-    private static final int MAX_THREADS = 16;
+    private static final int MAX_THREADS = 64;
 
     // The number of hours that the validity checker for the current Subject will request ahead to see if the Subject's
     // X500 certificate is about to expire.  This will also be used to update to schedule updates to the Subject's

@@ -194,6 +194,8 @@ public class Main {
             final String configuredRetryAfter = props.getFirstPropertyValue(RETRY_AFTER_CONFIG_KEY);
             final int retryAfter = Integer.parseInt(configuredRetryAfter);
 
+            log.info(THREADS_CONFIG_KEY + " = " + threads);
+            log.info(RETRY_AFTER_CONFIG_KEY + " = " + retryAfter);
             FileSync fileSync = new FileSync(daoConfig, connectionConfig, artifactStore,
                                     storageNamespace, buckets, threads, retryAfter);
             fileSync.run();
