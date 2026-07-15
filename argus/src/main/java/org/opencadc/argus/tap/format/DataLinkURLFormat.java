@@ -72,6 +72,7 @@ package org.opencadc.argus.tap.format;
 import ca.nrc.cadc.auth.AuthMethod;
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.dali.util.Format;
+import ca.nrc.cadc.db.mappers.JdbcMapUtil;
 import ca.nrc.cadc.net.NetUtil;
 import ca.nrc.cadc.reg.Standards;
 import ca.nrc.cadc.reg.client.RegistryClient;
@@ -109,27 +110,28 @@ public class DataLinkURLFormat implements Format<Object>, ResultSetFormat {
 
     @Override
     public Object extract(ResultSet resultSet, int columnIndex) throws SQLException {
-        return toValue(resultSet.getString(columnIndex));
+        return toValue(JdbcMapUtil.getURI(resultSet, columnIndex));
     }
 
     // unit testable
-    String toValue(String suri) {
-        if (suri == null) {
+    URI toValue(Object o) {
+        if (o == null) {
             return null;
         }
         
+        URI uri = (URI) o;
         
-        URL linkURL = getLocalDataLink(suri);
-        if (linkURL != null) {
-            return linkURL.toExternalForm();
+        URI link = getLocalDataLink(uri);
+        if (link != null) {
+            return link;
         }
-        //linkURL = resolvePublisherID(suri);
-        //if (linkURL != null) {
-        //    return linkURL.toExternalForm();
+        //link = resolvePublisherID(suri);
+        //if (link != null) {
+        //    return link;
         //}
 
         // fall through to unresolved
-        return suri;
+        return uri;
     }
 
     @Override
@@ -143,41 +145,30 @@ public class DataLinkURLFormat implements Format<Object>, ResultSetFormat {
     }
 
     // try to resolve the publisherID by looking up the data collection in the registry
-    private URL resolvePublisherID(String publisherID) {
-
-        // TODO: create URI and use scheme + authority + path?
-        int i = publisherID.indexOf('?');
-        if (i <= 0) {
-            return null; // unrecognizable string structure
-        }
-
-        String rid = publisherID.substring(0, i);
+    private URI resolvePublisherID(URI publisherID) {
         try {
-            URI resourceID = new URI(rid);
-            if (!"ivo".equals(resourceID.getScheme())) {
-                throw new RuntimeException("BUG or CONFIG: expected publisherID to have 'ivo' scheme, got: " + resourceID.getScheme());  
-            }
             
+            if (!"ivo".equals(publisherID.getScheme())) {
+                throw new RuntimeException("BUG or CONFIG: expected publisherID to have 'ivo' scheme, got: " + publisherID.getScheme());  
+            }
+            URI resourceID = new URI(publisherID.getScheme(), publisherID.getHost(), publisherID.getPath(), null);
             RegistryClient rc = new RegistryClient();
             Subject caller = AuthenticationUtil.getCurrentSubject();
-            AuthMethod cur = AuthenticationUtil.getAuthMethod(caller);
-            URL baseURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_11, cur);
+            URL baseURL = rc.getServiceURL(resourceID, Standards.DATALINK_LINKS_11);
             if (baseURL == null) {
                 return null; // no aux capability for data collection
             }
             StringBuilder sb = new StringBuilder();
             sb.append(baseURL.toExternalForm());
-            sb.append("?ID=").append(NetUtil.encode(publisherID));
-            return new URL(sb.toString());
+            sb.append("?ID=").append(NetUtil.encode(publisherID.toASCIIString()));
+            return new URI(sb.toString());
         } catch (URISyntaxException ex) {
-            throw new RuntimeException("CONFIG: extracted data collection identifier is not valid URI: " + rid, ex);
-        } catch (MalformedURLException ex) {
             throw new RuntimeException("BUG: failed to generate datalink URL for " + publisherID, ex);
         }
     }
 
     // get the locally configured datalink service from config
-    private URL getLocalDataLink(String publisherID) {
+    private URI getLocalDataLink(URI publisherID) {
         log.warn("getLocalDataLink: " + publisherID + " columnID=" + publisherColumnRef);
         try {
             
@@ -192,9 +183,9 @@ public class DataLinkURLFormat implements Format<Object>, ResultSetFormat {
             }
             StringBuilder sb = new StringBuilder();
             sb.append(baseURL.toExternalForm());
-            sb.append("?ID=").append(NetUtil.encode(publisherID));
-            return new URL(sb.toString());
-        } catch (MalformedURLException ex) {
+            sb.append("?ID=").append(NetUtil.encode(publisherID.toASCIIString()));
+            return new URI(sb.toString());
+        } catch (URISyntaxException ex) {
             throw new RuntimeException("BUG: failed to generate datalink URL for " + publisherID, ex);
         } catch (IOException ex) {
             throw new RuntimeException("CONFIG: failed to read config for " + publisherColumnRef);

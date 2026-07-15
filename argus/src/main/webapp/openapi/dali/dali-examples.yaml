@@ -1,0 +1,73 @@
+head:
+    operationId: probe-examples
+    tags: 
+      - DALI Examples
+    summary: DALI Examples
+    description: |
+        Get standard headers for the resource.
+    responses:
+        '200':
+            $ref: ../vosi/vosi-std-responses.yaml#/authenticated
+        '401':
+            $ref: ../vosi/vosi-std-responses.yaml#/not-authenticated
+        '403':
+            $ref: ../vosi/vosi-std-responses.yaml#/permission-denied
+        '404':
+            $ref: ../vosi/vosi-std-responses.yaml#/not-found
+get:
+    operationId: read-examples
+    tags: 
+      - DALI Examples 
+    summary: DALI Examples
+    description: |
+      Get a browser- and machine-readable document with examples showing 
+      how to use this service
+    responses:
+        '200':
+            $ref: '#/components/schemas/examples'
+        '401':
+            $ref: ../vosi/vosi-std-responses.yaml#/not-authenticated
+        '403':
+            $ref: ../vosi/vosi-std-responses.yaml#/permission-denied
+        '404':
+            $ref: ../vosi/vosi-std-responses.yaml#/not-found
+            
+components:
+    schemas:
+        examples:
+            description: A DALI examples document
+            content:
+                application/xhtml+xml:
+                  schema:
+                    type: object
+                    xml:
+                      name: html
+                      namespace: |
+                        http://www.w3.org/1999/xhtml
+                        http://schema.org
+                  example: |
+                    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.1//EN" "http://w3.org">
+                    <html xmlns="http://www.w3.org/1999/xhtml" xmlns:schema="http://schema.org"
+                          xml:lang="en" lang="en">
+                        <head>
+                            <title>Examples</title>
+                        </head>
+                        <body>
+                            <div vocab="http://www.ivoa.net/rdf/examples#">
+                              <div id="x" resource="#x" typeof="example">
+                                <h2 property="name">Example X</h2>
+                                <p>
+                                  standardID: <span property="capability">ivo://ivoa.net/std/TAP</span>
+                                </p>
+                                <div property="generic-parameter" typeof="keyval">
+                                  <span property="key">MAXREC</span>=<span property="value">100</span>
+                                </div>
+                                <div property="generic-parameter" typeof="keyval">
+                                  <span property="key">QUERY</span>=<pre property="value">
+                                    SELECT * from tap_schema.tables
+                                  </pre>
+                                </div>
+                              </div>
+                            </div>
+                        </body>
+                    </html>

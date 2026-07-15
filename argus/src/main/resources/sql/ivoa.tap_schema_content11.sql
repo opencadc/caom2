@@ -68,7 +68,7 @@ insert into tap_schema.columns11
 ( 'ivoa.ObsCore', 'calib_level', 	'obscore:ObsDataset.calibLevel',
     'calibration level (0,1,2,3)', 'meta.code;obs.calib', NULL, 'int',NULL,NULL, 1,0,1,10),
 ( 'ivoa.ObsCore', 'access_url', 'obscore:Access.Reference',
-    'URL to download the data', 'meta.ref.url', NULL, 'char', '*','clob', 1,0,1,20),
+    'URL to download the data', 'meta.ref.url', NULL, 'char', '*','uri', 1,0,1,20),
 ( 'ivoa.ObsCore', 'access_format', 'obscore:Access.Format',
     'format of the data file(s)', 'meta.code.mime', NULL, 'char','128*',NULL, 1,0,1,21),
 ( 'ivoa.ObsCore', 'access_estsize', 'obscore:Access.Size',

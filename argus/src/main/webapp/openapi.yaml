@@ -14,10 +14,11 @@ servers:
     - url: /argus
 
 tags:
+    - name: TAP Query
+    - name: DALI Examples
     - name: VOSI Capabilities
     - name: VOSI Table Metadata
-    - name: TAP Query
-    
+
 paths:
     /sync:
         $ref: ./openapi/tap/tap-sync.yaml
@@ -37,4 +38,6 @@ paths:
         $ref: ./openapi/vosi/vosi-tableset.yaml
     /tables/{name}:
         $ref: ./openapi/vosi/vosi-table.yaml
-
+        
+    /examples:
+        $ref: ./openapi/dali/dali-examples.yaml
