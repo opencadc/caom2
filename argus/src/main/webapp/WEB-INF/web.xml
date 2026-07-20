@@ -7,7 +7,14 @@
   <display-name>argus</display-name>
   <welcome-file-list>
     <welcome-file>index.html</welcome-file>
+    <welcome-file>index.xhtml</welcome-file>
   </welcome-file-list>
+
+    <!-- for DALI examples -->
+    <mime-mapping>
+        <extension>xhtml</extension>
+        <mime-type>application/xhtml+xml</mime-type>
+    </mime-mapping>
 
     <servlet>
         <servlet-name>logControl</servlet-name>

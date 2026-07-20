@@ -71,6 +71,7 @@ package ca.nrc.cadc.tap.impl;
 
 import ca.nrc.cadc.dali.util.Format;
 import ca.nrc.cadc.tap.TapSelectItem;
+import ca.nrc.cadc.tap.caom2.CaomMultiShapeFormat;
 import ca.nrc.cadc.tap.caom2.DataLinkURLFormat;
 import ca.nrc.cadc.tap.caom2.IntervalFormat;
 import ca.nrc.cadc.tap.caom2.PositionBoundsRegionFormat;
@@ -110,6 +111,15 @@ public class CaomFormatFactory extends PostgreSQLFormatFactory {
         return super.getShapeFormat(columnDesc);
     }
 
+    @Override
+    protected Format<Object> getMultiShapeFormat(TapSelectItem columnDesc) {
+        if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds.samples")) {
+            return new CaomMultiShapeFormat();
+        }
+        return super.getMultiShapeFormat(columnDesc);
+    }
+
+    
     @Override
     protected Format<Object> getMultiPolygonFormat(TapSelectItem columnDesc) {
         if (columnDesc.utype != null && columnDesc.utype.equals("caom2:Plane.position.bounds.samples")) {

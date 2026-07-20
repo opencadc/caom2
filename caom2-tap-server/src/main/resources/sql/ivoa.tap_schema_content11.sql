@@ -110,7 +110,7 @@ insert into tap_schema.columns11 (table_name,column_name,utype,description,ucd,u
     'UCD describing the observable axis (pixel values)', 'meta.ucd', NULL, 'char','32*',NULL, 1,0,1,29 ),
 
 ( 'ivoa.ObsCore', 'access_url', 'obscore:Access.Reference',
-    'URL to download the data', 'meta.ref.url', NULL, 'char', '*','clob', 1,0,1,30 ),
+    'URL to download the data', 'meta.ref.url', NULL, 'char', '*','uri', 1,0,1,30 ),
 ( 'ivoa.ObsCore', 'access_format', 'obscore:Access.Format',
     'format of the data file(s)', 'meta.code.mime', NULL, 'char','128*',NULL, 1,0,1,31 ),
 ( 'ivoa.ObsCore', 'access_estsize', 'obscore:Access.Size',

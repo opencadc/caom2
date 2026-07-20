@@ -135,7 +135,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'provenance_runID', 'responsible entity (e.g. person)', 'caom2:Plane.provenance.runID', NULL, NULL, 'char', '64*', NULL, 0,1,0, 25),
 ( 'caom2.Plane', 'provenance_lastExecuted', 'date this process was last executed', 'caom2:Plane.provenance.lastExecuted', NULL, NULL, 'char', '23*', 'timestamp', 0,0,0 , 26),
 ( 'caom2.Plane', 'provenance_keywords', 'provenance keywords (separated by |)', 'caom2:Plane.provenance.keywords', NULL, NULL, 'char', '*', NULL, 0,0,0 , 27),
-( 'caom2.Plane', 'provenance_inputs', 'inputs of the process that created this plane (space-separated list of Plane URIs)', 'caom2:Plane.provenance.inputs', NULL, NULL, 'char','*','clob', 0,0,0 , 28),
+( 'caom2.Plane', 'provenance_inputs', 'inputs of the process that created this plane (space-separated list of Plane URIs)', 'caom2:Plane.provenance.inputs', NULL, NULL, 'char','*',NULL, 0,0,0 , 28),
 
 ( 'caom2.Plane', 'metrics_sourceNumberDensity', 'number density of sources', 'caom2:Plane.metrics.sourceNumberDensity', NULL, 'deg**-2', 'double', NULL, NULL, 0,0,0 , 30),
 ( 'caom2.Plane', 'metrics_background', 'background intensity', 'caom2:Plane.metrics.background', NULL, 'Jy/pix', 'double', NULL,NULL, 0,0,0 , 31),
@@ -147,7 +147,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'quality_flag', 'flag describing the data quality (possible values: junk)', 'caom2:Plane.quality.flag', NULL, NULL, 'char', '16*', NULL, 0,0,0 , 41),
 
 ( 'caom2.Plane', 'position_bounds', 'positional coverage of the data', 'caom2:Plane.position.bounds', NULL, 'deg', 'char', '*', 'shape', 1,1,1 , 50),
-( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'double', '*', 'multipolygon', 0,0,0 , 50),
+( 'caom2.Plane', 'position_bounds_samples', 'positional coverage of the data', 'caom2:Plane.position.bounds.samples', NULL, 'deg', 'char', '*', 'multishape', 0,0,0 , 50),
 ( 'caom2.Plane', 'position_bounds_size', 'size of the polygon bounds (diameter of minimum spanning circle)', 'caom2:Plane.position.bounds.size', NULL, 'deg', 'double', NULL, NULL, 0,0,0 , 51),
 ( 'caom2.Plane', 'position_resolution', 'median spatial resolution (FWHM)', 'caom2:Plane.position.resolution', NULL, 'arcsec', 'double', NULL, NULL, 0,0,0 , 52),
 ( 'caom2.Plane', 'position_resolutionBounds', 'range of spatial resolution (FWHM) [new in 2.4]', 'caom2:Plane.position.resolutionBounds', NULL, 'arcsec', 'double', '2', 'interval', 0,0,0 , 52),
@@ -157,7 +157,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'position_timeDependent', 'flag indicating that the position is time-dependent (0=false, 1=true)', 'caom2:Plane.position.timeDependent', NULL, NULL, 'int', NULL, NULL, 0,0,0 , 56),
 
 ( 'caom2.Plane', 'energy_bounds', 'energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds', NULL, 'm', 'double', '2','interval', 1,1,1 , 61),
-( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '2x*', 'interval', 0,0,0 , 61),
+( 'caom2.Plane', 'energy_bounds_samples', 'detailed energy coverage (barycentric wavelength)', 'caom2:Plane.energy.bounds.samples', NULL, 'm', 'double', '*', 'multiinterval', 0,0,0 , 61),
 ( 'caom2.Plane', 'energy_bounds_lower', 'lower bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.lower', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 62),
 ( 'caom2.Plane', 'energy_bounds_upper', 'upper bound on energy axis (barycentric wavelength)', 'caom2:Plane.energy.bounds.upper', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 63),
 ( 'caom2.Plane', 'energy_bounds_width', 'width of the energy bounds', 'caom2:Plane.energy.bounds.width', NULL, 'm', 'double', NULL, NULL, 0,0,0 , 64),
@@ -177,7 +177,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Plane', 'energy_restwav', 'rest wavelength of target spectral feature (barycentric)', 'caom2:Plane.energy.restwav', NULL, 'm', 'double', NULL, NULL, 0,1,0 , 75),
 
 ( 'caom2.Plane', 'time_bounds', 'time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds', NULL, 'd', 'double', '2', 'interval', 1,1,1 , 80),
-( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '2x*', 'interval', 0,0,0 , 81),
+( 'caom2.Plane', 'time_bounds_samples', 'detailed time coverage (Modified Julian Day)', 'caom2:Plane.time.bounds.samples', NULL, 'd', 'double', '*', 'multiinterval', 0,0,0 , 81),
 ( 'caom2.Plane', 'time_bounds_lower', 'lower bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.lower', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 81),
 ( 'caom2.Plane', 'time_bounds_upper', 'upper bound on time axis (Modified Julian Day)', 'caom2:Plane.time.bounds.upper', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 82),
 ( 'caom2.Plane', 'time_bounds_width', 'width of the time bounds', 'caom2:Plane.time.bounds.width', NULL, 'd', 'double', NULL, NULL, 0,1,0 , 83),
@@ -192,7 +192,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 
 ( 'caom2.Plane', 'custom_ctype', 'coordinate type for custom axis [new in 2.4]', 'caom2:Plane.custom.ctype', NULL, NULL, 'char', '32*', NULL, 0,0,0 , 100),
 ( 'caom2.Plane', 'custom_bounds', 'custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds', NULL, NULL, 'double', '2', 'interval', 0,0,0 , 101),
-( 'caom2.Plane', 'custom_bounds_samples', 'detailed custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds.samples', NULL, NULL, 'double', '2x*', 'interval', 0,0,0 , 102),
+( 'caom2.Plane', 'custom_bounds_samples', 'detailed custom axis coverage [new in 2.4]', 'caom2:Plane.custom.bounds.samples', NULL, NULL, 'double', '*', 'multiinterval', 0,0,0 , 102),
 ( 'caom2.Plane', 'custom_bounds_lower', 'lower bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.lower', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 103),
 ( 'caom2.Plane', 'custom_bounds_upper', 'upper bound on custom axis [new in 2.4]', 'caom2:Plane.custom.bounds.upper', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 104),
 ( 'caom2.Plane', 'custom_bounds_width', 'width of the custom bounds [new in 2.4]', 'caom2:Plane.custom.bounds.width', NULL, NULL, 'double', NULL, NULL, 0,0,0 , 105),
@@ -279,7 +279,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'position_axis_range_end_coord1_val', 'coordinate range for position axis', 'caom2:Chunk.position.axis.range.end.coord1.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 35),
 ( 'caom2.Chunk', 'position_axis_range_end_coord2_pix', 'coordinate range for position axis', 'caom2:Chunk.position.axis.range.end.coord2.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 36),
 ( 'caom2.Chunk', 'position_axis_range_end_coord2_val', 'coordinate range for position axis', 'caom2:Chunk.position.axis.range.end.coord2.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 37),
-( 'caom2.Chunk', 'position_axis_bounds', 'coordinate bounds for position axis (string-encoded)', 'caom2:Chunk.position.axis.bounds', NULL, NULL, 'char', NULL, NULL, 1,0,0 , 38),
+( 'caom2.Chunk', 'position_axis_bounds', 'coordinate bounds for position axis (string-encoded)', 'caom2:Chunk.position.axis.bounds', NULL, NULL, 'char', '*', NULL, 1,0,0 , 38),
 ( 'caom2.Chunk', 'position_axis_function_dimension_naxis1', 'coordinate function for position axis', 'caom2:Chunk.position.axis.function.dimension.naxis1', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 39),
 ( 'caom2.Chunk', 'position_axis_function_dimension_naxis2', 'coordinate function for position axis', 'caom2:Chunk.position.axis.function.dimension.naxis2', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 40),
 ( 'caom2.Chunk', 'position_axis_function_refCoord_coord1_pix', 'coordinate function for position axis', 'caom2:Chunk.position.axis.function.refCoord.coord1.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 41),
@@ -299,7 +299,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'energy_axis_range_start_val', 'coordinate range for energy axis', 'caom2:Chunk.energy.axis.range.start.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 65),
 ( 'caom2.Chunk', 'energy_axis_range_end_pix', 'coordinate range for energy axis', 'caom2:Chunk.energy.axis.range.end.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 66),
 ( 'caom2.Chunk', 'energy_axis_range_end_val', 'coordinate range for energy axis', 'caom2:Chunk.energy.axis.range.end.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 67),
-( 'caom2.Chunk', 'energy_axis_bounds', 'coordinate bounds for energy axis (string-encoded)', 'caom2:Chunk.energy.axis.bounds', NULL, NULL, 'char', NULL, NULL, 1,0,0 , 68),
+( 'caom2.Chunk', 'energy_axis_bounds', 'coordinate bounds for energy axis (string-encoded)', 'caom2:Chunk.energy.axis.bounds', NULL, NULL, 'char', '*', NULL, 1,0,0 , 68),
 ( 'caom2.Chunk', 'energy_axis_function_naxis', 'coordinate function for energy axis', 'caom2:Chunk.energy.axis.function.naxis', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 69),
 ( 'caom2.Chunk', 'energy_axis_function_refCoord_pix', 'coordinate function for energy axis', 'caom2:Chunk.energy.axis.function.refCoord.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 70),
 ( 'caom2.Chunk', 'energy_axis_function_refCoord_val', 'coordinate function for energy axis', 'caom2:Chunk.energy.axis.function.refCoord.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 71),
@@ -325,7 +325,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'time_axis_range_start_val', 'coordinate range for time axis', 'caom2:Chunk.time.axis.range.start.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 104),
 ( 'caom2.Chunk', 'time_axis_range_end_pix', 'coordinate range for time axis', 'caom2:Chunk.time.axis.range.end.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 105),
 ( 'caom2.Chunk', 'time_axis_range_end_val', 'coordinate range for time axis', 'caom2:Chunk.time.axis.range.end.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 106),
-( 'caom2.Chunk', 'time_axis_bounds', 'coordinate bounds for time axis (string-encoded)', 'caom2:Chunk.time.axis.bounds', NULL, NULL, 'char', NULL, NULL, 1,0,0 , 107),
+( 'caom2.Chunk', 'time_axis_bounds', 'coordinate bounds for time axis (string-encoded)', 'caom2:Chunk.time.axis.bounds', NULL, NULL, 'char', '*', NULL, 1,0,0 , 107),
 ( 'caom2.Chunk', 'time_axis_function_naxis', 'coordinate function for time axis', 'caom2:Chunk.time.axis.function.naxis', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 108),
 ( 'caom2.Chunk', 'time_axis_function_refCoord_pix', 'coordinate function for time axis', 'caom2:Chunk.time.axis.function.refCoord.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 109),
 ( 'caom2.Chunk', 'time_axis_function_refCoord_val', 'coordinate function for time axis', 'caom2:Chunk.time.axis.function.refCoord.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 110),
@@ -344,7 +344,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'polarization_axis_range_start_val', 'coordinate range for time axis', 'caom2:Chunk.polarization.axis.range.start.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 145),
 ( 'caom2.Chunk', 'polarization_axis_range_end_pix', 'coordinate range for time axis', 'caom2:Chunk.polarization.axis.range.end.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 146),
 ( 'caom2.Chunk', 'polarization_axis_range_end_val', 'coordinate range for time axis', 'caom2:Chunk.polarization.axis.range.end.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 147),
-( 'caom2.Chunk', 'polarization_axis_bounds', 'coordinate bounds for polarization axis (string-encoded)', 'caom2:Chunk.polarization.axis.bounds', NULL, NULL, 'char', NULL, NULL, 1,0,0 , 148),
+( 'caom2.Chunk', 'polarization_axis_bounds', 'coordinate bounds for polarization axis (string-encoded)', 'caom2:Chunk.polarization.axis.bounds', NULL, NULL, 'char', '*', NULL, 1,0,0 , 148),
 ( 'caom2.Chunk', 'polarization_axis_function_naxis', 'coordinate function for polarization axis', 'caom2:Chunk.polarization.axis.function.naxis', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 149),
 ( 'caom2.Chunk', 'polarization_axis_function_refCoord_pix', 'coordinate function for polarization axis', 'caom2:Chunk.polarization.axis.function.refCoord.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 150),
 ( 'caom2.Chunk', 'polarization_axis_function_refCoord_val', 'coordinate function for polarization axis', 'caom2:Chunk.polarization.axis.function.refCoord.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 151),
@@ -358,7 +358,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,utype,ucd,u
 ( 'caom2.Chunk', 'custom_axis_range_start_val', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.start.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 165),
 ( 'caom2.Chunk', 'custom_axis_range_end_pix', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.end.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 166),
 ( 'caom2.Chunk', 'custom_axis_range_end_val', 'coordinate range for time axis [new in 2.4]', 'caom2:Chunk.custom.axis.range.end.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 167),
-( 'caom2.Chunk', 'custom_axis_bounds', 'coordinate bounds for custom axis (string-encoded) [new in 2.4]', 'caom2:Chunk.custom.axis.bounds', NULL, NULL, 'char', NULL, NULL, 1,0,0 , 168),
+( 'caom2.Chunk', 'custom_axis_bounds', 'coordinate bounds for custom axis (string-encoded) [new in 2.4]', 'caom2:Chunk.custom.axis.bounds', NULL, NULL, 'char', '*', NULL, 1,0,0 , 168),
 ( 'caom2.Chunk', 'custom_axis_function_naxis', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.naxis', NULL, NULL, 'long', NULL, NULL, 1,0,0 , 169),
 ( 'caom2.Chunk', 'custom_axis_function_refCoord_pix', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.refCoord.pix', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 170),
 ( 'caom2.Chunk', 'custom_axis_function_refCoord_val', 'coordinate function for custom axis [new in 2.4]', 'caom2:Chunk.custom.axis.function.refCoord.val', NULL, NULL, 'double', NULL, NULL, 1,0,0 , 171),
@@ -453,7 +453,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 ( 'caom2.SIAv1', 'publisherDID', 	'unique product identifier', 	'VOX:Image_Title', NULL, NULL, 	'char', '128*', NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'instrument_name', 	'name of the instrument used to collect the data', 	'INST_ID', NULL, NULL, 	'char', '128*',NULL, 1,1,1 ),
 
-( 'caom2.SIAv1', 'position_bounds', 'positional coverage of the data', NULL, 'caom2:Plane.position.bounds', 'deg', 'char', '*', 'caom2:shape', 0,0,0),
+( 'caom2.SIAv1', 'position_bounds', 'positional coverage of the data', NULL, 'caom2:Plane.position.bounds', 'deg', 'char', '*', 'shape', 0,0,0),
 
 ( 'caom2.SIAv1', 'position_center_ra', 	'RA of central coordinates', 				'POS_EQ_RA_MAIN', NULL, 'deg', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'position_center_dec', 'DEC of central coordinates', 				'POS_EQ_DEC_MAIN', NULL, 'deg', 	'double', NULL, NULL, 1,1,1 ),
@@ -473,7 +473,7 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 ( 'caom2.SIAv1', 'time_exposure', 	'actual exposure time', 				'time.duration;obs.exposure', NULL, 's', 'double', NULL, NULL, 1,1,0 ),
 
 ( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, NULL, 'char', '*', NULL, 1,0,1 ),
-( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, NULL, 'char', '*', 'clob', 1,0,1 ),
+( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, NULL, 'char', '*', 'uri', 1,0,1 ),
 
 ( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 ),
 ( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 )
