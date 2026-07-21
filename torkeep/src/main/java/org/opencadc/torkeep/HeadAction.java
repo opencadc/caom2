@@ -96,32 +96,30 @@ public class HeadAction extends RepoAction {
         URI uri = getObservationURI();
 
         log.debug("START: " + uri);
-        if (uri == null) {
-            // TODO: method not supported on base endpoint
-            throw new IllegalArgumentException("HEAD requires a URI in the path");
-        }
-        ObservationDAO dao = getDAO();
-        log.debug("getState: " + uri);
-        ObservationState state = dao.getState(uri);
-        log.debug("found state: " + state);
+        if (uri != null) {
+            ObservationDAO dao = getDAO();
+            log.debug("getState: " + uri);
+            ObservationState state = dao.getState(uri);
+            log.debug("found state: " + state);
         
-        // permission check: ignoring Observation.metaReadGroups for now
-        Date now = new Date();
-        if (state != null && state.metaRelease != null && state.metaRelease.before(now)) {
-            DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
-            logInfo.setGrant("metaRelease: " + df.format(state.metaRelease));
-        } else {
-            // check configured permissions
-            checkReadPermission();
+            // permission check: ignoring Observation.metaReadGroups for now
+            Date now = new Date();
+            if (state != null && state.metaRelease != null && state.metaRelease.before(now)) {
+                DateFormat df = DateUtil.getDateFormat(DateUtil.IVOA_DATE_FORMAT, DateUtil.UTC);
+                logInfo.setGrant("metaRelease: " + df.format(state.metaRelease));
+            } else {
+                // check configured permissions
+                checkReadPermission();
+            }
+            
+            if (state == null) {
+                throw new ResourceNotFoundException("not found: " + uri);
+            }
+            syncOutput.setHeader("x-entity-id", state.getID().toString());
+            syncOutput.setHeader("etag", state.getAccMetaChecksum());
+            syncOutput.setLastModified(state.getMaxLastModified());
         }
         
-        if (state == null) {
-            throw new ResourceNotFoundException("not found: " + uri);
-        }
-        
-        syncOutput.setHeader("x-entity-id", state.getID().toString());
-        syncOutput.setHeader("etag", state.getAccMetaChecksum());
-        syncOutput.setLastModified(state.getMaxLastModified());
         syncOutput.setCode(200);
     }
 }
