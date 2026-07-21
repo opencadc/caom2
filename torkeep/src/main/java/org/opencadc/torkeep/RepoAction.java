@@ -81,6 +81,7 @@ import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.reg.client.LocalAuthority;
 import ca.nrc.cadc.rest.InlineContentHandler;
 import ca.nrc.cadc.rest.RestAction;
+import ca.nrc.cadc.rest.Version;
 import com.csvreader.CsvWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -96,6 +97,7 @@ import java.util.Date;
 import java.util.Map;
 import javax.security.auth.Subject;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.opencadc.caom2.Artifact;
 import org.opencadc.caom2.Observation;
 import org.opencadc.caom2.Plane;
@@ -136,6 +138,12 @@ public abstract class RepoAction extends RestAction {
 
     protected RepoAction() {
         super();
+    }
+
+    @Override
+    protected String getServerImpl() {
+        Version v = getVersionFromResource();
+        return "caom2/torkeep-" + v.getVersion();
     }
 
     private void initTarget() {
@@ -365,7 +373,7 @@ public abstract class RepoAction extends RestAction {
                 grantURI = URI.create(base + getCollection() + "?");
             }
         }
-        log.warn("authorizing: " + grantURI);
+        log.debug("authorizing: " + grantURI);
         
         Subject subject = AuthenticationUtil.getCurrentSubject();
         boolean operators = !tc.archiveOperators.isEmpty() || !tc.metaSyncOperators.isEmpty();
@@ -414,15 +422,17 @@ public abstract class RepoAction extends RestAction {
         AuthorizationToken tok = getAuthorizationToken(subject);
         if (tok != null && authAPI != null && permAPI != null) {
             String srv = PAPI_SRV;
-            String route = "/observations/" + syncInput.getPath();
+            String route = "/observations/{collection}";
+            final JSONObject jsonBody = new JSONObject();
+            jsonBody.put("collection", syncInput.getPath());
             
-            log.warn("call papi: " + permAPI + " service=" + srv + " route=" + route + " method=GET");
+            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " body=" + jsonBody + " method=GET");
             PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
                     srv, route,
                     tok.getCredentials(), // ignores token domains and scope
-                    "GET", null, "1");
-            log.warn("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
+                    "GET", jsonBody, "1");
+            log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
                 logInfo.setGrant("read: " + permAPI.toASCIIString());
@@ -457,7 +467,7 @@ public abstract class RepoAction extends RestAction {
         } else {
             grantURI = URI.create("caom:" + getCollection() + "/");
         }
-        log.warn("authorizing: " + grantURI);
+        log.debug("authorizing: " + grantURI);
 
         Subject subject = AuthenticationUtil.getCurrentSubject();
         boolean operators = !tc.archiveOperators.isEmpty();
@@ -497,13 +507,13 @@ public abstract class RepoAction extends RestAction {
         if (tok != null && authAPI != null && permAPI != null) {
             String srv = PAPI_SRV;
             String route = "/observations/" + syncInput.getPath();
-            log.warn("call papi: " + permAPI + " service=" + srv + " route=" + route + " method=" + method);
+            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " method=" + method);
             PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
                     srv, route, 
                     tok.getCredentials(), // ignores token domains and scope
                     method, null, "1");
-            log.warn("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
+            log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
                 logInfo.setGrant("write: " + permAPI.toASCIIString());

@@ -101,15 +101,14 @@ public class DataLinkURLFormatterTest {
     @Test
     public final void testNull() {
         log.debug("testNull");
-
+        DataLinkURLFormat formatter = new DataLinkURLFormat("ivoaPublisherID");
         try {
             System.setProperty(TEST_CONFIG_DIR, "src/test/resources");
             
             Subject s = new Subject();
             s.getPublicCredentials().add(AuthMethod.ANON);
-            String surl = Subject.doAs(s, new FormatAction(null));
-            log.info("datalink URL: " + surl);
-            Assert.assertNull(surl);
+            URI url = formatter.toValue(null);
+            Assert.assertNull(url);
         } catch (Exception unexpected) {
             log.error("unexpected exception: ", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
@@ -121,35 +120,21 @@ public class DataLinkURLFormatterTest {
     @Test
     public final void testNotNull() {
         log.debug("testNotNull");
-
+        DataLinkURLFormat formatter = new DataLinkURLFormat("ivoaPublisherID");
         try {
             System.setProperty(TEST_CONFIG_DIR, "src/test/resources");
             
             Subject s = new Subject();
             s.getPublicCredentials().add(AuthMethod.ANON);
-            String surl = Subject.doAs(s, new FormatAction(uri.toASCIIString()));
-            Assert.assertNotNull(surl);
-            log.info("datalink URL: " + surl);
-            Assert.assertEquals(uri.toASCIIString(), surl); // fall through
+            URI val = formatter.toValue(uri);
+            Assert.assertNotNull(val);
+            log.info("datalink URL: " + val);
+            Assert.assertEquals(uri, val);
         } catch (Exception unexpected) {
             log.error("unexpected exception: ", unexpected);
             Assert.fail("unexpected exception: " + unexpected);
         }  finally {
             System.clearProperty(TEST_CONFIG_DIR);
-        }
-    }
-
-    private static class FormatAction implements PrivilegedExceptionAction<String> {
-
-        String val;
-
-        FormatAction(String val) {
-            this.val = val;
-        }
-
-        public String run() throws Exception {
-            DataLinkURLFormat formatter = new DataLinkURLFormat("ivoaPublisherID");
-            return formatter.toValue(val);
         }
     }
 }

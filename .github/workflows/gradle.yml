@@ -16,43 +16,51 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: 11
-  
+
+# only build the CAOM-2.5 changes
+
     - name: build and test caom2
       run: cd caom2 && ../gradlew --info clean build javadoc checkstyleMain install
       
     - name: build and test caom2-compute
       run: cd caom2-compute && ../gradlew --info clean assemble javadoc checkstyleMain install
     
+    - name: build and test caom2-db
+      run: cd caom2-db && ../gradlew --info clean build javadoc checkstyleMain install
+    
+# not version specific
     - name: build and test caom2-artifact-resolvers
       run: cd caom2-artifact-resolvers && ../gradlew --info clean assemble javadoc checkstyleMain install
 
     - name: build and test caom2-validator
       run: cd caom2-validator && ../gradlew --info clean build
 
-    - name: build and test caom2-access-control
-      run: cd caom2-access-control && ../gradlew --info clean build javadoc checkstyleMain install
+#    - name: build and test caom2-access-control
+#      run: cd caom2-access-control && ../gradlew --info clean build javadoc checkstyleMain install
 
-    - name: build and test caom2-repo
-      run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
-
-    - name: build and test caom2-db
-      run: cd caom2-db && ../gradlew --info clean build javadoc checkstyleMain install
+# not ported yet
+#    - name: build and test caom2-repo
+#      run: cd caom2-repo && ../gradlew --info clean build javadoc checkstyleMain install
       
+# not version specific
     - name: build and test caom2-artifact-store-si
       run: cd caom2-artifact-store-si && ../gradlew --info clean build javadoc checkstyleMain install
       
-    - name: build and test caom2-collection-validator
-      run: cd caom2-collection-validator && ../gradlew --info clean build javadoc checkstyleMain
+# not ported yet
+#    - name: build and test caom2-collection-validator
+#      run: cd caom2-collection-validator && ../gradlew --info clean build javadoc checkstyleMain
 
 #    - name: build and test caom2-remove
 #      run: cd caom2-remove && ../gradlew --info clean build javadoc checkstyleMain
 
-    - name: build and test caom2-tap
-      run: cd caom2-tap && ../gradlew clean build javadoc install
+# not ported yet
+#    - name: build and test caom2-tap
+#      run: cd caom2-tap && ../gradlew clean build javadoc install
 
 ## applications
-    - name: build and test icewind 
-      run: cd icewind && ../gradlew --info clean build checkstyleMain
+# not ported yet
+#    - name: build and test icewind 
+#      run: cd icewind && ../gradlew --info clean build checkstyleMain
 
     - name: build and test torkeep 
       run: cd torkeep && ../gradlew --info clean build checkstyleMain
@@ -60,12 +68,13 @@ jobs:
     - name: build and test argus 
       run: cd argus && ../gradlew --info clean build checkstyleMain
 
-    - name: build and test bifrost 
-      run: cd bifrost && ../gradlew --info clean build checkstyleMain
+# not ported yet
+#    - name: build and test bifrost 
+#      run: cd bifrost && ../gradlew --info clean build checkstyleMain
 
-    - name: build and test caom2-artifact-discover
-      run: cd caom2-artifact-discover && ../gradlew --info clean build checkstyleMain
+#    - name: build and test caom2-artifact-discover
+#      run: cd caom2-artifact-discover && ../gradlew --info clean build checkstyleMain
       
-    - name: build and test caom2-artifact-download 
-      run: cd caom2-artifact-download && ../gradlew --info clean build checkstyleMain
+#    - name: build and test caom2-artifact-download 
+#      run: cd caom2-artifact-download && ../gradlew --info clean build checkstyleMain
 

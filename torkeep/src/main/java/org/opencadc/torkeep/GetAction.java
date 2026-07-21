@@ -179,6 +179,10 @@ public class GetAction extends RepoAction {
 
     private Output getObservationWriter(String mt) throws UnsupportedOperationException {
         Output ret = new Output();
+        // default: XML
+        ret.ow = new ObservationWriter();
+        ret.contentType = CAOM_XML_MIMETYPE;
+
         if (JSON_MIMETYPE.equals(mt) || CAOM_JSON_MIMETYPE.equals(mt)) {
             ret.ow = new JsonWriter(true);
             ret.contentType = mt;
@@ -187,11 +191,6 @@ public class GetAction extends RepoAction {
             ret.ow = new ObservationWriter();
             ret.contentType = mt;
         }
-        // ignore unsupported format request
-        // default: XML
-        ret.ow = new ObservationWriter();
-        ret.contentType = CAOM_XML_MIMETYPE;
-        
         return ret;
     }
 
