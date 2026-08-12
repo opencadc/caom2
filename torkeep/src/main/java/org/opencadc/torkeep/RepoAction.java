@@ -506,13 +506,16 @@ public abstract class RepoAction extends RestAction {
         AuthorizationToken tok = getAuthorizationToken(subject);
         if (tok != null && authAPI != null && permAPI != null) {
             String srv = PAPI_SRV;
-            String route = "/observations/" + syncInput.getPath();
-            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " method=" + method);
+            String route = "/observations/{collection}/{observationID}";
+            final JSONObject jsonBody = new JSONObject();
+            jsonBody.put("collection", getCollection());
+            jsonBody.put("observationID", getObservationURI() != null ? getObservationURI().toASCIIString() : null);
+            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " body=" + jsonBody + " method=" + method);
             PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
-                    srv, route, 
+                    srv, route,
                     tok.getCredentials(), // ignores token domains and scope
-                    method, null, "1");
+                    method, jsonBody, "1");
             log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
