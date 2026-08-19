@@ -282,6 +282,7 @@ public abstract class RepoAction extends RestAction {
         initTarget();
         return collection;
     }
+    
 
     public String getNamespace() {
         return namespace;
@@ -431,7 +432,8 @@ public abstract class RepoAction extends RestAction {
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
                     srv, route,
                     tok.getCredentials(), // ignores token domains and scope
-                    "GET", jsonBody, "1");
+                    "GET", jsonBody, "1", 
+                    false); // no token exchange
             log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
@@ -506,13 +508,17 @@ public abstract class RepoAction extends RestAction {
         AuthorizationToken tok = getAuthorizationToken(subject);
         if (tok != null && authAPI != null && permAPI != null) {
             String srv = PAPI_SRV;
-            String route = "/observations/" + syncInput.getPath();
-            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " method=" + method);
+            String hackMethod = "GET"; // tmp to test
+            String route = "/observations/{collection}";
+            final JSONObject jsonBody = new JSONObject();
+            jsonBody.put("collection", getCollection());
+            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " body=" + jsonBody + " method=" + method);
             PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
-                    srv, route, 
+                    srv, route,
                     tok.getCredentials(), // ignores token domains and scope
-                    method, null, "1");
+                    hackMethod, jsonBody, "1",
+                    false); // no token exchange
             log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);

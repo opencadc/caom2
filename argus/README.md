@@ -92,7 +92,8 @@ The following _ID_ values are available in CAOM, with the suggested use:
 |ID|column|intended usage|
 |--|:----:|:------------:|
 |caomPublisherID|caom2.Plane.publisherID|inject DataLink "links" descriptor|
-|caomArtifactID|caom2.Artifact.uri|experimental: link to direct data access service|
+|ivoaPublisherID|ivoa.ObsCore.obs_publisher_did|inject DataLink "links" descriptor|
+|caomArtifactURI|caom2.Artifact.uri|experimental: link to direct data access service|
 |caomObservationURI|caom2.Observation.observationURI|experimental: link to complete observation metadata|
 
 To enable injection of resources, a VOTable xml file named `{ID}.xml` is added to the config
