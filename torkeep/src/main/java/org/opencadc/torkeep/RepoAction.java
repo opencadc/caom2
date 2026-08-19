@@ -432,7 +432,8 @@ public abstract class RepoAction extends RestAction {
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
                     srv, route,
                     tok.getCredentials(), // ignores token domains and scope
-                    "GET", jsonBody, "1");
+                    "GET", jsonBody, "1", 
+                    false); // no token exchange
             log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
@@ -516,7 +517,8 @@ public abstract class RepoAction extends RestAction {
             AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
                     srv, route,
                     tok.getCredentials(), // ignores token domains and scope
-                    hackMethod, jsonBody, "1");
+                    hackMethod, jsonBody, "1",
+                    false); // no token exchange
             log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
             if (authorisationResult.isAuthorised) {
                 logInfo.setResource(grantURI);
