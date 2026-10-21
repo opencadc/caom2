@@ -557,8 +557,8 @@ public abstract class RepoAction extends RestAction {
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry collectionEntry = tc.getConfig(obs.getCollection());
         String basePublisherID = null;
-        if (collectionEntry != null) {
-            basePublisherID = collectionEntry.getBasePublisherID().toASCIIString();
+        if (collectionEntry != null && collectionEntry.basePublisherID != null) {
+            basePublisherID = collectionEntry.basePublisherID.toASCIIString();
         }
         assignPublisherID(obs, basePublisherID);
     }

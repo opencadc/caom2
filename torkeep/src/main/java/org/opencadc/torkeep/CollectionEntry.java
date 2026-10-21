@@ -76,16 +76,16 @@ import java.util.List;
 public class CollectionEntry {
     private final String collection;
     private final String obsIdentifierPrefix;
-    private final URI basePublisherID;
     private final List<String> validationPolicy = new ArrayList<>();
-    
+
+    public URI basePublisherID;
+
     public boolean computeMetadata;
     public boolean proposalGroup;
 
-    public CollectionEntry(String collection, String obsIdentifierPrefix, URI basePublisherID) {
+    public CollectionEntry(String collection, String obsIdentifierPrefix) {
         this.collection = collection;
         this.obsIdentifierPrefix = obsIdentifierPrefix;
-        this.basePublisherID = basePublisherID;
     }
 
     public String getCollection() {

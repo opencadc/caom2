@@ -228,7 +228,8 @@ public class TorkeepConfig {
                 continue;
             }
 
-            CollectionEntry cc = new CollectionEntry(collection, obsIdentifierPrefix, basePublisherID);
+            CollectionEntry cc = new CollectionEntry(collection, obsIdentifierPrefix);
+            cc.basePublisherID = basePublisherID;
             cc.computeMetadata = computeMetadata;
             cc.proposalGroup = proposalGroup;
             if (vp != null) {
@@ -287,7 +288,7 @@ public class TorkeepConfig {
 
     private URI getBasePublisherID(MultiValuedProperties properties, String key, StringBuilder errors) {
         URI basePublisherID = null;
-        String basePublisherIDValue = getProperty(properties, key, errors, true);
+        String basePublisherIDValue = getProperty(properties, key, errors, false);
         if (basePublisherIDValue != null) {
             try {
                 basePublisherID = new URI(basePublisherIDValue);
