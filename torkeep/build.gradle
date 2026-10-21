@@ -29,7 +29,7 @@ dependencies {
 
     implementation 'net.sourceforge.javacsv:javacsv:2.0'
 
-    implementation 'org.opencadc:cadc-permissions-client:[0.4.1,1.0)'
+    implementation 'org.opencadc:cadc-permissions-client:[0.4.2,1.0)'
     implementation 'org.opencadc:caom2:[2.5.0,2.6)'
     implementation 'org.opencadc:cadc-util:[1.13.0,2.0)'
     implementation 'org.opencadc:cadc-rest:[1.4.7,)'

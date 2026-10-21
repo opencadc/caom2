@@ -71,6 +71,7 @@ package org.opencadc.torkeep;
 
 import ca.nrc.cadc.auth.AuthenticationUtil;
 import ca.nrc.cadc.auth.AuthorizationToken;
+import ca.nrc.cadc.auth.NotAuthenticatedException;
 import ca.nrc.cadc.caom2.compute.CaomWCSValidator;
 import ca.nrc.cadc.caom2.compute.ComputeUtil;
 import ca.nrc.cadc.date.DateUtil;
@@ -116,7 +117,7 @@ import org.opencadc.permissions.client.srcnet.PermissionsAPIClient;
 public abstract class RepoAction extends RestAction {
     private static final Logger log = Logger.getLogger(RepoAction.class);
 
-    // copied from cavern and hard coded for now
+    // TODO: hard coded for now but should be configurable
     private static final String PAPI_SRV = "science-metadata";
     
     static final String CAOM_XML_MIMETYPE = "application/x-caom+xml";
@@ -422,23 +423,34 @@ public abstract class RepoAction extends RestAction {
         URI permAPI = loc.getResourceID(PAPI.STD_PERM_API);
         AuthorizationToken tok = getAuthorizationToken(subject);
         if (tok != null && authAPI != null && permAPI != null) {
-            String srv = PAPI_SRV;
+            // assumption: service name and audience currently the same generic string
+            //boolean tokenExchange = !tok.getAudience().contains(PAPI_SRV); 
+            boolean tokenExchange = false; // let PAPI decide if audience is acceptable
             String route = "/observations/{collection}";
             final JSONObject jsonBody = new JSONObject();
             jsonBody.put("collection", syncInput.getPath());
             
-            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " body=" + jsonBody + " method=GET");
-            PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
-            AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
-                    srv, route,
-                    tok.getCredentials(), // ignores token domains and scope
-                    "GET", jsonBody, "1", 
-                    false); // no token exchange
-            log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
-            if (authorisationResult.isAuthorised) {
-                logInfo.setResource(grantURI);
-                logInfo.setGrant("read: " + permAPI.toASCIIString());
-                return;
+            try {
+                log.debug("call papi: " + permAPI + " service=" + PAPI_SRV + " route=" + route
+                        + " method=GET" + " exchange=" + tokenExchange + " body=" + jsonBody);
+                PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
+                AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
+                        PAPI_SRV, route,
+                        tok.getCredentials(), // ignores token domains and scope
+                        "GET", jsonBody, "1", 
+                        tokenExchange);
+                log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
+                if (authorisationResult.isAuthorised) {
+                    logInfo.setResource(grantURI);
+                    logInfo.setGrant("read: " + permAPI.toASCIIString());
+                    return;
+                }
+            } catch (NotAuthenticatedException ex) {
+                throw new PermissionDeniedException("token rejected by " + permAPI.toASCIIString()
+                        + " reason: " + ex.toString());
+            } catch (Exception unexpected) {
+                log.error("failed to call PAPI", unexpected);
+                throw unexpected;
             }
         }
         
@@ -507,24 +519,35 @@ public abstract class RepoAction extends RestAction {
         URI permAPI = loc.getResourceID(PAPI.STD_PERM_API);
         AuthorizationToken tok = getAuthorizationToken(subject);
         if (tok != null && authAPI != null && permAPI != null) {
-            String srv = PAPI_SRV;
-            String hackMethod = "GET"; // tmp to test
+            // assumption: service name and audience currently the same generic string
+            //boolean tokenExchange = !tok.getAudience().contains(PAPI_SRV); 
+            boolean tokenExchange = false; // let PAPI decide if audience is acceptable
             String route = "/observations/{collection}";
             final JSONObject jsonBody = new JSONObject();
             jsonBody.put("collection", getCollection());
-            log.debug("call papi: " + permAPI + " service=" + srv + " route=" + route + " body=" + jsonBody + " method=" + method);
-            PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
-            AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
-                    srv, route,
-                    tok.getCredentials(), // ignores token domains and scope
-                    hackMethod, jsonBody, "1",
-                    false); // no token exchange
-            log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
-            if (authorisationResult.isAuthorised) {
-                logInfo.setResource(grantURI);
-                logInfo.setGrant("write: " + permAPI.toASCIIString());
-                return;
+            try {
+                log.debug("call papi: " + permAPI + " service=" + PAPI_SRV + " route=" + route
+                        + " method=" + method + " exchange=" + tokenExchange + " body=" + jsonBody);
+                PermissionsAPIClient permissionsAPIClient = new PermissionsAPIClient(permAPI.toURL(), authAPI.toURL());
+                AuthorisationResult authorisationResult = permissionsAPIClient.authoriseRoute(
+                        PAPI_SRV, route,
+                        tok.getCredentials(), // ignores token domains and scope
+                        method, jsonBody, "1",
+                        tokenExchange); // no token exchange
+                log.debug("papi: authorised=" + authorisationResult.isAuthorised + " route=" + route);
+                if (authorisationResult.isAuthorised) {
+                    logInfo.setResource(grantURI);
+                    logInfo.setGrant("write: " + permAPI.toASCIIString());
+                    return;
+                }
+            } catch (NotAuthenticatedException ex) {
+                throw new PermissionDeniedException("token rejected by " + permAPI.toASCIIString()
+                        + " reason: " + ex.toString());
+            } catch (Exception unexpected) {
+                log.error("failed to call PAPI", unexpected);
+                throw unexpected;
             }
+                
         }
         
         throw new PermissionDeniedException("permission denied");
@@ -534,8 +557,8 @@ public abstract class RepoAction extends RestAction {
         TorkeepConfig tc = getTorkeepConfig();
         CollectionEntry collectionEntry = tc.getConfig(obs.getCollection());
         String basePublisherID = null;
-        if (collectionEntry != null) {
-            basePublisherID = collectionEntry.getBasePublisherID().toASCIIString();
+        if (collectionEntry != null && collectionEntry.basePublisherID != null) {
+            basePublisherID = collectionEntry.basePublisherID.toASCIIString();
         }
         assignPublisherID(obs, basePublisherID);
     }
