@@ -23,6 +23,9 @@ create view <schema>.SIAv1
 -- private
     position_bounds_spoly,
 
+-- unsupported columns with NULLs
+    stc_ref_frame, stc_coord_proj, stc_coord_ref_pix, stc_coord_ref_val, stc_cd_matrix, stc_pix_flags,
+
 -- CAOM read access
     metaRelease, dataRelease, metaReadAccessGroups,
     planeID
@@ -50,6 +53,8 @@ a.uri,
 a.contentType,
 
 p.position_bounds_spoly,
+
+NULL::text, NULL::text, NULL::double precision[], NULL::double precision[], NULL::double precision[], NULL::text,
 
 p.metaRelease, p.dataRelease, p.metaReadAccessGroups,
 p.planeID

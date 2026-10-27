@@ -450,8 +450,8 @@ insert into tap_schema.tables11 (schema_name,table_name,table_type,description,u
 
 insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,unit,datatype,arraysize,xtype,principal,indexed,std) values
 ( 'caom2.SIAv1', 'collection', 		'data collection this observation belongs to', 		NULL, NULL, NULL, 			'char', '32*',NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'publisherDID', 	'unique product identifier', 	'VOX:Image_Title', NULL, NULL, 	'char', '128*', NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'instrument_name', 	'name of the instrument used to collect the data', 	'INST_ID', NULL, NULL, 	'char', '128*',NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'publisherDID', 	'unique product identifier', 	'VOX:Image_Title', NULL, NULL, 	'char', '*', NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'instrument_name', 	'name of the instrument used to collect the data', 	'INST_ID', NULL, NULL, 	'char', '*',NULL, 1,1,1 ),
 
 ( 'caom2.SIAv1', 'position_bounds', 'positional coverage of the data', NULL, 'caom2:Plane.position.bounds', 'deg', 'char', '*', 'shape', 0,0,0),
 
@@ -464,8 +464,8 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 ( 'caom2.SIAv1', 'energy_bounds_center', 'medianvalue on  energy axis (barycentric wavelength)',  'VOX:BandPass_RefValue', NULL, 'm', 'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'energy_bounds_cval1', 'lower bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_LoLimit', NULL, 'm', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'energy_bounds_cval2', 'upper bound on energy axis (barycentric wavelength)', 	'VOX:BandPass_HiLimit', NULL, 'm', 	'double', NULL, NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'energy_units', 	'units used for energy values', 			'VOX:BandPass_Unit', NULL, NULL, 	'char', '1*',NULL, 1,1,1 ),
-( 'caom2.SIAv1', 'energy_bandpassName', 'collection-specific name for energy band (e.g. filter name)', 'VOX:BandPass_ID', NULL, NULL, 'char', '32*',NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_units', 	'units used for energy values', 			'VOX:BandPass_Unit', NULL, NULL, 	'char', '*',NULL, 1,1,1 ),
+( 'caom2.SIAv1', 'energy_bandpassName', 'collection-specific name for energy band (e.g. filter name)', 'VOX:BandPass_ID', NULL, NULL, 'char', '*',NULL, 1,1,1 ),
 
 ( 'caom2.SIAv1', 'time_bounds_center', 	'central value on time axis (Modified Julian Day)', 	'VOX:Image_MJDateObs', NULL, 'd', 	'double', NULL, NULL, 1,1,1 ),
 ( 'caom2.SIAv1', 'time_bounds_cval1', 	'lower bound on time axis (Modified Julian Day)', 	'time.start;obs.exposure', NULL, 'd', 'double', NULL, NULL, 1,1,0 ),
@@ -474,6 +474,14 @@ insert into tap_schema.columns11 (table_name,column_name,description,ucd,utype,u
 
 ( 'caom2.SIAv1', 'imageFormat', 	'mimetype of the data file(s)', 'VOX:Image_Format', NULL, NULL, 'char', '*', NULL, 1,0,1 ),
 ( 'caom2.SIAv1', 'accessURL', 		'access URL for the complete image', 'VOX:Image_AccessReference', NULL, NULL, 'char', '*', 'uri', 1,0,1 ),
+
+-- unsupportable columns
+( 'caom2.SIAv1', 'stc_ref_frame', 	'unsupported', 'VOX:STC_CoordReFrame', NULL, NULL, 'char', '*', NULL, 1,0,1 ),
+( 'caom2.SIAv1', 'stc_coord_proj', 	'unsupported', 'VOX:WCS_CoordProjection', NULL, NULL, 'char', '3', NULL, 1,0,1 ),
+( 'caom2.SIAv1', 'stc_coord_ref_pix', 	'unsupported', 'VOX:WCS_CoordRefPixel', NULL, NULL, 'double', '*', NULL, 1,0,1 ),
+( 'caom2.SIAv1', 'stc_coord_ref_val', 	'unsupported', 'VOX:WCS_CoordRefValue', NULL, NULL, 'double', '*', NULL, 1,0,1 ),
+( 'caom2.SIAv1', 'stc_cd_matrix', 	'unsupported', 'VOX:WCS_CDMatrix', NULL, NULL, 'double', '*', NULL, 1,0,1 ),
+( 'caom2.SIAv1', 'stc_pix_flags', 	'unsupported', 'VOX:Image_PixFlags', NULL, NULL, 'char', '*', NULL, 1,0,1 ),
 
 ( 'caom2.SIAv1', 'metaRelease',  'UTC timestamp when metadata is publicly visible',              NULL, NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 ),
 ( 'caom2.SIAv1', 'dataRelease',  'UTC timestamp when data is publicly available',                NULL, NULL, NULL, 'char', '23*', 'timestamp', 0,1,0 )

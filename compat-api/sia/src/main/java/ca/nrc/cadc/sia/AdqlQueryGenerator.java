@@ -59,7 +59,8 @@ public class AdqlQueryGenerator
             + "position_center_ra,position_center_dec,position_naxes,position_naxis,position_scale,position_bounds,"
             + "energy_bounds_center,energy_bounds_cval1,energy_bounds_cval2,energy_units,energy_bandpassName,"
             + "time_bounds_center,time_bounds_cval1,time_bounds_cval2,time_exposure,"
-            + "imageFormat,accessURL,metaRelease,dataRelease";
+            + "imageFormat,accessURL,metaRelease,dataRelease,"
+            + "stc_ref_frame,stc_coord_proj,stc_coord_ref_pix,stc_coord_ref_val,stc_cd_matrix,stc_pix_flags";
     private static final String INTERSECTS_OPEN_CIRCLE = "INTERSECTS(position_bounds, CIRCLE('ICRS',";
     private static final String INTERSECTS_CLOSE = ")) = 1";
     private static final String INTERSECTS_OPEN_POINT = "CONTAINS(POINT('ICRS',";
