@@ -93,6 +93,7 @@ import ca.nrc.cadc.caom2.types.SegmentType;
 import ca.nrc.cadc.caom2.types.Vertex;
 import ca.nrc.cadc.caom2.util.CaomUtil;
 import ca.nrc.cadc.caom2.wcs.Dimension2D;
+import ca.nrc.cadc.dali.MultiShape;
 import java.net.URI;
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -168,7 +169,24 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                     Object samplesObject = Util.getObject(data, map.get("caom2:Plane.position.bounds.samples"));
                     if (samplesObject != null) {
                         MultiPolygon mp = new MultiPolygon();
-                        if (samplesObject instanceof ca.nrc.cadc.dali.MultiPolygon) {
+                        if (samplesObject instanceof MultiShape) {
+                            // DALI-1.2 MultiShape is the correct behaviour
+                            MultiShape ms = (MultiShape) samplesObject;
+                            for (ca.nrc.cadc.dali.Shape s : ms.getShapes()) {
+                                if (s instanceof ca.nrc.cadc.dali.Polygon) {
+                                    ca.nrc.cadc.dali.Polygon poly = (ca.nrc.cadc.dali.Polygon) s;
+                                    SegmentType st = SegmentType.MOVE;
+                                    for (ca.nrc.cadc.dali.Point p : poly.getVertices()) {
+                                        mp.getVertices().add(new Vertex(p.getLongitude(), p.getLatitude(), st));
+                                        st = SegmentType.LINE;
+                                    }
+                                    mp.getVertices().add(new Vertex(0, 0, SegmentType.CLOSE));
+                                } else {
+                                    throw new RuntimeException("unexpected shape in multishape: " + s.getClass().getName());
+                                }
+                            }
+                        } else if (samplesObject instanceof ca.nrc.cadc.dali.MultiPolygon) {
+                            // backwards compat to prototype multipolygon
                             log.debug("found ca.nrc.cadc.dali.MultiPolygon");
                             ca.nrc.cadc.dali.MultiPolygon mpoly = (ca.nrc.cadc.dali.MultiPolygon) samplesObject;
                             for (ca.nrc.cadc.dali.Polygon poly : mpoly.getPolygons()) {
@@ -180,6 +198,7 @@ public class PlaneMapper implements VOTableRowMapper<Plane> {
                                 mp.getVertices().add(new Vertex(0, 0, SegmentType.CLOSE));
                             }
                         } else {
+                            // even older backwards compat, just in case?
                             log.debug("found double[] aka old style caom2:multipolygon");
                             double[] posBoundsSamples = (double[]) samplesObject;
                             for (int i = 0; i < posBoundsSamples.length; i += 3) {
