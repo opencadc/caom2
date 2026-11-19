@@ -72,6 +72,7 @@ package ca.nrc.cadc.tap.caom2;
 import ca.nrc.cadc.tap.caom2.function.Area;
 import ca.nrc.cadc.tap.caom2.function.Centroid;
 import ca.nrc.cadc.tap.caom2.function.Coordsys;
+import ca.nrc.cadc.tap.caom2.function.ObsCorePoint;
 import ca.nrc.cadc.tap.parser.ParserUtil;
 import ca.nrc.cadc.tap.parser.navigator.ExpressionNavigator;
 import ca.nrc.cadc.tap.parser.navigator.FromItemNavigator;
@@ -85,6 +86,7 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
+import net.sf.jsqlparser.statement.select.PlainSelect;
 import org.apache.log4j.Logger;
 
 /**
@@ -262,6 +264,99 @@ public class CaomRegionConverter extends PgsphereRegionConverter
             if (c.getColumnName().equals("position_bounds_center"))
                 c.setColumnName("position_bounds_center::scircle");
         }
+    }
+
+    /**
+     * POINT(s_ra, s_dec) on ObsCore is marked with the position_bounds_center
+     * column the view derives s_ra and s_dec from. It still renders as
+     * spoint(radians(s_ra), radians(s_dec)); only handleDistance uses the column.
+     *
+     * @param coordsys the coordinate system
+     * @param ra the longitude expression
+     * @param dec the latitude expression
+     * @return replacement expression
+     */
+    @Override
+    protected Expression handlePoint(Expression coordsys, Expression ra, Expression dec)
+    {
+        Column center = findObsCoreCenter(ra, dec);
+        if (center != null)
+            return new ObsCorePoint(coordsys, ra, dec, center);
+        return super.handlePoint(coordsys, ra, dec);
+    }
+
+    /**
+     * In CAOM, DISTANCE on POINT(s_ra, s_dec) of ObsCore uses position_bounds_center
+     * directly, so that a GiST index on that column can serve DISTANCE(...) &lt; r
+     * (see PgsphereRegionConverter.handleDistancePredicate).
+     *
+     * @param left the first point
+     * @param right the second point
+     * @return replacement expression
+     */
+    @Override
+    protected Expression handleDistance(Expression left, Expression right)
+    {
+        if (left instanceof ObsCorePoint)
+            left = ((ObsCorePoint) left).getCenter();
+        if (right instanceof ObsCorePoint)
+            right = ((ObsCorePoint) right).getCenter();
+        return super.handleDistance(left, right);
+    }
+
+    // position_bounds_center of the ObsCore table that both s_ra and s_dec come from, or null
+    private Column findObsCoreCenter(Expression ra, Expression dec)
+    {
+        if (!(ra instanceof Column) || !(dec instanceof Column))
+            return null;
+        Column raCol = (Column) ra;
+        Column decCol = (Column) dec;
+        if (!"s_ra".equalsIgnoreCase(raCol.getColumnName()) || !"s_dec".equalsIgnoreCase(decCol.getColumnName()))
+            return null;
+
+        PlainSelect ps = super.getPlainSelect();
+        Table from = findFromTable(raCol, ps);
+        if (from == null || from != findFromTable(decCol, ps))
+            return null;
+        String schema = from.getSchemaName();
+        if (!"ObsCore".equalsIgnoreCase(from.getName())
+            || !("ivoa".equalsIgnoreCase(schema) || "caom2".equalsIgnoreCase(schema)))
+            return null;
+
+        // same table reference as the user wrote for s_ra, so later converters treat it alike
+        Table t = raCol.getTable();
+        Table ref = (t == null) ? null : new Table(t.getSchemaName(), t.getName());
+        return new Column(ref, "position_bounds_center");
+    }
+
+    // the FROM table a column refers to, or null if it cannot be determined unambiguously
+    private static Table findFromTable(Column c, PlainSelect ps)
+    {
+        Table t = c.getTable();
+        if (t == null || t.getName() == null)
+        {
+            // unqualified: only when the FROM clause is a single table
+            if (ps.getFromItem() instanceof Table && (ps.getJoins() == null || ps.getJoins().isEmpty()))
+                return (Table) ps.getFromItem();
+            return null;
+        }
+        Table ret = null;
+        for (Table from : ParserUtil.getFromTableList(ps))
+        {
+            boolean match;
+            if (from.getAlias() != null)
+                match = t.getSchemaName() == null && from.getAlias().equalsIgnoreCase(t.getName());
+            else
+                match = from.getName().equalsIgnoreCase(t.getName())
+                    && (t.getSchemaName() == null || t.getSchemaName().equalsIgnoreCase(from.getSchemaName()));
+            if (match)
+            {
+                if (ret != null)
+                    return null; // ambiguous
+                ret = from;
+            }
+        }
+        return ret;
     }
 
     @Override
