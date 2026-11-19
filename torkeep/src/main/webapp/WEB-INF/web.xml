@@ -18,6 +18,7 @@
                 org.opencadc.caom2
                 ca.nrc.cadc.db.version
                 ca.nrc.cadc.rest
+                org.opencadc.erfa
                 ca.nrc.cadc.wcs
                 ca.nrc.cadc.vosi
             </param-value>

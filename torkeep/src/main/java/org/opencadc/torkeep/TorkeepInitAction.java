@@ -71,6 +71,8 @@ package org.opencadc.torkeep;
 
 import ca.nrc.cadc.db.DBUtil;
 import ca.nrc.cadc.rest.InitAction;
+import ca.nrc.cadc.vosi.avail.CheckException;
+import ca.nrc.cadc.wcs.VerifyWCS;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.naming.Context;
@@ -81,6 +83,7 @@ import org.apache.log4j.Logger;
 import org.opencadc.caom2.db.PostgreSQLDialect;
 import org.opencadc.caom2.db.SQLDialect;
 import org.opencadc.caom2.db.version.InitDatabase;
+import org.opencadc.erfa.ERFALib;
 
 public class TorkeepInitAction extends InitAction {
 
@@ -100,6 +103,7 @@ public class TorkeepInitAction extends InitAction {
     @Override
     public void doInit() {
         initConfig();
+        initNativeCode();
         initDatabase();
         initJNDI();
     }
@@ -116,6 +120,28 @@ public class TorkeepInitAction extends InitAction {
         log.info("initConfig: START");
         this.torkeepConfig = new TorkeepConfig();
         log.info("initConfig: OK");
+    }
+
+    private void initNativeCode() {
+        log.info("initNativeCode: START");
+        StringBuilder sb = new StringBuilder();
+        // check the WCS JNI library
+        try {
+            Class.forName("ca.nrc.cadc.wcs.WCSLib");
+        } catch (Throwable t) {
+            sb.append("\nwcslib: ").append(t);
+        }
+
+        // check the ERFA JNI library
+        try {
+            Class.forName("org.opencadc.erfa.ERFALib");
+        } catch (Throwable t) {
+            sb.append("\nerfalib: " + t);
+        }
+        if (sb.length() > 0) {
+            throw new RuntimeException("BUG: failed to init native code: " + sb);
+        }
+        log.info("initNativeCode: OK");
     }
 
     private void initDatabase() {
