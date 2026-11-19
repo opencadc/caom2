@@ -91,6 +91,9 @@
             <feature>
                 <form>COORD2</form>
             </feature>
+            <feature>
+                <form>DISTANCE</form>
+            </feature>
         </languageFeatures>
     </language>
 

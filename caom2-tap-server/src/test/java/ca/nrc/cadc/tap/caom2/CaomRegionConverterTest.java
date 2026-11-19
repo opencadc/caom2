@@ -839,4 +839,95 @@ public class CaomRegionConverterTest {
         //Assert.assertEquals(_expected, prepareToCompare(_sql));
         Assert.assertTrue(prepareToCompare(_sql).toLowerCase().indexOf(_expected.toLowerCase()) >= 0);
     }
+    // DISTANCE on POINT(s_ra, s_dec) of ObsCore uses the indexed position_bounds_center
+    private static final String Q = "spoint(radians(10), radians(20))";
+
+    private static String lowered(String p, String q, String r, String compare) {
+        return "(" + p + " <@ scircle(" + q + ", radians(" + r + ")) and "
+            + q + " <@ scircle(" + p + ", radians(" + r + ")) and " + compare + ")";
+    }
+
+    private void assertSql() {
+        Assert.assertEquals(prepareToCompare(_expected), prepareToCompare(_sql));
+    }
+
+    @Test
+    public void testDistanceObsCore() {
+        String c = "caom2.ObsCore.position_bounds_center";
+        _query = "select obs_id from ivoa.ObsCore where DISTANCE(POINT('ICRS', ivoa.ObsCore.s_ra, ivoa.ObsCore.s_dec), POINT('ICRS', 10, 20)) < 0.5";
+        _expected = "select obs_id from caom2.ObsCore where " + lowered(c, Q, "0.5", "degrees(" + c + " <-> " + Q + ") < 0.5");
+        run();
+        assertSql();
+
+        // unqualified, single table
+        c = "position_bounds_center";
+        _query = "select obs_id from ivoa.ObsCore where 0.5 >= DISTANCE(POINT('ICRS', 10, 20), POINT('ICRS', s_ra, s_dec))";
+        _expected = "select obs_id from caom2.ObsCore where " + lowered(Q, c, "0.5", "0.5 >= degrees(" + Q + " <-> " + c + ")");
+        run();
+        assertSql();
+
+        // four-argument form
+        _query = "select obs_id from ivoa.ObsCore where DISTANCE(s_ra, s_dec, 10, 20) < 0.5";
+        _expected = "select obs_id from caom2.ObsCore where " + lowered(c, Q, "0.5", "degrees(" + c + " <-> " + Q + ") < 0.5");
+        run();
+        assertSql();
+
+        // select list
+        _query = "select DISTANCE(POINT('ICRS', o.s_ra, o.s_dec), POINT('ICRS', 10, 20)) from ivoa.ObsCore as o";
+        _expected = "select degrees(o.position_bounds_center <-> " + Q + ") from caom2.ObsCore as o";
+        run();
+        assertSql();
+    }
+
+    @Test
+    public void testDistanceObsCoreCrossMatch() {
+        String o = "o.position_bounds_center";
+        String u = "spoint(radians(u.ra), radians(u.dec))";
+        _query = "select o.obs_id, u.id from ivoa.ObsCore as o join tap_upload.pos as u"
+            + " on DISTANCE(POINT('ICRS', o.s_ra, o.s_dec), POINT('ICRS', u.ra, u.dec)) < 0.01";
+        _expected = "select o.obs_id, u.id from caom2.ObsCore as o join tap_upload.pos as u on "
+            + lowered(o, u, "0.01", "degrees(" + o + " <-> " + u + ") < 0.01");
+        run();
+        assertSql();
+
+        // uploaded table with ObsCore column names is not mapped
+        String p = "spoint(radians(u.s_ra), radians(u.s_dec))";
+        _query = "select o.obs_id from ivoa.ObsCore as o join tap_upload.pos as u"
+            + " on DISTANCE(POINT('ICRS', u.s_ra, u.s_dec), POINT('ICRS', o.s_ra, o.s_dec)) < 0.01";
+        _expected = "select o.obs_id from caom2.ObsCore as o join tap_upload.pos as u on "
+            + lowered(p, o, "0.01", "degrees(" + p + " <-> " + o + ") < 0.01");
+        run();
+        assertSql();
+    }
+
+    @Test
+    public void testPointObsCoreNotMapped() {
+        // s_ra and s_dec from different tables
+        String p = "spoint(radians(a.s_ra), radians(b.s_dec))";
+        _query = "select a.obs_id from ivoa.ObsCore as a join ivoa.ObsCore as b on a.obs_id = b.obs_id"
+            + " where DISTANCE(POINT('ICRS', a.s_ra, b.s_dec), POINT('ICRS', 10, 20)) < 0.5";
+        _expected = "select a.obs_id from caom2.ObsCore as a join caom2.ObsCore as b on a.obs_id = b.obs_id where "
+            + lowered(p, Q, "0.5", "degrees(" + p + " <-> " + Q + ") < 0.5");
+        run();
+        assertSql();
+
+        // unqualified in a join: not resolved
+        p = "spoint(radians(s_ra), radians(s_dec))";
+        _query = "select obs_id from ivoa.ObsCore join tap_upload.pos as u on obs_id = u.id"
+            + " where DISTANCE(POINT('ICRS', s_ra, s_dec), POINT('ICRS', 10, 20)) < 0.5";
+        _expected = "select obs_id from caom2.ObsCore join tap_upload.pos as u on obs_id = u.id where "
+            + lowered(p, Q, "0.5", "degrees(" + p + " <-> " + Q + ") < 0.5");
+        run();
+        assertSql();
+
+        // POINT outside DISTANCE renders as before
+        _query = "select POINT('ICRS', s_ra, s_dec) from ivoa.ObsCore";
+        _expected = "select " + p + " from caom2.ObsCore";
+        run();
+        assertSql();
+        _query = "select obs_id from ivoa.ObsCore where CONTAINS(POINT('ICRS', s_ra, s_dec), CIRCLE('ICRS', 10, 20, 0.5)) = 1";
+        _expected = "select obs_id from caom2.ObsCore where cast(" + p + " as scircle) <@ scircle(" + Q + ", radians(0.5))";
+        run();
+        assertSql();
+    }
 }

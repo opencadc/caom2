@@ -4,6 +4,11 @@ create index Plane_position_i1
     on <schema>.Plane using gist (position_bounds_spoly)
 ;
 
+-- ADQL DISTANCE(POINT(s_ra, s_dec), ...) < r on ObsCore
+create index Plane_position_center
+    on <schema>.Plane using gist (position_bounds_center)
+;
+
 -- energy
 create index Plane_energy_ib
     on <schema>.Plane using gist (energy_bounds)
