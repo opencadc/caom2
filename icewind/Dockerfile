@@ -1,6 +1,6 @@
 FROM images.opencadc.org/library/cadc-java:1
 
-ENV IMAGE_VERSION="0.3.0"
+ENV IMAGE_VERSION="0.4.0"
 LABEL org.opencontainers.image.version="${IMAGE_VERSION}"
 
 ADD build/distributions/icewind.tar /
