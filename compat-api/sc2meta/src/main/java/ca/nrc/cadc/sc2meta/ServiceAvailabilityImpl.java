@@ -86,6 +86,7 @@ import org.apache.log4j.Logger;
 
 import java.net.URI;
 import java.net.URL;
+import java.util.NoSuchElementException;
 
 /**
  *
@@ -124,44 +125,61 @@ public class ServiceAvailabilityImpl implements AvailabilityPlugin
 
             // check other services we depend on
             RegistryClient reg = new RegistryClient();
+            URL url;
+            CheckResource checkResource;
+
+            checkResource = new CheckWebService(TAP_URI);
+            checkResource.check();
+            
             LocalAuthority localAuthority = new LocalAuthority();
-            
-            URI openidURI = localAuthority.getResourceID(Standards.SECURITY_METHOD_OPENID);
-            if (openidURI != null) {
-                CheckOpenIDProvider ch = new CheckOpenIDProvider(openidURI);
-                ch.check();
-            }
 
-            URI credURI = localAuthority.getResourceID(Standards.CRED_PROXY_10);
-            if (credURI != null) {
-                CheckResource cws = new CheckWebService(credURI);
-                cws.check();
-            }
+            String stdID = Standards.CRED_PROXY_10.toString();
+            try {
 
-            URI usersURI = localAuthority.getResourceID(Standards.UMS_USERS_01);
-            if (usersURI != null) {
-                CheckResource cws = new CheckWebService(usersURI);
-                cws.check();
-            }
-
-            URI groupsURI = localAuthority.getResourceID(Standards.GMS_SEARCH_10);
-            if (groupsURI != null && !groupsURI.equals(usersURI)) {
-                CheckResource cws = new CheckWebService(groupsURI);
-                cws.check();
-            }
-            
-            if (credURI != null || usersURI != null) {
-                if (AAI_PEM_FILE.exists() && AAI_PEM_FILE.canRead()) {
-                    // check for a certificate needed to perform network A&A ops
-                    CheckCertificate checkCert = new CheckCertificate(AAI_PEM_FILE);
-                    checkCert.check();
+                URI credURI = localAuthority.getServiceURI(stdID);
+                url = reg.getServiceURL(credURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                if (url != null) {
+                    checkResource = new CheckWebService(url);
+                    checkResource.check();
                 } else {
-                    log.debug("AAI cert not found or unreadable");
+                    log.debug("check skipped: " + credURI + " does not provide " + Standards.VOSI_AVAILABILITY);
                 }
+            } catch (NoSuchElementException ex) {
+                log.debug("not found: " + stdID);
             }
-            
-            CheckResource ct = new CheckWebService(TAP_URI);
-            ct.check();
+
+            stdID = Standards.GMS_SEARCH_10.toString();
+            URI groupsURI = null;
+            try {
+                groupsURI = localAuthority.getServiceURI(stdID);
+                url = reg.getServiceURL(groupsURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                if (url != null) {
+                    checkResource = new CheckWebService(url);
+                    checkResource.check();
+                } else {
+                    log.debug("check skipped: " + groupsURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                }
+            } catch (NoSuchElementException ex) {
+                log.debug("not found: " + stdID);
+            }
+
+            stdID = Standards.UMS_USERS_01.toString();
+            try {
+                URI usersURI = localAuthority.getServiceURI(stdID);
+                if (!usersURI.equals(groupsURI)) {
+                    url = reg.getServiceURL(usersURI, Standards.VOSI_AVAILABILITY, AuthMethod.ANON);
+                    if (url != null) {
+                        checkResource = new CheckWebService(url);
+                        checkResource.check();
+                    } else {
+                        log.debug("check skipped: " + usersURI + " does not provide " + Standards.VOSI_AVAILABILITY);
+                    }
+                } else {
+                    log.debug("already checked: " + stdID + " = " + usersURI);
+                }
+            } catch (NoSuchElementException ex) {
+                log.debug("not found: " + stdID);
+            }
             
         }
         catch(CheckException ce)
