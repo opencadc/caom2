@@ -23,7 +23,7 @@ The CAOM data model development is here: https://github.com/opencadc/CAOM
 - caom2-tap: basic CAOM-2.x TAP client to get observations, planes, or artifacts from a TAP service
 - caom2-tap-server: (DEPREACTED) see argus
 - caom2-datalink-server: (DEPRECATED) see bifrost
-- caom2-meta-server: (DEPRECATED) TODO: make read-only torkeep a viable alternative
+- caom2-meta-server: (OBSOLETE)
 - caom2-pkg-server: simple CAOM-2.x package service that generates tar|zip packages TODO: convert to service (docker container)
 - caom2-soda-server: IVOA SODA implementation for CAOM-2.x
 
