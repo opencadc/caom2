@@ -9,6 +9,22 @@ configurations {
 dependencies {
     testImplementation 'com.puppycrawl.tools:checkstyle:8.2'
     checkstyleDep 'org.opencadc:cadc-quality:[1.0,1.1)'
+
+    // work around for gradle 6 until support dropped
+    attributesSchema {
+        attribute(Attribute.of('org.gradle.jvm.environment', String)) {
+            disambiguationRules.add(StandardJvmRule)
+        }
+    }
+}
+
+class StandardJvmRule implements AttributeDisambiguationRule<String> {
+    @Override
+    void execute(MultipleCandidatesDetails<String> details) {
+        if (details.candidateValues.contains('standard-jvm')) {
+            details.closestMatch('standard-jvm')
+        }
+    }
 }
 
 checkstyle {
